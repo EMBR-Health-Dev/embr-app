@@ -1,0 +1,17 @@
+node_modules
+.turbo
+dist
+build
+.next
+coverage
+playwright-report
+test-results
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.pnpm-store
+prisma/*.db
+.vscode/*
+!.vscode/extensions.json

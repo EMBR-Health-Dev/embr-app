@@ -1,0 +1,16 @@
+// EMBR — Prisma schema
+//
+// Intentionally empty of business models in Milestone 1. Auth models
+// (User, Session, RefreshToken) land in Milestone 2; domain models
+// (SymptomLog, CycleEntry, ...) in Milestone 3. Keeping the schema empty
+// now means the very first migration is trivial to review and revert,
+// and nothing here needs to be redesigned once real models arrive.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

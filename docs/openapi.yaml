@@ -1,0 +1,94 @@
+openapi: 3.1.0
+info:
+  title: EMBR API
+  description: >
+    API for the EMBR perimenopause and menopause health platform.
+    OpenAPI-first: this spec is the source of truth for request/response
+    contracts. New endpoints are documented here before (or alongside)
+    implementation, and packages/sdk generates typed clients from it.
+  version: 0.1.0
+  contact:
+    name: EMBR Engineering
+servers:
+  - url: http://localhost:4000
+    description: Local development
+paths:
+  /health/live:
+    get:
+      summary: Liveness probe
+      description: Returns 200 if the process is running. Does not check dependencies.
+      tags: [Health]
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+  /health/ready:
+    get:
+      summary: Readiness probe
+      description: Returns 200 only if the database and Redis are both reachable.
+      tags: [Health]
+      responses:
+        "200":
+          description: Service and dependencies are healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResponse"
+        "503":
+          description: One or more dependencies are unreachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResponse"
+components:
+  schemas:
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        uptimeSeconds:
+          type: integer
+        version:
+          type: string
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [ok, down]
+              latencyMs:
+                type: number
+              message:
+                type: string
+    ApiErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
