@@ -32,7 +32,10 @@
     "ioredis": "^5.4.0",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.6.0",
-    "zod": "^3.24.0"
+    "zod": "^3.24.0",
+    "argon2": "^0.41.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.16"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
@@ -41,6 +44,8 @@
     "@types/cookie-parser": "^1.4.8",
     "@types/swagger-ui-express": "^4.1.7",
     "@types/supertest": "^6.0.2",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/nodemailer": "^6.4.17",
     "prisma": "^6.1.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.0",

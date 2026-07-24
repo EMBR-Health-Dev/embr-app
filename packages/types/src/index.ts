@@ -25,3 +25,35 @@ export interface HealthCheckResponse {
   version: string;
   checks: Record<string, { status: "ok" | "down"; latencyMs?: number; message?: string }>;
 }
+
+// ---- Auth (Milestone 2) ----
+
+export type Role = "MEMBER" | "ADMIN";
+
+/** Public-safe user shape — never includes passwordHash. */
+export interface UserDto {
+  id: string;
+  email: string;
+  role: Role;
+  emailVerified: boolean;
+  createdAt: string;
+}
+
+export interface AuthSessionResponse {
+  user: UserDto;
+  /**
+   * Present for non-browser clients (mobile) that can't rely on
+   * httpOnly cookies. Browser clients should read the session from the
+   * cookie the API sets and ignore this field.
+   */
+  accessToken: string;
+}
+
+export interface DeviceSessionDto {
+  id: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  createdAt: string;
+  expiresAt: string;
+  current: boolean;
+}

@@ -47,7 +47,163 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthCheckResponse"
+  /auth/csrf:
+    get:
+      summary: Issue a CSRF token
+      description: >
+        Sets the CSRF cookie and returns the token in the response body.
+        Call once on app load and before any state-changing auth request;
+        echo the returned value back in the `x-csrf-token` header.
+      tags: [Auth]
+      responses:
+        "200":
+          description: CSRF token issued
+  /auth/register:
+    post:
+      summary: Register a new account
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 12 }
+      responses:
+        "201":
+          description: Account created — a verification email has been sent
+        "409":
+          description: An account with this email already exists
+        "429":
+          description: Too many registration attempts from this IP
+  /auth/verify-email:
+    post:
+      summary: Consume an email-verification token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties: { token: { type: string } }
+      responses:
+        "204": { description: Email verified }
+        "400": { description: Token invalid or expired }
+  /auth/resend-verification:
+    post:
+      summary: Resend the verification email
+      description: Always returns 202, regardless of whether the account exists or is already verified, to avoid email enumeration.
+      tags: [Auth]
+      responses:
+        "202": { description: Accepted }
+  /auth/login:
+    post:
+      summary: Log in with email and password
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: >
+            Sets embr_at (access token), embr_rt (refresh token), and
+            embr_csrf cookies; also returns the access token in the body
+            for non-browser clients.
+        "401": { description: Invalid email or password }
+        "429": { description: Too many login attempts for this account/IP }
+  /auth/refresh:
+    post:
+      summary: Rotate the refresh token and issue a new access token
+      description: Requires the embr_rt cookie and a matching x-csrf-token header.
+      tags: [Auth]
+      responses:
+        "200": { description: New access/refresh tokens issued }
+        "401": { description: Session expired, already used, or reuse detected }
+        "403": { description: Missing or invalid CSRF token }
+  /auth/logout:
+    post:
+      summary: Revoke the current session
+      tags: [Auth]
+      responses:
+        "204": { description: Logged out }
+        "403": { description: Missing or invalid CSRF token }
+  /auth/logout-all:
+    post:
+      summary: Revoke every session for the current user
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "204": { description: All sessions revoked }
+  /auth/forgot-password:
+    post:
+      summary: Request a password reset email
+      description: Always returns 202 regardless of whether the account exists, to avoid email enumeration.
+      tags: [Auth]
+      responses:
+        "202": { description: Accepted }
+  /auth/reset-password:
+    post:
+      summary: Reset a password using an emailed token
+      description: Revokes every existing session for the account on success.
+      tags: [Auth]
+      responses:
+        "204": { description: Password reset }
+        "400": { description: Token invalid or expired }
+  /auth/change-password:
+    post:
+      summary: Change the current user's password
+      description: Requires the current password; revokes every session (including the current one) on success.
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "204": { description: Password changed }
+        "400": { description: Current password incorrect }
+  /auth/me:
+    get:
+      summary: Get the current authenticated user
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "200": { description: Current user }
+        "401": { description: Not authenticated }
+  /auth/sessions:
+    get:
+      summary: List active device sessions for the current user
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "200": { description: Active sessions, with the current one flagged }
+  /auth/sessions/{id}:
+    delete:
+      summary: Revoke a specific device session
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Session revoked }
+        "404": { description: No active session with that id for this user }
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: embr_at
   schemas:
     HealthCheckResponse:
       type: object

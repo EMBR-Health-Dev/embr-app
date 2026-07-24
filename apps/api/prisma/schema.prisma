@@ -1,10 +1,8 @@
 // EMBR — Prisma schema
 //
-// Intentionally empty of business models in Milestone 1. Auth models
-// (User, Session, RefreshToken) land in Milestone 2; domain models
-// (SymptomLog, CycleEntry, ...) in Milestone 3. Keeping the schema empty
-// now means the very first migration is trivial to review and revert,
-// and nothing here needs to be redesigned once real models arrive.
+// Milestone 2 — Authentication. Domain models (SymptomLog, CycleEntry,
+// ...) land in Milestone 3 and reference User by id; nothing here is
+// expected to be redesigned when they arrive.
 
 generator client {
   provider = "prisma-client-js"
@@ -13,4 +11,101 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+/// A registered account. Passwords are never stored in plaintext — only
+/// an argon2id hash. `emailVerifiedAt` gates access to features that
+/// require a confirmed email (see requireVerifiedEmail middleware).
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(MEMBER)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions                Session[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  auditLogs               AuditLog[]
+
+  @@map("users")
+}
+
+/// A refresh-token-backed device session. Refresh tokens are never
+/// stored in plaintext — only a SHA-256 hash — so a leaked database
+/// dump cannot be replayed as a session. Rotated on every /auth/refresh
+/// call; `replacedBySessionId` lets us detect refresh-token reuse
+/// (a strong signal of theft) and revoke the whole chain.
+model Session {
+  id                  String    @id @default(uuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash    String    @unique
+  userAgent           String?
+  ipAddress           String?
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  replacedBySessionId String?
+  createdAt           DateTime  @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Single-use token emailed to confirm account ownership. Only the hash
+/// is stored; `consumedAt` enforces single use without needing to
+/// delete (and thus lose the audit trail of) the row.
+model EmailVerificationToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+/// Single-use token emailed for the forgot-password flow. Issuing a new
+/// one invalidates prior unconsumed tokens for the same user (see
+/// auth.repository.ts) so only the most recently requested link works.
+model PasswordResetToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+/// Append-only security/audit trail for auth events (register, login,
+/// login failure, password change, session revocation, ...). `userId`
+/// is nullable and SET NULL on delete so the trail survives account
+/// deletion for as long as retention policy requires.
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
 }

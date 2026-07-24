@@ -32,3 +32,35 @@ See `docs/ARCHITECTURE.md` for the specific tradeoffs. In short: this milestone 
 
 **Next milestone**
 Milestone 2 — Authentication: registration, login, refresh tokens, password reset, email verification, device sessions, RBAC, rate limiting on auth routes specifically, audit logging, secure cookies, CSRF protection, session revocation.
+
+## Milestone 2 — Authentication ✅ (this delivery)
+
+**What changed**
+
+- Prisma models: `User` (with `Role` enum), `Session` (refresh-token-backed device sessions), `EmailVerificationToken`, `PasswordResetToken`, `AuditLog`
+- `apps/api/src/modules/auth`: registration, login, refresh (with rotation + reuse detection — a revoked token being replayed revokes every session for that user), logout, logout-all, email verification + resend, forgot/reset/change-password, `/auth/me`, session listing + per-session revocation
+- Argon2id password hashing (OWASP-recommended parameters); opaque, SHA-256-hashed refresh tokens (never stored or transmitted as JWTs)
+- Short-lived JWT access tokens (httpOnly cookie, with an `Authorization: Bearer` fallback for non-browser clients), httpOnly refresh-token cookie scoped to `/auth`
+- Double-submit-cookie CSRF protection on every state-changing endpoint that acts on an existing session (refresh, logout, logout-all, change-password, session revocation) — not on register/login, which don't rely on ambient cookie auth to take effect
+- Per-route rate limiting on auth endpoints specifically (keyed by email+IP where an email is present), stricter than the global API limiter
+- Append-only `AuditLog` for register/login (success+failure)/refresh/reuse-detection/logout/password-change/password-reset events
+- Transactional email (verification, password reset) via nodemailer → MailHog in dev
+- Shared Zod validation schemas (`packages/validation`) and DTOs (`packages/types`) so `apps/web`/`apps/admin` can reuse the exact same contracts
+- `requireAuth()` / `requireRole()` middleware for RBAC on future protected routes
+- Vitest + Supertest coverage: registration (incl. duplicate-email conflict, weak-password rejection), login (incl. same-shape 401 for wrong-password vs. non-existent account — no enumeration), `/auth/me` auth gating, CSRF enforcement, and refresh-token rotation/reuse-detection
+
+**Why it changed**
+Argon2id + opaque hashed refresh tokens + rotation-with-reuse-detection is the combination OWASP currently recommends for session security; building it once, correctly, here avoids revisiting session handling once real user data exists. CSRF protection is scoped to cookie-authenticated state changes only (not to register/login) because that's where the actual ambient-credential attack surface is — over-applying it elsewhere adds friction without adding safety.
+
+**Known limitation — verify before merging**
+This was built in a network-sandboxed environment that cannot reach `binaries.prisma.sh`, so `prisma generate` could not run here. The Prisma-dependent code was reviewed by hand and the full test suite (mocking the Prisma client) passes, and `tsc --noEmit` is clean except for the one error `@prisma/client` has no exported member 'User'`— a direct symptom of the client never having been generated, not a real type error. Run`pnpm db:generate && pnpm typecheck`(and generate the initial migration with`pnpm db:migrate`) in an environment with normal network access — e.g. CI — before relying on this.
+
+**Remaining work (explicitly out of scope for M2)**
+
+- No initial Prisma migration file is committed yet — generate it once `prisma generate` can run (see limitation above)
+- `requireVerifiedEmail` gating (blocking specific actions until email is confirmed) is not yet wired into any route, since no such actions exist until Milestone 3
+- No account lockout after N failed logins beyond the rate limiter (a deliberate simplification — revisit if abuse patterns emerge)
+- No OAuth/social login, no MFA — email+password only for this milestone
+
+**Next milestone**
+Milestone 3 — Core domain: symptom logging, cycle tracking entries, and the first real data model built on top of `User`.
