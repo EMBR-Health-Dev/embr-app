@@ -15,3 +15,5 @@ test-results
 prisma/*.db
 .vscode/*
 !.vscode/extensions.json
+next-env.d.ts
+*.tsbuildinfo

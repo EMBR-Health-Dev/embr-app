@@ -24,6 +24,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @embr/api prisma generate
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
@@ -56,6 +57,8 @@ jobs:
       DATABASE_URL: postgresql://embr:embr_test_password@localhost:5432/embr_test?schema=public
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
+      JWT_ACCESS_SECRET: ci-test-only-access-secret-not-for-prod-use-32ch
+      JWT_REFRESH_SECRET: ci-test-only-refresh-secret-not-for-prod-use-32ch
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
