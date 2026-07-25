@@ -198,14 +198,12 @@ describe("POST /symptom-logs", () => {
     const agent = request.agent(app);
     await registerAndLogin(agent, "symptoms@embr.health");
 
-    const res = await agent
-      .post("/symptom-logs")
-      .send({
-        category: "HOT_FLASH",
-        severity: "SEVERE",
-        occurredAt: "2026-07-20T03:00:00.000Z",
-        notes: "woke up drenched",
-      });
+    const res = await agent.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "SEVERE",
+      occurredAt: "2026-07-20T03:00:00.000Z",
+      notes: "woke up drenched",
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.data.category).toBe("HOT_FLASH");
@@ -218,13 +216,11 @@ describe("POST /symptom-logs", () => {
     const agent = request.agent(app);
     await registerAndLogin(agent, "invalidcat@embr.health");
 
-    const res = await agent
-      .post("/symptom-logs")
-      .send({
-        category: "NOT_A_REAL_CATEGORY",
-        severity: "MILD",
-        occurredAt: new Date().toISOString(),
-      });
+    const res = await agent.post("/symptom-logs").send({
+      category: "NOT_A_REAL_CATEGORY",
+      severity: "MILD",
+      occurredAt: new Date().toISOString(),
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
