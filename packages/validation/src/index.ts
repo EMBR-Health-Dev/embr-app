@@ -71,3 +71,65 @@ export const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+// ---- Core domain (Milestone 3) ----
+
+export const symptomCategorySchema = z.enum([
+  "HOT_FLASH",
+  "NIGHT_SWEATS",
+  "MOOD_CHANGE",
+  "SLEEP_DISTURBANCE",
+  "BRAIN_FOG",
+  "JOINT_PAIN",
+  "FATIGUE",
+  "ANXIETY",
+  "IRREGULAR_HEARTBEAT",
+  "VAGINAL_DRYNESS",
+  "LIBIDO_CHANGE",
+  "WEIGHT_CHANGE",
+  "HEADACHE",
+  "OTHER",
+]);
+
+export const severityLevelSchema = z.enum(["MILD", "MODERATE", "SEVERE"]);
+
+export const createSymptomLogSchema = z.object({
+  category: symptomCategorySchema,
+  severity: severityLevelSchema,
+  occurredAt: z.coerce.date(),
+  notes: z.string().trim().max(2000).optional(),
+});
+export type CreateSymptomLogInput = z.infer<typeof createSymptomLogSchema>;
+
+export const updateSymptomLogSchema = createSymptomLogSchema.partial();
+export type UpdateSymptomLogInput = z.infer<typeof updateSymptomLogSchema>;
+
+export const symptomLogQuerySchema = paginationQuerySchema.extend({
+  category: symptomCategorySchema.optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type SymptomLogQuery = z.infer<typeof symptomLogQuerySchema>;
+
+export const flowIntensitySchema = z.enum(["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"]);
+
+export const upsertCycleEntrySchema = z.object({
+  date: z.coerce.date(),
+  flow: flowIntensitySchema.optional(),
+  isPeriodStart: z.boolean().optional().default(false),
+  isPeriodEnd: z.boolean().optional().default(false),
+  notes: z.string().trim().max(2000).optional(),
+});
+export type UpsertCycleEntryInput = z.infer<typeof upsertCycleEntrySchema>;
+
+// date is the entry's identity (see the userId+date unique constraint) —
+// updating it would mean updating a different entry entirely, so PATCH
+// deliberately excludes it.
+export const updateCycleEntrySchema = upsertCycleEntrySchema.omit({ date: true }).partial();
+export type UpdateCycleEntryInput = z.infer<typeof updateCycleEntrySchema>;
+
+export const cycleEntryQuerySchema = paginationQuerySchema.extend({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type CycleEntryQuery = z.infer<typeof cycleEntryQuerySchema>;

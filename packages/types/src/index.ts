@@ -57,3 +57,54 @@ export interface DeviceSessionDto {
   expiresAt: string;
   current: boolean;
 }
+
+// ---- Core domain (Milestone 3) ----
+
+export type SymptomCategory =
+  | "HOT_FLASH"
+  | "NIGHT_SWEATS"
+  | "MOOD_CHANGE"
+  | "SLEEP_DISTURBANCE"
+  | "BRAIN_FOG"
+  | "JOINT_PAIN"
+  | "FATIGUE"
+  | "ANXIETY"
+  | "IRREGULAR_HEARTBEAT"
+  | "VAGINAL_DRYNESS"
+  | "LIBIDO_CHANGE"
+  | "WEIGHT_CHANGE"
+  | "HEADACHE"
+  | "OTHER";
+
+export type SeverityLevel = "MILD" | "MODERATE" | "SEVERE";
+
+export interface SymptomLogDto {
+  id: string;
+  category: SymptomCategory;
+  severity: SeverityLevel;
+  occurredAt: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FlowIntensity = "SPOTTING" | "LIGHT" | "MEDIUM" | "HEAVY";
+
+export interface CycleEntryDto {
+  id: string;
+  date: string;
+  flow: FlowIntensity | null;
+  isPeriodStart: boolean;
+  isPeriodEnd: boolean;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}

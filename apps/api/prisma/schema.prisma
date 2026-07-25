@@ -42,6 +42,8 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   auditLogs               AuditLog[]
+  symptomLogs             SymptomLog[]
+  cycleEntries            CycleEntry[]
 
   @@map("users")
 }
@@ -116,4 +118,79 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@map("audit_logs")
+}
+
+// ---- Core domain (Milestone 3) ----
+
+enum SymptomCategory {
+  HOT_FLASH
+  NIGHT_SWEATS
+  MOOD_CHANGE
+  SLEEP_DISTURBANCE
+  BRAIN_FOG
+  JOINT_PAIN
+  FATIGUE
+  ANXIETY
+  IRREGULAR_HEARTBEAT
+  VAGINAL_DRYNESS
+  LIBIDO_CHANGE
+  WEIGHT_CHANGE
+  HEADACHE
+  OTHER
+}
+
+enum SeverityLevel {
+  MILD
+  MODERATE
+  SEVERE
+}
+
+/// A single symptom occurrence a user logs. `occurredAt` is
+/// user-supplied (when the symptom happened) and is deliberately
+/// separate from `createdAt` (when the log entry was saved) — perimenopause
+/// symptoms are very often logged after the fact, sometimes the next
+/// morning for a night-time hot flash.
+model SymptomLog {
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   SymptomCategory
+  severity   SeverityLevel
+  occurredAt DateTime
+  notes      String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([userId, occurredAt])
+  @@map("symptom_logs")
+}
+
+enum FlowIntensity {
+  SPOTTING
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+/// One entry per user per calendar day (see the unique constraint below),
+/// covering both period-flow tracking and the period start/end markers
+/// cycle-length calculations need. Perimenopause cycles are frequently
+/// irregular or entirely absent for stretches, so every field here is
+/// optional except the date itself — a day can be logged with just
+/// `notes` and nothing else.
+model CycleEntry {
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime       @db.Date
+  flow          FlowIntensity?
+  isPeriodStart Boolean        @default(false)
+  isPeriodEnd   Boolean        @default(false)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("cycle_entries")
 }

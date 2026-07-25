@@ -198,6 +198,125 @@ paths:
       responses:
         "204": { description: Session revoked }
         "404": { description: No active session with that id for this user }
+  /symptom-logs:
+    post:
+      summary: Log a symptom occurrence
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, severity, occurredAt]
+              properties:
+                category: { $ref: "#/components/schemas/SymptomCategory" }
+                severity: { $ref: "#/components/schemas/SeverityLevel" }
+                occurredAt: { type: string, format: date-time }
+                notes: { type: string, maxLength: 2000 }
+      responses:
+        "201": { description: Symptom log created }
+    get:
+      summary: List the current user's symptom logs
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: category, in: query, schema: { $ref: "#/components/schemas/SymptomCategory" } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200": { description: Paginated symptom logs }
+  /symptom-logs/{id}:
+    get:
+      summary: Get a single symptom log
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Symptom log }
+        "404": { description: No log with that id owned by this user }
+    patch:
+      summary: Update a symptom log
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Updated symptom log }
+        "404": { description: No log with that id owned by this user }
+    delete:
+      summary: Delete a symptom log
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "404": { description: No log with that id owned by this user }
+  /cycle-entries:
+    post:
+      summary: Create or replace the cycle entry for a date
+      description: Upsert keyed on (user, date) — calling again for the same date overwrites rather than duplicating.
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date]
+              properties:
+                date: { type: string, format: date }
+                flow: { $ref: "#/components/schemas/FlowIntensity" }
+                isPeriodStart: { type: boolean, default: false }
+                isPeriodEnd: { type: boolean, default: false }
+                notes: { type: string, maxLength: 2000 }
+      responses:
+        "200": { description: Entry created or replaced }
+    get:
+      summary: List the current user's cycle entries
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        "200": { description: Paginated cycle entries }
+  /cycle-entries/{id}:
+    get:
+      summary: Get a single cycle entry
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Cycle entry }
+        "404": { description: No entry with that id owned by this user }
+    patch:
+      summary: Update a cycle entry (all fields except date)
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Updated cycle entry }
+        "404": { description: No entry with that id owned by this user }
+    delete:
+      summary: Delete a cycle entry
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "404": { description: No entry with that id owned by this user }
 components:
   securitySchemes:
     cookieAuth:
@@ -205,6 +324,31 @@ components:
       in: cookie
       name: embr_at
   schemas:
+    SymptomCategory:
+      type: string
+      enum:
+        [
+          HOT_FLASH,
+          NIGHT_SWEATS,
+          MOOD_CHANGE,
+          SLEEP_DISTURBANCE,
+          BRAIN_FOG,
+          JOINT_PAIN,
+          FATIGUE,
+          ANXIETY,
+          IRREGULAR_HEARTBEAT,
+          VAGINAL_DRYNESS,
+          LIBIDO_CHANGE,
+          WEIGHT_CHANGE,
+          HEADACHE,
+          OTHER,
+        ]
+    SeverityLevel:
+      type: string
+      enum: [MILD, MODERATE, SEVERE]
+    FlowIntensity:
+      type: string
+      enum: [SPOTTING, LIGHT, MEDIUM, HEAVY]
     HealthCheckResponse:
       type: object
       properties:

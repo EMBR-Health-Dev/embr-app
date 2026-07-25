@@ -15,6 +15,8 @@ import { httpLoggerMiddleware } from "./middleware/http-logger.js";
 import { errorHandlerMiddleware, notFoundMiddleware } from "./middleware/error-handler.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { symptomRouter } from "./modules/symptoms/symptom.routes.js";
+import { cycleRouter } from "./modules/cycle/cycle.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -64,6 +66,8 @@ export function createApp(): Express {
   // ---- Routes ----
   app.use(healthRouter);
   app.use(authRouter);
+  app.use(symptomRouter);
+  app.use(cycleRouter);
 
   // ---- 404 + error handling (must be last) ----
   app.use(notFoundMiddleware());
