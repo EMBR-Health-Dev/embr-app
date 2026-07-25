@@ -25,6 +25,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api prisma generate
+      - run: find apps/api/src/generated apps/api/node_modules/.prisma apps/api/node_modules/@prisma/client -maxdepth 3 2>&1 || true
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
