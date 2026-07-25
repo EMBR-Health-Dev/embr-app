@@ -12,6 +12,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/coverage/**",
       "**/playwright-report/**",
+      "**/generated/**",
     ],
   },
   js.configs.recommended,

@@ -6,6 +6,14 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Generated to an explicit project-local path rather than the default
+  // node_modules/@prisma/client. In a pnpm workspace with
+  // moduleResolution: NodeNext, resolving the default location depends
+  // on how pnpm's isolated node_modules + @prisma/client's package.json
+  // "exports" map interact, which has proven unreliable in CI even when
+  // `prisma generate` itself succeeds. A relative import path removes
+  // that ambiguity entirely.
+  output = "../src/generated/prisma"
 }
 
 datasource db {
