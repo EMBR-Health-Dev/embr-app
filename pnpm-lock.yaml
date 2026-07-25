@@ -183,6 +183,9 @@ importers:
       "@embr/types":
         specifier: workspace:*
         version: link:../../packages/types
+      "@embr/validation":
+        specifier: workspace:*
+        version: link:../../packages/validation
       next:
         specifier: ^15.1.0
         version: 15.5.21(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
