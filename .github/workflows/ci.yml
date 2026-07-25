@@ -24,11 +24,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @embr/api prisma generate
-      - name: debug-generated
-        run: |
-          OUT=$(find apps/api/src/generated apps/api/node_modules/.prisma apps/api/node_modules/@prisma/client -maxdepth 4 2>&1 | tr '\n' '|')
-          echo "::error::GENERATED_DEBUG: $OUT"
+      - run: pnpm --filter @embr/api exec prisma generate
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
@@ -73,8 +69,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @embr/api prisma generate
-      - run: pnpm --filter @embr/api prisma migrate deploy
+      - run: pnpm --filter @embr/api exec prisma generate
+      - run: pnpm --filter @embr/api exec prisma migrate deploy
       - run: pnpm test
 
   build:
@@ -91,5 +87,5 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @embr/api prisma generate
+      - run: pnpm --filter @embr/api exec prisma generate
       - run: pnpm build
