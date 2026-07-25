@@ -1,4 +1,4 @@
-import type { Prisma } from "../generated/prisma/index.js";
+import type { Prisma } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { env } from "../../config/env.js";
 

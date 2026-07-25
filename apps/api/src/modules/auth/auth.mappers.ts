@@ -1,4 +1,4 @@
-import type { User } from "../generated/prisma/index.js";
+import type { User } from "../../generated/prisma/index.js";
 import type { UserDto } from "@embr/types";
 
 /** Never spread a Prisma User directly into a response — passwordHash

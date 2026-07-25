@@ -1,4 +1,5 @@
 import type { Request } from "express";
+import type { Prisma } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { logger } from "../../lib/logger.js";
 
@@ -31,7 +32,7 @@ export async function writeAuditLog(
       data: {
         userId,
         action,
-        metadata,
+        metadata: metadata as Prisma.InputJsonValue | undefined,
         ipAddress: req.ip,
         userAgent: req.header("user-agent") ?? null,
       },
