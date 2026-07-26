@@ -36,7 +36,10 @@ function cycleLengths(entries: CycleEntry[]): number[] {
     .sort((a, b) => a - b);
   const lengths: number[] = [];
   for (let i = 1; i < starts.length; i++) {
-    lengths.push(Math.round((starts[i] - starts[i - 1]) / (1000 * 60 * 60 * 24)));
+    const prev = starts[i - 1];
+    const curr = starts[i];
+    if (prev === undefined || curr === undefined) continue;
+    lengths.push(Math.round((curr - prev) / (1000 * 60 * 60 * 24)));
   }
   return lengths;
 }
