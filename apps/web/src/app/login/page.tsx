@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginSchema } from "@embr/validation";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { useAuth } from "../../lib/auth-context";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+
+function ReasonBanner() {
+  const reason = useSearchParams().get("reason");
+  if (reason !== "password-changed") return null;
+  return (
+    <p className="mb-6 rounded-sm bg-teal/10 px-3 py-2 text-sm text-teal">
+      Password changed. Log in with your new password.
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -56,7 +66,13 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <h1 className="font-display text-3xl text-navy">Welcome back</h1>
 
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" noValidate>
+        <Suspense fallback={null}>
+          <div className="mt-6">
+            <ReasonBanner />
+          </div>
+        </Suspense>
+
+        <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-4" noValidate>
           <Field
             label="Email"
             type="email"

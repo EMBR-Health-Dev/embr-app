@@ -144,6 +144,9 @@ export default function DashboardPage() {
           <Link href="/export" className="underline underline-offset-2 hover:text-navy">
             Export
           </Link>
+          <Link href="/settings" className="underline underline-offset-2 hover:text-navy">
+            Settings
+          </Link>
           <span>{user.email}</span>
           <button
             onClick={() => logout().then(() => router.replace("/login"))}

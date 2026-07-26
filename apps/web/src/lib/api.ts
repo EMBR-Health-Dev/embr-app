@@ -1,6 +1,7 @@
 import type {
   AuthSessionResponse,
   CycleEntryDto,
+  DeviceSessionDto,
   PaginatedResponse,
   SymptomLogDto,
   UserDto,
@@ -17,7 +18,17 @@ export const api = {
 
     logout: () => apiFetch<void>("/auth/logout", { method: "POST" }),
 
+    logoutAll: () => apiFetch<void>("/auth/logout-all", { method: "POST" }),
+
     me: () => apiFetch<UserDto>("/auth/me"),
+
+    changePassword: (input: { currentPassword: string; newPassword: string }) =>
+      apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
+
+    sessions: {
+      list: () => apiFetch<DeviceSessionDto[]>("/auth/sessions"),
+      revoke: (id: string) => apiFetch<void>(`/auth/sessions/${id}`, { method: "DELETE" }),
+    },
   },
 
   symptomLogs: {

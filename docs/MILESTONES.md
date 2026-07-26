@@ -158,3 +158,18 @@ Keeping admin visibility to account metadata and the audit trail — and nothing
 
 **Next milestone**
 To be scoped from here — candidates: a dedicated server-side aggregate endpoint for trends (see Milestone 5's known limitation), admin account-management actions if real ops need surfaces them, or whatever real usage of the platform so far turns out to actually be missing.
+
+## Milestone 8 — Account settings UI ✅ (this delivery)
+
+**What changed**
+
+- New `apps/web` `/settings` page: change password, and view/revoke device sessions, with a "log out everywhere" action — all backed by API endpoints that have existed since Milestone 2 but were never exposed anywhere in the consumer frontend
+- The change-password flow explicitly surfaces the fact that it signs the user out everywhere, including the current device (the API revokes every session on password change, by design, for security) — the redirect to `/login?reason=password-changed` is expected behavior with its own confirmation message, not treated as an error path
+- The device list marks the current session distinctly and only offers "Revoke" on the others — revoking your own current session from this screen would be a confusing dead end (you'd need `logoutAll`/`logout` for that, both of which already exist as separate explicit actions)
+- Fixed a real Next.js 15 requirement while building this: `useSearchParams()` (used to read the `?reason=` param on the login page) must be wrapped in a `Suspense` boundary or it can fail static generation — verified against Next's own error messaging and structured accordingly, though this sandbox's Google Fonts network block means the actual `next build` could only be confirmed in CI, not locally
+
+**Why it changed**
+This was the most concrete "close the loop" feature available: real, tested backend capability with zero frontend surface. Building a new domain feature would have been guessing at what's actually valuable next; exposing account security controls that already exist and are already covered by Milestone 2's test suite was not a guess.
+
+**Next milestone**
+To be scoped from here — same open candidates as before (trends aggregate endpoint, admin account-management actions), plus now: `apps/admin` still has no equivalent settings/session-management UI for admin accounts themselves, which is a symmetrical gap to the one this milestone just closed for the consumer app.
