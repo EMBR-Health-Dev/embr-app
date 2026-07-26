@@ -21,8 +21,13 @@ export const api = {
   },
 
   symptomLogs: {
-    list: (query?: { page?: number; pageSize?: number; category?: string }) =>
-      apiFetch<PaginatedResponse<SymptomLogDto>>("/symptom-logs", { query }),
+    list: (query?: {
+      page?: number;
+      pageSize?: number;
+      category?: string;
+      from?: string;
+      to?: string;
+    }) => apiFetch<PaginatedResponse<SymptomLogDto>>("/symptom-logs", { query }),
 
     create: (input: { category: string; severity: string; occurredAt: string; notes?: string }) =>
       apiFetch<SymptomLogDto>("/symptom-logs", { method: "POST", body: input }),
@@ -31,7 +36,7 @@ export const api = {
   },
 
   cycleEntries: {
-    list: (query?: { page?: number; pageSize?: number }) =>
+    list: (query?: { page?: number; pageSize?: number; from?: string; to?: string }) =>
       apiFetch<PaginatedResponse<CycleEntryDto>>("/cycle-entries", { query }),
 
     upsert: (input: {

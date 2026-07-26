@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -137,6 +138,9 @@ export default function DashboardPage() {
       <header className="flex items-center justify-between">
         <h1 className="font-display text-2xl text-navy">EMBR</h1>
         <div className="flex items-center gap-4 text-sm text-navy/60">
+          <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
+            Trends
+          </Link>
           <span>{user.email}</span>
           <button
             onClick={() => logout().then(() => router.replace("/login"))}
