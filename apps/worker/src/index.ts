@@ -10,7 +10,15 @@ const logger = createLogger({ serviceName: "worker" });
  * (ai-insight-generation, report-pdf-export, reminder-emails, ...) are
  * added in Milestones 3-4 following this exact pattern.
  */
-const connection = { url: env.REDIS_URL };
+// BullMQ requires maxRetriesPerRequest: null on any connection given to a
+// Worker — Workers use blocking Redis commands (BRPOPLPUSH and similar)
+// that must be allowed to keep retrying indefinitely rather than give up
+// after ioredis's default retry limit. Omitting this either throws at
+// startup or silently stalls job processing, depending on version — see
+// https://docs.bullmq.io/guide/connections. Nothing in CI actually starts
+// this process against a real Redis instance, so this was latent since
+// Milestone 1 with no test ever exercising it.
+const connection = { url: env.REDIS_URL, maxRetriesPerRequest: null };
 
 const worker = new Worker(
   "system-maintenance",
