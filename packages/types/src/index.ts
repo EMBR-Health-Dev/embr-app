@@ -108,3 +108,14 @@ export interface PaginatedResponse<T> {
   total: number;
   totalPages: number;
 }
+
+// ---- Admin (Milestone 7) ----
+
+export interface AuditLogDto {
+  id: string;
+  userId: string | null;
+  action: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}

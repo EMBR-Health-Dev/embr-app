@@ -1,10 +1,22 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../lib/auth-context";
+
 export default function AdminHomePage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+    router.replace(user ? "/dashboard" : "/login");
+  }, [loading, user, router]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-3xl font-semibold">EMBR Admin</h1>
-      <p className="text-teal">
-        Reserved for Milestone 6 — organizations, admin dashboard, permissions, feature flags.
-      </p>
+      <h1 className="font-display text-3xl text-bone">EMBR Admin</h1>
+      <p className="text-sm text-bone/50">Loading…</p>
     </main>
   );
 }

@@ -145,3 +145,17 @@ export const exportQuerySchema = z.object({
   to: z.coerce.date().optional(),
 });
 export type ExportQuery = z.infer<typeof exportQuerySchema>;
+
+// ---- Admin (Milestone 7) ----
+//
+// Deliberately limited to operational data: account and audit-trail
+// visibility, never symptom/cycle records. See docs/MILESTONES.md for
+// why that line is drawn where it is.
+export const adminUserQuerySchema = paginationQuerySchema;
+export type AdminUserQuery = z.infer<typeof adminUserQuerySchema>;
+
+export const adminAuditLogQuerySchema = paginationQuerySchema.extend({
+  action: z.string().optional(),
+  userId: z.string().uuid().optional(),
+});
+export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuerySchema>;

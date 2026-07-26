@@ -11,6 +11,10 @@ const config: Config = {
         brass: "#b8974f",
         teal: "#3a6b6a",
       },
+      fontFamily: {
+        display: ["var(--font-display)", "serif"],
+        body: ["var(--font-body)", "sans-serif"],
+      },
     },
   },
   plugins: [],

@@ -357,6 +357,31 @@ paths:
           description: "PDF file (Content-Disposition: attachment)"
           content:
             application/pdf: {}
+  /admin/users:
+    get:
+      summary: List user accounts (admin only)
+      description: Account metadata only — never symptom/cycle data. Requires the ADMIN role.
+      security: [{ cookieAuth: [] }]
+      tags: [Admin]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200": { description: Paginated user accounts }
+        "403": { description: Authenticated but not an admin }
+  /admin/audit-logs:
+    get:
+      summary: List the security audit trail (admin only)
+      security: [{ cookieAuth: [] }]
+      tags: [Admin]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: action, in: query, schema: { type: string } }
+        - { name: userId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Paginated audit log entries }
+        "403": { description: Authenticated but not an admin }
 components:
   securitySchemes:
     cookieAuth:
