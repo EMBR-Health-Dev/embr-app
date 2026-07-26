@@ -1,9 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
-import { createApp } from "../src/app.js";
-
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 

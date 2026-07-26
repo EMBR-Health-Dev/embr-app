@@ -317,6 +317,46 @@ paths:
       responses:
         "204": { description: Deleted }
         "404": { description: No entry with that id owned by this user }
+  /export/symptom-logs.csv:
+    get:
+      summary: Download symptom logs as CSV
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "CSV file (Content-Disposition: attachment)"
+          content:
+            text/csv: {}
+  /export/cycle-entries.csv:
+    get:
+      summary: Download cycle entries as CSV
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "CSV file (Content-Disposition: attachment)"
+          content:
+            text/csv: {}
+  /export/summary.pdf:
+    get:
+      summary: Download a clinician-facing PDF summary
+      description: Symptom frequency, cycle length, and the full symptom log for the range — deliberately non-diagnostic language throughout.
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "PDF file (Content-Disposition: attachment)"
+          content:
+            application/pdf: {}
 components:
   securitySchemes:
     cookieAuth:

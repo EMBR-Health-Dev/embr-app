@@ -17,6 +17,7 @@ import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { symptomRouter } from "./modules/symptoms/symptom.routes.js";
 import { cycleRouter } from "./modules/cycle/cycle.routes.js";
+import { exportRouter } from "./modules/export/export.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -68,6 +69,7 @@ export function createApp(): Express {
   app.use(authRouter);
   app.use(symptomRouter);
   app.use(cycleRouter);
+  app.use(exportRouter);
 
   // ---- 404 + error handling (must be last) ----
   app.use(notFoundMiddleware());

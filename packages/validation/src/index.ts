@@ -133,3 +133,15 @@ export const cycleEntryQuerySchema = paginationQuerySchema.extend({
   to: z.coerce.date().optional(),
 });
 export type CycleEntryQuery = z.infer<typeof cycleEntryQuerySchema>;
+
+// ---- Export (Milestone 6) ----
+//
+// Deliberately unpaginated — an export is "everything in this range,"
+// not a page of it. The route layer applies its own hard safety cap
+// (see exportRepository) rather than exposing that as a client-facing
+// parameter.
+export const exportQuerySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type ExportQuery = z.infer<typeof exportQuerySchema>;
