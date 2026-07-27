@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { CycleEntryDto, SymptomLogDto } from "@embr/types";
+import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 
@@ -24,37 +24,13 @@ function daysAgoIso(days: number): string {
   return d.toISOString();
 }
 
-function symptomFrequency(logs: SymptomLogDto[]): Array<{ category: string; count: number }> {
-  const counts = new Map<string, number>();
-  for (const log of logs) {
-    counts.set(log.category, (counts.get(log.category) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-function cycleLengths(entries: CycleEntryDto[]): Array<{ from: string; to: string; days: number }> {
-  const starts = entries
-    .filter((e) => e.isPeriodStart)
-    .map((e) => e.date)
-    .sort();
-  const lengths: Array<{ from: string; to: string; days: number }> = [];
-  for (let i = 1; i < starts.length; i++) {
-    const prev = new Date(starts[i - 1]);
-    const curr = new Date(starts[i]);
-    const days = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-    lengths.push({ from: starts[i - 1], to: starts[i], days });
-  }
-  return lengths;
-}
-
 export default function TrendsPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
-  const [logs, setLogs] = useState<SymptomLogDto[]>([]);
-  const [entries, setEntries] = useState<CycleEntryDto[]>([]);
+  const [frequency, setFrequency] = useState<SymptomFrequencyDto[]>([]);
+  const [lengths, setLengths] = useState<CycleLengthEntryDto[]>([]);
+  const [averageCycleLength, setAverageCycleLength] = useState<number | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
@@ -64,24 +40,23 @@ export default function TrendsPage() {
   useEffect(() => {
     if (!user) return;
     setDataLoading(true);
+    // Both trends are now computed server-side (Milestone 9) — Postgres
+    // does the GROUP BY / diffing over the full range, so this view is
+    // no longer subject to the pageSize:100 cap the old client-side
+    // aggregation had (see Milestone 5's known limitation).
     Promise.all([
-      api.symptomLogs.list({ pageSize: 100, from: daysAgoIso(WINDOW_DAYS) }),
-      api.cycleEntries.list({ pageSize: 100, from: daysAgoIso(CYCLE_WINDOW_DAYS) }),
+      api.trends.symptomFrequency({ from: daysAgoIso(WINDOW_DAYS) }),
+      api.trends.cycleLength({ from: daysAgoIso(CYCLE_WINDOW_DAYS) }),
     ])
-      .then(([logsPage, entriesPage]) => {
-        setLogs(logsPage.items);
-        setEntries(entriesPage.items);
+      .then(([symptomFrequency, cycleLength]) => {
+        setFrequency(symptomFrequency);
+        setLengths(cycleLength.lengths);
+        setAverageCycleLength(cycleLength.averageDays);
       })
       .finally(() => setDataLoading(false));
   }, [user]);
 
-  const frequency = useMemo(() => symptomFrequency(logs), [logs]);
-  const lengths = useMemo(() => cycleLengths(entries), [entries]);
   const maxCount = frequency[0]?.count ?? 1;
-  const averageCycleLength =
-    lengths.length > 0
-      ? Math.round(lengths.reduce((sum, l) => sum + l.days, 0) / lengths.length)
-      : null;
 
   if (loading || !user) {
     return (

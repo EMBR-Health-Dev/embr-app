@@ -159,3 +159,17 @@ export const adminAuditLogQuerySchema = paginationQuerySchema.extend({
   userId: z.string().uuid().optional(),
 });
 export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuerySchema>;
+
+// ---- Trends (Milestone 9) ----
+//
+// Same shape as exportQuerySchema (unpaginated, from/to only) and for
+// the same reason: a trend is computed over "everything in this range,"
+// not a page of it. Symptom frequency is a true DB-side aggregate
+// (COUNT ... GROUP BY) so it isn't subject to any row cap; cycle length
+// applies its own safety ceiling in trendsRepository, the same pattern
+// exportRepository established in Milestone 6.
+export const trendsQuerySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type TrendsQuery = z.infer<typeof trendsQuerySchema>;

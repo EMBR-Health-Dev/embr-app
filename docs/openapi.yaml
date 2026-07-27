@@ -357,6 +357,53 @@ paths:
           description: "PDF file (Content-Disposition: attachment)"
           content:
             application/pdf: {}
+  /trends/symptom-frequency:
+    get:
+      summary: Symptom frequency by category (DB-side aggregate)
+      description: COUNT ... GROUP BY category, computed entirely in Postgres — not subject to the pageSize:100 cap the list endpoints have.
+      security: [{ cookieAuth: [] }]
+      tags: [Trends]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Symptom counts by category, sorted descending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category: { $ref: "#/components/schemas/SymptomCategory" }
+                    count: { type: integer }
+  /trends/cycle-length:
+    get:
+      summary: Cycle length between period starts
+      description: Sequential diff between consecutive period-start dates in the range, plus the average. Cycle irregularity is expected during perimenopause; this is not a diagnostic signal.
+      security: [{ cookieAuth: [] }]
+      tags: [Trends]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Cycle-length entries and the average over the range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  averageDays: { type: integer, nullable: true }
+                  lengths:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from: { type: string, format: date }
+                        to: { type: string, format: date }
+                        days: { type: integer }
   /admin/users:
     get:
       summary: List user accounts (admin only)
