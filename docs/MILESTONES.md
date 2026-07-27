@@ -173,3 +173,28 @@ This was the most concrete "close the loop" feature available: real, tested back
 
 **Next milestone**
 To be scoped from here — same open candidates as before (trends aggregate endpoint, admin account-management actions), plus now: `apps/admin` still has no equivalent settings/session-management UI for admin accounts themselves, which is a symmetrical gap to the one this milestone just closed for the consumer app.
+
+## Milestone 9 — Server-side trends aggregate ✅ (this delivery)
+
+**What changed**
+
+- `GET /trends/symptom-frequency` — counts symptom logs by category over an optional `from`/`to` range, computed with Prisma's `groupBy` (`COUNT ... GROUP BY category` in Postgres), sorted descending by count
+- `GET /trends/cycle-length` — diffs consecutive period-start dates in range and returns both the per-pair lengths and the average, mirroring the exact computation `apps/web`'s trends page used to do client-side
+- Both routes live in a new `apps/api/src/modules/trends` module (repository/service/routes, same shape as every other domain module), both `requireAuth()`-gated, both added to `docs/openapi.yaml`
+- `apps/web`'s `/trends` page now calls these two endpoints instead of fetching `pageSize: 100` pages of raw logs/entries and aggregating them client-side — same UI, same copy, same non-diagnostic framing, different data path
+- `trendsRepository.periodStartDates` applies the same generously-sized safety cap `exportRepository` established in Milestone 6 (this one's local to the module rather than shared, since it's the only other place that needs an unpaginated-but-bounded fetch); symptom frequency needs no equivalent cap since `groupBy` returns one row per category, not one row per log
+- 6 new backend tests (46 total): auth gating on both routes, an aggregate-correctness test that logs 120 symptom entries specifically to prove counting isn't silently capped at 100, `from`/`to` range filtering, and cycle-length diffing/averaging including a check that non-period-start entries are correctly excluded from the diff
+
+**Why it changed**
+
+This is the fix for the limitation Milestone 5 flagged when trends first shipped: the client-side approach fetched at most `pageSize: 100` rows per window, so a 90-day symptom window with more than 100 logged entries would silently undercount rather than error. Moving the counting into Postgres removes that ceiling entirely for symptom frequency — `groupBy` aggregates over every matching row before anything crosses the wire, so no page size is involved.
+Cycle length isn't a pure DB-side aggregate the way frequency is (it's a sequential diff between dates, not a count), so it keeps a bounded fetch — but the bound here is a generous safety ceiling shared with the export pattern, not the tight 100-row list-endpoint default that caused the original problem.
+
+**Remaining work (explicitly out of scope for M9)**
+
+- No caching — every call recomputes from Postgres. Fine at current scale; worth revisiting only if trends become a high-traffic read path
+- `apps/admin` has no visibility into aggregate trend data, by the same deliberate scope boundary Milestone 7 drew (admin sees account/audit metadata, never symptom or cycle content)
+- The two endpoints still take separate `from`/`to` windows per call (matching `apps/web`'s existing 90-day symptom / 180-day cycle window split) rather than a single combined `/trends` response — kept as two resources since the windows genuinely differ and combining them would mean the caller always fetches both even when only one is needed
+
+**Next milestone**
+To be scoped from here — same open candidates as before (admin account-management actions, `apps/admin` settings/session UI), plus whatever real usage of the trends view surfaces as actually missing now that the undercounting limitation is closed.

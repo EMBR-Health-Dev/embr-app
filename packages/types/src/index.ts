@@ -109,6 +109,24 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+// ---- Trends (Milestone 9) ----
+
+export interface SymptomFrequencyDto {
+  category: SymptomCategory;
+  count: number;
+}
+
+export interface CycleLengthEntryDto {
+  from: string;
+  to: string;
+  days: number;
+}
+
+export interface CycleLengthTrendDto {
+  averageDays: number | null;
+  lengths: CycleLengthEntryDto[];
+}
+
 // ---- Admin (Milestone 7) ----
 
 export interface AuditLogDto {
