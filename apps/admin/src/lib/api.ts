@@ -1,4 +1,10 @@
-import type { AuditLogDto, AuthSessionResponse, PaginatedResponse, UserDto } from "@embr/types";
+import type {
+  AuditLogDto,
+  AuthSessionResponse,
+  DeviceSessionDto,
+  PaginatedResponse,
+  UserDto,
+} from "@embr/types";
 import { apiFetch } from "./api-client";
 
 export const api = {
@@ -8,7 +14,17 @@ export const api = {
 
     logout: () => apiFetch<void>("/auth/logout", { method: "POST" }),
 
+    logoutAll: () => apiFetch<void>("/auth/logout-all", { method: "POST" }),
+
     me: () => apiFetch<UserDto>("/auth/me"),
+
+    changePassword: (input: { currentPassword: string; newPassword: string }) =>
+      apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
+
+    sessions: {
+      list: () => apiFetch<DeviceSessionDto[]>("/auth/sessions"),
+      revoke: (id: string) => apiFetch<void>(`/auth/sessions/${id}`, { method: "DELETE" }),
+    },
   },
 
   admin: {

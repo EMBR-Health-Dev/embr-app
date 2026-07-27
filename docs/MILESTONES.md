@@ -198,3 +198,16 @@ Cycle length isn't a pure DB-side aggregate the way frequency is (it's a sequent
 
 **Next milestone**
 To be scoped from here — same open candidates as before (admin account-management actions, `apps/admin` settings/session UI), plus whatever real usage of the trends view surfaces as actually missing now that the undercounting limitation is closed.
+
+## Milestone 10 — apps/admin settings UI ✅ (this delivery)
+
+**What changed**
+
+- New `apps/admin` `/settings` page: change password and device session management, identical in capability to Milestone 8's `apps/web` version, adapted to the admin app's inverted dark theme — closes the symmetrical gap Milestone 9 flagged
+- Same design decisions as Milestone 8 for the same reasons: change-password explicitly surfaces that it signs out every session including the current one, and the device list only offers "Revoke" on non-current sessions
+
+**A process note, not a product change**
+While verifying this locally, `apps/api`'s test suite briefly failed 4 tests with 500 errors immediately after pulling in Milestone 9's merge — not a bug in that work (its own CI run had already passed cleanly), but a stale local `packages/validation` build artifact: `pnpm --filter @embr/validation build` hadn't been re-run in this working copy after `trendsQuerySchema` was added, so the compiled `dist/` output being imported at runtime didn't export it yet. Confirmed via CI logs that the actual merged commit was green; fixed locally by rebuilding the package. Worth remembering: a green CI run doesn't guarantee every local working copy is in sync — always rebuild workspace package `dist/` output after pulling in changes that touch `packages/*`, same as any other dependency update.
+
+**Next milestone**
+To be scoped from here — same open candidates as before (admin account-management actions, `apps/admin` trend visibility if that scope boundary ever gets revisited), or whatever real usage surfaces as actually missing.

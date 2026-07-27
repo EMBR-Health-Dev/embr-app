@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { AuditLogDto, UserDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -70,6 +71,9 @@ export default function AdminDashboardPage() {
       <header className="flex items-center justify-between">
         <h1 className="font-display text-2xl text-bone">EMBR Admin</h1>
         <div className="flex items-center gap-4 text-sm text-bone/60">
+          <Link href="/settings" className="underline underline-offset-2 hover:text-bone">
+            Settings
+          </Link>
           <span>{user.email}</span>
           <button
             onClick={() => logout().then(() => router.replace("/login"))}
