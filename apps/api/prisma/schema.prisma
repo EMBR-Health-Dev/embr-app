@@ -44,6 +44,8 @@ model User {
   auditLogs               AuditLog[]
   symptomLogs             SymptomLog[]
   cycleEntries            CycleEntry[]
+  organizationMemberships OrganizationMembership[]
+  sentOrganizationInvites OrganizationInvite[]
 
   @@map("users")
 }
@@ -193,4 +195,89 @@ model CycleEntry {
   @@unique([userId, date])
   @@index([userId, date])
   @@map("cycle_entries")
+}
+
+// ---- Organizations (Milestone 12) ----
+//
+// The B2B/enterprise counterpart to the individual `User` accounts every
+// prior milestone was built around. Deliberately additive: a `User` with
+// no OrganizationMembership behaves exactly as it always has (this is
+// still an optional relation, not a required tenant column). Existing
+// personal-data boundaries are unchanged — see OrganizationMembership's
+// doc comment for the specific line this draws.
+
+enum OrgRole {
+  ORG_ADMIN
+  ORG_MEMBER
+}
+
+/// A B2B customer account (an employer, insurer, or clinic purchasing
+/// covered access for its members). Provisioned by EMBR ops today, not
+/// self-serve — see organization.routes.ts for why that's a platform-ADMIN
+/// action rather than an open signup flow, matching the sales-assisted
+/// pilot-to-enterprise progression the business already runs on.
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  /// Null = no seat limit enforced yet (pilot-stage default). Set once a
+  /// real contract has a seat count to enforce.
+  seatLimit Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrganizationMembership[]
+  invites     OrganizationInvite[]
+
+  @@map("organizations")
+}
+
+/// Links a User to an Organization. Deliberately does NOT grant the org
+/// or its ORG_ADMINs any access to that member's SymptomLog/CycleEntry
+/// rows — those stay exactly as private as Milestone 3 and Milestone 7
+/// already established for the platform-ADMIN case. What ORG_ADMIN
+/// actually gets: the member roster (this table) and anonymized,
+/// cohort-level trend aggregates (see organization.trends in the
+/// service layer) — never an individual member's records.
+///
+/// One membership per (organization, user) — schema allows a user to
+/// belong to multiple organizations over time (e.g. a job change), but
+/// the invite/accept flow in this milestone only ever creates one at a
+/// time; nothing here assumes single-org exclusivity going forward.
+model OrganizationMembership {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           OrgRole      @default(ORG_MEMBER)
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_memberships")
+}
+
+/// Single-use, emailed invitation to join an organization — same
+/// hashed-token, single-consumption pattern as EmailVerificationToken /
+/// PasswordResetToken (see auth.repository.ts). Issuing a new invite for
+/// the same (org, email) pair invalidates prior unconsumed ones for that
+/// pair, mirroring how a fresh password-reset request supersedes older
+/// links.
+model OrganizationInvite {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           OrgRole      @default(ORG_MEMBER)
+  tokenHash      String       @unique
+  invitedByUserId String
+  invitedBy      User         @relation(fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("organization_invites")
 }

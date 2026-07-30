@@ -173,3 +173,48 @@ export const trendsQuerySchema = z.object({
   to: z.coerce.date().optional(),
 });
 export type TrendsQuery = z.infer<typeof trendsQuerySchema>;
+
+// ---- Organizations (Milestone 12) ----
+//
+// Org provisioning is a platform-ADMIN action, not self-serve (see
+// organization.routes.ts) — the slug is chosen at creation time by
+// whoever's provisioning the account, not derived automatically, so ops
+// can match it to whatever the customer already calls themselves.
+export const orgRoleSchema = z.enum(["ORG_ADMIN", "ORG_MEMBER"]);
+
+const slugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(2)
+  .max(63)
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Slug must be lowercase alphanumeric with single hyphens");
+
+export const createOrganizationSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  slug: slugSchema,
+  seatLimit: z.number().int().positive().optional(),
+});
+export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
+
+export const inviteMemberSchema = z.object({
+  email: emailSchema,
+  role: orgRoleSchema.default("ORG_MEMBER"),
+});
+export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+
+export const acceptInviteSchema = z.object({
+  token: z.string().min(1),
+});
+export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+
+export const organizationMemberQuerySchema = paginationQuerySchema;
+export type OrganizationMemberQuery = z.infer<typeof organizationMemberQuerySchema>;
+
+// Same unpaginated from/to shape as trendsQuerySchema, for the same
+// reason: an org trend is computed over "everything in range," not a
+// page of it — the k-anonymity floor (see organization.service.ts)
+// suppresses the output entirely for a too-small cohort, so there's no
+// per-row cap to design around the way exportRepository needed one.
+export const orgTrendsQuerySchema = trendsQuerySchema;
+export type OrgTrendsQuery = z.infer<typeof orgTrendsQuerySchema>;

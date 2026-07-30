@@ -43,6 +43,20 @@ const apiEnvSchema = z.object({
   // is unset, so local dev and CI never need a real DSN configured.
   SENTRY_DSN: z.string().url().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
+
+  // ---- Organizations (Milestone 12) ----
+  ORG_INVITE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(7 * 24 * 60 * 60),
+  // The k-anonymity floor for org-level aggregate trends: below this many
+  // members with any logged data in range, organization.trends returns a
+  // suppressed (empty) result rather than a small, individually-identifying
+  // count. 5 is a conservative starting default, not a researched constant —
+  // revisit once a real small-org pilot customer surfaces whether it's too
+  // strict or too loose in practice.
+  ORG_TRENDS_MIN_COHORT_SIZE: z.coerce.number().int().positive().default(5),
 });
 
 export const env = loadEnv(apiEnvSchema);

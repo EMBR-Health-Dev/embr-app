@@ -137,3 +137,47 @@ export interface AuditLogDto {
   userAgent: string | null;
   createdAt: string;
 }
+
+// ---- Organizations (Milestone 12) ----
+
+export type OrgRole = "ORG_ADMIN" | "ORG_MEMBER";
+
+export interface OrganizationDto {
+  id: string;
+  name: string;
+  slug: string;
+  seatLimit: number | null;
+  memberCount: number;
+  createdAt: string;
+}
+
+/** Roster entry — deliberately just account + org-role metadata, never
+ * anything from that member's SymptomLog/CycleEntry records. */
+export interface OrganizationMemberDto {
+  id: string;
+  userId: string;
+  email: string;
+  role: OrgRole;
+  joinedAt: string;
+}
+
+export interface OrganizationInviteDto {
+  id: string;
+  email: string;
+  role: OrgRole;
+  expiresAt: string;
+}
+
+/**
+ * Cohort-level, anonymized only. `suppressed: true` means the
+ * organization's active membership fell below the minimum cohort size
+ * (see ORG_TRENDS_MIN_COHORT_SIZE) — in that case `categories` is always
+ * empty, on purpose: a small enough org makes even a category-level
+ * count individually identifying, so nothing is returned rather than a
+ * technically-true-but-unsafe number.
+ */
+export interface OrgSymptomFrequencyDto {
+  suppressed: boolean;
+  cohortSize: number;
+  categories: Array<{ category: SymptomCategory; count: number }>;
+}
