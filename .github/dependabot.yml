@@ -1,0 +1,42 @@
+version: 2
+updates:
+  # Single root entry: pnpm workspaces resolve from the lockfile at the
+  # repo root, so Dependabot only needs one npm ecosystem entry here —
+  # not one per app/package — to see every workspace's dependencies.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      # Patch/minor bumps across the workspace are low-risk and noisy
+      # one-PR-per-package; group them so review is one PR per week
+      # instead of a dozen. Major bumps stay ungrouped — those need
+      # individual review since they can carry breaking changes.
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "docker"
+    directories:
+      - "/apps/api"
+      - "/apps/worker"
+      - "/apps/web"
+      - "/apps/admin"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "ci"
