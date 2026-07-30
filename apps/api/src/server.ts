@@ -3,6 +3,12 @@ import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
 import { prisma } from "./lib/prisma.js";
 import { redis } from "./lib/redis.js";
+import { initSentry, captureException } from "./lib/sentry.js";
+
+// Must run before createApp() so errors during route registration are
+// still captured, and before the process-level handlers below so they
+// have Sentry available immediately.
+initSentry();
 
 const app = createApp();
 
@@ -36,8 +42,10 @@ process.on("SIGINT", () => void shutdown("SIGINT"));
 
 process.on("unhandledRejection", (reason) => {
   logger.error({ err: reason }, "unhandled promise rejection");
+  captureException(reason);
 });
 process.on("uncaughtException", (err) => {
   logger.fatal({ err }, "uncaught exception — exiting");
+  captureException(err);
   process.exit(1);
 });

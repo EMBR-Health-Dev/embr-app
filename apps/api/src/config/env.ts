@@ -37,6 +37,12 @@ const apiEnvSchema = z.object({
     .default(60 * 60),
   COOKIE_DOMAIN: z.string().optional(),
   COOKIE_SECURE: z.coerce.boolean().default(false),
+
+  // ---- Observability (Milestone 11) ----
+  // Optional by design: Sentry stays fully disabled (no-op init) when this
+  // is unset, so local dev and CI never need a real DSN configured.
+  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
 });
 
 export const env = loadEnv(apiEnvSchema);

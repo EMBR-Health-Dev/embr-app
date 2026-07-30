@@ -211,3 +211,36 @@ While verifying this locally, `apps/api`'s test suite briefly failed 4 tests wit
 
 **Next milestone**
 To be scoped from here — same open candidates as before (admin account-management actions, `apps/admin` trend visibility if that scope boundary ever gets revisited), or whatever real usage surfaces as actually missing.
+
+## Milestone 11 — Production hardening ✅ (this delivery)
+
+**What changed**
+
+- **Error monitoring**: `apps/api` and `apps/worker` both gained an `initSentry()` call (in `src/lib/sentry.ts` and `src/sentry.ts` respectively) that's a deliberate no-op unless `SENTRY_DSN` is set — dev and CI need nothing extra. 5xx errors are captured from the central `errorHandlerMiddleware` (4xx aren't — those are expected validation/client errors, not incidents), worker job failures are captured from the existing `failed` listener, and both processes now also report `unhandledRejection`/`uncaughtException` to Sentry before exiting. `beforeSend` on the API side strips `request.cookies`/`request.data` before anything leaves the process, given this handles health data.
+- **CI security scanning**: new `security` job in `.github/workflows/ci.yml` — `pnpm audit --audit-level high` (deliberately not `moderate`/`low`, which are noisy enough in the JS ecosystem to make a required check meaningless) plus gitleaks secret scanning on every PR.
+- **Coverage enforcement**: `apps/api`'s `test` script now runs `vitest run --coverage` by default (added the missing `@vitest/coverage-v8` dependency — the coverage config existed in `vitest.config.ts` since Milestone 1 but nothing had ever actually invoked it with `--coverage`), with thresholds set conservatively (60/55/60/60) since this shipped without a live Postgres/Redis available to read back the real current number. The report uploads as a CI artifact either way.
+- **Dependabot**: weekly automated dependency-update PRs for npm (grouped by minor/patch to avoid one-PR-per-package noise), Docker base images across all four `apps/*/Dockerfile`s, and GitHub Actions versions.
+- **Database backups**: `scripts/db-backup.sh` (`pg_dump -Fc` → AES256 gpg encryption → optional S3 upload → retention pruning) and `scripts/db-restore-test.sh` (decrypt → restore into a scratch database → sanity-check row counts), wired into a new scheduled `.github/workflows/backup.yml` — daily backup, weekly restore verification against a disposable Postgres service container. See `docs/BACKUPS.md`.
+- **Branch protection**: `scripts/setup-branch-protection.mjs` — a one-time script (not a CI job, since it needs a repo-admin PAT) that configures `main` via the GitHub REST API: all four CI jobs required, 1 approving review, stale reviews dismissed on new commits, force-push and branch-deletion blocked, conversation resolution required.
+- **Docs**: `docs/DEPLOYMENT.md` (recommended platforms, secrets-management hierarchy, error-monitoring/health-check setup, rollback strategy), `docs/BACKUPS.md`, `docs/INCIDENT_RESPONSE.md` (severity levels, first-5-minutes checklist, data-integrity/security-specific guidance, postmortem expectations).
+
+**Why it changed**
+
+Milestones 1-10 built real, tested feature capability — the gap this closes is everything between "the tests pass" and "this is safe to run against real patient health data in production." None of this milestone's changes touch product behavior; every prior milestone's tests still cover the same surface they did before.
+
+**A note on what this milestone deliberately did _not_ do**
+
+- Did not actually deploy anything to Railway/Fly/Vercel — no live infrastructure exists yet to point at, and claiming otherwise in this doc would be inaccurate. `docs/DEPLOYMENT.md` is the recommended path for whoever does that next, not a record of it having happened.
+- Did not run `scripts/setup-branch-protection.mjs` — it needs a personal access token with admin rights on the actual GitHub repo, which this sandbox doesn't have. Same reasoning for not measuring real coverage numbers: no live Postgres/Redis was available here to run the suite against.
+- Did not add Sentry to `apps/web`/`apps/admin` (Next.js) in this pass — `@sentry/nextjs` needs `next.config.js` changes and a build-time source-map upload step that's more invasive than the api/worker addition, and the two Node services (which handle all the actual health-data logic and background jobs) were the higher-value target for a first pass.
+
+**Remaining work (explicitly out of scope for M11)**
+
+- No committed Prisma migration history yet (`apps/api/prisma/` has only `schema.prisma`) — CI's `prisma migrate deploy` step is currently a no-op against an empty migrations directory. This needs `pnpm db:migrate` run once locally to generate and commit the first migration before any real production deploy, independent of anything else in this milestone.
+- Sentry for `apps/web`/`apps/admin` (see note above).
+- No log aggregation platform (Datadog/CloudWatch/etc.) wired up yet — `packages/shared`'s logger already tags every line with `service` in anticipation of this (see its own doc comment), so adding an aggregator later is a sink configuration change, not a logging-format change.
+- No load/performance testing.
+- Health-check _monitoring_ (an external uptime service actually polling `/health/ready`) is documented in `docs/DEPLOYMENT.md` as a setup step, not configured against anything, since there's no live URL yet to monitor.
+
+**Next milestone**
+To be scoped from here — candidates: whichever of Milestone 12-15's roadmap items (Clinical Intelligence, Provider Portal, Enterprise, Production Launch) actually becomes real priority next, or closing the Prisma-migrations gap flagged above if a real deploy is imminent.

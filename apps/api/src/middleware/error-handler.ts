@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { AppError, ErrorCode } from "@embr/shared";
 import { logger } from "../lib/logger.js";
+import { captureException } from "../lib/sentry.js";
 
 /**
  * Single place where every thrown error becomes an HTTP response.
@@ -24,6 +25,8 @@ export function errorHandlerMiddleware() {
 
     if (appError.statusCode >= 500) {
       logger.error({ ...logPayload, err }, appError.message);
+      // Only 5xx: 4xx are expected client/validation errors, not incidents.
+      captureException(err, logPayload);
     } else {
       logger.warn(logPayload, appError.message);
     }

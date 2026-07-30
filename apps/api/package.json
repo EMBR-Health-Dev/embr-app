@@ -10,7 +10,7 @@
     "start": "node dist/server.js",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "clean": "rm -rf dist",
     "prisma:generate": "prisma generate",
@@ -23,6 +23,7 @@
     "@embr/types": "workspace:*",
     "@embr/validation": "workspace:*",
     "@prisma/client": "^6.1.0",
+    "@sentry/node": "^8.47.0",
     "express": "^4.21.0",
     "cors": "^2.8.5",
     "helmet": "^8.0.0",
@@ -51,6 +52,7 @@
     "prisma": "^6.1.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }

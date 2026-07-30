@@ -1,0 +1,98 @@
+name: Database Backup
+
+# Runs daily at 03:00 UTC — chosen to land outside typical daytime usage
+# for a Singapore/Tokyo-based user base without needing per-region tuning.
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily backup, 03:00 UTC
+    - cron: "0 4 * * 1" # weekly restore verification, Mondays 04:00 UTC
+  workflow_dispatch: {} # manual trigger, e.g. right before a risky migration
+
+jobs:
+  backup:
+    name: Backup production database
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 3 * * *'
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install gpg and postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y gnupg postgresql-client
+
+      - name: Run backup
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION }}
+        run: ./scripts/db-backup.sh
+
+      - name: Upload encrypted backup as a workflow artifact
+        # Belt-and-suspenders alongside the S3 upload inside db-backup.sh —
+        # gives the restore-verify job below something to fetch without
+        # needing AWS credentials of its own, and gives a 7-day local
+        # fallback even if the S3 upload step ever silently misconfigures.
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-backup
+          path: backups/embr-*.dump.gpg
+          retention-days: 7
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Database backup failed — check Sentry/logs and confirm the last successful backup timestamp before treating this as low-priority."
+
+  verify-restore:
+    name: Verify a fresh backup restores cleanly
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 4 * * 1'
+    services:
+      scratch-postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: embr
+          POSTGRES_PASSWORD: restore_test_password
+          POSTGRES_DB: embr_restore_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install gpg and postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y gnupg postgresql-client
+
+      # Takes its own fresh backup rather than reusing the daily job's
+      # artifact — the daily and weekly triggers fire as separate workflow
+      # runs, so there's no same-run artifact to hand off between them.
+      # This also means what gets verified is always current, not
+      # whatever happened to be lying around from up to a week ago.
+      - name: Take a fresh backup
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: ./scripts/db-backup.sh
+
+      # Runs against a disposable scratch DB spun up just for this job —
+      # never against production. This is the piece that turns "we take
+      # backups" into "we know our backups work": untested backups have
+      # a way of turning out to be corrupt, wrongly scoped, or silently
+      # empty exactly when you need them.
+      - name: Restore into scratch database and sanity-check
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          RESTORE_TEST_DB_URL: postgresql://embr:restore_test_password@localhost:5432/embr_restore_test?schema=public
+        run: |
+          LATEST=$(ls -t backups/embr-*.dump.gpg | head -1)
+          ./scripts/db-restore-test.sh "$LATEST"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Backup restore verification failed — the most recent backup may not actually be usable. Investigate before relying on it in an incident."

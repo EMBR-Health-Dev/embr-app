@@ -1,8 +1,11 @@
 import { Worker, type Job } from "bullmq";
 import { createLogger } from "@embr/shared";
 import { env } from "./env.js";
+import { initSentry, captureException } from "./sentry.js";
 
 const logger = createLogger({ serviceName: "worker" });
+
+initSentry(logger);
 
 /**
  * Placeholder queue so the BullMQ + Redis wiring, graceful shutdown, and
@@ -30,7 +33,10 @@ const worker = new Worker(
 );
 
 worker.on("completed", (job) => logger.info({ jobId: job.id }, "job completed"));
-worker.on("failed", (job, err) => logger.error({ jobId: job?.id, err }, "job failed"));
+worker.on("failed", (job, err) => {
+  logger.error({ jobId: job?.id, err }, "job failed");
+  captureException(err, { jobId: job?.id, jobName: job?.name });
+});
 
 logger.info("worker started, listening on queue: system-maintenance");
 
@@ -42,3 +48,13 @@ async function shutdown(signal: string) {
 
 process.on("SIGTERM", () => void shutdown("SIGTERM"));
 process.on("SIGINT", () => void shutdown("SIGINT"));
+
+process.on("unhandledRejection", (reason) => {
+  logger.error({ err: reason }, "unhandled promise rejection");
+  captureException(reason);
+});
+process.on("uncaughtException", (err) => {
+  logger.fatal({ err }, "uncaught exception — exiting");
+  captureException(err);
+  process.exit(1);
+});

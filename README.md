@@ -32,14 +32,17 @@ pnpm dev                  # runs all apps in parallel via Turborepo
 
 ## Commands
 
-| Command                          | Description                                 |
-| -------------------------------- | ------------------------------------------- |
-| `pnpm dev`                       | Run all apps in dev mode                    |
-| `pnpm build`                     | Build all apps/packages via Turborepo       |
-| `pnpm lint` / `pnpm typecheck`   | Static checks across the monorepo           |
-| `pnpm test`                      | Unit/integration tests (Vitest + Supertest) |
-| `pnpm test:e2e`                  | Playwright end-to-end tests                 |
-| `pnpm docker:up` / `docker:down` | Local infra (Postgres, Redis, MailHog)      |
-| `pnpm db:migrate` / `db:studio`  | Prisma migrations / GUI                     |
+| Command                                    | Description                                        |
+| ------------------------------------------ | -------------------------------------------------- |
+| `pnpm dev`                                 | Run all apps in dev mode                           |
+| `pnpm build`                               | Build all apps/packages via Turborepo              |
+| `pnpm lint` / `pnpm typecheck`             | Static checks across the monorepo                  |
+| `pnpm test`                                | Unit/integration tests (Vitest + Supertest)        |
+| `pnpm test:e2e`                            | Playwright end-to-end tests                        |
+| `pnpm docker:up` / `docker:down`           | Local infra (Postgres, Redis, MailHog)             |
+| `pnpm db:migrate` / `db:studio`            | Prisma migrations / GUI                            |
+| `./scripts/db-backup.sh`                   | Encrypted database backup (see `docs/BACKUPS.md`)  |
+| `./scripts/db-restore-test.sh`             | Restore a backup into a scratch DB and verify it   |
+| `node scripts/setup-branch-protection.mjs` | One-time GitHub branch protection setup for `main` |
 
-See `docs/ARCHITECTURE.md` for design decisions and `docs/MILESTONES.md` for engineering roadmap and progress.
+See `docs/ARCHITECTURE.md` for design decisions, `docs/MILESTONES.md` for engineering roadmap and progress, `docs/DEPLOYMENT.md` for the production deployment path, `docs/BACKUPS.md` for the backup/restore workflow, and `docs/INCIDENT_RESPONSE.md` for the on-call runbook.
