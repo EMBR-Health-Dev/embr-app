@@ -2,6 +2,7 @@ import rateLimit from "express-rate-limit";
 import { AppError, ErrorCode } from "@embr/shared";
 import type { NextFunction, Request, Response } from "express";
 import { env } from "../../config/env.js";
+import { redisRateLimitStore } from "../../lib/rate-limit-store.js";
 
 /**
  * The global limiter in app.ts is a backstop for the whole API; brute-
@@ -24,13 +25,15 @@ function keyByEmailAndIp(req: Request): string {
   return `${req.ip}:${email}`;
 }
 
-// These limiters are process-wide singletons (one in-memory store per
-// limiter, shared by every request the process ever handles) — correct
-// for a real server, but it means integration tests that exercise many
-// register/login calls in one process would otherwise trip each
-// other's counters. Rate limiting itself is out of scope for those
-// tests (it's exercised by not being exercised: production wiring is
-// identical), so it's skipped in NODE_ENV=test.
+// These limiters are process-wide singletons sharing one Redis-backed
+// store per limiter (see lib/rate-limit-store.ts) — correct for a real,
+// possibly multi-instance deployment, but it means integration tests
+// that exercise many register/login calls in one process would
+// otherwise trip each other's counters (and, in this sandbox/CI test
+// job, the Redis mock only stubs `ping`, not what the store needs).
+// Rate limiting itself is out of scope for those tests (it's exercised
+// by not being exercised: production wiring is identical), so it's
+// skipped in NODE_ENV=test.
 const skipInTest = () => env.NODE_ENV === "test";
 
 export const loginLimiter = rateLimit({
@@ -40,6 +43,7 @@ export const loginLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: keyByEmailAndIp,
   handler: authRateLimitHandler,
+  store: redisRateLimitStore("rl:login:"),
   skip: skipInTest,
 });
 
@@ -49,6 +53,7 @@ export const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: authRateLimitHandler,
+  store: redisRateLimitStore("rl:register:"),
   skip: skipInTest,
 });
 
@@ -59,6 +64,7 @@ export const passwordResetLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: keyByEmailAndIp,
   handler: authRateLimitHandler,
+  store: redisRateLimitStore("rl:password-reset:"),
   skip: skipInTest,
 });
 
@@ -68,5 +74,6 @@ export const refreshLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: authRateLimitHandler,
+  store: redisRateLimitStore("rl:refresh:"),
   skip: skipInTest,
 });
