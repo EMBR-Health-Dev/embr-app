@@ -12,6 +12,7 @@ import {
 } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
+import { requireParam } from "../../lib/params.js";
 import { authService } from "./auth.service.js";
 import { authRepository } from "./auth.repository.js";
 import { toUserDto } from "./auth.mappers.js";
@@ -192,7 +193,7 @@ router.delete(
   requireCsrfToken(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
-    await authService.revokeSession(req.user!.sub, req.params.id as string);
+    await authService.revokeSession(req.user!.sub, requireParam(req, "id"));
     res.status(204).send();
   }),
 );

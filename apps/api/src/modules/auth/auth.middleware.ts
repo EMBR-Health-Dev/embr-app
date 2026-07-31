@@ -3,6 +3,7 @@ import { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
 import { AppError } from "@embr/shared";
 import type { OrgRole, Role } from "@embr/types";
 import { prisma } from "../../lib/prisma.js";
+import { requireParam } from "../../lib/params.js";
 import { verifyAccessToken, type AccessTokenPayload } from "./tokens.js";
 import { ACCESS_TOKEN_COOKIE } from "./cookies.js";
 
@@ -89,10 +90,7 @@ export function requireOrgRole(...roles: OrgRole[]) {
         if (!req.user) {
           return next(AppError.unauthorized());
         }
-        const organizationId = req.params.organizationId as string | undefined;
-        if (!organizationId) {
-          return next(AppError.internal("requireOrgRole used on a route with no :organizationId"));
-        }
+        const organizationId = requireParam(req, "organizationId");
 
         const membership = await prisma.organizationMembership.findUnique({
           where: { organizationId_userId: { organizationId, userId: req.user.sub } },
