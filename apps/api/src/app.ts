@@ -20,6 +20,7 @@ import { cycleRouter } from "./modules/cycle/cycle.routes.js";
 import { exportRouter } from "./modules/export/export.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { trendsRouter } from "./modules/trends/trends.routes.js";
+import { organizationRouter } from "./modules/organizations/organization.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -74,6 +75,7 @@ export function createApp(): Express {
   app.use(exportRouter);
   app.use(adminRouter);
   app.use(trendsRouter);
+  app.use(organizationRouter);
 
   // ---- 404 + error handling (must be last) ----
   app.use(notFoundMiddleware());

@@ -244,3 +244,39 @@ Milestones 1-10 built real, tested feature capability — the gap this closes is
 
 **Next milestone**
 To be scoped from here — candidates: whichever of Milestone 12-15's roadmap items (Clinical Intelligence, Provider Portal, Enterprise, Production Launch) actually becomes real priority next, or closing the Prisma-migrations gap flagged above if a real deploy is imminent.
+
+## Milestone 12 — Organizations (Enterprise multi-tenancy foundation) ✅ (this delivery)
+
+**What changed**
+
+- Three new Prisma models: `Organization` (a B2B customer account — employer, insurer, or clinic), `OrganizationMembership` (links a `User` to an `Organization` with an `OrgRole` of `ORG_ADMIN`/`ORG_MEMBER`), and `OrganizationInvite` (single-use, hashed-token invitations — same pattern as `EmailVerificationToken`/`PasswordResetToken`). All additive: a `User` with no membership behaves exactly as it always has.
+- New `apps/api/src/modules/organizations` module (mappers/repository/service/routes, same shape as every other domain module) and a new `requireOrgRole()` middleware, parallel to the existing `requireRole()`:
+  - `POST /organizations` — platform-`ADMIN`-only org provisioning (deliberately not self-serve — matches the sales-assisted pilot-to-enterprise progression the business already runs on)
+  - `GET /organizations` — platform-`ADMIN`-only list, metadata only (name/slug/seat count), same read-only-ops-visibility boundary Milestone 7 already drew for `/admin/users`
+  - `GET /organizations/:id` — any member (`ORG_ADMIN` or `ORG_MEMBER`)
+  - `GET /organizations/:id/members` / `POST /organizations/:id/invites` / `DELETE /organizations/:id/members/:userId` — `ORG_ADMIN`-only roster management
+  - `POST /organizations/invites/accept` — authenticated-user-only, not org-scoped in the URL (the invite token itself carries the organization, which matters for a brand-new user who's never seen that org's id before)
+  - `GET /organizations/:id/trends/symptom-frequency` — `ORG_ADMIN`-only anonymized aggregate (see below)
+- Cross-org access (a syntactically valid `organizationId` the caller isn't a member of) returns 404, not 403 — same ownership-scoping precedent Milestone 3 established for symptom logs and cycle entries.
+- **The privacy boundary this milestone is actually built around**: `OrganizationMembership` grants an `ORG_ADMIN` the member roster and one anonymized, cohort-level aggregate — never an individual member's `SymptomLog`/`CycleEntry` rows. The aggregate endpoint applies a k-anonymity floor (`ORG_TRENDS_MIN_COHORT_SIZE`, default 5): if fewer than that many members have any logged data in the requested range, the response is `{ suppressed: true, cohortSize, categories: [] }` — categories are withheld entirely, not just rounded or omitted individually, so there's no way to back into a small org's real count by narrowing the date range. Cohort size counts distinct members who actually logged something in range, not raw membership count.
+- 14 new backend tests (60 total): RBAC on every route (401/403/404, including the cross-org-is-404-not-403 case), duplicate-slug conflict, a full invite → accept round trip (captures the real plaintext token via the mailer call rather than the stored hash, confirms the token can't be reused after acceptance), email-mismatch rejection on accept, roster field-shape (asserts the response has no fields beyond id/userId/email/role/joinedAt), member revocation + re-revoke-404, and both sides of the k-anonymity floor (suppressed under threshold, real counts at/above it).
+- `docs/openapi.yaml` updated with all 7 new routes and 5 new schemas — validated against Redocly's linter; the only new finding beyond what the existing file already had is `seatLimit`'s `nullable: true`, which matches the exact style the pre-existing `averageDays` field already uses (an existing OpenAPI 3.1-strictness gap in the file, not something newly introduced here).
+
+**Why it changed**
+
+Of the four Enterprise-epic candidates (Organizations/multi-tenancy, SSO, an enterprise admin console), the other two both depend on this one — SSO needs an organization to bind an identity-provider connection to, and an org-scoped admin console needs org-scoped data to show. Building this first means SSO and the console slot in cleanly later instead of retrofitting a tenancy concept underneath them. Scoped to backend-only for this milestone (no `apps/web`/`apps/admin` UI yet), matching Milestone 9's precedent — auth/registration-flow UI changes for the accept-invite path are a real design surface of their own, better scoped once this foundation is settled rather than guessed at alongside it.
+
+**A verification note for this sandbox**
+
+`prisma generate` is blocked here (`binaries.prisma.sh` returns 403 outside the network allowlist — the same constraint Milestone 2 first flagged), so `apps/api`'s full `tsc --noEmit` couldn't be run end-to-end. What was verified in this environment: `packages/shared`/`packages/types`/`packages/validation` all rebuilt and typechecked clean against the new code; the full `apps/api` test suite (60/60, including all 14 new tests) runs green — these tests mock Prisma entirely, so they don't depend on the generated client; and `eslint`/`prettier` pass clean on every new and modified file.
+
+**Remaining work (explicitly out of scope for M12)**
+
+- No frontend UI — no accept-invite page in `apps/web`, no org roster/aggregate-trends view in `apps/admin` (or a dedicated org-admin surface). Every capability above exists only as an API today.
+- No billing/seat-purchase flow — `Organization.seatLimit` exists and is enforced on invite (a full org can't invite past its limit), but nothing sets that limit except direct provisioning; no Stripe or equivalent integration.
+- A user can belong to multiple organizations at the schema level (`OrganizationMembership` is a proper join table, not a single `organizationId` column on `User`), but nothing in this milestone's UX assumes or tests that — the invite/accept flow only ever creates one membership at a time. Worth deciding deliberately before it's load-bearing.
+- Still true from Milestone 11, unrelated to this work: no committed Prisma migration history yet.
+- SSO and the enterprise admin console — the two roadmap items this milestone was explicitly built to unblock, not yet started.
+
+**Next milestone**
+To be scoped from here — most likely candidates given this foundation: an `apps/admin`-adjacent org-admin console (roster + the new aggregate-trends endpoint, now that both exist to build a UI against), or SSO if a real enterprise pilot customer's requirements make that the more urgent of the two.

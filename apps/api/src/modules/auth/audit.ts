@@ -17,7 +17,12 @@ export type AuditAction =
   | "PASSWORD_RESET_COMPLETED"
   | "DATA_EXPORTED"
   | "ADMIN_VIEWED_USERS"
-  | "ADMIN_VIEWED_AUDIT_LOGS";
+  | "ADMIN_VIEWED_AUDIT_LOGS"
+  | "ORG_CREATED"
+  | "ORG_MEMBER_INVITED"
+  | "ORG_MEMBER_JOINED"
+  | "ORG_MEMBER_REVOKED"
+  | "ORG_AGGREGATE_TRENDS_VIEWED";
 
 /**
  * Best-effort, append-only security audit trail. Failures here are

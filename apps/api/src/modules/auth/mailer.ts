@@ -44,3 +44,17 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     `Reset your password: ${link}`,
   );
 }
+
+export async function sendOrganizationInviteEmail(
+  to: string,
+  organizationName: string,
+  token: string,
+) {
+  const link = `${env.APP_URL}/organizations/accept-invite?token=${encodeURIComponent(token)}`;
+  await sendMail(
+    to,
+    `You've been invited to join ${organizationName} on EMBR`,
+    `<p>You've been invited to join <strong>${organizationName}</strong> on EMBR.</p><p><a href="${link}">${link}</a></p><p>This link expires in ${Math.round(env.ORG_INVITE_TTL_SECONDS / (24 * 60 * 60))} days. If you weren't expecting this, you can safely ignore this email.</p>`,
+    `You've been invited to join ${organizationName} on EMBR: ${link}`,
+  );
+}
