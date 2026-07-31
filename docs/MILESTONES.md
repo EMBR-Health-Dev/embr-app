@@ -306,3 +306,29 @@ Same `binaries.prisma.sh` network-allowlist constraint flagged in Milestones 2 a
 
 **Next milestone**
 To be scoped from here — candidates: the accept-invite flow flagged above (now the more clearly-scoped of the two remaining frontend gaps), SSO, or closing the still-outstanding Prisma-migrations gap from Milestone 11 if a real deploy is imminent.
+
+## Milestone 14 — Accept-invite flow ✅ (this delivery)
+
+**What changed**
+
+- New `/organizations/accept-invite` page in `apps/web` — the actual target of the link `sendOrganizationInviteEmail` has been sending since Milestone 12 (`${APP_URL}/organizations/accept-invite?token=...`), which until now pointed at a route that didn't exist. Reads `token` from the query string and calls the `POST /organizations/invites/accept` endpoint the web client already had a method for since Milestone 13.
+- Handles all three visitor states: **logged out** — shows a choice of log in / create account rather than immediately failing on a 401, since `/organizations/invites/accept` sits behind the same `requireAuth()` as every other organization route; **logged in** — accepts automatically on load and shows who they joined; **already a member** — the accept endpoint's one legitimate 409 case, shown as a soft confirmation rather than an error.
+- Added `redirect` query param support to `/login` and `/register` so the invite token survives the register-or-login round trip a logged-out visitor has to take: the accept-invite page hands its own URL (with the token still in it) to whichever auth page the visitor picks, both auth pages thread it through to each other (register's "Already have an account?" / login's "Create an account" links) and, for login specifically, land the visitor back on it after a successful session instead of the usual `/dashboard`. New `safeRedirect()` helper in `apps/web/src/lib/` rejects anything that isn't a same-origin relative path — an unvalidated `redirect` param is a textbook open-redirect vector the moment a page starts acting on it.
+- Register's flow doesn't change beyond carrying the param: it still requires email verification before _that_ can happen, but login itself has no such gate (confirmed against `auth.service.ts` — `login()` never checks `emailVerifiedAt`), so a brand-new invitee can register, then log straight in and land back on the invite without waiting on the separate verification email.
+
+**Why it changed**
+
+Milestone 13 flagged this as the more clearly-scoped of its two remaining frontend gaps, and it was actually blocking something live: the invite email has been linking to a 404 since Milestone 12 shipped `inviteMember()`. The redirect-survival design follows directly from `requireAuth()` being applied to _all_ organization routes including `/organizations/invites/accept` (see `organization.routes.ts`'s `router.use("/organizations", requireAuth())`) — there was no version of this feature that could skip the logged-out case.
+
+**A verification note for this sandbox**
+
+No backend files touched this milestone, so the API test suite is an unchanged baseline (ran green, same 64/64 as M13). `packages/types`/`validation`/`shared` rebuild clean; `apps/web`'s `tsc --noEmit` passes with no errors across the whole app (new and pre-existing files alike); `eslint` passes on every new/modified file. Same as Milestones 4, 8, and 13: `apps/web`'s `next build` itself couldn't be verified in this sandbox (no route to Google Fonts) — unrelated to this milestone's code, not attempted as a substitute for the typecheck/lint checks above.
+
+**Remaining work (explicitly out of scope for M14)**
+
+- No self-service "leave organization" action for a member — carried over from Milestone 13, still just an `ORG_ADMIN` revoking someone else.
+- SSO — still not started.
+- The accept-invite page's "already joined" and error states don't offer a way to switch accounts if the visitor is logged in as the wrong person (e.g. invite sent to a work email, visitor logged in on a personal one, hits the "different email address" 403). Worth a follow-up if that turns out to be a common support request rather than an edge case.
+
+**Next milestone**
+To be scoped from here — candidates: SSO, the Prisma-migrations gap from Milestone 11, or the wrong-account edge case flagged above if it proves to matter in practice.
