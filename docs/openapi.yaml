@@ -428,7 +428,166 @@ paths:
         - { name: userId, in: query, schema: { type: string, format: uuid } }
       responses:
         "200": { description: Paginated audit log entries }
-        "403": { description: Authenticated but not an admin }
+  /organizations:
+    get:
+      summary: List organizations (platform admin only)
+      description: Metadata only (name/slug/seat count) — same read-only ops-visibility boundary as /admin/users, never a route into any organization's roster or health data.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200": { description: Paginated organizations }
+        "403": { description: Authenticated but not a platform admin }
+    post:
+      summary: Provision a new organization (platform admin only)
+      description: Deliberately not self-serve — orgs are provisioned by EMBR ops, matching the sales-assisted pilot-to-enterprise progression the business runs on.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name: { type: string }
+                slug: { type: string, description: "Lowercase alphanumeric, single hyphens" }
+                seatLimit: { type: integer, minimum: 1 }
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationDto" }
+        "403": { description: Authenticated but not a platform admin }
+        "409": { description: Slug already in use }
+  /organizations/{organizationId}:
+    get:
+      summary: Get organization details
+      description: Any member (ORG_ADMIN or ORG_MEMBER) can view basic org info.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationDto" }
+        "404":
+          {
+            description: "Not found, or the caller isn't a member (same response either way, matching Milestone 3's ownership-scoping precedent)",
+          }
+  /organizations/{organizationId}/members:
+    get:
+      summary: List an organization's member roster (ORG_ADMIN only)
+      description: Roster metadata only — never a member's own symptom/cycle records.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200":
+          description: Paginated member roster
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OrganizationMemberDto" }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+  /organizations/{organizationId}/members/{userId}:
+    delete:
+      summary: Revoke a member's organization access (ORG_ADMIN only)
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Membership revoked }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404":
+          {
+            description: "Org doesn't exist, caller isn't a member, or the target user wasn't a member",
+          }
+  /organizations/{organizationId}/invites:
+    post:
+      summary: Invite someone to join the organization (ORG_ADMIN only)
+      description: Sends a single-use, hashed-token invite email (same pattern as email verification / password reset). A prior unconsumed invite for the same email is invalidated when a new one is issued.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                role: { $ref: "#/components/schemas/OrgRole" }
+      responses:
+        "201":
+          description: Invite created and emailed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationInviteDto" }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "409": { description: "Already a member, or the organization has no remaining seats" }
+  /organizations/invites/accept:
+    post:
+      summary: Accept an organization invite
+      description: Not organization-scoped in the URL — the invite token itself carries the organization. The authenticated user's account email must match the invited address exactly.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200": { description: Membership created }
+        "400": { description: "Invite token is invalid, expired, or already consumed" }
+        "403":
+          {
+            description: "Invite was sent to a different email address than the authenticated account",
+          }
+        "409": { description: Already a member of this organization }
+  /organizations/{organizationId}/trends/symptom-frequency:
+    get:
+      summary: Anonymized, cohort-level symptom frequency for an organization (ORG_ADMIN only)
+      description: >
+        Never individual member records. Below the configured k-anonymity
+        floor (ORG_TRENDS_MIN_COHORT_SIZE, default 5 active loggers),
+        the response is suppressed entirely rather than returning a
+        small, individually-identifying count.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Cohort-level symptom frequency, possibly suppressed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrgSymptomFrequencyDto" }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
 components:
   securitySchemes:
     cookieAuth:
@@ -461,6 +620,51 @@ components:
     FlowIntensity:
       type: string
       enum: [SPOTTING, LIGHT, MEDIUM, HEAVY]
+    OrgRole:
+      type: string
+      enum: [ORG_ADMIN, ORG_MEMBER]
+    OrganizationDto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        seatLimit: { type: integer, nullable: true }
+        memberCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+    OrganizationMemberDto:
+      type: object
+      description: Roster entry — account + org-role metadata only, never anything from that member's own symptom/cycle records.
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        joinedAt: { type: string, format: date-time }
+    OrganizationInviteDto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        expiresAt: { type: string, format: date-time }
+    OrgSymptomFrequencyDto:
+      type: object
+      description: Anonymized, cohort-level only. When suppressed, categories is always empty — a small enough organization makes even a category-level count individually identifying.
+      properties:
+        suppressed:
+          type: boolean
+          description: True when the active cohort is below the configured k-anonymity floor (ORG_TRENDS_MIN_COHORT_SIZE).
+        cohortSize:
+          type: integer
+          description: Distinct members with at least one logged entry in range — not raw membership count.
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category: { $ref: "#/components/schemas/SymptomCategory" }
+              count: { type: integer }
     HealthCheckResponse:
       type: object
       properties:

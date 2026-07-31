@@ -260,6 +260,7 @@ To be scoped from here — candidates: whichever of Milestone 12-15's roadmap it
 - Cross-org access (a syntactically valid `organizationId` the caller isn't a member of) returns 404, not 403 — same ownership-scoping precedent Milestone 3 established for symptom logs and cycle entries.
 - **The privacy boundary this milestone is actually built around**: `OrganizationMembership` grants an `ORG_ADMIN` the member roster and one anonymized, cohort-level aggregate — never an individual member's `SymptomLog`/`CycleEntry` rows. The aggregate endpoint applies a k-anonymity floor (`ORG_TRENDS_MIN_COHORT_SIZE`, default 5): if fewer than that many members have any logged data in the requested range, the response is `{ suppressed: true, cohortSize, categories: [] }` — categories are withheld entirely, not just rounded or omitted individually, so there's no way to back into a small org's real count by narrowing the date range. Cohort size counts distinct members who actually logged something in range, not raw membership count.
 - 14 new backend tests (60 total): RBAC on every route (401/403/404, including the cross-org-is-404-not-403 case), duplicate-slug conflict, a full invite → accept round trip (captures the real plaintext token via the mailer call rather than the stored hash, confirms the token can't be reused after acceptance), email-mismatch rejection on accept, roster field-shape (asserts the response has no fields beyond id/userId/email/role/joinedAt), member revocation + re-revoke-404, and both sides of the k-anonymity floor (suppressed under threshold, real counts at/above it).
+- `docs/openapi.yaml` updated with all 7 new routes and 5 new schemas — validated against Redocly's linter; the only new finding beyond what the existing file already had is `seatLimit`'s `nullable: true`, which matches the exact style the pre-existing `averageDays` field already uses (an existing OpenAPI 3.1-strictness gap in the file, not something newly introduced here).
 
 **Why it changed**
 
@@ -274,9 +275,8 @@ Of the four Enterprise-epic candidates (Organizations/multi-tenancy, SSO, an ent
 - No frontend UI — no accept-invite page in `apps/web`, no org roster/aggregate-trends view in `apps/admin` (or a dedicated org-admin surface). Every capability above exists only as an API today.
 - No billing/seat-purchase flow — `Organization.seatLimit` exists and is enforced on invite (a full org can't invite past its limit), but nothing sets that limit except direct provisioning; no Stripe or equivalent integration.
 - A user can belong to multiple organizations at the schema level (`OrganizationMembership` is a proper join table, not a single `organizationId` column on `User`), but nothing in this milestone's UX assumes or tests that — the invite/accept flow only ever creates one membership at a time. Worth deciding deliberately before it's load-bearing.
-- `docs/openapi.yaml` was not updated with the new routes in this pass — flagged here rather than silently skipped, unlike the trends/admin precedent of always keeping it in sync.
-- SSO and the enterprise admin console — the two roadmap items this milestone was explicitly built to unblock, not yet started.
 - Still true from Milestone 11, unrelated to this work: no committed Prisma migration history yet.
+- SSO and the enterprise admin console — the two roadmap items this milestone was explicitly built to unblock, not yet started.
 
 **Next milestone**
 To be scoped from here — most likely candidates given this foundation: an `apps/admin`-adjacent org-admin console (roster + the new aggregate-trends endpoint, now that both exist to build a UI against), or SSO if a real enterprise pilot customer's requirements make that the more urgent of the two.
