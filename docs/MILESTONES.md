@@ -315,6 +315,7 @@ To be scoped from here — candidates: the accept-invite flow flagged above (now
 - Handles all three visitor states: **logged out** — shows a choice of log in / create account rather than immediately failing on a 401, since `/organizations/invites/accept` sits behind the same `requireAuth()` as every other organization route; **logged in** — accepts automatically on load and shows who they joined; **already a member** — the accept endpoint's one legitimate 409 case, shown as a soft confirmation rather than an error.
 - Added `redirect` query param support to `/login` and `/register` so the invite token survives the register-or-login round trip a logged-out visitor has to take: the accept-invite page hands its own URL (with the token still in it) to whichever auth page the visitor picks, both auth pages thread it through to each other (register's "Already have an account?" / login's "Create an account" links) and, for login specifically, land the visitor back on it after a successful session instead of the usual `/dashboard`. New `safeRedirect()` helper in `apps/web/src/lib/` rejects anything that isn't a same-origin relative path — an unvalidated `redirect` param is a textbook open-redirect vector the moment a page starts acting on it.
 - Register's flow doesn't change beyond carrying the param: it still requires email verification before _that_ can happen, but login itself has no such gate (confirmed against `auth.service.ts` — `login()` never checks `emailVerifiedAt`), so a brand-new invitee can register, then log straight in and land back on the invite without waiting on the separate verification email.
+- A fourth visitor state, added after first review: **wrong account** — signed in, but as someone whose email doesn't match who the invite was sent to (`acceptInvite`'s only 403 case). Rather than a dead-end generic error, this offers a one-click "log out and try again" that signs the visitor out and sends them back through `/login?redirect=...` with the same token, so they land right back here once they've signed in as the right person.
 
 **Why it changed**
 
@@ -328,7 +329,6 @@ No backend files touched this milestone, so the API test suite is an unchanged b
 
 - No self-service "leave organization" action for a member — carried over from Milestone 13, still just an `ORG_ADMIN` revoking someone else.
 - SSO — still not started.
-- The accept-invite page's "already joined" and error states don't offer a way to switch accounts if the visitor is logged in as the wrong person (e.g. invite sent to a work email, visitor logged in on a personal one, hits the "different email address" 403). Worth a follow-up if that turns out to be a common support request rather than an edge case.
 
 **Next milestone**
-To be scoped from here — candidates: SSO, the Prisma-migrations gap from Milestone 11, or the wrong-account edge case flagged above if it proves to matter in practice.
+To be scoped from here — candidates: SSO, or the Prisma-migrations gap from Milestone 11 if a real deploy is imminent.

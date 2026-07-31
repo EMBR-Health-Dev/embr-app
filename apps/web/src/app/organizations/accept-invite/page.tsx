@@ -8,17 +8,25 @@ import { api } from "../../../lib/api";
 import { ApiError } from "../../../lib/api-client";
 import { Button } from "../../../components/button";
 
-type Status = "checking" | "needs-auth" | "accepting" | "accepted" | "already-member" | "error";
+type Status =
+  | "checking"
+  | "needs-auth"
+  | "accepting"
+  | "accepted"
+  | "already-member"
+  | "wrong-account"
+  | "error";
 
 function AcceptInviteScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   const [status, setStatus] = useState<Status>("checking");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [orgName, setOrgName] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Guards against the effect firing twice (React Strict Mode, or the
   // user/token dependency settling in two steps as auth loads) and
@@ -69,6 +77,13 @@ function AcceptInviteScreen() {
         // treat as the friendly case rather than a real error.
         if (err instanceof ApiError && err.status === 409) {
           setStatus("already-member");
+        } else if (err instanceof ApiError && err.status === 403) {
+          // acceptInvite's only 403 case: signed in, but as someone
+          // whose email doesn't match who the invite was sent to. Not
+          // a dead end — logging out and signing back in as the right
+          // person resolves it, so offer that directly rather than a
+          // generic error.
+          setStatus("wrong-account");
         } else {
           setStatus("error");
           setErrorMessage(
@@ -140,6 +155,41 @@ function AcceptInviteScreen() {
         <Button className="mt-6" onClick={() => router.push("/organization")}>
           Go to organization
         </Button>
+      </div>
+    );
+  }
+
+  if (status === "wrong-account") {
+    const returnTo = `/organizations/accept-invite?token=${encodeURIComponent(token ?? "")}`;
+    const encoded = encodeURIComponent(returnTo);
+
+    async function logOutAndRetry() {
+      setLoggingOut(true);
+      try {
+        await logout();
+        router.push(`/login?redirect=${encoded}`);
+      } finally {
+        setLoggingOut(false);
+      }
+    }
+
+    return (
+      <div className="w-full max-w-sm text-center">
+        <h1 className="font-display text-2xl text-navy">Wrong account</h1>
+        <p className="mt-3 text-sm text-navy/60">
+          This invitation was sent to a different email address than{" "}
+          <span className="font-medium text-navy">{user?.email}</span>, the account you&apos;re
+          currently signed into. Log out and sign back in with the email the invite was sent to.
+        </p>
+        <Button className="mt-6 w-full" disabled={loggingOut} onClick={() => void logOutAndRetry()}>
+          {loggingOut ? "Logging out…" : "Log out and try again"}
+        </Button>
+        <Link
+          href="/dashboard"
+          className="mt-4 inline-block text-sm font-medium text-teal underline underline-offset-2"
+        >
+          Stay signed in and go to dashboard
+        </Link>
       </div>
     );
   }
