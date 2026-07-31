@@ -7,16 +7,6 @@ import type { OrgRole } from "@embr/types";
 import { prisma } from "../../lib/prisma.js";
 import { toSkipTake } from "../../lib/pagination.js";
 
-function dateRangeWhere(query: OrgTrendsQuery) {
-  if (!query.from && !query.to) return {};
-  return {
-    occurredAt: {
-      ...(query.from ? { gte: query.from } : {}),
-      ...(query.to ? { lte: query.to } : {}),
-    },
-  };
-}
-
 export const organizationRepository = {
   createOrganization(input: CreateOrganizationInput) {
     return prisma.organization.create({ data: input });
@@ -120,11 +110,36 @@ export const organizationRepository = {
       return { cohortSize: 0, categories: [] };
     }
 
-    const where = { userId: { in: memberUserIds }, ...dateRangeWhere(query) };
-
     const [cohortRows, categoryRows] = await Promise.all([
-      prisma.symptomLog.groupBy({ by: ["userId"], where }),
-      prisma.symptomLog.groupBy({ by: ["category"], where, _count: { category: true } }),
+      prisma.symptomLog.groupBy({
+        by: ["userId"],
+        where: {
+          userId: { in: memberUserIds },
+          ...(query.from || query.to
+            ? {
+                occurredAt: {
+                  ...(query.from ? { gte: query.from } : {}),
+                  ...(query.to ? { lte: query.to } : {}),
+                },
+              }
+            : {}),
+        },
+      }),
+      prisma.symptomLog.groupBy({
+        by: ["category"],
+        where: {
+          userId: { in: memberUserIds },
+          ...(query.from || query.to
+            ? {
+                occurredAt: {
+                  ...(query.from ? { gte: query.from } : {}),
+                  ...(query.to ? { lte: query.to } : {}),
+                },
+              }
+            : {}),
+        },
+        _count: { category: true },
+      }),
     ]);
 
     return {

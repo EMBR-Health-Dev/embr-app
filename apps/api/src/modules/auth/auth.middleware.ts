@@ -89,7 +89,7 @@ export function requireOrgRole(...roles: OrgRole[]) {
         if (!req.user) {
           return next(AppError.unauthorized());
         }
-        const organizationId = req.params.organizationId;
+        const organizationId = req.params.organizationId as string | undefined;
         if (!organizationId) {
           return next(AppError.internal("requireOrgRole used on a route with no :organizationId"));
         }

@@ -12,6 +12,7 @@ import YAML from "yaml";
 import { requestIdMiddleware } from "@embr/shared";
 import { env } from "./config/env.js";
 import { httpLoggerMiddleware } from "./middleware/http-logger.js";
+import { redisRateLimitStore } from "./lib/rate-limit-store.js";
 import { errorHandlerMiddleware, notFoundMiddleware } from "./middleware/error-handler.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
@@ -36,12 +37,20 @@ export function createApp(): Express {
   app.set("trust proxy", 1);
 
   // Global-rate-limit as a defense-in-depth backstop; per-route limits
-  // (login, password reset) are added in Milestone 2.
+  // (login, password reset) are added in Milestone 2. Redis-backed so
+  // the limit is enforced across every API instance sharing this
+  // Redis, not just per-process (see lib/rate-limit-store.ts). Skipped
+  // in tests for the same reason rate-limiters.ts skips its own
+  // limiters there: every test file's Redis mock only stubs `ping`,
+  // not the `call` this store needs, and rate limiting itself isn't
+  // what those tests are exercising.
   const globalLimiter = rateLimit({
     windowMs: 60_000,
     limit: 300,
     standardHeaders: true,
     legacyHeaders: false,
+    store: redisRateLimitStore("rl:global:"),
+    skip: () => env.NODE_ENV === "test",
   });
 
   app.use(requestIdMiddleware());
