@@ -226,17 +226,29 @@ vi.mock("../src/lib/prisma.js", () => ({
           skip = 0,
           take = 20,
         }: {
-          where: { organizationId: string };
+          where: { organizationId?: string; userId?: string };
           skip?: number;
           take?: number;
         }) => {
+          // listMembers(organizationId) — includes the member's user.
+          if (where.organizationId !== undefined) {
+            const items = state.memberships
+              .filter((m) => m.organizationId === where.organizationId)
+              .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+              .slice(skip, skip + take)
+              .map((m) => {
+                const user = state.users.find((u) => u.id === m.userId)!;
+                return { ...m, user: { id: user.id, email: user.email } };
+              });
+            return Promise.resolve(items);
+          }
+          // listMembershipsForUser(userId) — includes the organization.
           const items = state.memberships
-            .filter((m) => m.organizationId === where.organizationId)
+            .filter((m) => m.userId === where.userId)
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-            .slice(skip, skip + take)
             .map((m) => {
-              const user = state.users.find((u) => u.id === m.userId)!;
-              return { ...m, user: { id: user.id, email: user.email } };
+              const org = state.organizations.find((o) => o.id === m.organizationId)!;
+              return { ...m, organization: { id: org.id, name: org.name, slug: org.slug } };
             });
           return Promise.resolve(items);
         },
@@ -635,5 +647,88 @@ describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
 
     const res = await memberAgent.get(`/organizations/${organizationId}/trends/symptom-frequency`);
     expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /organizations/mine", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/organizations/mine");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns an empty list for a user with no organization memberships", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "noorg@embr.health");
+    const res = await agent.get("/organizations/mine");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  it("returns each organization the user belongs to, with their role in it", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "opsmine@embr.health");
+    promoteToAdmin("opsmine@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "opsmine@embr.health", password: VALID_PASSWORD });
+
+    const orgA = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-mine" });
+    const orgB = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Globex", slug: "globex-mine" });
+
+    const memberAgent = request.agent(app);
+    const memberId = await registerAndLogin(memberAgent, "belongs-to-both@embr.health");
+    addMembership(orgA.body.data.id, memberId, "ORG_ADMIN");
+    addMembership(orgB.body.data.id, memberId, "ORG_MEMBER");
+
+    const res = await memberAgent.get("/organizations/mine");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          organizationId: orgA.body.data.id,
+          organizationName: "Acme",
+          organizationSlug: "acme-mine",
+          role: "ORG_ADMIN",
+        }),
+        expect.objectContaining({
+          organizationId: orgB.body.data.id,
+          organizationName: "Globex",
+          organizationSlug: "globex-mine",
+          role: "ORG_MEMBER",
+        }),
+      ]),
+    );
+  });
+
+  it("does not leak another user's memberships", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "opsmine2@embr.health");
+    promoteToAdmin("opsmine2@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "opsmine2@embr.health", password: VALID_PASSWORD });
+    const org = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Initech", slug: "initech-mine" });
+
+    const ownerAgent = request.agent(app);
+    const ownerId = await registerAndLogin(ownerAgent, "owner-mine@embr.health");
+    addMembership(org.body.data.id, ownerId, "ORG_ADMIN");
+
+    const outsiderAgent = request.agent(app);
+    await registerAndLogin(outsiderAgent, "outsider-mine@embr.health");
+
+    const res = await outsiderAgent.get("/organizations/mine");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
   });
 });

@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [managesOrg, setManagesOrg] = useState(false);
 
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("BRAIN_FOG");
   const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]>("MODERATE");
@@ -77,6 +78,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) void loadLogs();
+  }, [user]);
+
+  // Most people aren't an ORG_ADMIN of anything — only show the link
+  // if this one extra call actually finds one, rather than always
+  // linking to a page that'll just say "not applicable" for everyone.
+  useEffect(() => {
+    if (!user) return;
+    api.organizations
+      .mine()
+      .then((rows) => setManagesOrg(rows.some((m) => m.role === "ORG_ADMIN")))
+      .catch(() => setManagesOrg(false));
   }, [user]);
 
   async function logHotFlashNow() {
@@ -144,6 +156,11 @@ export default function DashboardPage() {
           <Link href="/export" className="underline underline-offset-2 hover:text-navy">
             Export
           </Link>
+          {managesOrg && (
+            <Link href="/organization" className="underline underline-offset-2 hover:text-navy">
+              Organization
+            </Link>
+          )}
           <Link href="/settings" className="underline underline-offset-2 hover:text-navy">
             Settings
           </Link>

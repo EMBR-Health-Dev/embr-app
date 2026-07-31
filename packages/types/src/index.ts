@@ -168,6 +168,17 @@ export interface OrganizationInviteDto {
   expiresAt: string;
 }
 
+/** One row per organization the current user belongs to — lets a user
+ * discover which org(s) they're in and in what role, without already
+ * knowing an organizationId (see GET /organizations/mine). */
+export interface MyOrganizationMembershipDto {
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+  role: OrgRole;
+  joinedAt: string;
+}
+
 /**
  * Cohort-level, anonymized only. `suppressed: true` means the
  * organization's active membership fell below the minimum cohort size

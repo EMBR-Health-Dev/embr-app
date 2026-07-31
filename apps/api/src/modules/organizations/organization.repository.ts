@@ -53,6 +53,18 @@ export const organizationRepository = {
     return { items, total };
   },
 
+  /** Every other organization route requires already knowing an
+   * organizationId; this is the one query keyed by userId instead, so
+   * a member (or a brand-new ORG_ADMIN) can discover what they belong
+   * to at all. */
+  listMembershipsForUser(userId: string) {
+    return prisma.organizationMembership.findMany({
+      where: { userId },
+      include: { organization: { select: { id: true, name: true, slug: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+  },
+
   createMembership(organizationId: string, userId: string, role: OrgRole) {
     return prisma.organizationMembership.create({
       data: { organizationId, userId, role },

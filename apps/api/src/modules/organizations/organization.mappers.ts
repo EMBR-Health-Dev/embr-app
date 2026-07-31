@@ -5,6 +5,7 @@ import type {
   User,
 } from "../../generated/prisma/index.js";
 import type {
+  MyOrganizationMembershipDto,
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationMemberDto,
@@ -29,6 +30,18 @@ export function toOrganizationMemberDto(
     id: membership.id,
     userId: membership.user.id,
     email: membership.user.email,
+    role: membership.role as OrgRole,
+    joinedAt: membership.createdAt.toISOString(),
+  };
+}
+
+export function toMyOrganizationMembershipDto(
+  membership: OrganizationMembership & { organization: Pick<Organization, "id" | "name" | "slug"> },
+): MyOrganizationMembershipDto {
+  return {
+    organizationId: membership.organization.id,
+    organizationName: membership.organization.name,
+    organizationSlug: membership.organization.slug,
     role: membership.role as OrgRole,
     joinedAt: membership.createdAt.toISOString(),
   };

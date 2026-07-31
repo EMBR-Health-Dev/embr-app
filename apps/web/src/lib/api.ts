@@ -3,6 +3,11 @@ import type {
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
+  MyOrganizationMembershipDto,
+  OrganizationDto,
+  OrganizationInviteDto,
+  OrganizationMemberDto,
+  OrgSymptomFrequencyDto,
   PaginatedResponse,
   SymptomFrequencyDto,
   SymptomLogDto,
@@ -67,5 +72,50 @@ export const api = {
 
     cycleLength: (query?: { from?: string; to?: string }) =>
       apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
+  },
+
+  organizations: {
+    // The one call that doesn't need an organizationId already in
+    // hand — see the API route's own comment on why it's ordered
+    // ahead of /organizations/:organizationId server-side.
+    mine: () => apiFetch<MyOrganizationMembershipDto[]>("/organizations/mine"),
+
+    get: (organizationId: string) =>
+      apiFetch<OrganizationDto>(`/organizations/${organizationId}`),
+
+    members: {
+      list: (organizationId: string, query?: { page?: number; pageSize?: number }) =>
+        apiFetch<PaginatedResponse<OrganizationMemberDto>>(
+          `/organizations/${organizationId}/members`,
+          { query },
+        ),
+
+      revoke: (organizationId: string, userId: string) =>
+        apiFetch<void>(`/organizations/${organizationId}/members/${userId}`, {
+          method: "DELETE",
+        }),
+    },
+
+    invites: {
+      create: (organizationId: string, input: { email: string; role: "ORG_ADMIN" | "ORG_MEMBER" }) =>
+        apiFetch<OrganizationInviteDto>(`/organizations/${organizationId}/invites`, {
+          method: "POST",
+          body: input,
+        }),
+
+      accept: (token: string) =>
+        apiFetch<{ joined: boolean }>("/organizations/invites/accept", {
+          method: "POST",
+          body: { token },
+        }),
+    },
+
+    trends: {
+      symptomFrequency: (organizationId: string, query?: { from?: string; to?: string }) =>
+        apiFetch<OrgSymptomFrequencyDto>(
+          `/organizations/${organizationId}/trends/symptom-frequency`,
+          { query },
+        ),
+    },
   },
 };

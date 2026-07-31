@@ -280,3 +280,29 @@ Of the four Enterprise-epic candidates (Organizations/multi-tenancy, SSO, an ent
 
 **Next milestone**
 To be scoped from here — most likely candidates given this foundation: an `apps/admin`-adjacent org-admin console (roster + the new aggregate-trends endpoint, now that both exist to build a UI against), or SSO if a real enterprise pilot customer's requirements make that the more urgent of the two.
+
+## Milestone 13 — Org-admin console UI ✅ (this delivery)
+
+**What changed**
+
+- New `GET /organizations/mine` endpoint — the one organization route keyed by the caller's own membership rather than a path param. Every other organization route requires already knowing an `organizationId`; this is what lets a user (most importantly a brand-new `ORG_ADMIN` who just accepted an invite) discover which org(s) they belong to and in what role at all. Registered ahead of `/organizations/:organizationId` in the router — an important ordering detail, since Express matches by registration order and `"mine"` would otherwise be swallowed as an `organizationId` value and 404 rather than match the new route.
+- New `apps/web` `/organization` page: org picker (if the caller administers more than one), roster with invite + revoke, and the Milestone 12 anonymized aggregate-trends view — all backed entirely by endpoints that already existed since Milestone 12 plus the one new lookup above.
+- Dashboard nav now conditionally shows an "Organization" link — fetched once per authenticated load — only for users `GET /organizations/mine` actually shows an `ORG_ADMIN` membership for, rather than linking everyone to a page that would just say "not applicable."
+- The roster view marks the caller's own row ("You") and, matching Milestone 8/10's device-session pattern, only offers "Revoke" on the other rows — revoking your own admin membership from this screen would be a confusing dead end with no undo path.
+
+**Why it changed**
+
+Milestone 12's own "next milestone" note guessed this would land in `apps/admin` — worth correcting here: `ORG_ADMIN` is an `OrgRole` on a regular `User`'s `OrganizationMembership`, granted via `requireOrgRole()`, not the platform-level `Role.ADMIN` that gates `apps/admin` via `requireRole("ADMIN")`. An employer HR contact or insurer account manager is an ordinary EMBR user who happens to administer an org — they log into `apps/web`, the same as any other user, and have no reason to see `apps/admin`'s internal ops console (user list, security audit trail) at all. Building this in `apps/web` isn't a style choice; it's the only placement consistent with the RBAC boundary Milestone 12 already established.
+
+**A verification note for this sandbox**
+
+Same `binaries.prisma.sh` network-allowlist constraint flagged in Milestones 2 and 12: `prisma generate` can't run here, so `apps/api`'s full `tsc --noEmit` still reports the same pre-existing `generated/prisma` module-not-found errors on files this milestone didn't touch — confirmed unchanged by running the same command against `main` before these changes. What was verified clean in this environment: `packages/types`/`packages/validation`/`packages/shared` all rebuild and typecheck; the full `apps/api` test suite (64/64, including 3 new tests for `GET /organizations/mine`) runs green against the mocked-Prisma test harness; `eslint` passes on every new/modified file in both `apps/api` and `apps/web`; and `apps/web`'s `tsc --noEmit` passes clean. `apps/web`'s `next build` itself couldn't complete here — this sandbox has no route to Google Fonts, the same constraint Milestones 4 and 8 already hit — but that's a font-fetch failure unrelated to any code in this milestone, not a build error in the new page.
+
+**Remaining work (explicitly out of scope for M13)**
+
+- No accept-invite UI in `apps/web` yet — an invited user still accepts via the API directly (`POST /organizations/invites/accept`, which the web client now has a method for). This is the other frontend gap Milestone 12 flagged and is a real design surface of its own (a logged-out visitor needs to register/log in first, then have the invite token survive that round trip) — better scoped on its own than folded into this console.
+- No self-service "leave organization" action for a member — only an `ORG_ADMIN` revoking someone else, matching what the API already supports.
+- SSO — the other item Milestone 12 was built to unblock, still not started.
+
+**Next milestone**
+To be scoped from here — candidates: the accept-invite flow flagged above (now the more clearly-scoped of the two remaining frontend gaps), SSO, or closing the still-outstanding Prisma-migrations gap from Milestone 11 if a real deploy is imminent.
