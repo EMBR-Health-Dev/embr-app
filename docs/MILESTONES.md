@@ -281,6 +281,27 @@ Of the four Enterprise-epic candidates (Organizations/multi-tenancy, SSO, an ent
 **Next milestone**
 To be scoped from here — most likely candidates given this foundation: an `apps/admin`-adjacent org-admin console (roster + the new aggregate-trends endpoint, now that both exist to build a UI against), or SSO if a real enterprise pilot customer's requirements make that the more urgent of the two.
 
+## Repo maintenance — Express types + Next.js ESLint wiring (between M12 and M13 work)
+
+**What changed**
+
+- `@types/express` was pinned to `^5.0.0` in `apps/api` and `packages/shared` while the actual `express` runtime dependency is `^4.21.0` — a major-version type/runtime mismatch. Express 5's types model repeated route params as `string | string[]` (reflecting its `path-to-regexp` v7 behavior), which doesn't apply to the Express 4 app actually running. This was silently producing five `TS2345` errors plus two downstream `TS7031` implicit-any errors in `organization.routes.ts` (the `any`-cascade from `prisma` failing to resolve — see below — was masking these in ad hoc `tsc` runs that only ever checked `apps/web`; this is the first time `apps/api`'s typecheck was run in full in this environment). Fixed by pinning `@types/express` to `^4.17.21` instead of upgrading the runtime to Express 5 mid-project.
+- `eslint-config-next` was installed as a dependency in both `apps/web` and `apps/admin` but never actually wired into either app's ESLint flat config — the root `eslint.config.js` has no Next-specific plugin, and neither app had its own config file, so `next lint` was silently falling back to the bare root rules while still reporting "No ESLint warnings or errors." In practice this meant `react-hooks/exhaustive-deps`, `jsx-a11y`, `next/no-img-element`, and the rest of Next's recommended rule set were never actually running in either app. Added a proper `eslint.config.mjs` to each app using `FlatCompat` (the documented way to pull `eslint-config-next`'s eslintrc-style config into flat config) — the same pattern `create-next-app` itself scaffolds for Next 15.
+  - Hit and resolved a `Cannot redefine plugin "@typescript-eslint"` collision along the way: the root config's `...tseslint.configs.recommended` and `next/typescript` (via `eslint-config-next`) both register a plugin under the same name, sometimes as non-identical instances depending on pnpm's resolution. Fixed by reconstructing the root config's other pieces (ignores, `js.configs.recommended`, prettier compat, the repo's custom rules) directly in each app's config instead of spreading the root config wholesale, letting `next/typescript` be the sole source of the `@typescript-eslint` plugin in these two apps.
+  - `next lint`'s first-run auto-setup also unconditionally adds `allowJs: true` to `tsconfig.json` if the key is absent at all — undesired in an all-TypeScript codebase. An explicit `"allowJs": false` in both tsconfigs stops it from re-adding this on every future `next lint` invocation (confirmed: an absent key gets silently overwritten every run; an explicit `false` is left alone).
+
+**Why it changed**
+
+Found while running a full-repo `pnpm typecheck`/`pnpm lint` audit for the first time (previous milestones only ever spot-checked `apps/web`). Neither issue was caught by any prior milestone's verification because none of them ran `apps/api`'s typecheck or a from-scratch `next lint` in full — the Express types mismatch had presumably been silently wrong since whichever milestone first added `@types/express` (predates this doc's tracking), and the missing Next ESLint wiring predates it too.
+
+**A verification note for this sandbox**
+
+`apps/api`'s `Cannot find module '../generated/prisma'` errors remain and are unrelated to this fix — `prisma generate` is still blocked by the same `binaries.prisma.sh` network restriction flagged since Milestone 2/11/12. Confirmed this is a hard sandbox constraint, not a code issue: even `PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1` still 403s on the actual engine binary fetch. Everything else verified clean: full monorepo `pnpm typecheck` (all 9 packages except the pre-existing Prisma gap in `@embr/api`), full monorepo `pnpm lint` (all 10 packages, silent — no warnings, no tsconfig-reconfiguration messages), and `apps/api`'s test suite (60/60 against this branch's `main`-based state; mocked-Prisma harness, unaffected either way).
+
+**Remaining work**
+
+- The `apps/api` Prisma-generation gap itself (tracked since Milestone 11) is still open — needs either network allowlist changes or a real (non-sandbox) CI environment to resolve, not something fixable from here.
+
 ## Milestone 13 — Org-admin console UI ✅ (this delivery)
 
 **What changed**
