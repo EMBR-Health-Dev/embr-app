@@ -44,7 +44,7 @@ router.get(
       prisma.organization.count(),
     ]);
     const withCounts = await Promise.all(
-      orgs.map(async (org: { id: string }) => ({
+      orgs.map(async (org) => ({
         org,
         count: await prisma.organizationMembership.count({ where: { organizationId: org.id } }),
       })),
@@ -73,7 +73,7 @@ router.get(
   "/organizations/:organizationId",
   requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),
   asyncHandler(async (req, res) => {
-    const org = await organizationService.getOrganization(req.params.organizationId!);
+    const org = await organizationService.getOrganization(req.params.organizationId as string);
     res.status(200).json({ data: org, requestId: req.requestId });
   }),
 );
@@ -88,7 +88,7 @@ router.get(
   validate(organizationMemberQuerySchema, "query"),
   asyncHandler(async (req, res) => {
     const page = await organizationService.listMembers(
-      req.params.organizationId!,
+      req.params.organizationId as string,
       req.query as unknown as OrganizationMemberQuery,
     );
     res.status(200).json({ data: page, requestId: req.requestId });
@@ -101,7 +101,7 @@ router.post(
   validate(inviteMemberSchema),
   asyncHandler(async (req, res) => {
     const invite = await organizationService.inviteMember(
-      req.params.organizationId!,
+      req.params.organizationId as string,
       req.user!.sub,
       req.body as InviteMemberInput,
     );
@@ -132,7 +132,10 @@ router.delete(
   "/organizations/:organizationId/members/:userId",
   requireOrgRole("ORG_ADMIN"),
   asyncHandler(async (req, res) => {
-    await organizationService.revokeMember(req.params.organizationId!, req.params.userId!);
+    await organizationService.revokeMember(
+      req.params.organizationId as string,
+      req.params.userId as string,
+    );
     await writeAuditLog(req, "ORG_MEMBER_REVOKED", req.user!.sub, {
       organizationId: req.params.organizationId,
       revokedUserId: req.params.userId,
@@ -154,7 +157,7 @@ router.get(
   validate(orgTrendsQuerySchema, "query"),
   asyncHandler(async (req, res) => {
     const data = await organizationService.symptomFrequency(
-      req.params.organizationId!,
+      req.params.organizationId as string,
       req.query as unknown as OrgTrendsQuery,
     );
     await writeAuditLog(req, "ORG_AGGREGATE_TRENDS_VIEWED", req.user!.sub, {
