@@ -15,6 +15,7 @@ import {
 } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
+import { requireParam } from "../../lib/params.js";
 import { requireAuth, requireOrgRole, requireRole } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { prisma } from "../../lib/prisma.js";
@@ -73,7 +74,7 @@ router.get(
   "/organizations/:organizationId",
   requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),
   asyncHandler(async (req, res) => {
-    const org = await organizationService.getOrganization(req.params.organizationId as string);
+    const org = await organizationService.getOrganization(requireParam(req, "organizationId"));
     res.status(200).json({ data: org, requestId: req.requestId });
   }),
 );
@@ -88,7 +89,7 @@ router.get(
   validate(organizationMemberQuerySchema, "query"),
   asyncHandler(async (req, res) => {
     const page = await organizationService.listMembers(
-      req.params.organizationId as string,
+      requireParam(req, "organizationId"),
       req.query as unknown as OrganizationMemberQuery,
     );
     res.status(200).json({ data: page, requestId: req.requestId });
@@ -100,13 +101,14 @@ router.post(
   requireOrgRole("ORG_ADMIN"),
   validate(inviteMemberSchema),
   asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
     const invite = await organizationService.inviteMember(
-      req.params.organizationId as string,
+      organizationId,
       req.user!.sub,
       req.body as InviteMemberInput,
     );
     await writeAuditLog(req, "ORG_MEMBER_INVITED", req.user!.sub, {
-      organizationId: req.params.organizationId,
+      organizationId,
       invitedEmail: invite.email,
     });
     res.status(201).json({ data: invite, requestId: req.requestId });
@@ -132,13 +134,12 @@ router.delete(
   "/organizations/:organizationId/members/:userId",
   requireOrgRole("ORG_ADMIN"),
   asyncHandler(async (req, res) => {
-    await organizationService.revokeMember(
-      req.params.organizationId as string,
-      req.params.userId as string,
-    );
+    const organizationId = requireParam(req, "organizationId");
+    const revokedUserId = requireParam(req, "userId");
+    await organizationService.revokeMember(organizationId, revokedUserId);
     await writeAuditLog(req, "ORG_MEMBER_REVOKED", req.user!.sub, {
-      organizationId: req.params.organizationId,
-      revokedUserId: req.params.userId,
+      organizationId,
+      revokedUserId,
     });
     res.status(204).send();
   }),
@@ -156,12 +157,13 @@ router.get(
   requireOrgRole("ORG_ADMIN"),
   validate(orgTrendsQuerySchema, "query"),
   asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
     const data = await organizationService.symptomFrequency(
-      req.params.organizationId as string,
+      organizationId,
       req.query as unknown as OrgTrendsQuery,
     );
     await writeAuditLog(req, "ORG_AGGREGATE_TRENDS_VIEWED", req.user!.sub, {
-      organizationId: req.params.organizationId,
+      organizationId,
     });
     res.status(200).json({ data, requestId: req.requestId });
   }),
