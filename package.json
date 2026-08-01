@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "EMBR — AI-powered perimenopause and menopause health platform",
+  "description": "EMBR \u2014 AI-powered perimenopause and menopause health platform",
   "engines": {
     "node": ">=20.11.0",
     "pnpm": ">=9.0.0"
@@ -47,5 +47,12 @@
     "*.{ts,tsx,md,json,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.18",
+      "sharp": ">=0.35.0",
+      "brace-expansion": ">=2.1.2 <3"
+    }
   }
 }
