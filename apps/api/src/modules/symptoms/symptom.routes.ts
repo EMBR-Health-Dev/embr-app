@@ -8,6 +8,7 @@ import {
 } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
+import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 import { symptomService } from "./symptom.service.js";
 
@@ -37,7 +38,7 @@ router.get(
   "/symptom-logs/:id",
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
-    const log = await symptomService.getById(req.user!.sub, req.params.id as string);
+    const log = await symptomService.getById(req.user!.sub, requireParam(req, "id"));
     res.status(200).json({ data: log, requestId: req.requestId });
   }),
 );
@@ -47,7 +48,7 @@ router.patch(
   validate(idParamSchema, "params"),
   validate(updateSymptomLogSchema),
   asyncHandler(async (req, res) => {
-    const log = await symptomService.update(req.user!.sub, req.params.id as string, req.body);
+    const log = await symptomService.update(req.user!.sub, requireParam(req, "id"), req.body);
     res.status(200).json({ data: log, requestId: req.requestId });
   }),
 );
@@ -56,7 +57,7 @@ router.delete(
   "/symptom-logs/:id",
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
-    await symptomService.delete(req.user!.sub, req.params.id as string);
+    await symptomService.delete(req.user!.sub, requireParam(req, "id"));
     res.status(204).send();
   }),
 );
