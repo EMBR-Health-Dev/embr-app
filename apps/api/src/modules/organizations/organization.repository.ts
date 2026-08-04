@@ -110,34 +110,16 @@ export const organizationRepository = {
       return { cohortSize: 0, categories: [] };
     }
 
+    const dateFilter = occurredAtFilter(query);
+
     const [cohortRows, categoryRows] = await Promise.all([
       prisma.symptomLog.groupBy({
         by: ["userId"],
-        where: {
-          userId: { in: memberUserIds },
-          ...(query.from || query.to
-            ? {
-                occurredAt: {
-                  ...(query.from ? { gte: query.from } : {}),
-                  ...(query.to ? { lte: query.to } : {}),
-                },
-              }
-            : {}),
-        },
+        where: { userId: { in: memberUserIds }, ...dateFilter },
       }),
       prisma.symptomLog.groupBy({
         by: ["category"],
-        where: {
-          userId: { in: memberUserIds },
-          ...(query.from || query.to
-            ? {
-                occurredAt: {
-                  ...(query.from ? { gte: query.from } : {}),
-                  ...(query.to ? { lte: query.to } : {}),
-                },
-              }
-            : {}),
-        },
+        where: { userId: { in: memberUserIds }, ...dateFilter },
         _count: { category: true },
       }),
     ]);
@@ -151,3 +133,23 @@ export const organizationRepository = {
     };
   },
 };
+
+/**
+ * The optional `occurredAt` range filter shared by both groupBy queries
+ * in symptomFrequencyForMembers. Previously the same `from`/`to` spread
+ * logic was copy-pasted verbatim into each query's `where` clause; a
+ * change to one (e.g. switching `to` from inclusive to exclusive) could
+ * silently drift out of sync with the other. Returns `{}` — not
+ * `{ occurredAt: undefined }` — when neither bound is set, so the key is
+ * absent from `where` entirely, matching Prisma's "no filter on this
+ * field" semantics exactly as the inline version did.
+ */
+function occurredAtFilter(query: OrgTrendsQuery): { occurredAt?: { gte?: Date; lte?: Date } } {
+  if (!query.from && !query.to) return {};
+  return {
+    occurredAt: {
+      ...(query.from ? { gte: query.from } : {}),
+      ...(query.to ? { lte: query.to } : {}),
+    },
+  };
+}
