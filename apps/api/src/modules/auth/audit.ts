@@ -25,9 +25,29 @@ export type AuditAction =
   | "ORG_AGGREGATE_TRENDS_VIEWED";
 
 /**
- * Best-effort, append-only security audit trail. Failures here are
- * logged but never thrown — an audit-log write must not be able to
- * fail an otherwise-successful auth operation.
+ * Actions worth a human noticing in a log aggregator / alert rather than
+ * just an "info" line — repeated failures or anomalies rather than
+ * routine activity. Not exhaustive of everything security-relevant (all
+ * of these are audited either way); this only affects log *level*, i.e.
+ * what's worth alerting on without querying the audit_log table.
+ */
+const SECURITY_SENSITIVE_ACTIONS: ReadonlySet<AuditAction> = new Set([
+  "LOGIN_FAILED",
+  "REFRESH_TOKEN_REUSE_DETECTED",
+  "ORG_MEMBER_REVOKED",
+]);
+
+/**
+ * Best-effort, append-only security audit trail. The DB write here is
+ * never allowed to fail an otherwise-successful auth/org operation, so
+ * failures are logged, not thrown.
+ *
+ * The structured log line below is deliberately independent of that DB
+ * write (emitted first, unconditionally) rather than folded into it: a
+ * log aggregator can alert on it (e.g. a spike in LOGIN_FAILED or
+ * REFRESH_TOKEN_REUSE_DETECTED) without querying Postgres, and — more
+ * importantly — that signal must not go missing on exactly the kind of
+ * database blip that would also make the audit_log write below fail.
  */
 export async function writeAuditLog(
   req: Request,
@@ -35,6 +55,9 @@ export async function writeAuditLog(
   userId: string | null,
   metadata?: Record<string, unknown>,
 ) {
+  const level = SECURITY_SENSITIVE_ACTIONS.has(action) ? "warn" : "info";
+  logger[level]({ action, userId, requestId: req.requestId, ...metadata }, "audit event");
+
   try {
     await prisma.auditLog.create({
       data: {
