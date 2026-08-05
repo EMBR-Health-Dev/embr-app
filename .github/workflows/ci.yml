@@ -101,10 +101,16 @@ jobs:
       - name: Dependency audit (pnpm audit)
         run: pnpm audit --audit-level high
         continue-on-error: false
+      # gitleaks/gitleaks-action@v2 requires a paid GITLEAKS_LICENSE for
+      # organization-owned repos (this one) as of its v2 licensing change --
+      # the underlying gitleaks scanner itself is still free/open-source
+      # (MIT), only that convenience wrapper started gating on a commercial
+      # license. gacts/gitleaks wraps the same scanner without that gate.
+      # If a GITLEAKS_LICENSE secret gets added later (e.g. for the PR-
+      # commenting/SARIF features the official action adds), this can
+      # switch back.
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: gacts/gitleaks@v1
 
   build:
     name: Build All Apps
