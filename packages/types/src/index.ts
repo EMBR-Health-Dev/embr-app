@@ -151,6 +151,16 @@ export interface OrganizationDto {
   createdAt: string;
 }
 
+/** What GET /organizations/me returns — how the frontend discovers
+ * which organization(s) the current user belongs to, and as what
+ * role, without already knowing an organizationId. */
+export interface MyOrganizationMembershipDto {
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+  role: OrgRole;
+}
+
 /** Roster entry — deliberately just account + org-role metadata, never
  * anything from that member's SymptomLog/CycleEntry records. */
 export interface OrganizationMemberDto {

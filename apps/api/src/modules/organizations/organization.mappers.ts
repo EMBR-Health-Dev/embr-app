@@ -9,6 +9,7 @@ import type {
   OrganizationInviteDto,
   OrganizationMemberDto,
   OrgRole,
+  MyOrganizationMembershipDto,
 } from "@embr/types";
 
 export function toOrganizationDto(org: Organization, memberCount: number): OrganizationDto {
@@ -40,5 +41,16 @@ export function toOrganizationInviteDto(invite: OrganizationInvite): Organizatio
     email: invite.email,
     role: invite.role as OrgRole,
     expiresAt: invite.expiresAt.toISOString(),
+  };
+}
+
+export function toMyOrganizationMembershipDto(
+  membership: OrganizationMembership & { organization: Organization },
+): MyOrganizationMembershipDto {
+  return {
+    organizationId: membership.organization.id,
+    organizationName: membership.organization.name,
+    organizationSlug: membership.organization.slug,
+    role: membership.role as OrgRole,
   };
 }

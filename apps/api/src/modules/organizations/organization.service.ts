@@ -12,6 +12,7 @@ import type {
   OrgSymptomFrequencyDto,
   PaginatedResponse,
   SymptomCategory,
+  MyOrganizationMembershipDto,
 } from "@embr/types";
 import { env } from "../../config/env.js";
 import { organizationRepository } from "./organization.repository.js";
@@ -19,12 +20,18 @@ import {
   toOrganizationDto,
   toOrganizationInviteDto,
   toOrganizationMemberDto,
+  toMyOrganizationMembershipDto,
 } from "./organization.mappers.js";
 import { authRepository } from "../auth/auth.repository.js";
 import { generateOpaqueToken, hashToken } from "../auth/tokens.js";
 import { sendOrganizationInviteEmail } from "../auth/mailer.js";
 
 export const organizationService = {
+  async getMyMemberships(userId: string): Promise<MyOrganizationMembershipDto[]> {
+    const memberships = await organizationRepository.findMembershipsForUser(userId);
+    return memberships.map(toMyOrganizationMembershipDto);
+  },
+
   async createOrganization(input: CreateOrganizationInput): Promise<OrganizationDto> {
     const existing = await organizationRepository.findOrganizationBySlug(input.slug);
     if (existing) {

@@ -224,21 +224,27 @@ vi.mock("../src/lib/prisma.js", () => ({
         ({
           where,
           skip = 0,
-          take = 20,
+          take,
         }: {
-          where: { organizationId: string };
+          where: { organizationId?: string; userId?: string };
           skip?: number;
           take?: number;
         }) => {
-          const items = state.memberships
-            .filter((m) => m.organizationId === where.organizationId)
-            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-            .slice(skip, skip + take)
-            .map((m) => {
-              const user = state.users.find((u) => u.id === m.userId)!;
-              return { ...m, user: { id: user.id, email: user.email } };
-            });
-          return Promise.resolve(items);
+          let items = state.memberships;
+          if (where.organizationId !== undefined) {
+            items = items.filter((m) => m.organizationId === where.organizationId);
+          }
+          if (where.userId !== undefined) {
+            items = items.filter((m) => m.userId === where.userId);
+          }
+          items = items.slice().sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+          if (take !== undefined) items = items.slice(skip, skip + take);
+          const mapped = items.map((m) => {
+            const user = state.users.find((u) => u.id === m.userId)!;
+            const organization = state.organizations.find((o) => o.id === m.organizationId)!;
+            return { ...m, user: { id: user.id, email: user.email }, organization };
+          });
+          return Promise.resolve(mapped);
         },
       ),
       count: vi.fn(({ where }: { where: { organizationId: string } }) =>
@@ -477,6 +483,62 @@ describe("org invite + accept flow", () => {
       .post("/organizations/invites/accept")
       .send({ token: "not-a-real-token" });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("GET /organizations/me", () => {
+  it("returns an empty list for a user with no memberships", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "nomember@embr.health");
+
+    const res = await agent.get("/organizations/me");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  it("returns each organization the user belongs to, with role", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-me@embr.health");
+    promoteToAdmin("ops-me@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops-me@embr.health", password: VALID_PASSWORD });
+    const orgARes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Org A", slug: "org-a-me" });
+    const orgBRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Org B", slug: "org-b-me" });
+
+    const memberAgent = request.agent(app);
+    const memberId = await registerAndLogin(memberAgent, "multiorg@embr.health");
+    addMembership(orgARes.body.data.id, memberId, "ORG_ADMIN");
+    addMembership(orgBRes.body.data.id, memberId, "ORG_MEMBER");
+
+    const res = await memberAgent.get("/organizations/me");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      {
+        organizationId: orgARes.body.data.id,
+        organizationName: "Org A",
+        organizationSlug: "org-a-me",
+        role: "ORG_ADMIN",
+      },
+      {
+        organizationId: orgBRes.body.data.id,
+        organizationName: "Org B",
+        organizationSlug: "org-b-me",
+        role: "ORG_MEMBER",
+      },
+    ]);
+  });
+
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/organizations/me");
+    expect(res.status).toBe(401);
   });
 });
 

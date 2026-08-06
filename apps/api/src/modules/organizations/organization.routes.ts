@@ -70,6 +70,20 @@ router.post(
   }),
 );
 
+/**
+ * How the frontend discovers which organization(s) the current user
+ * belongs to, and as what role, without already knowing an
+ * organizationId — registered before the :organizationId route below
+ * so the literal "me" isn't swallowed by that param instead.
+ */
+router.get(
+  "/organizations/me",
+  asyncHandler(async (req, res) => {
+    const memberships = await organizationService.getMyMemberships(req.user!.sub);
+    res.status(200).json({ data: memberships, requestId: req.requestId });
+  }),
+);
+
 router.get(
   "/organizations/:organizationId",
   requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),

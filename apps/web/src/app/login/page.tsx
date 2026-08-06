@@ -20,8 +20,9 @@ function ReasonBanner() {
   );
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,7 +49,12 @@ export default function LoginPage() {
     try {
       await api.auth.login(parsed.data);
       await refresh();
-      router.push("/dashboard");
+      // Only ever follow a same-origin, path-relative next — anything
+      // else (a full URL, protocol-relative "//evil.com") is dropped in
+      // favor of the default, since this value round-trips through a
+      // query param an attacker could craft.
+      const next = searchParams.get("next");
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
     } catch (err) {
       // Deliberately the same message shape the API itself returns for
       // both "wrong password" and "no such account" — no reason for the
@@ -66,11 +72,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <h1 className="font-display text-3xl text-navy">Welcome back</h1>
 
-        <Suspense fallback={null}>
-          <div className="mt-6">
-            <ReasonBanner />
-          </div>
-        </Suspense>
+        <div className="mt-6">
+          <ReasonBanner />
+        </div>
 
         <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-4" noValidate>
           <Field
@@ -105,5 +109,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

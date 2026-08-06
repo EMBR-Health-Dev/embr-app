@@ -2,6 +2,10 @@ import type {
   AuditLogDto,
   AuthSessionResponse,
   DeviceSessionDto,
+  MyOrganizationMembershipDto,
+  OrganizationMemberDto,
+  OrganizationInviteDto,
+  OrgSymptomFrequencyDto,
   PaginatedResponse,
   UserDto,
 } from "@embr/types";
@@ -37,5 +41,30 @@ export const api = {
       action?: string;
       userId?: string;
     }) => apiFetch<PaginatedResponse<AuditLogDto>>("/admin/audit-logs", { query }),
+  },
+
+  organizations: {
+    my: () => apiFetch<MyOrganizationMembershipDto[]>("/organizations/me"),
+
+    members: (organizationId: string, query?: { page?: number; pageSize?: number }) =>
+      apiFetch<PaginatedResponse<OrganizationMemberDto>>(
+        `/organizations/${organizationId}/members`,
+        { query },
+      ),
+
+    inviteMember: (organizationId: string, input: { email: string; role?: string }) =>
+      apiFetch<OrganizationInviteDto>(`/organizations/${organizationId}/invites`, {
+        method: "POST",
+        body: input,
+      }),
+
+    revokeMember: (organizationId: string, userId: string) =>
+      apiFetch<void>(`/organizations/${organizationId}/members/${userId}`, { method: "DELETE" }),
+
+    symptomFrequency: (organizationId: string, query?: { from?: string; to?: string }) =>
+      apiFetch<OrgSymptomFrequencyDto>(
+        `/organizations/${organizationId}/trends/symptom-frequency`,
+        { query },
+      ),
   },
 };

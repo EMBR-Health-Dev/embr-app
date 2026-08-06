@@ -24,6 +24,17 @@ export const organizationRepository = {
     return prisma.organizationMembership.count({ where: { organizationId } });
   },
 
+  /** A user's own organization memberships, with the org's basic
+   * metadata (name/slug) — how the frontend discovers "which org am I
+   * in, and as what role" without already knowing an organizationId. */
+  findMembershipsForUser(userId: string) {
+    return prisma.organizationMembership.findMany({
+      where: { userId },
+      include: { organization: true },
+      orderBy: { createdAt: "asc" },
+    });
+  },
+
   findMembership(organizationId: string, userId: string) {
     return prisma.organizationMembership.findUnique({
       where: { organizationId_userId: { organizationId, userId } },

@@ -68,4 +68,9 @@ export const api = {
     cycleLength: (query?: { from?: string; to?: string }) =>
       apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
   },
+
+  organizations: {
+    acceptInvite: (token: string) =>
+      apiFetch<void>("/organizations/invites/accept", { method: "POST", body: { token } }),
+  },
 };
