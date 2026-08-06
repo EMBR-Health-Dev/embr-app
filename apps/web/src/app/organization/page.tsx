@@ -8,6 +8,7 @@ import type {
   OrganizationDto,
   OrganizationMemberDto,
   OrgSymptomFrequencyDto,
+  SsoConnectionDto,
 } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -52,6 +53,17 @@ export default function OrganizationPage() {
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
 
+  const [ssoConnection, setSsoConnection] = useState<SsoConnectionDto | null>(null);
+  const [ssoLoading, setSsoLoading] = useState(true);
+  const [ssoIssuerUrl, setSsoIssuerUrl] = useState("");
+  const [ssoClientId, setSsoClientId] = useState("");
+  const [ssoClientSecret, setSsoClientSecret] = useState("");
+  const [ssoDomain, setSsoDomain] = useState("");
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [ssoError, setSsoError] = useState<string | null>(null);
+  const [ssoSuccess, setSsoSuccess] = useState<string | null>(null);
+  const [ssoSaving, setSsoSaving] = useState(false);
+
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
@@ -90,6 +102,21 @@ export default function OrganizationPage() {
       .symptomFrequency(selectedOrgId, { from: daysAgoIso(TRENDS_WINDOW_DAYS) })
       .then(setFrequency)
       .finally(() => setTrendsLoading(false));
+
+    setSsoLoading(true);
+    api.organizations.sso
+      .get(selectedOrgId)
+      .then((connection) => {
+        setSsoConnection(connection);
+        if (connection) {
+          setSsoIssuerUrl(connection.issuerUrl);
+          setSsoClientId(connection.clientId);
+          setSsoDomain(connection.allowedEmailDomain);
+          setSsoEnabled(connection.enabled);
+        }
+      })
+      .catch(() => setSsoConnection(null))
+      .finally(() => setSsoLoading(false));
   }, [selectedOrgId]);
 
   async function revokeMember(userId: string) {
@@ -119,9 +146,38 @@ export default function OrganizationPage() {
       setInviteEmail("");
       setInviteRole("ORG_MEMBER");
     } catch (err) {
-      setInviteError(err instanceof ApiError ? err.message : "Couldn't send that invite — try again.");
+      setInviteError(
+        err instanceof ApiError ? err.message : "Couldn't send that invite — try again.",
+      );
     } finally {
       setInviting(false);
+    }
+  }
+
+  async function saveSso(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedOrgId) return;
+    setSsoError(null);
+    setSsoSuccess(null);
+    setSsoSaving(true);
+    try {
+      const connection = await api.organizations.sso.upsert(selectedOrgId, {
+        issuerUrl: ssoIssuerUrl.trim(),
+        clientId: ssoClientId.trim(),
+        clientSecret: ssoClientSecret,
+        allowedEmailDomain: ssoDomain.trim(),
+        enabled: ssoEnabled,
+      });
+      setSsoConnection(connection);
+      // The secret is never echoed back — clearing it here (rather than
+      // leaving whatever was typed) matches that it's genuinely gone
+      // from the client the moment the request completes.
+      setSsoClientSecret("");
+      setSsoSuccess("SSO connection saved.");
+    } catch (err) {
+      setSsoError(err instanceof ApiError ? err.message : "Couldn't save that — try again.");
+    } finally {
+      setSsoSaving(false);
     }
   }
 
@@ -272,6 +328,67 @@ export default function OrganizationPage() {
         )}
       </section>
 
+      {/* Single sign-on. */}
+      <section className="mt-8 rounded border border-navy/10 p-5">
+        <h2 className="font-display text-lg text-navy">Single sign-on</h2>
+        <p className="mt-1 text-sm text-navy/60">
+          Let members at your email domain log in through your identity provider instead of a
+          password. Password login keeps working either way — this doesn&apos;t replace it.
+        </p>
+
+        {ssoLoading ? (
+          <p className="mt-4 text-sm text-navy/50">Loading…</p>
+        ) : (
+          <form onSubmit={saveSso} className="mt-4 flex flex-col gap-4" noValidate>
+            <Field
+              label="Issuer URL"
+              type="url"
+              placeholder="https://your-idp.example.com"
+              value={ssoIssuerUrl}
+              onChange={(e) => setSsoIssuerUrl(e.target.value)}
+              required
+            />
+            <Field
+              label="Client ID"
+              value={ssoClientId}
+              onChange={(e) => setSsoClientId(e.target.value)}
+              required
+            />
+            <Field
+              label="Client secret"
+              type="password"
+              placeholder={ssoConnection ? "Re-enter to update" : undefined}
+              value={ssoClientSecret}
+              onChange={(e) => setSsoClientSecret(e.target.value)}
+              required
+            />
+            <Field
+              label="Allowed email domain"
+              placeholder="acme.com"
+              value={ssoDomain}
+              onChange={(e) => setSsoDomain(e.target.value)}
+              required
+            />
+            <label className="flex items-center gap-2 text-sm text-navy">
+              <input
+                type="checkbox"
+                checked={ssoEnabled}
+                onChange={(e) => setSsoEnabled(e.target.checked)}
+                className="h-4 w-4 rounded-sm border-navy/30"
+              />
+              Enabled
+            </label>
+
+            {ssoError && <p className="text-sm text-red-600">{ssoError}</p>}
+            {ssoSuccess && <p className="text-sm font-medium text-teal">{ssoSuccess}</p>}
+
+            <Button type="submit" disabled={ssoSaving} className="self-start">
+              {ssoSaving ? "Saving…" : ssoConnection ? "Update connection" : "Save connection"}
+            </Button>
+          </form>
+        )}
+      </section>
+
       {/* Aggregate trends — anonymized, cohort-level only. */}
       <section className="mt-10">
         <h2 className="font-display text-lg text-navy">
@@ -285,8 +402,8 @@ export default function OrganizationPage() {
         ) : !frequency || frequency.suppressed ? (
           <p className="mt-4 text-sm text-navy/50">
             Not enough people have logged symptoms in this window yet to show a trend without
-            risking identifying any one person. This isn&apos;t about your organization being
-            too small overall — it&apos;s about how many members have actually logged something
+            risking identifying any one person. This isn&apos;t about your organization being too
+            small overall — it&apos;s about how many members have actually logged something
             recently.
           </p>
         ) : frequency.categories.length === 0 ? (

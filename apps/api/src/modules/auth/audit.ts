@@ -22,7 +22,11 @@ export type AuditAction =
   | "ORG_MEMBER_INVITED"
   | "ORG_MEMBER_JOINED"
   | "ORG_MEMBER_REVOKED"
-  | "ORG_AGGREGATE_TRENDS_VIEWED";
+  | "ORG_AGGREGATE_TRENDS_VIEWED"
+  | "SSO_CONNECTION_CONFIGURED"
+  | "SSO_USER_PROVISIONED"
+  | "SSO_LOGIN_SUCCEEDED"
+  | "SSO_LOGIN_FAILED";
 
 /**
  * Best-effort, append-only security audit trail. Failures here are

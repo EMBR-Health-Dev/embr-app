@@ -192,3 +192,21 @@ export interface OrgSymptomFrequencyDto {
   cohortSize: number;
   categories: Array<{ category: SymptomCategory; count: number }>;
 }
+
+// ---- SSO (Milestone 15) ----
+
+/** Never includes the client secret, encrypted or otherwise — the
+ * frontend only ever needs to know a secret is configured, not its
+ * value (see sso.mappers.ts). */
+export interface SsoConnectionDto {
+  id: string;
+  protocol: "OIDC";
+  issuerUrl: string;
+  clientId: string;
+  hasClientSecret: boolean;
+  allowedEmailDomain: string;
+  enabled: boolean;
+  enforced: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

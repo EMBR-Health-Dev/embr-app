@@ -9,6 +9,7 @@ import type {
   OrganizationMemberDto,
   OrgSymptomFrequencyDto,
   PaginatedResponse,
+  SsoConnectionDto,
   SymptomFrequencyDto,
   SymptomLogDto,
   UserDto,
@@ -80,8 +81,7 @@ export const api = {
     // ahead of /organizations/:organizationId server-side.
     mine: () => apiFetch<MyOrganizationMembershipDto[]>("/organizations/mine"),
 
-    get: (organizationId: string) =>
-      apiFetch<OrganizationDto>(`/organizations/${organizationId}`),
+    get: (organizationId: string) => apiFetch<OrganizationDto>(`/organizations/${organizationId}`),
 
     members: {
       list: (organizationId: string, query?: { page?: number; pageSize?: number }) =>
@@ -97,7 +97,10 @@ export const api = {
     },
 
     invites: {
-      create: (organizationId: string, input: { email: string; role: "ORG_ADMIN" | "ORG_MEMBER" }) =>
+      create: (
+        organizationId: string,
+        input: { email: string; role: "ORG_ADMIN" | "ORG_MEMBER" },
+      ) =>
         apiFetch<OrganizationInviteDto>(`/organizations/${organizationId}/invites`, {
           method: "POST",
           body: input,
@@ -117,5 +120,32 @@ export const api = {
           { query },
         ),
     },
+
+    sso: {
+      get: (organizationId: string) =>
+        apiFetch<SsoConnectionDto | null>(`/organizations/${organizationId}/sso`),
+
+      upsert: (
+        organizationId: string,
+        input: {
+          issuerUrl: string;
+          clientId: string;
+          clientSecret: string;
+          allowedEmailDomain: string;
+          enabled: boolean;
+        },
+      ) =>
+        apiFetch<SsoConnectionDto>(`/organizations/${organizationId}/sso`, {
+          method: "PUT",
+          body: input,
+        }),
+    },
+  },
+
+  sso: {
+    // Not a JSON call — this is a full-page navigation, so the caller
+    // sets window.location.href to this rather than awaiting a
+    // response. Exposed as a plain URL builder for that reason.
+    startUrl: (email: string) => `/api/auth/sso/start?email=${encodeURIComponent(email)}`,
   },
 };

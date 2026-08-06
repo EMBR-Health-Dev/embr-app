@@ -21,6 +21,7 @@ import { exportRouter } from "./modules/export/export.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { trendsRouter } from "./modules/trends/trends.routes.js";
 import { organizationRouter } from "./modules/organizations/organization.routes.js";
+import { ssoRouter } from "./modules/sso/sso.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -76,6 +77,7 @@ export function createApp(): Express {
   app.use(adminRouter);
   app.use(trendsRouter);
   app.use(organizationRouter);
+  app.use(ssoRouter);
 
   // ---- 404 + error handling (must be last) ----
   app.use(notFoundMiddleware());

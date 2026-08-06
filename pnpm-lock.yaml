@@ -137,6 +137,9 @@ importers:
       nodemailer:
         specifier: ^6.9.16
         version: 6.10.1
+      openid-client:
+        specifier: ^6.8.0
+        version: 6.8.4
       pdfkit:
         specifier: ^0.15.0
         version: 0.15.2
@@ -4741,6 +4744,12 @@ packages:
       }
     hasBin: true
 
+  jose@6.2.8:
+    resolution:
+      {
+        integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==,
+      }
+
   joycon@3.1.1:
     resolution:
       {
@@ -5290,6 +5299,12 @@ packages:
     engines: { node: ">=18" }
     hasBin: true
 
+  oauth4webapi@3.8.6:
+    resolution:
+      {
+        integrity: sha512-iwemM91xz8nryHti2yTmg5fhyEMVOkOXwHNqbvcATjyajb5oQxCQzrNOA6uElRHuMhQQTKUyFKV9y/CNyg25BQ==,
+      }
+
   object-assign@4.1.1:
     resolution:
       {
@@ -5406,6 +5421,12 @@ packages:
         integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==,
       }
     engines: { node: ">=18" }
+
+  openid-client@6.8.4:
+    resolution:
+      {
+        integrity: sha512-QSw0BA08piujetEwfZsHoTrDpMEha7GDZDicQqVwX4u0ChCjefvjDB++TZ8BTg76UpwhzIQgdvvfgfl3HpCSAw==,
+      }
 
   optionator@0.9.4:
     resolution:
@@ -9896,6 +9917,8 @@ snapshots:
 
   jiti@2.7.0: {}
 
+  jose@6.2.8: {}
+
   joycon@3.1.1: {}
 
   jpeg-exif@1.1.4: {}
@@ -10194,6 +10217,8 @@ snapshots:
       pathe: 2.0.3
       tinyexec: 1.2.4
 
+  oauth4webapi@3.8.6: {}
+
   object-assign@4.1.1: {}
 
   object-hash@3.0.0: {}
@@ -10264,6 +10289,11 @@ snapshots:
   onetime@7.0.0:
     dependencies:
       mimic-function: 5.0.1
+
+  openid-client@6.8.4:
+    dependencies:
+      jose: 6.2.8
+      oauth4webapi: 3.8.6
 
   optionator@0.9.4:
     dependencies:

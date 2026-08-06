@@ -5,5 +5,8 @@ process.env.DATABASE_URL ??= "postgresql://embr:test@localhost:5432/embr_test?sc
 process.env.REDIS_URL ??= "redis://localhost:6379";
 process.env.JWT_ACCESS_SECRET ??= "test-only-access-secret-do-not-use-in-prod-32ch";
 process.env.JWT_REFRESH_SECRET ??= "test-only-refresh-secret-do-not-use-in-prod-32ch";
+// 32 zero bytes, base64-encoded — fine for tests, never for a real
+// deployment (see env.ts's doc comment on the real key's rotation cost).
+process.env.SSO_ENCRYPTION_KEY ??= Buffer.alloc(32).toString("base64");
 process.env.NODE_ENV = "test";
 process.env.LOG_LEVEL = "fatal";

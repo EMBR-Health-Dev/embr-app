@@ -603,6 +603,96 @@ paths:
               schema: { $ref: "#/components/schemas/OrgSymptomFrequencyDto" }
         "403": { description: "Member, but not ORG_ADMIN" }
         "404": { description: "Org doesn't exist, or the caller isn't a member" }
+  /organizations/{organizationId}/sso:
+    get:
+      summary: Get the organization's SSO connection (ORG_ADMIN only)
+      description: Returns null if no connection is configured yet. Never includes the client secret in any form — only whether one is set.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations, SSO]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The connection, or null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/SsoConnectionDto" }
+                  - type: "null"
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+    put:
+      summary: Configure the organization's SSO connection (ORG_ADMIN only)
+      description: >
+        Full replace, not a partial update — the client secret is always
+        required, even when only e.g. flipping `enabled`, since it's
+        never echoed back by GET for a partial update to omit. Verifies
+        the issuer's OIDC discovery document is reachable before saving;
+        a bad issuer URL or unreachable IdP fails the request rather
+        than silently saving a broken connection.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations, SSO]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [issuerUrl, clientId, clientSecret, allowedEmailDomain]
+              properties:
+                issuerUrl: { type: string, format: uri, description: "Must use https" }
+                clientId: { type: string }
+                clientSecret: { type: string }
+                allowedEmailDomain: { type: string, example: acme.com }
+                enabled: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Connection saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SsoConnectionDto" }
+        "400":
+          {
+            description: "Validation failed, or the issuer's OIDC discovery document couldn't be verified",
+          }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+  /auth/sso/start:
+    get:
+      summary: Begin SP-initiated OIDC login
+      description: >
+        Not a JSON endpoint — hit via a full-page browser navigation.
+        Looks up which organization's SSO connection (if any) governs
+        the given email's domain and 302s to that IdP's authorization
+        endpoint with PKCE, state, and nonce. No connection for the
+        domain (or a disabled one) redirects to
+        `/login?ssoError=sso_not_configured` rather than returning 404
+        JSON — there's no XHR caller here to parse it.
+      tags: [Auth, SSO]
+      parameters:
+        - { name: email, in: query, required: true, schema: { type: string, format: email } }
+      responses:
+        "302": { description: "Redirect to the IdP, or back to /login?ssoError=... on failure" }
+  /auth/sso/callback:
+    get:
+      summary: Complete SP-initiated OIDC login
+      description: >
+        The IdP's redirect target. Validates state/PKCE/nonce (single-use;
+        Redis-backed, ~10 minute TTL), exchanges the code, JIT-provisions
+        the user and org membership if this is their first time, and
+        issues the same session cookies password login would. Every
+        outcome is a redirect — success to `/dashboard`, any failure to
+        `/login?ssoError=...` — never a JSON error response.
+      tags: [Auth, SSO]
+      parameters:
+        - { name: code, in: query, schema: { type: string } }
+        - { name: state, in: query, schema: { type: string } }
+      responses:
+        "302":
+          { description: "Redirect to /dashboard on success, or /login?ssoError=... on failure" }
 components:
   securitySchemes:
     cookieAuth:
@@ -638,6 +728,21 @@ components:
     OrgRole:
       type: string
       enum: [ORG_ADMIN, ORG_MEMBER]
+    SsoConnectionDto:
+      type: object
+      description: Never includes the client secret, encrypted or otherwise — hasClientSecret is all a config UI needs.
+      properties:
+        id: { type: string, format: uuid }
+        protocol: { type: string, enum: [OIDC] }
+        issuerUrl: { type: string, format: uri }
+        clientId: { type: string }
+        hasClientSecret: { type: boolean }
+        allowedEmailDomain: { type: string }
+        enabled: { type: boolean }
+        enforced:
+          { type: boolean, description: "Reserved — not read anywhere yet as of Milestone 15" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     OrganizationDto:
       type: object
       properties:

@@ -218,3 +218,38 @@ export type OrganizationMemberQuery = z.infer<typeof organizationMemberQuerySche
 // per-row cap to design around the way exportRepository needed one.
 export const orgTrendsQuerySchema = trendsQuerySchema;
 export type OrgTrendsQuery = z.infer<typeof orgTrendsQuerySchema>;
+
+// ---- SSO (Milestone 15) ----
+
+export const ssoStartQuerySchema = z.object({
+  email: emailSchema,
+});
+export type SsoStartQuery = z.infer<typeof ssoStartQuerySchema>;
+
+const domainSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3)
+  .max(253)
+  .regex(
+    /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/,
+    "Must be a valid domain, e.g. acme.com",
+  );
+
+// Full-replace PUT, same convention as createOrganizationSchema — the
+// client secret is always required here even when only e.g. flipping
+// `enabled`, since the API never echoes back the existing plaintext
+// secret for a partial update to omit (see sso.mappers.ts).
+export const upsertSsoConnectionSchema = z.object({
+  issuerUrl: z
+    .string()
+    .trim()
+    .url("Must be a valid URL")
+    .refine((v) => v.startsWith("https://"), "Issuer URL must use https"),
+  clientId: z.string().trim().min(1).max(500),
+  clientSecret: z.string().min(1).max(2000),
+  allowedEmailDomain: domainSchema,
+  enabled: z.boolean().default(false),
+});
+export type UpsertSsoConnectionInput = z.infer<typeof upsertSsoConnectionSchema>;
