@@ -42,6 +42,7 @@ const { state, nextId } = vi.hoisted(() => {
         consumedAt: Date | null;
         createdAt: Date;
       }>,
+      auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
     },
     nextId: () => randomUUID(),
   };
@@ -128,7 +129,12 @@ vi.mock("../src/lib/prisma.js", () => ({
       update: vi.fn().mockResolvedValue({}),
     },
     auditLog: {
-      create: vi.fn().mockResolvedValue({}),
+      create: vi.fn(
+        ({ data }: { data: { action: string; userId: string | null; metadata?: unknown } }) => {
+          state.auditLogEntries.push(data);
+          return Promise.resolve({ id: nextId(), ...data });
+        },
+      ),
     },
     symptomLog: {
       create: vi.fn(
@@ -323,6 +329,7 @@ beforeEach(() => {
   state.organizations = [];
   state.memberships = [];
   state.invites = [];
+  state.auditLogEntries = [];
   sentInvites.length = 0;
 });
 
@@ -525,6 +532,66 @@ describe("GET /organizations/:organizationId/members", () => {
 
     const res = await outsiderAgent.get(`/organizations/${organizationId}/members`);
     expect(res.status).toBe(404);
+  });
+
+  // RBAC/audit-log review: unlike a member reading their own data, an
+  // ORG_ADMIN viewing the roster sees other real people's identities
+  // (email, role) -- that's exactly the "who viewed" case an audit trail
+  // exists for, and it previously had none.
+  it("logs ORG_MEMBERS_VIEWED when the roster is read", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-roster@embr.health");
+    promoteToAdmin("ops-roster@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops-roster@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-roster" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLogin(orgAdminAgent, "orgadmin-roster@embr.health");
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+
+    await orgAdminAgent.get(`/organizations/${organizationId}/members`);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "ORG_MEMBERS_VIEWED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { organizationId?: string })?.organizationId).toBe(organizationId);
+    expect(entry?.userId).toBe(orgAdminId);
+  });
+});
+
+// RBAC/audit-log review: this platform-admin listing was inconsistent with
+// its siblings -- /admin/users and /admin/audit-logs both log
+// ADMIN_VIEWED_* already, this one didn't.
+describe("GET /organizations", () => {
+  it("logs ADMIN_VIEWED_ORGANIZATIONS when a platform admin lists all organizations", async () => {
+    const app = createApp();
+    const adminAgent = request.agent(app);
+    const adminId = await registerAndLogin(adminAgent, "ops-list@embr.health");
+    promoteToAdmin("ops-list@embr.health");
+    await adminAgent
+      .post("/auth/login")
+      .send({ email: "ops-list@embr.health", password: VALID_PASSWORD });
+
+    const res = await adminAgent.get("/organizations");
+    expect(res.status).toBe(200);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "ADMIN_VIEWED_ORGANIZATIONS");
+    expect(entry).toBeDefined();
+    expect(entry?.userId).toBe(adminId);
+  });
+
+  it("is not accessible to a non-admin member", async () => {
+    const app = createApp();
+    const memberAgent = request.agent(app);
+    await registerAndLogin(memberAgent, "not-admin@embr.health");
+
+    const res = await memberAgent.get("/organizations");
+    expect(res.status).toBe(403);
   });
 });
 

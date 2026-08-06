@@ -25,6 +25,7 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
     },
     // idParamSchema requires a real UUID shape, so fixture ids can't be
     // plain incrementing strings the way earlier tests used them.
@@ -97,7 +98,12 @@ vi.mock("../src/lib/prisma.js", () => ({
       update: vi.fn().mockResolvedValue({}),
     },
     auditLog: {
-      create: vi.fn().mockResolvedValue({}),
+      create: vi.fn(
+        ({ data }: { data: { action: string; userId: string | null; metadata?: unknown } }) => {
+          state.auditLogEntries.push(data);
+          return Promise.resolve({ id: nextId(), ...data });
+        },
+      ),
     },
     symptomLog: {
       create: vi.fn(
@@ -178,6 +184,7 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 beforeEach(() => {
   state.users = [];
   state.logs = [];
+  state.auditLogEntries = [];
 });
 
 describe("POST /symptom-logs", () => {
@@ -315,5 +322,61 @@ describe("ownership scoping on single-resource routes", () => {
 
     const getRes = await agent.get(`/symptom-logs/${logId}`);
     expect(getRes.status).toBe(404);
+  });
+});
+
+// RBAC/audit-log coverage review: symptom logs are personal health data,
+// and create/update/delete previously had no audit trail at all (unlike
+// exports and admin views, which did). Deliberately not asserting on
+// GET/list here -- a user reading their own data on every page load isn't
+// the "who viewed/edited/deleted someone's record" case an audit trail
+// exists for; the mutations are.
+describe("audit log coverage for symptom log mutations", () => {
+  it("logs SYMPTOM_LOG_CREATED on create", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-create@embr.health");
+
+    const res = await agent
+      .post("/symptom-logs")
+      .send({ category: "FATIGUE", severity: "MILD", occurredAt: new Date().toISOString() });
+
+    const entry = state.auditLogEntries.find((e) => e.action === "SYMPTOM_LOG_CREATED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { symptomLogId?: string })?.symptomLogId).toBe(res.body.data.id);
+  });
+
+  it("logs SYMPTOM_LOG_UPDATED on update", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-update@embr.health");
+    const createRes = await agent
+      .post("/symptom-logs")
+      .send({ category: "FATIGUE", severity: "MILD", occurredAt: new Date().toISOString() });
+
+    await agent.patch(`/symptom-logs/${createRes.body.data.id}`).send({ severity: "SEVERE" });
+
+    const entry = state.auditLogEntries.find((e) => e.action === "SYMPTOM_LOG_UPDATED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { symptomLogId?: string })?.symptomLogId).toBe(
+      createRes.body.data.id,
+    );
+  });
+
+  it("logs SYMPTOM_LOG_DELETED on delete", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-delete@embr.health");
+    const createRes = await agent
+      .post("/symptom-logs")
+      .send({ category: "FATIGUE", severity: "MILD", occurredAt: new Date().toISOString() });
+
+    await agent.delete(`/symptom-logs/${createRes.body.data.id}`);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "SYMPTOM_LOG_DELETED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { symptomLogId?: string })?.symptomLogId).toBe(
+      createRes.body.data.id,
+    );
   });
 });

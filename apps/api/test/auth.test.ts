@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
+import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 
 // vi.mock(...) below is hoisted above all other top-level code in this
@@ -7,7 +8,6 @@ import { createApp } from "../src/app.js";
 // vi.hoisted() — a plain `let` declared further down would be accessed
 // before initialization once hoisting happens.
 const { state, nextId } = vi.hoisted(() => {
-  let idCounter = 0;
   return {
     state: {
       users: [] as Array<{
@@ -30,8 +30,9 @@ const { state, nextId } = vi.hoisted(() => {
         replacedBySessionId: string | null;
         createdAt: Date;
       }>,
+      auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
     },
-    nextId: () => `id-${++idCounter}`,
+    nextId: () => randomUUID(),
   };
 });
 
@@ -130,7 +131,12 @@ vi.mock("../src/lib/prisma.js", () => ({
       update: vi.fn().mockResolvedValue({}),
     },
     auditLog: {
-      create: vi.fn().mockResolvedValue({}),
+      create: vi.fn(
+        ({ data }: { data: { action: string; userId: string | null; metadata?: unknown } }) => {
+          state.auditLogEntries.push(data);
+          return Promise.resolve({ id: nextId(), ...data });
+        },
+      ),
     },
     $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
       // Fake tx object reuses the same mocked model methods above.
@@ -151,6 +157,7 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 beforeEach(() => {
   state.users = [];
   state.sessions = [];
+  state.auditLogEntries = [];
 });
 
 describe("POST /auth/register", () => {
@@ -273,6 +280,28 @@ describe("CSRF protection", () => {
 
     const res = await agent.post("/auth/logout").set("x-csrf-token", csrfCookie);
     expect(res.status).toBe(204);
+  });
+});
+
+describe("DELETE /auth/sessions/:id", () => {
+  it("logs SESSION_REVOKED, matching the existing LOGOUT/LOGOUT_ALL coverage", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "revoke@embr.health");
+    const csrfCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_csrf="))!
+      .split(";")[0]
+      .split("=")[1];
+
+    const sessionsRes = await agent.get("/auth/sessions");
+    const sessionId = sessionsRes.body.data[0].id;
+
+    const res = await agent.delete(`/auth/sessions/${sessionId}`).set("x-csrf-token", csrfCookie);
+    expect(res.status).toBe(204);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "SESSION_REVOKED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { sessionId?: string })?.sessionId).toBe(sessionId);
   });
 });
 

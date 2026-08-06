@@ -26,6 +26,7 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
     },
     nextId: () => randomUUID(),
   };
@@ -96,7 +97,12 @@ vi.mock("../src/lib/prisma.js", () => ({
       update: vi.fn().mockResolvedValue({}),
     },
     auditLog: {
-      create: vi.fn().mockResolvedValue({}),
+      create: vi.fn(
+        ({ data }: { data: { action: string; userId: string | null; metadata?: unknown } }) => {
+          state.auditLogEntries.push(data);
+          return Promise.resolve({ id: nextId(), ...data });
+        },
+      ),
     },
     cycleEntry: {
       upsert: vi.fn(
@@ -186,6 +192,7 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 beforeEach(() => {
   state.users = [];
   state.entries = [];
+  state.auditLogEntries = [];
 });
 
 describe("POST /cycle-entries", () => {
@@ -279,5 +286,57 @@ describe("ownership scoping", () => {
 
     const getRes = await agent.get(`/cycle-entries/${entryId}`);
     expect(getRes.status).toBe(404);
+  });
+});
+
+// RBAC/audit-log coverage review: cycle entries are personal health data
+// and previously had no audit trail on create/update/delete at all. See
+// the matching note in symptom.test.ts for why GET/list is deliberately
+// not covered here.
+describe("audit log coverage for cycle entry mutations", () => {
+  it("logs CYCLE_ENTRY_UPSERTED on create", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-cycle-create@embr.health");
+
+    const res = await agent.post("/cycle-entries").send({ date: "2026-08-01", flow: "MEDIUM" });
+
+    const entry = state.auditLogEntries.find((e) => e.action === "CYCLE_ENTRY_UPSERTED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { cycleEntryId?: string })?.cycleEntryId).toBe(res.body.data.id);
+  });
+
+  it("logs CYCLE_ENTRY_UPDATED on update", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-cycle-update@embr.health");
+    const createRes = await agent
+      .post("/cycle-entries")
+      .send({ date: "2026-08-02", flow: "LIGHT" });
+
+    await agent.patch(`/cycle-entries/${createRes.body.data.id}`).send({ flow: "HEAVY" });
+
+    const entry = state.auditLogEntries.find((e) => e.action === "CYCLE_ENTRY_UPDATED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { cycleEntryId?: string })?.cycleEntryId).toBe(
+      createRes.body.data.id,
+    );
+  });
+
+  it("logs CYCLE_ENTRY_DELETED on delete", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-cycle-delete@embr.health");
+    const createRes = await agent
+      .post("/cycle-entries")
+      .send({ date: "2026-08-03", flow: "LIGHT" });
+
+    await agent.delete(`/cycle-entries/${createRes.body.data.id}`);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "CYCLE_ENTRY_DELETED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { cycleEntryId?: string })?.cycleEntryId).toBe(
+      createRes.body.data.id,
+    );
   });
 });
