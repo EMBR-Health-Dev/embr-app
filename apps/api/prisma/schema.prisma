@@ -226,8 +226,9 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships OrganizationMembership[]
-  invites     OrganizationInvite[]
+  memberships   OrganizationMembership[]
+  invites       OrganizationInvite[]
+  ssoConnection OrganizationSsoConnection?
 
   @@map("organizations")
 }
@@ -280,4 +281,49 @@ model OrganizationInvite {
   @@index([organizationId])
   @@index([email])
   @@map("organization_invites")
+}
+
+// ---- SSO (Milestone 15) ----
+//
+// OIDC-only for now (see docs/MILESTONES.md Milestone 15 for why SAML
+// isn't in scope yet) and coexists with password login rather than
+// replacing it — `enforced` exists so a later milestone can add
+// SSO-only enforcement without another migration, but nothing reads it
+// yet.
+
+enum SsoProtocol {
+  OIDC
+}
+
+/// An organization's configured SSO identity provider connection. One
+/// per organization (not a list) — enterprise customers overwhelmingly
+/// standardize on a single IdP; supporting more later is additive, not
+/// a schema break, if a real customer ever needs it.
+model OrganizationSsoConnection {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  protocol       SsoProtocol  @default(OIDC)
+  /// The IdP's issuer URL (OIDC discovery is done against
+  /// `${issuerUrl}/.well-known/openid-configuration`).
+  issuerUrl String
+  clientId  String
+  /// AES-256-GCM ciphertext, never the plaintext secret — see
+  /// sso.crypto.ts. Reversible (unlike PasswordHash) because the API
+  /// must present this back to the IdP's token endpoint on every login;
+  /// a one-way hash can't work here the way it does for User passwords.
+  encryptedClientSecret String
+  /// Only emails at this domain may authenticate (and be JIT-
+  /// provisioned) through this connection — see sso.service.ts. Without
+  /// this gate, any account the IdP happens to authenticate would be
+  /// able to join the organization, regardless of who it actually
+  /// belongs to.
+  allowedEmailDomain String
+  enabled            Boolean  @default(false)
+  /// Not read anywhere yet — see the file-level note above.
+  enforced  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("organization_sso_connections")
 }

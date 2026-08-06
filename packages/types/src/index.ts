@@ -168,6 +168,17 @@ export interface OrganizationInviteDto {
   expiresAt: string;
 }
 
+/** One row per organization the current user belongs to — lets a user
+ * discover which org(s) they're in and in what role, without already
+ * knowing an organizationId (see GET /organizations/mine). */
+export interface MyOrganizationMembershipDto {
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+  role: OrgRole;
+  joinedAt: string;
+}
+
 /**
  * Cohort-level, anonymized only. `suppressed: true` means the
  * organization's active membership fell below the minimum cohort size
@@ -180,4 +191,22 @@ export interface OrgSymptomFrequencyDto {
   suppressed: boolean;
   cohortSize: number;
   categories: Array<{ category: SymptomCategory; count: number }>;
+}
+
+// ---- SSO (Milestone 15) ----
+
+/** Never includes the client secret, encrypted or otherwise — the
+ * frontend only ever needs to know a secret is configured, not its
+ * value (see sso.mappers.ts). */
+export interface SsoConnectionDto {
+  id: string;
+  protocol: "OIDC";
+  issuerUrl: string;
+  clientId: string;
+  hasClientSecret: boolean;
+  allowedEmailDomain: string;
+  enabled: boolean;
+  enforced: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

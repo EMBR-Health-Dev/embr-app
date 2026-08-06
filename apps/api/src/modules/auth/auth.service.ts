@@ -19,7 +19,7 @@ function requestMeta(req: Request) {
   return { userAgent: req.header("user-agent") ?? null, ipAddress: req.ip ?? null };
 }
 
-async function issueSession(
+export async function issueSession(
   req: Request,
   user: { id: string; email: string; role: "MEMBER" | "ADMIN" },
 ): Promise<{ accessToken: string; refreshToken: string }> {

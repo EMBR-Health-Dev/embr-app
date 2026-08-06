@@ -301,3 +301,95 @@ Found while running a full-repo `pnpm typecheck`/`pnpm lint` audit for the first
 **Remaining work**
 
 - The `apps/api` Prisma-generation gap itself (tracked since Milestone 11) is still open — needs either network allowlist changes or a real (non-sandbox) CI environment to resolve, not something fixable from here.
+
+## Milestone 13 — Org-admin console UI ✅ (this delivery)
+
+**What changed**
+
+- New `GET /organizations/mine` endpoint — the one organization route keyed by the caller's own membership rather than a path param. Every other organization route requires already knowing an `organizationId`; this is what lets a user (most importantly a brand-new `ORG_ADMIN` who just accepted an invite) discover which org(s) they belong to and in what role at all. Registered ahead of `/organizations/:organizationId` in the router — an important ordering detail, since Express matches by registration order and `"mine"` would otherwise be swallowed as an `organizationId` value and 404 rather than match the new route.
+- New `apps/web` `/organization` page: org picker (if the caller administers more than one), roster with invite + revoke, and the Milestone 12 anonymized aggregate-trends view — all backed entirely by endpoints that already existed since Milestone 12 plus the one new lookup above.
+- Dashboard nav now conditionally shows an "Organization" link — fetched once per authenticated load — only for users `GET /organizations/mine` actually shows an `ORG_ADMIN` membership for, rather than linking everyone to a page that would just say "not applicable."
+- The roster view marks the caller's own row ("You") and, matching Milestone 8/10's device-session pattern, only offers "Revoke" on the other rows — revoking your own admin membership from this screen would be a confusing dead end with no undo path.
+
+**Why it changed**
+
+Milestone 12's own "next milestone" note guessed this would land in `apps/admin` — worth correcting here: `ORG_ADMIN` is an `OrgRole` on a regular `User`'s `OrganizationMembership`, granted via `requireOrgRole()`, not the platform-level `Role.ADMIN` that gates `apps/admin` via `requireRole("ADMIN")`. An employer HR contact or insurer account manager is an ordinary EMBR user who happens to administer an org — they log into `apps/web`, the same as any other user, and have no reason to see `apps/admin`'s internal ops console (user list, security audit trail) at all. Building this in `apps/web` isn't a style choice; it's the only placement consistent with the RBAC boundary Milestone 12 already established.
+
+**A verification note for this sandbox**
+
+Same `binaries.prisma.sh` network-allowlist constraint flagged in Milestones 2 and 12: `prisma generate` can't run here, so `apps/api`'s full `tsc --noEmit` still reports the same pre-existing `generated/prisma` module-not-found errors on files this milestone didn't touch — confirmed unchanged by running the same command against `main` before these changes. What was verified clean in this environment: `packages/types`/`packages/validation`/`packages/shared` all rebuild and typecheck; the full `apps/api` test suite (64/64, including 3 new tests for `GET /organizations/mine`) runs green against the mocked-Prisma test harness; `eslint` passes on every new/modified file in both `apps/api` and `apps/web`; and `apps/web`'s `tsc --noEmit` passes clean. `apps/web`'s `next build` itself couldn't complete here — this sandbox has no route to Google Fonts, the same constraint Milestones 4 and 8 already hit — but that's a font-fetch failure unrelated to any code in this milestone, not a build error in the new page.
+
+**Remaining work (explicitly out of scope for M13)**
+
+- No accept-invite UI in `apps/web` yet — an invited user still accepts via the API directly (`POST /organizations/invites/accept`, which the web client now has a method for). This is the other frontend gap Milestone 12 flagged and is a real design surface of its own (a logged-out visitor needs to register/log in first, then have the invite token survive that round trip) — better scoped on its own than folded into this console.
+- No self-service "leave organization" action for a member — only an `ORG_ADMIN` revoking someone else, matching what the API already supports.
+- SSO — the other item Milestone 12 was built to unblock, still not started.
+
+**Next milestone**
+To be scoped from here — candidates: the accept-invite flow flagged above (now the more clearly-scoped of the two remaining frontend gaps), SSO, or closing the still-outstanding Prisma-migrations gap from Milestone 11 if a real deploy is imminent.
+
+## Milestone 14 — Accept-invite flow ✅ (this delivery)
+
+**What changed**
+
+- New `/organizations/accept-invite` page in `apps/web` — the actual target of the link `sendOrganizationInviteEmail` has been sending since Milestone 12 (`${APP_URL}/organizations/accept-invite?token=...`), which until now pointed at a route that didn't exist. Reads `token` from the query string and calls the `POST /organizations/invites/accept` endpoint the web client already had a method for since Milestone 13.
+- Handles all three visitor states: **logged out** — shows a choice of log in / create account rather than immediately failing on a 401, since `/organizations/invites/accept` sits behind the same `requireAuth()` as every other organization route; **logged in** — accepts automatically on load and shows who they joined; **already a member** — the accept endpoint's one legitimate 409 case, shown as a soft confirmation rather than an error.
+- Added `redirect` query param support to `/login` and `/register` so the invite token survives the register-or-login round trip a logged-out visitor has to take: the accept-invite page hands its own URL (with the token still in it) to whichever auth page the visitor picks, both auth pages thread it through to each other (register's "Already have an account?" / login's "Create an account" links) and, for login specifically, land the visitor back on it after a successful session instead of the usual `/dashboard`. New `safeRedirect()` helper in `apps/web/src/lib/` rejects anything that isn't a same-origin relative path — an unvalidated `redirect` param is a textbook open-redirect vector the moment a page starts acting on it.
+- Register's flow doesn't change beyond carrying the param: it still requires email verification before _that_ can happen, but login itself has no such gate (confirmed against `auth.service.ts` — `login()` never checks `emailVerifiedAt`), so a brand-new invitee can register, then log straight in and land back on the invite without waiting on the separate verification email.
+- A fourth visitor state, added after first review: **wrong account** — signed in, but as someone whose email doesn't match who the invite was sent to (`acceptInvite`'s only 403 case). Rather than a dead-end generic error, this offers a one-click "log out and try again" that signs the visitor out and sends them back through `/login?redirect=...` with the same token, so they land right back here once they've signed in as the right person.
+
+**Why it changed**
+
+Milestone 13 flagged this as the more clearly-scoped of its two remaining frontend gaps, and it was actually blocking something live: the invite email has been linking to a 404 since Milestone 12 shipped `inviteMember()`. The redirect-survival design follows directly from `requireAuth()` being applied to _all_ organization routes including `/organizations/invites/accept` (see `organization.routes.ts`'s `router.use("/organizations", requireAuth())`) — there was no version of this feature that could skip the logged-out case.
+
+**A verification note for this sandbox**
+
+No backend files touched this milestone, so the API test suite is an unchanged baseline (ran green, same 64/64 as M13). `packages/types`/`validation`/`shared` rebuild clean; `apps/web`'s `tsc --noEmit` passes with no errors across the whole app (new and pre-existing files alike); `eslint` passes on every new/modified file. Same as Milestones 4, 8, and 13: `apps/web`'s `next build` itself couldn't be verified in this sandbox (no route to Google Fonts) — unrelated to this milestone's code, not attempted as a substitute for the typecheck/lint checks above.
+
+**Remaining work (explicitly out of scope for M14)**
+
+- No self-service "leave organization" action for a member — carried over from Milestone 13, still just an `ORG_ADMIN` revoking someone else.
+- SSO — still not started.
+
+**Next milestone**
+To be scoped from here — candidates: SSO, or the Prisma-migrations gap from Milestone 11 if a real deploy is imminent.
+
+## Milestone 15 — SSO (OIDC, SP-initiated, coexists with password login) ✅ (this delivery)
+
+**Scope decisions, made explicitly before building**
+
+- **OIDC only, not SAML.** Covers the large majority of current enterprise IdPs (Okta, Azure AD/Entra, Google Workspace, Auth0, OneLogin) with far less code and attack surface than SAML (no XML signing, no metadata/cert rotation). `OrganizationSsoConnection.protocol` is an enum specifically so SAML can slot in later behind the same shape, not a redesign.
+- **SP-initiated only, not IdP-initiated.** The visitor starts at EMBR's own login page, not their IdP's app dashboard.
+- **Coexists with password login, doesn't replace it.** Org admins opt in per-org; nothing is enforced. `OrganizationSsoConnection.enforced` exists in the schema (defaulted off, read nowhere) specifically so turning on enforcement later doesn't need another migration.
+
+**What changed**
+
+- New `OrganizationSsoConnection` model (one per organization, not a list — enterprise customers overwhelmingly standardize on a single IdP): issuer URL, client ID, AES-256-GCM-encrypted client secret, allowed email domain, `enabled`/`enforced` flags. Encrypted, not hashed, unlike `User.passwordHash` — the plaintext secret must be recoverable to present to the IdP's token endpoint on every login, which a one-way hash structurally can't support. New `sso.crypto.ts` handles this with a dedicated `SSO_ENCRYPTION_KEY` env var (base64, 32 bytes) — treat it with the same care as the JWT secrets; rotating it invalidates every stored connection's secret.
+- `openid-client` v6 added as a dependency, wrapped in `sso.oidc.ts` rather than used directly elsewhere — isolates the third-party API shape from the rest of the app and gives tests a single, easy mock point.
+- SP-initiated flow: `GET /auth/sso/start?email=...` looks up which org's connection (if any) governs that email's domain, builds a PKCE + state + nonce authorization request, stashes the verifier/nonce in Redis keyed by `state` (single-use, ~10 min TTL via `SSO_STATE_TTL_SECONDS`), and 302s to the IdP. `GET /auth/sso/callback` is the IdP's redirect target: validates state/PKCE/nonce, exchanges the code, and issues the same session cookies password login does (`issueSession` — now exported from `auth.service.ts` rather than staying a private helper, specifically so this could reuse it instead of duplicating session issuance).
+  - Both routes are hit by full-page browser navigation, not `fetch()` — every outcome, success or failure, is a redirect (`/dashboard` or `/login?ssoError=...`), never a JSON error response. This is a deliberate departure from the rest of the API's JSON-everywhere convention, not an oversight.
+  - The registered `redirect_uri` is `${APP_URL}/api/auth/sso/callback` — routed through the web app's own `/api/*` rewrite (see `apps/web/next.config.ts`) rather than the API's bare origin, so the callback's Set-Cookie response lands as an ordinary first-party cookie, identical treatment to every other auth endpoint. Because the actual request arrives at the API after that proxy hop, `sso.routes.ts` reconstructs the exact callback URL from `APP_URL` rather than trusting `req.originalUrl`/`req.get("host")`, which would reflect the internal hop instead.
+- JIT provisioning on first SSO login: creates the `User` if none exists by that email (with a random, never-presented password hash — this account has no password login path unless the person separately completes forgot-password later; see remaining work), upgrades `emailVerifiedAt` if unset (the IdP vouching for the identity is at least as strong evidence as our own unclicked verification link), and auto-joins the organization as `ORG_MEMBER` if not already a member. Domain-gated: an identity outside the connection's `allowedEmailDomain` is rejected even though the visitor typed a matching-domain email to get there — the IdP's actual assertion is what's checked, not what was requested.
+- Org-admin config: `GET`/`PUT /organizations/:organizationId/sso`, `ORG_ADMIN`-gated the same way the rest of the organization routes are. Full-replace `PUT`, not partial — the client secret is always required, even when only flipping `enabled`, since `GET` never echoes it back (`hasClientSecret: boolean` is all the response includes). `PUT` verifies the issuer's OIDC discovery document is reachable before saving, so a typo'd issuer URL fails at config time instead of silently breaking every login attempt through it.
+- Frontend: login page gets a "Continue with SSO" button (reuses whichever email is already typed in the password form above it, rather than a second input) and an `ssoError`-driven banner for the redirect-back failure cases. Org console gets a new "Single sign-on" section alongside the existing roster/invite/trends sections.
+- `docs/openapi.yaml` updated for all three new routes plus `SsoConnectionDto`, matching the M12-follow-up precedent of keeping the spec in sync rather than letting it drift.
+
+**Why the design decisions above**
+
+- Random-unusable-password-hash over making `User.passwordHash` nullable: the nullable-schema version is arguably the "more correct" long-term shape, but it ripples into `changePassword`'s current-password check, `auth.mappers.ts`, and every other place that assumes a hash exists. The random-hash version is a well-established real-world pattern for SSO-provisioned accounts and has zero blast radius on existing auth code. Flagged explicitly below as a known, accepted gap rather than something quietly worked around.
+- `issueSession` exported rather than duplicated: a second, slightly-different implementation of session issuance is exactly the kind of thing that quietly drifts (cookie flags, JWT claims, refresh-token hashing) between the password and SSO paths over time. One implementation, two callers.
+- Domain-gate re-checked at the callback, not just trusted from `/auth/sso/start`'s initial lookup: `/auth/sso/start` only decides which IdP to send the visitor to based on what they typed; it's the callback's job to verify what the IdP actually asserts, since an IdP can authenticate the visitor as a different account than the one implied by the email they originally entered (e.g., picking a different Google account at the consent screen).
+
+**A verification note for this sandbox**
+
+Full monorepo `pnpm typecheck`: 11/12 packages clean; `@embr/api` fails only on the confirmed, pre-existing Prisma-generation sandbox gap (`binaries.prisma.sh` unreachable — same constraint flagged since Milestone 2/11/12 and reconfirmed in the repo-maintenance fix between M12 and M13) — `sso.mappers.ts` shows the identical expected error pattern, nothing new. Full monorepo `pnpm lint`: all 12 packages clean. `apps/api` test suite: 82/82 passing (up from 64 at Milestone 14 — 18 new tests: 14 in `sso.test.ts` covering the config routes and the full start→callback flow with `openid-client` and Redis mocked, 4 in `sso-crypto.test.ts` unit-testing the encryption round-trip, tamper-rejection, and malformed-input handling directly). `apps/web` typecheck and eslint clean. `next build` itself remains unverifiable in this sandbox (no route to Google Fonts) — same unrelated constraint as every prior milestone touching `apps/web`.
+
+**Remaining work (explicitly out of scope for M15)**
+
+- SAML, IdP-initiated flow, SCIM provisioning/deprovisioning, multiple connections per organization, and enforce-only mode are all out of scope by design (see the scope decisions above) — not gaps, deliberate boundaries.
+- An SSO-JIT-provisioned user's random password hash means they could still separately complete forgot-password and gain a working password login alongside SSO. Not a security hole (the reset link still only reaches someone who controls the email inbox) but a product nuance worth a decision later: is a dual login path fine, or should JIT-provisioned accounts have password-login explicitly blocked?
+- `sso.oidc.ts`'s discovery call isn't cached — every login (and every config save) does a fresh round-trip to the IdP's `.well-known/openid-configuration`. Fine for a first cut at realistic pilot-customer volumes; worth a short-TTL per-connection cache if it ever shows up in latency numbers.
+- No self-service "leave organization" action — carried over from Milestone 13/14, still open.
+
+**Next milestone**
+To be scoped from here — candidates: closing the forgot-password-on-SSO-account nuance above, the Prisma-migrations gap from Milestone 11 if a real deploy is imminent, or a genuinely new area (SAML, self-service org-leave, something else) depending on what a real pilot customer surfaces first.
