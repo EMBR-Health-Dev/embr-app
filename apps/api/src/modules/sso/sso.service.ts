@@ -177,6 +177,23 @@ export const ssoService = {
       );
     }
 
+    // The domain check above only constrains which domain the claimed
+    // email is on — it says nothing about whether the IdP actually
+    // confirmed the person authenticating owns that specific address.
+    // An IdP tenant that allows self-service signup with an unconfirmed
+    // email would otherwise let someone claim any address on the
+    // allowed domain, including a real coworker's, and either log into
+    // their existing account or have a fresh one provisioned under it.
+    if (!identity.emailVerified) {
+      await writeAuditLog(req, "SSO_LOGIN_FAILED", null, {
+        reason: "email_not_verified",
+        connectionId: connection.id,
+      });
+      throw AppError.forbidden(
+        "This identity provider did not confirm the account's email address",
+      );
+    }
+
     let user = await authRepository.findUserByEmail(identity.email);
     if (!user) {
       // JIT provisioning. The password hash is a random value never

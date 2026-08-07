@@ -500,6 +500,60 @@ describe("GET /auth/sso/callback", () => {
     expect(state.users.find((u) => u.email === "person@gmail.com")).toBeUndefined();
   });
 
+  it("rejects an identity the IdP did not confirm the email of, even within the allowed domain", async () => {
+    const app = createApp();
+    const org = addOrganization("Acme", "acme");
+    addSsoConnection(org.id, { allowedEmailDomain: "acme.com", enabled: true });
+    // Right domain, but the IdP itself flags this claim as unconfirmed —
+    // e.g. a self-service IdP tenant that lets someone type any email
+    // without proving they own it. The domain check alone wouldn't catch
+    // this: it only constrains *which* domain, not whether the address
+    // was actually verified.
+    oidcState.nextIdentity = {
+      email: "coworker@acme.com",
+      emailVerified: false,
+      subject: "sub-unverified",
+    };
+
+    await startAttempt(app, "coworker@acme.com");
+    const res = await request(app)
+      .get("/auth/sso/callback")
+      .query({ code: "test-code", state: "test-state" });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("http://localhost:3000/login?ssoError=sso_callback_failed");
+    expect(res.headers["set-cookie"]).toBeUndefined();
+    // Specifically: no account gets created or logged into under that
+    // email as a side effect of the rejected attempt, including if one
+    // already existed.
+    expect(state.users.find((u) => u.email === "coworker@acme.com")).toBeUndefined();
+  });
+
+  it("does not log into an existing user's account via an unverified email claim", async () => {
+    const app = createApp();
+    const org = addOrganization("Acme", "acme");
+    addSsoConnection(org.id, { allowedEmailDomain: "acme.com", enabled: true });
+
+    const victimAgent = request.agent(app);
+    await registerAndLogin(victimAgent, "victim@acme.com");
+    // The attacker's IdP session claims the victim's real, already-
+    // registered email — but the IdP itself says it never confirmed it.
+    oidcState.nextIdentity = {
+      email: "victim@acme.com",
+      emailVerified: false,
+      subject: "sub-attacker",
+    };
+
+    await startAttempt(app, "victim@acme.com");
+    const res = await request(app)
+      .get("/auth/sso/callback")
+      .query({ code: "test-code", state: "test-state" });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("http://localhost:3000/login?ssoError=sso_callback_failed");
+    expect(res.headers["set-cookie"]).toBeUndefined();
+  });
+
   it("rejects an unknown or already-used state value", async () => {
     const app = createApp();
     const res = await request(app)
