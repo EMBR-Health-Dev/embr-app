@@ -71,6 +71,24 @@ router.post(
   }),
 );
 
+/**
+ * Every other organization route below requires already knowing the
+ * organizationId — fine for an established integration, but a brand
+ * new ORG_ADMIN who just accepted an invite has no way to learn that
+ * id otherwise. This is the one route keyed by the caller's own
+ * membership instead of a path param. Must stay registered above
+ * "/organizations/:organizationId" or "mine" would be swallowed as an
+ * organizationId value and 404 via requireOrgRole instead of matching
+ * here — order in this file is load-bearing.
+ */
+router.get(
+  "/organizations/mine",
+  asyncHandler(async (req, res) => {
+    const memberships = await organizationService.listMyMemberships(req.user!.sub);
+    res.status(200).json({ data: memberships, requestId: req.requestId });
+  }),
+);
+
 router.get(
   "/organizations/:organizationId",
   requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),

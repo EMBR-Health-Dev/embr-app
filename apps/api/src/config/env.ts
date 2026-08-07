@@ -57,6 +57,30 @@ const apiEnvSchema = z.object({
   // revisit once a real small-org pilot customer surfaces whether it's too
   // strict or too loose in practice.
   ORG_TRENDS_MIN_COHORT_SIZE: z.coerce.number().int().positive().default(5),
+
+  // ---- SSO (Milestone 15) ----
+  // Base64-encoded 32-byte (256-bit) key used to encrypt each
+  // organization's OIDC client secret at rest (see sso.crypto.ts) — a
+  // hash won't do here, unlike passwords, because the plaintext secret
+  // must be recoverable to present to the IdP's token endpoint on every
+  // login. Rotating this key would invalidate every stored secret, so
+  // treat it with the same care as JWT_ACCESS_SECRET.
+  SSO_ENCRYPTION_KEY: z.string().refine((v) => {
+    try {
+      return Buffer.from(v, "base64").length === 32;
+    } catch {
+      return false;
+    }
+  }, "SSO_ENCRYPTION_KEY must be a base64-encoded 32-byte key"),
+  // How long a single SSO login attempt's state/PKCE/nonce (stored in
+  // Redis, keyed by the OAuth `state` value) stays valid — long enough
+  // to cover a slow IdP login prompt (MFA, etc.), short enough that a
+  // stale, unfinished attempt can't be replayed much later.
+  SSO_STATE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(10 * 60),
 });
 
 export const env = loadEnv(apiEnvSchema);

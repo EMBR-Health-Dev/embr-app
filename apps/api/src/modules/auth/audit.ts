@@ -32,6 +32,11 @@ export type AuditAction =
   | "CYCLE_ENTRY_UPSERTED"
   | "CYCLE_ENTRY_UPDATED"
   | "CYCLE_ENTRY_DELETED";
+  | "ORG_AGGREGATE_TRENDS_VIEWED"
+  | "SSO_CONNECTION_CONFIGURED"
+  | "SSO_USER_PROVISIONED"
+  | "SSO_LOGIN_SUCCEEDED"
+  | "SSO_LOGIN_FAILED";
 
 /**
  * Actions worth a human noticing in a log aggregator / alert rather than

@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { registerSchema } from "@embr/validation";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const loginHref = redirectParam
+    ? `/login?redirect=${encodeURIComponent(redirectParam)}`
+    : "/login";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -54,7 +61,10 @@ export default function RegisterPage() {
           We&apos;ve sent a verification link to <span className="font-medium">{email}</span>. Once
           you&apos;ve confirmed it, come back and log in.
         </p>
-        <Link href="/login" className="text-sm font-medium text-teal underline underline-offset-2">
+        <Link
+          href={loginHref}
+          className="text-sm font-medium text-teal underline underline-offset-2"
+        >
           Go to login
         </Link>
       </main>
@@ -99,11 +109,19 @@ export default function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-navy/60">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-teal underline underline-offset-2">
+          <Link href={loginHref} className="font-medium text-teal underline underline-offset-2">
             Log in
           </Link>
         </p>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

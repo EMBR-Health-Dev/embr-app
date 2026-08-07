@@ -6,6 +6,7 @@ import type {
   OrgTrendsQuery,
 } from "@embr/validation";
 import type {
+  MyOrganizationMembershipDto,
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationMemberDto,
@@ -16,6 +17,7 @@ import type {
 import { env } from "../../config/env.js";
 import { organizationRepository } from "./organization.repository.js";
 import {
+  toMyOrganizationMembershipDto,
   toOrganizationDto,
   toOrganizationInviteDto,
   toOrganizationMemberDto,
@@ -32,6 +34,11 @@ export const organizationService = {
     }
     const org = await organizationRepository.createOrganization(input);
     return toOrganizationDto(org, 0);
+  },
+
+  async listMyMemberships(userId: string): Promise<MyOrganizationMembershipDto[]> {
+    const memberships = await organizationRepository.listMembershipsForUser(userId);
+    return memberships.map(toMyOrganizationMembershipDto);
   },
 
   async getOrganization(organizationId: string): Promise<OrganizationDto> {
