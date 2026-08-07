@@ -34,7 +34,7 @@ jobs:
         # gives the restore-verify job below something to fetch without
         # needing AWS credentials of its own, and gives a 7-day local
         # fallback even if the S3 upload step ever silently misconfigures.
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: encrypted-backup
           path: backups/embr-*.dump.gpg
