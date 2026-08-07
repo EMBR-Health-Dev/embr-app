@@ -393,3 +393,14 @@ Full monorepo `pnpm typecheck`: 11/12 packages clean; `@embr/api` fails only on 
 
 **Next milestone**
 To be scoped from here — candidates: closing the forgot-password-on-SSO-account nuance above, the Prisma-migrations gap from Milestone 11 if a real deploy is imminent, or a genuinely new area (SAML, self-service org-leave, something else) depending on what a real pilot customer surfaces first.
+
+## Repo maintenance — fixed a broken merge on `main` (post-Milestone 15)
+
+Found while investigating unrelated work: `main` had two live merge-conflict artifacts from the SSO branch (#43) landing alongside other in-flight work, neither caught by CI apparently because `pnpm install` still succeeded locally against an already-resolved `node_modules` in whatever ran it last —
+
+- `apps/api/src/modules/auth/audit.ts`: the `AuditAction` type was terminated with a semicolon mid-union, leaving several members (including this branch's own `SSO_*` actions) as orphaned, invalid syntax after it. This was a hard parse error — `eslint` and `tsc` both failed outright on the file, and the majority of `apps/api`'s test files failed as a result (anything importing audit.ts transitively). Fixed by merging into one clean union with no duplicates.
+- `apps/api/package.json`: a duplicate `nodemailer` dependency key — `^9.0.3` (a legitimate, already-completed bump found in this file's own history) sitting alongside a stale `^6.9.16` left over from the SSO branch's base. This corrupted `pnpm-lock.yaml` with a duplicate YAML mapping key, which made `pnpm install --frozen-lockfile` fail outright — i.e., a fresh clone or CI run of `pnpm install` was currently broken on `main`. Fixed by removing the stale line and fully regenerating the lockfile (a large diff, mostly cosmetic re-quoting from the regeneration — verified only ~32 real transitive version lines actually changed, all plausible drift).
+
+Also added two indexes prompted by an external review: `AuditLog(createdAt)` (time-range queries) and `Session(expiresAt)` (useful the moment any session-cleanup mechanism exists — none does yet). Schema-only, no behavior change.
+
+**Verification**: full monorepo `pnpm typecheck` (13/13 expected errors, all the confirmed Prisma-generation sandbox gap — see prior entries — spread across a couple more files now that other work has landed, nothing new), full monorepo `pnpm lint` (12/12 clean), `apps/api` test suite (106/111 passing, 5 skipped, 2 failing — both `test/integration/*` files that deliberately require a real Redis instance to exercise the production rate-limit store end-to-end, which this sandbox doesn't have; confirmed via `redis-cli`/`redis-server` both absent).

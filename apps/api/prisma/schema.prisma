@@ -68,6 +68,7 @@ model Session {
   createdAt           DateTime  @default(now())
 
   @@index([userId])
+  @@index([expiresAt])
   @@map("sessions")
 }
 
@@ -119,6 +120,7 @@ model AuditLog {
 
   @@index([userId])
   @@index([action])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
