@@ -13,6 +13,7 @@ import { requestIdMiddleware } from "@embr/shared";
 import { env } from "./config/env.js";
 import { httpLoggerMiddleware } from "./middleware/http-logger.js";
 import { redisRateLimitStore } from "./lib/rate-limit-store.js";
+import { rateLimitExceededHandler } from "./lib/rate-limit-handler.js";
 import { errorHandlerMiddleware, notFoundMiddleware } from "./middleware/error-handler.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
@@ -49,6 +50,7 @@ export function createApp(): Express {
     limit: 300,
     standardHeaders: true,
     legacyHeaders: false,
+    handler: rateLimitExceededHandler,
     store: redisRateLimitStore("rl:global:"),
     skip: () => env.NODE_ENV === "test",
   });
