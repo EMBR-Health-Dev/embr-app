@@ -1,4 +1,4 @@
-import { RedisStore } from "rate-limit-redis";
+import { RedisStore, type RedisReply } from "rate-limit-redis";
 import { redis } from "./redis.js";
 import { env } from "../config/env.js";
 
@@ -32,9 +32,14 @@ export function redisRateLimitStore(prefix: string) {
     return undefined;
   }
   return new RedisStore({
-    // ioredis's call() matches the (command, ...args) => Promise<T>
-    // shape rate-limit-redis's sendCommand expects.
-    sendCommand: (...args: string[]) => redis.call(...args) as Promise<unknown>,
+    // ioredis's call() has no rest-parameter overload matching an
+    // arbitrary-length spread — only fixed (command) and
+    // (command, args[]) forms — so split the incoming args instead of
+    // spreading them, and cast to RedisReply (boolean|number|string|
+    // Data[]) rather than `unknown`, matching what SendCommandFn
+    // actually declares.
+    sendCommand: (...args: string[]) =>
+      redis.call(args[0] as string, args.slice(1)) as Promise<RedisReply>,
     prefix,
   });
 }

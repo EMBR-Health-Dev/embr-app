@@ -1,8 +1,8 @@
 import rateLimit from "express-rate-limit";
-import { AppError, ErrorCode } from "@embr/shared";
-import type { NextFunction, Request, Response } from "express";
+import type { Request } from "express";
 import { env } from "../../config/env.js";
 import { redisRateLimitStore } from "../../lib/rate-limit-store.js";
+import { rateLimitExceededHandler } from "../../lib/rate-limit-handler.js";
 
 /**
  * The global limiter in app.ts is a backstop for the whole API; brute-
@@ -11,15 +11,6 @@ import { redisRateLimitStore } from "../../lib/rate-limit-store.js";
  * a NAT trying the *same* account (keyed by email+IP, not IP alone,
  * where the endpoint takes an email).
  */
-function authRateLimitHandler(_req: Request, _res: Response, next: NextFunction) {
-  next(
-    new AppError({
-      code: ErrorCode.RATE_LIMITED,
-      message: "Too many requests — please try again later",
-    }),
-  );
-}
-
 function keyByEmailAndIp(req: Request): string {
   const email = typeof req.body?.email === "string" ? req.body.email.toLowerCase() : "unknown";
   return `${req.ip}:${email}`;
@@ -42,7 +33,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: keyByEmailAndIp,
-  handler: authRateLimitHandler,
+  handler: rateLimitExceededHandler,
   store: redisRateLimitStore("rl:login:"),
   skip: skipInTest,
 });
@@ -52,7 +43,7 @@ export const registerLimiter = rateLimit({
   limit: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: authRateLimitHandler,
+  handler: rateLimitExceededHandler,
   store: redisRateLimitStore("rl:register:"),
   skip: skipInTest,
 });
@@ -63,7 +54,7 @@ export const passwordResetLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: keyByEmailAndIp,
-  handler: authRateLimitHandler,
+  handler: rateLimitExceededHandler,
   store: redisRateLimitStore("rl:password-reset:"),
   skip: skipInTest,
 });
@@ -73,7 +64,7 @@ export const refreshLimiter = rateLimit({
   limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: authRateLimitHandler,
+  handler: rateLimitExceededHandler,
   store: redisRateLimitStore("rl:refresh:"),
   skip: skipInTest,
 });

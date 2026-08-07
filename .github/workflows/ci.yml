@@ -11,8 +11,50 @@ env:
   PNPM_VERSION: "9.12.0"
 
 jobs:
-  lint-typecheck:
-    name: Lint & Typecheck
+  # format, lint, and typecheck were previously three sequential steps in
+  # one job -- if format:check failed, lint and typecheck never even ran,
+  # so a PR showing "Lint & Typecheck failed" told you nothing about which
+  # of the three actually broke without opening the log. Split into three
+  # independent jobs so each is its own status check, all three always
+  # run, and they run in parallel instead of sequentially. The tradeoff is
+  # three separate `pnpm install` steps instead of one; with pnpm's store
+  # cache (actions/setup-node's cache: "pnpm") this is a low-single-digit
+  # seconds cost on a cache hit, which is worth it for the clearer signal.
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # eslint.config.js uses tseslint's non-type-checked `recommended`
+      # preset (no parserOptions.project), so lint -- unlike typecheck --
+      # doesn't need the generated Prisma client to run.
+      - run: pnpm lint
+
+  typecheck:
+    name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -25,8 +67,6 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api exec prisma generate
-      - run: pnpm format:check
-      - run: pnpm lint
       - run: pnpm typecheck
 
   test:
@@ -101,15 +141,21 @@ jobs:
       - name: Dependency audit (pnpm audit)
         run: pnpm audit --audit-level high
         continue-on-error: false
+      # gitleaks/gitleaks-action@v2 requires a paid GITLEAKS_LICENSE for
+      # organization-owned repos (this one) as of its v2 licensing change --
+      # the underlying gitleaks scanner itself is still free/open-source
+      # (MIT), only that convenience wrapper started gating on a commercial
+      # license. gacts/gitleaks wraps the same scanner without that gate.
+      # If a GITLEAKS_LICENSE secret gets added later (e.g. for the PR-
+      # commenting/SARIF features the official action adds), this can
+      # switch back.
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: gacts/gitleaks@v1
 
   build:
     name: Build All Apps
     runs-on: ubuntu-latest
-    needs: [lint-typecheck, test]
+    needs: [format, lint, typecheck, test]
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
