@@ -17,6 +17,7 @@ import { authService } from "./auth.service.js";
 import { authRepository } from "./auth.repository.js";
 import { toUserDto } from "./auth.mappers.js";
 import { requireAuth } from "./auth.middleware.js";
+import { writeAuditLog } from "./audit.js";
 import { requireCsrfToken, issueCsrfToken } from "./csrf.js";
 import {
   clearAuthCookies,
@@ -193,7 +194,9 @@ router.delete(
   requireCsrfToken(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
-    await authService.revokeSession(req.user!.sub, requireParam(req, "id"));
+    const sessionId = requireParam(req, "id");
+    await authService.revokeSession(req.user!.sub, sessionId);
+    await writeAuditLog(req, "SESSION_REVOKED", req.user!.sub, { sessionId });
     res.status(204).send();
   }),
 );

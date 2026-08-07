@@ -10,6 +10,7 @@ import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { writeAuditLog } from "../auth/audit.js";
 import { cycleService } from "./cycle.service.js";
 
 const router: ExpressRouter = Router();
@@ -24,6 +25,7 @@ router.post(
   validate(upsertCycleEntrySchema),
   asyncHandler(async (req, res) => {
     const entry = await cycleService.upsert(req.user!.sub, req.body);
+    await writeAuditLog(req, "CYCLE_ENTRY_UPSERTED", req.user!.sub, { cycleEntryId: entry.id });
     res.status(200).json({ data: entry, requestId: req.requestId });
   }),
 );
@@ -52,6 +54,7 @@ router.patch(
   validate(updateCycleEntrySchema),
   asyncHandler(async (req, res) => {
     const entry = await cycleService.update(req.user!.sub, requireParam(req, "id"), req.body);
+    await writeAuditLog(req, "CYCLE_ENTRY_UPDATED", req.user!.sub, { cycleEntryId: entry.id });
     res.status(200).json({ data: entry, requestId: req.requestId });
   }),
 );
@@ -60,7 +63,9 @@ router.delete(
   "/cycle-entries/:id",
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
-    await cycleService.delete(req.user!.sub, requireParam(req, "id"));
+    const cycleEntryId = requireParam(req, "id");
+    await cycleService.delete(req.user!.sub, cycleEntryId);
+    await writeAuditLog(req, "CYCLE_ENTRY_DELETED", req.user!.sub, { cycleEntryId });
     res.status(204).send();
   }),
 );

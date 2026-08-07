@@ -55,6 +55,7 @@ router.get(
       total,
       query,
     );
+    await writeAuditLog(req, "ADMIN_VIEWED_ORGANIZATIONS", req.user!.sub);
     res.status(200).json({ data: page, requestId: req.requestId });
   }),
 );
@@ -88,10 +89,12 @@ router.get(
   requireOrgRole("ORG_ADMIN"),
   validate(organizationMemberQuerySchema, "query"),
   asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
     const page = await organizationService.listMembers(
-      requireParam(req, "organizationId"),
+      organizationId,
       req.query as unknown as OrganizationMemberQuery,
     );
+    await writeAuditLog(req, "ORG_MEMBERS_VIEWED", req.user!.sub, { organizationId });
     res.status(200).json({ data: page, requestId: req.requestId });
   }),
 );

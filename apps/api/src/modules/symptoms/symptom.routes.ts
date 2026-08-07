@@ -10,6 +10,7 @@ import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { writeAuditLog } from "../auth/audit.js";
 import { symptomService } from "./symptom.service.js";
 
 const router: ExpressRouter = Router();
@@ -21,6 +22,7 @@ router.post(
   validate(createSymptomLogSchema),
   asyncHandler(async (req, res) => {
     const log = await symptomService.create(req.user!.sub, req.body);
+    await writeAuditLog(req, "SYMPTOM_LOG_CREATED", req.user!.sub, { symptomLogId: log.id });
     res.status(201).json({ data: log, requestId: req.requestId });
   }),
 );
@@ -49,6 +51,7 @@ router.patch(
   validate(updateSymptomLogSchema),
   asyncHandler(async (req, res) => {
     const log = await symptomService.update(req.user!.sub, requireParam(req, "id"), req.body);
+    await writeAuditLog(req, "SYMPTOM_LOG_UPDATED", req.user!.sub, { symptomLogId: log.id });
     res.status(200).json({ data: log, requestId: req.requestId });
   }),
 );
@@ -57,7 +60,9 @@ router.delete(
   "/symptom-logs/:id",
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
-    await symptomService.delete(req.user!.sub, requireParam(req, "id"));
+    const symptomLogId = requireParam(req, "id");
+    await symptomService.delete(req.user!.sub, symptomLogId);
+    await writeAuditLog(req, "SYMPTOM_LOG_DELETED", req.user!.sub, { symptomLogId });
     res.status(204).send();
   }),
 );
