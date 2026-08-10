@@ -79,5 +79,5 @@ export async function guardedFetch(url: string, options: unknown): Promise<Respo
     throw new SsrfBlockedError(url);
   }
 
-  return fetch(url, options);
+  return fetch(url, options as RequestInit | undefined);
 }
