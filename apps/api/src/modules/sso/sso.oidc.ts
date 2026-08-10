@@ -1,5 +1,6 @@
 import * as client from "openid-client";
 import type { Configuration } from "openid-client";
+import { guardedFetch } from "./sso.ssrf-guard.js";
 
 export interface PendingAuthorization {
   redirectUrl: string;
@@ -26,7 +27,9 @@ export const ssoOidc = {
     clientId: string,
     clientSecret: string,
   ): Promise<Configuration> {
-    return client.discovery(new URL(issuerUrl), clientId, clientSecret);
+    return client.discovery(new URL(issuerUrl), clientId, clientSecret, undefined, {
+      [client.customFetch]: guardedFetch,
+    });
   },
 
   /** Builds the redirect URL for Step 1 of the SP-initiated flow, along
