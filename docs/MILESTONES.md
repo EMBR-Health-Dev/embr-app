@@ -419,3 +419,37 @@ Found while scoping a mobile app: `AuthSessionResponse.accessToken` was explicit
 **Verification**: added explicit test coverage rather than just trusting the change — 6 new tests in `auth.test.ts` covering login's body shape, `/auth/me` via Bearer-only (no cookies), `/auth/refresh` and `/auth/logout` via body-only (no cookie, no CSRF header), rotation-then-replay-rejection on the body path (same as the existing cookie-path test), and — the one that actually matters most — an explicit check that a genuinely cookie-authenticated request with a missing CSRF header is _still_ rejected exactly as before, confirming the exemption didn't accidentally weaken the browser path. All 18 tests in the file pass (12 existing + 6 new), full suite 136/141 (5 skipped, 2 failing on the same real-Redis sandbox limitation as always), full monorepo typecheck/lint at the established baseline.
 
 **Remaining gap, explicitly not solved here**: token storage/rotation on the client side (secure storage, refresh-on-401 interceptor logic) is a mobile-app-side concern, addressed in Milestone 16 below, not a backend one.
+
+## Milestone 16 — Mobile app scaffold (Expo / React Native)
+
+New `apps/mobile` workspace: a real Expo SDK 57 (React Native 0.86) app, wired end-to-end against the actual API — not a placeholder shell.
+
+**What changed**
+
+- `apps/mobile`, added to the pnpm workspace, depending on `@embr/types` and `@embr/validation` like every other app.
+- File-based routing via `expo-router`: `app/_layout.tsx` (root, wraps `AuthProvider`), `app/index.tsx` (redirects to `/login` or `/(app)` based on auth state), `app/login.tsx`, `app/register.tsx`, and an `(app)` route group whose own `_layout.tsx` guards against unauthenticated access — same shape as `apps/web`'s dashboard guard, adapted to Expo Router's group convention.
+- `lib/token-storage.ts`: `expo-secure-store` (Keychain/Keystore-backed) wrapper for the access/refresh token pair — always read and written together, so a partial write can't leave a stale access token paired with an already-rotated-away refresh token.
+- `lib/api-client.ts`: no same-origin proxy to hide behind like `apps/web`/`apps/admin` have (see their `next.config.ts` rewrites) — this calls the API directly over `EXPO_PUBLIC_API_URL`, attaches `Authorization: Bearer <token>`, and transparently refreshes on a 401 (deduplicated across concurrent in-flight requests, since refresh tokens rotate on use and a second concurrent presentation of the same one would fail even though the first succeeded) before retrying the original request once.
+- `lib/auth-context.tsx` / `lib/api.ts`: same shape as `apps/web`'s equivalents, adapted for explicit token persistence instead of an implicit cookie jar.
+
+**Why this was buildable at all right now**
+
+The backend fix directly above this entry ("mobile-viable auth") is what made this a real scaffold instead of a dead end — before that, `/auth/refresh` and `/auth/logout` had no non-cookie path, so a mobile client would've been silently logged out every `ACCESS_TOKEN_TTL_SECONDS` (15 minutes default) with no way back in. This milestone is the client-side half of that same effort.
+
+**Verification**
+
+- Full monorepo `pnpm typecheck`: 12/13 packages clean, including `@embr/mobile` itself. The 13th, `@embr/api`, fails only on the confirmed, pre-existing Prisma-generation sandbox gap — including two implicit-`any` errors in `organization.routes.ts` that look unrelated at first glance but are the same root cause surfacing differently (that file's `prisma.organization.findMany(...)` call has no real return type to infer from when the generated client can't resolve, so the `.map()` callback's parameters go from precisely-typed to implicit-`any`); `main`'s real CI already has this file typechecking clean with a working Prisma client.
+- Full monorepo `pnpm lint`: 13/13 clean.
+- `expo export --platform web` (with `EXPO_OFFLINE=1`, since the Expo CLI's own dependency-compatibility check calls `api.expo.dev`, which this sandbox can't reach) produced a complete, successful Metro bundle — 1302 modules, every route compiled, real cross-package resolution of `@embr/types`/`@embr/validation` confirmed working end-to-end. Stronger verification than typecheck alone: this is proof the app actually builds, not just that the types line up.
+- Could not verify: an actual native build or a real device/simulator run (no Xcode/Android SDK in this sandbox), and `npx expo install`'s own compatibility resolution (same blocked `api.expo.dev` host) — dependency versions were instead pinned by hand against the real npm registry, cross-checked against what SDK 57's own install guide specifies.
+
+**Remaining work (explicitly out of scope for this milestone)**
+
+- No actual product screens past the auth flow — symptom logging, cycle tracking, trends, all still to build. The home screen says as much rather than pretend otherwise.
+- `GET /auth/sessions`'s "is this the current device" marking relies on reading the refresh token cookie server-side — mobile has no cookie, so that field just won't distinguish "this device" from any other session in a future sessions-list screen. Minor UX nuance, not a blocker; noted here rather than silently left for someone to puzzle over later.
+- `expo-modules-core`'s declared peer range for `react-native-worklets` (`^0.7.4 || ^0.8.0 || ^0.9.0 || ^0.10.0`) hasn't caught up to the `0.11.3` that `react-native-reanimated` (pulled in transitively by `expo-router`'s own drawer-navigation dependency, not something this app uses directly) actually needs — a soft peer-dependency warning, not an install or build failure; very plausibly just SDK 57 being three weeks old at time of writing and the ecosystem not fully caught up yet. Worth a glance next time dependencies are touched, not worth forcing an override now.
+- No test framework wired up yet (no `test` script) — deferred rather than reaching for `jest-expo` just to have something, given there's no product logic yet to test.
+- Backend decision explicitly deferred by design (per how this milestone was scoped): whether mobile gets its own dedicated API/BFF (push notifications, device tokens, etc.) or continues sharing `apps/api` directly, as it does today.
+
+**Next milestone**
+To be scoped from here — most likely candidates: the first real product screen (symptom logging, reusing the validation schemas and DTOs already shared with the backend), or the mobile-specific backend decision flagged above if push notifications become a near-term need.
