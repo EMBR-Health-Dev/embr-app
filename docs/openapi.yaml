@@ -119,29 +119,57 @@ paths:
         "200":
           description: >
             Sets embr_at (access token), embr_rt (refresh token), and
-            embr_csrf cookies; also returns the access token in the body
-            for non-browser clients.
+            embr_csrf cookies; also returns both the access token and
+            refresh token in the body for non-browser (mobile) clients,
+            which have no cookie jar to read them from. Browser clients
+            rely on the cookies and can ignore both fields.
         "401": { description: Invalid email or password }
         "429": { description: Too many login attempts for this account/IP }
   /auth/refresh:
     post:
       summary: Rotate the refresh token and issue a new access token
-      description: Requires the embr_rt cookie and a matching x-csrf-token header.
+      description: >
+        Reads the refresh token from the embr_rt cookie if present
+        (browser clients — requires a matching x-csrf-token header in
+        that case), or from `refreshToken` in the request body
+        otherwise (mobile clients, which are not CSRF-vulnerable in the
+        first place since they present the token explicitly rather than
+        via an ambient cookie). The response body always includes the
+        rotated refreshToken alongside accessToken — a mobile client
+        that discards it can only refresh once.
       tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string, description: "Mobile clients only" }
       responses:
         "200": { description: New access/refresh tokens issued }
         "401": { description: Session expired, already used, or reuse detected }
-        "403": { description: Missing or invalid CSRF token }
+        "403": { description: Missing or invalid CSRF token (cookie-authenticated requests only) }
   /auth/logout:
     post:
       summary: Revoke the current session
+      description: >
+        Same refreshToken-in-body fallback as /auth/refresh for mobile
+        clients.
       tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string, description: "Mobile clients only" }
       responses:
         "204": { description: Logged out }
-        "403": { description: Missing or invalid CSRF token }
+        "403": { description: Missing or invalid CSRF token (cookie-authenticated requests only) }
   /auth/logout-all:
     post:
       summary: Revoke every session for the current user
+      description: Works via Bearer access token (mobile) or cookie (browser) — see requireAuth().
       security: [{ cookieAuth: [] }]
       tags: [Auth]
       responses:
