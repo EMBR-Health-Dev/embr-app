@@ -50,6 +50,17 @@ export const verifyEmailSchema = z.object({
 });
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
+// Browser clients call /auth/refresh and /auth/logout with an empty
+// body — the refresh token comes from the httpOnly cookie. Mobile
+// clients have no cookie to read it from, so it's an optional fallback
+// field here rather than its own separate schema/route; the field is
+// simply absent (and this validates fine against {}) for the cookie
+// case.
+export const refreshTokenBodySchema = z.object({
+  refreshToken: z.string().min(1).optional(),
+});
+export type RefreshTokenBodyInput = z.infer<typeof refreshTokenBodySchema>;
+
 export const resendVerificationSchema = z.object({
   email: emailSchema,
 });

@@ -5,6 +5,7 @@ import {
   forgotPasswordSchema,
   idParamSchema,
   loginSchema,
+  refreshTokenBodySchema,
   registerSchema,
   resendVerificationSchema,
   resetPasswordSchema,
@@ -85,31 +86,42 @@ router.post(
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, refreshToken);
     issueCsrfToken(res);
-    res.status(200).json({ data: { user, accessToken }, requestId: req.requestId });
+    // refreshToken is included for non-browser clients the same way
+    // accessToken already was — see AuthSessionResponse's doc comment.
+    // Browser clients rely on the httpOnly cookie and ignore this
+    // field; mobile has no cookie, so this is the only place it gets
+    // one at all.
+    res.status(200).json({ data: { user, accessToken, refreshToken }, requestId: req.requestId });
   }),
 );
 
 router.post(
   "/auth/refresh",
   refreshLimiter,
-  requireCsrfToken(),
+  requireCsrfToken(REFRESH_TOKEN_COOKIE),
+  validate(refreshTokenBodySchema),
   asyncHandler(async (req, res) => {
-    const presented = req.cookies?.[REFRESH_TOKEN_COOKIE];
+    const presented = req.cookies?.[REFRESH_TOKEN_COOKIE] ?? req.body?.refreshToken;
     if (!presented) {
       throw AppError.unauthorized("No refresh token presented");
     }
     const { user, accessToken, refreshToken } = await authService.refresh(req, presented);
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, refreshToken);
-    res.status(200).json({ data: { user, accessToken }, requestId: req.requestId });
+    // Refresh tokens rotate on every use (see auth.service.ts) — a
+    // mobile client that only reads accessToken here would successfully
+    // refresh exactly once and then be stuck presenting an already-
+    // consumed token forever after. It has to receive the new one too.
+    res.status(200).json({ data: { user, accessToken, refreshToken }, requestId: req.requestId });
   }),
 );
 
 router.post(
   "/auth/logout",
-  requireCsrfToken(),
+  requireCsrfToken(REFRESH_TOKEN_COOKIE),
+  validate(refreshTokenBodySchema),
   asyncHandler(async (req, res) => {
-    await authService.logout(req, req.cookies?.[REFRESH_TOKEN_COOKIE]);
+    await authService.logout(req, req.cookies?.[REFRESH_TOKEN_COOKIE] ?? req.body?.refreshToken);
     clearAuthCookies(res);
     res.status(204).send();
   }),

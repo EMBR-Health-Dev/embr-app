@@ -47,6 +47,13 @@ export interface AuthSessionResponse {
    * cookie the API sets and ignore this field.
    */
   accessToken: string;
+  /**
+   * Same reasoning as accessToken above. Rotates on every
+   * /auth/refresh call — a mobile client must persist the new value
+   * each time, not just the one from login, or the next refresh will
+   * fail with an already-consumed token.
+   */
+  refreshToken: string;
 }
 
 export interface DeviceSessionDto {

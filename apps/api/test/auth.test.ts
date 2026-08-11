@@ -333,3 +333,112 @@ describe("POST /auth/refresh", () => {
     expect(replay.status).toBe(401);
   });
 });
+
+describe("Mobile auth (Bearer access token, body-presented refresh token)", () => {
+  it("login response includes refreshToken, not just accessToken", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "mobile-login@embr.health", password: VALID_PASSWORD });
+
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "mobile-login@embr.health", password: VALID_PASSWORD });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.accessToken).toBeTruthy();
+    expect(res.body.data.refreshToken).toBeTruthy();
+  });
+
+  it("GET /auth/me works via Authorization header alone, no cookies at all", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "mobile-me@embr.health", password: VALID_PASSWORD });
+    const loginRes = await request(app)
+      .post("/auth/login")
+      .send({ email: "mobile-me@embr.health", password: VALID_PASSWORD });
+
+    // A fresh request(app) call, deliberately not the cookie-jar agent
+    // — nothing here should depend on a cookie existing.
+    const res = await request(app)
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${loginRes.body.data.accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.email).toBe("mobile-me@embr.health");
+  });
+
+  it("POST /auth/refresh works from a refresh token in the body, no cookie or CSRF header", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "mobile-refresh@embr.health", password: VALID_PASSWORD });
+    const loginRes = await request(app)
+      .post("/auth/login")
+      .send({ email: "mobile-refresh@embr.health", password: VALID_PASSWORD });
+
+    const res = await request(app)
+      .post("/auth/refresh")
+      .send({ refreshToken: loginRes.body.data.refreshToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.accessToken).toBeTruthy();
+    // Rotation applies here too — the response must carry the new token
+    // forward, or a mobile client can refresh exactly once.
+    expect(res.body.data.refreshToken).toBeTruthy();
+    expect(res.body.data.refreshToken).not.toBe(loginRes.body.data.refreshToken);
+  });
+
+  it("a body-presented refresh token also rotates and rejects reuse, same as the cookie path", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "mobile-rotate@embr.health", password: VALID_PASSWORD });
+    const loginRes = await request(app)
+      .post("/auth/login")
+      .send({ email: "mobile-rotate@embr.health", password: VALID_PASSWORD });
+
+    const firstToken = loginRes.body.data.refreshToken as string;
+    const first = await request(app).post("/auth/refresh").send({ refreshToken: firstToken });
+    expect(first.status).toBe(200);
+
+    const replay = await request(app).post("/auth/refresh").send({ refreshToken: firstToken });
+    expect(replay.status).toBe(401);
+  });
+
+  it("POST /auth/logout works from a refresh token in the body, no cookie or CSRF header", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "mobile-logout@embr.health", password: VALID_PASSWORD });
+    const loginRes = await request(app)
+      .post("/auth/login")
+      .send({ email: "mobile-logout@embr.health", password: VALID_PASSWORD });
+
+    const logoutRes = await request(app)
+      .post("/auth/logout")
+      .send({ refreshToken: loginRes.body.data.refreshToken });
+    expect(logoutRes.status).toBe(204);
+
+    // The logged-out token must actually be revoked, not just accepted
+    // and ignored.
+    const reuse = await request(app)
+      .post("/auth/refresh")
+      .send({ refreshToken: loginRes.body.data.refreshToken });
+    expect(reuse.status).toBe(401);
+  });
+
+  it("does not relax CSRF for a genuinely cookie-authenticated refresh request", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "still-protected@embr.health");
+
+    // Cookie is present (the agent has it from login) but no CSRF header
+    // is sent — this must still be rejected exactly as before. The
+    // exemption is for requests with no relevant cookie at all, not a
+    // general weakening of the check.
+    const res = await agent.post("/auth/refresh");
+    expect(res.status).toBe(403);
+  });
+});
