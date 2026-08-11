@@ -20,51 +20,59 @@ vi.mock("../../src/config/env.js", async (importOriginal) => {
   return { ...actual, env: { ...actual.env, NODE_ENV: "production" as const } };
 });
 
-const { redisRateLimitStore } = await import("../../src/lib/rate-limit-store.js");
-const { redis } = await import("../../src/lib/redis.js");
+const { isRedisReachable } = await import("./redis-reachable.js");
 
-/**
- * A minimal app with one rate-limited route, standing in for "one API
- * process". Building a fresh app (and Store) per call is what lets the
- * "shared across instances" test below construct two independent stores —
- * exactly as two separate API processes would each construct their own —
- * and confirm they still enforce one combined limit because they share the
- * same Redis and key prefix.
- */
-function buildLimitedApp(options: { prefix: string; limit: number; windowMs: number }) {
-  const app = express();
-  app.get(
-    "/ping",
-    rateLimit({
-      windowMs: options.windowMs,
-      limit: options.limit,
-      standardHeaders: true,
-      legacyHeaders: false,
-      store: redisRateLimitStore(options.prefix),
-    }),
-    (_req, res) => res.status(200).json({ ok: true }),
-  );
-  return app;
-}
+// Checked with a raw socket probe (see redis-reachable.ts) *before* the
+// real redis.js module — and the real ioredis client it constructs at
+// import time (lazyConnect: false) — is ever imported, so an unreachable
+// Redis here means this file's describe block is cleanly skipped rather
+// than importing a client that's about to start failing commands.
+const redisReachable = await isRedisReachable(process.env.REDIS_URL ?? "redis://localhost:6379");
 
-// Every test gets its own prefix so runs (and tests within this file)
-// can't see each other's counters, without needing a shared afterEach
-// cleanup step.
-function uniquePrefix() {
-  return `rl:test-${randomUUID()}:`;
-}
+describe.skipIf(!redisReachable)("redisRateLimitStore against a real Redis", () => {
+  let redisRateLimitStore: (typeof import("../../src/lib/rate-limit-store.js"))["redisRateLimitStore"];
+  let redis: (typeof import("../../src/lib/redis.js"))["redis"];
 
-beforeAll(async () => {
-  // Fails fast with a clear message rather than every test below timing
-  // out individually if there's no Redis reachable at REDIS_URL.
-  await expect(redis.ping()).resolves.toBe("PONG");
-});
+  beforeAll(async () => {
+    ({ redisRateLimitStore } = await import("../../src/lib/rate-limit-store.js"));
+    ({ redis } = await import("../../src/lib/redis.js"));
+  });
 
-afterAll(async () => {
-  await redis.quit();
-});
+  afterAll(async () => {
+    await redis.quit();
+  });
 
-describe("redisRateLimitStore against a real Redis", () => {
+  /**
+   * A minimal app with one rate-limited route, standing in for "one API
+   * process". Building a fresh app (and Store) per call is what lets the
+   * "shared across instances" test below construct two independent stores
+   * — exactly as two separate API processes would each construct their
+   * own — and confirm they still enforce one combined limit because they
+   * share the same Redis and key prefix.
+   */
+  function buildLimitedApp(options: { prefix: string; limit: number; windowMs: number }) {
+    const app = express();
+    app.get(
+      "/ping",
+      rateLimit({
+        windowMs: options.windowMs,
+        limit: options.limit,
+        standardHeaders: true,
+        legacyHeaders: false,
+        store: redisRateLimitStore(options.prefix),
+      }),
+      (_req, res) => res.status(200).json({ ok: true }),
+    );
+    return app;
+  }
+
+  // Every test gets its own prefix so runs (and tests within this file)
+  // can't see each other's counters, without needing a shared afterEach
+  // cleanup step.
+  function uniquePrefix() {
+    return `rl:test-${randomUUID()}:`;
+  }
+
   it("enforces one shared limit across two independently-constructed app instances", async () => {
     const prefix = uniquePrefix();
     // Two separately-built apps with their own Store instance, same prefix
