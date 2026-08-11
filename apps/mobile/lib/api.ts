@@ -1,4 +1,4 @@
-import type { AuthSessionResponse, UserDto } from "@embr/types";
+import type { AuthSessionResponse, PaginatedResponse, SymptomLogDto, UserDto } from "@embr/types";
 import { apiFetch } from "./api-client";
 
 export const api = {
@@ -25,5 +25,20 @@ export const api = {
 
     forgotPassword: (email: string) =>
       apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
+  },
+
+  symptomLogs: {
+    list: (query?: {
+      page?: number;
+      pageSize?: number;
+      category?: string;
+      from?: string;
+      to?: string;
+    }) => apiFetch<PaginatedResponse<SymptomLogDto>>("/symptom-logs", { query }),
+
+    create: (input: { category: string; severity: string; occurredAt: string; notes?: string }) =>
+      apiFetch<SymptomLogDto>("/symptom-logs", { method: "POST", body: input }),
+
+    delete: (id: string) => apiFetch<void>(`/symptom-logs/${id}`, { method: "DELETE" }),
   },
 };

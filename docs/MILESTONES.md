@@ -445,11 +445,17 @@ The backend fix directly above this entry ("mobile-viable auth") is what made th
 
 **Remaining work (explicitly out of scope for this milestone)**
 
-- No actual product screens past the auth flow — symptom logging, cycle tracking, trends, all still to build. The home screen says as much rather than pretend otherwise.
+- Symptom logging is now built (see follow-up commit below) — cycle tracking and trends are still to come.
 - `GET /auth/sessions`'s "is this the current device" marking relies on reading the refresh token cookie server-side — mobile has no cookie, so that field just won't distinguish "this device" from any other session in a future sessions-list screen. Minor UX nuance, not a blocker; noted here rather than silently left for someone to puzzle over later.
 - `expo-modules-core`'s declared peer range for `react-native-worklets` (`^0.7.4 || ^0.8.0 || ^0.9.0 || ^0.10.0`) hasn't caught up to the `0.11.3` that `react-native-reanimated` (pulled in transitively by `expo-router`'s own drawer-navigation dependency, not something this app uses directly) actually needs — a soft peer-dependency warning, not an install or build failure; very plausibly just SDK 57 being three weeks old at time of writing and the ecosystem not fully caught up yet. Worth a glance next time dependencies are touched, not worth forcing an override now.
-- No test framework wired up yet (no `test` script) — deferred rather than reaching for `jest-expo` just to have something, given there's no product logic yet to test.
+- No test framework wired up yet (no `test` script) — deferred rather than reaching for `jest-expo` just to have something, given there's not much product logic yet to test in isolation from the UI.
 - Backend decision explicitly deferred by design (per how this milestone was scoped): whether mobile gets its own dedicated API/BFF (push notifications, device tokens, etc.) or continues sharing `apps/api` directly, as it does today.
 
+**Follow-up in this same milestone: symptom logging**
+
+The first real product screen past auth. `app/(app)/index.tsx` now does the actual job: a category picker (chip grid over `symptomCategorySchema.options` — the real Zod enum's runtime values, not a hand-duplicated list that could drift from the backend's), a severity picker the same way, an optional notes field, and a recent-logs list with optimistic delete (removed from the list immediately, restored via a re-fetch if the server call actually fails, rather than leaving the UI showing something that silently isn't true server-side). `occurredAt` defaults to "now" — no date/time picker yet, logging in the moment is the primary case; picking a past time is a reasonable fast-follow, not done here.
+
+Re-verified the same way: full monorepo typecheck and lint both stayed clean, and a fresh `expo export --platform web` produced a complete build (1304 modules, up from 1302).
+
 **Next milestone**
-To be scoped from here — most likely candidates: the first real product screen (symptom logging, reusing the validation schemas and DTOs already shared with the backend), or the mobile-specific backend decision flagged above if push notifications become a near-term need.
+To be scoped from here — most likely candidates: cycle tracking (mirroring `apps/web`'s `cycleEntries` API, same as symptom logging just did), a date/time picker for backdating a symptom log, or the mobile-specific backend decision flagged above if push notifications become a near-term need.
