@@ -459,3 +459,15 @@ Re-verified the same way: full monorepo typecheck and lint both stayed clean, an
 
 **Next milestone**
 To be scoped from here — most likely candidates: cycle tracking (mirroring `apps/web`'s `cycleEntries` API, same as symptom logging just did), a date/time picker for backdating a symptom log, or the mobile-specific backend decision flagged above if push notifications become a near-term need.
+
+## Repo maintenance — reconciling two parallel mobile-app builds
+
+Two independent builds of the mobile app existed in parallel — this session's own scaffold (`milestone-16-mobile-scaffold`, auth flow only, built around the shared `@embr/sdk` package with test coverage for its trickiest part) and a separate `feature/mobile-app` branch (further along: a real symptom-logging screen, actual icon/splash assets, its own mobile-local `api-client.ts`). Both independently converged on the same correct design for silent-refresh-on-401 with concurrent-request deduplication — reassuring on correctness, but genuine duplicate work either way. Decision: keep `feature/mobile-app` as the base (more product value delivered, real assets); this session's own scaffold was discarded rather than merged.
+
+**What was added on top of their branch, found getting it to a clean state**
+
+- `apps/mobile` had no ESLint config of its own at all — not even `eslint-config-expo` as a dependency — so `"lint": "eslint ."` had been silently falling back to the bare root config. Added the same `eslint.config.mjs` pattern already proven for `apps/web`/`apps/admin` (explicit `/flat.js` path — `eslint-config-expo` ships both a `flat.js` file and a same-named `flat/` directory at its root, and Node's ESM resolver finds the directory first without the extension).
+- Their `tsconfig.json` had no explicit `include`, which meant TypeScript's default (include everything under the project root) swept the newly-added `eslint.config.mjs` into the app's own type-checking scope, producing spurious "missing type declarations" errors for config-only packages. Added the same explicit `include`/`exclude` used elsewhere in the monorepo.
+- The `react-hooks/set-state-in-effect` sweep across `apps/web`/`apps/admin` and the `lint-staged` CWD-resolution structural fix (see the "Milestone 16" entry above, on the now-discarded scaffold branch) were re-applied here, since they're valid regardless of which mobile app won and had never actually reached `main`.
+
+**Verification**: full monorepo `pnpm typecheck` (12/13 — the one failure is the confirmed pre-existing Prisma-generation sandbox gap), full monorepo `pnpm lint` (13/13, clean), full `apps/api` suite (136/141, same 2 real-Redis-dependent integration tests as always in this sandbox).

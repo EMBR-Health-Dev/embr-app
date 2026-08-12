@@ -8,14 +8,7 @@ import { api } from "../../../lib/api";
 import { ApiError } from "../../../lib/api-client";
 import { Button } from "../../../components/button";
 
-type Status =
-  | "checking"
-  | "needs-auth"
-  | "accepting"
-  | "accepted"
-  | "already-member"
-  | "wrong-account"
-  | "error";
+type Status = "checking" | "accepting" | "accepted" | "already-member" | "wrong-account" | "error";
 
 function AcceptInviteScreen() {
   const router = useRouter();
@@ -36,24 +29,22 @@ function AcceptInviteScreen() {
   const attempted = useRef(false);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!token) {
-      setStatus("error");
-      setErrorMessage(
-        "This invite link is missing its token — check that you copied the whole link from the email.",
-      );
-      return;
-    }
-
-    if (!user) {
-      setStatus("needs-auth");
-      return;
-    }
+    // The missing-token and needs-auth cases are handled as direct
+    // render-time checks below (see the two early returns right after
+    // this effect) — they're derivable synchronously from token/user/
+    // loading with no async work involved, so routing them through
+    // setState-in-an-effect would just be an unnecessary extra render
+    // (see react.dev/learn/you-might-not-need-an-effect).
+    if (loading || !token || !user) return;
 
     if (attempted.current) return;
     attempted.current = true;
 
+    // Starting the actual async accept call is the one part of this
+    // effect that legitimately sets state synchronously before an
+    // async continuation — matches React's own documented
+    // fetch-in-effect pattern
+    // (react.dev/learn/synchronizing-with-effects#fetching-data).
     setStatus("accepting");
     api.organizations.invites
       .accept(token)
@@ -95,12 +86,30 @@ function AcceptInviteScreen() {
       });
   }, [loading, user, token]);
 
-  if (loading || status === "checking" || status === "accepting") {
+  if (loading) {
     return <p className="text-navy/50">Loading…</p>;
   }
 
-  if (status === "needs-auth") {
-    const returnTo = `/organizations/accept-invite?token=${encodeURIComponent(token ?? "")}`;
+  if (!token) {
+    return (
+      <div className="w-full max-w-sm text-center">
+        <h1 className="font-display text-2xl text-navy">Couldn&apos;t accept that invite</h1>
+        <p className="mt-3 text-sm text-red-600">
+          This invite link is missing its token — check that you copied the whole link from the
+          email.
+        </p>
+        <Link
+          href="/dashboard"
+          className="mt-6 inline-block text-sm font-medium text-teal underline underline-offset-2"
+        >
+          Go to dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  if (!user) {
+    const returnTo = `/organizations/accept-invite?token=${encodeURIComponent(token)}`;
     const encoded = encodeURIComponent(returnTo);
     return (
       <div className="w-full max-w-sm text-center">
@@ -123,6 +132,10 @@ function AcceptInviteScreen() {
         </div>
       </div>
     );
+  }
+
+  if (status === "checking" || status === "accepting") {
+    return <p className="text-navy/50">Loading…</p>;
   }
 
   if (status === "accepted") {
@@ -160,7 +173,7 @@ function AcceptInviteScreen() {
   }
 
   if (status === "wrong-account") {
-    const returnTo = `/organizations/accept-invite?token=${encodeURIComponent(token ?? "")}`;
+    const returnTo = `/organizations/accept-invite?token=${encodeURIComponent(token)}`;
     const encoded = encodeURIComponent(returnTo);
 
     async function logOutAndRetry() {

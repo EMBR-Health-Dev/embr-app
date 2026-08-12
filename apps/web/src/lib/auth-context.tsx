@@ -35,6 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Same reasoning as apps/admin/src/lib/auth-context.tsx's identical
+    // suppression — React's own documented fetch-on-mount pattern,
+    // and refresh() is also exposed via context for other callers.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
 

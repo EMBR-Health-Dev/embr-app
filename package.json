@@ -40,14 +40,6 @@
     "lint-staged": "^15.3.0",
     "@types/node": "^22.10.0"
   },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix"
-    ],
-    "*.{ts,tsx,md,json,yml,yaml}": [
-      "prettier --write"
-    ]
-  },
   "pnpm": {
     "overrides": {
       "postcss": ">=8.5.18",

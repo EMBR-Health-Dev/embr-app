@@ -85,6 +85,10 @@ export default function OrganizationPage() {
 
   useEffect(() => {
     if (!selectedOrgId) return;
+    // Matches React's own documented fetch-on-mount pattern — see the
+    // equivalent suppression in apps/admin/dashboard/page.tsx for the
+    // full reasoning.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRosterLoading(true);
     setTrendsLoading(true);
 

@@ -26,7 +26,7 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 export default [
-  { ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/coverage/**"] },
+  { ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/coverage/**", "next-env.d.ts"] },
   js.configs.recommended,
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   prettierConfig,

@@ -22,17 +22,21 @@ export default function AdminDashboardPage() {
     if (loading) return;
     if (!user) {
       router.replace("/login");
-      return;
     }
-    if (!isAdmin) {
-      // Authenticated, but not an admin — distinct from "not logged in."
-      // Handled inline below rather than a redirect loop back to /login.
-      setDataLoading(false);
-    }
-  }, [loading, user, isAdmin, router]);
+    // No `else if (!isAdmin)` branch needed here — the !isAdmin render
+    // path below never reads dataLoading, so there's nothing to set.
+  }, [loading, user, router]);
 
   useEffect(() => {
     if (!isAdmin) return;
+    // Matches React's own documented data-fetching-in-effect pattern
+    // (react.dev/learn/synchronizing-with-effects#fetching-data), which
+    // also resets the loading flag synchronously before the fetch
+    // starts — this is what makes switching tabs show a loading state
+    // again rather than briefly flashing stale data from the previous
+    // tab. react-hooks/set-state-in-effect flags it anyway; suppressed
+    // rather than contorted into something artificial.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDataLoading(true);
     const load =
       tab === "users"

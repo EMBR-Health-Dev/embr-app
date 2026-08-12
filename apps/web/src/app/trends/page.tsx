@@ -39,6 +39,11 @@ export default function TrendsPage() {
 
   useEffect(() => {
     if (!user) return;
+    // Matches React's own documented data-fetching-in-effect pattern
+    // (react.dev/learn/synchronizing-with-effects#fetching-data);
+    // react-hooks/set-state-in-effect flags it anyway. Same reasoning
+    // as the equivalent suppression in apps/admin/dashboard/page.tsx.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDataLoading(true);
     // Both trends are now computed server-side (Milestone 9) — Postgres
     // does the GROUP BY / diffing over the full range, so this view is

@@ -34,6 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Same reasoning as dashboard/page.tsx's suppression of this rule —
+    // this is React's own documented fetch-on-mount pattern
+    // (react.dev/learn/synchronizing-with-effects#fetching-data).
+    // refresh() is also exposed via context for other callers to invoke
+    // directly later, so it can't be inlined into just this effect
+    // without losing that reusability.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
 

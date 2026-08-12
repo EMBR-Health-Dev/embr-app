@@ -21,7 +21,10 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "eslint": "^9.17.0",
+    "eslint-config-expo": "^57.0.1",
+    "vitest": "^4.1.10"
   },
   "scripts": {
     "start": "expo start",
@@ -29,7 +32,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "build": "echo 'No local build step — use EAS Build (eas build) for app binaries' && exit 0",
+    "clean": "rm -rf .expo dist"
   },
   "private": true
 }

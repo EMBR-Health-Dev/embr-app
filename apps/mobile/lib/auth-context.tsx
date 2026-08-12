@@ -44,6 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Matches React's own documented fetch-on-mount pattern
+    // (react.dev/learn/synchronizing-with-effects#fetching-data); same
+    // suppression as the identical case in apps/web and
+    // apps/admin's auth-context.tsx.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadUser();
   }, [loadUser]);
 
