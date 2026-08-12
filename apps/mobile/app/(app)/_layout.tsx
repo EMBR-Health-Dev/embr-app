@@ -1,4 +1,4 @@
-import { Redirect, Stack } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../../lib/auth-context";
 
@@ -17,5 +17,10 @@ export default function AppLayout() {
     return <Redirect href="/login" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="index" options={{ title: "Symptoms" }} />
+      <Tabs.Screen name="cycle" options={{ title: "Cycle" }} />
+    </Tabs>
+  );
 }

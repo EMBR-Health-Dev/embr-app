@@ -457,8 +457,16 @@ The first real product screen past auth. `app/(app)/index.tsx` now does the actu
 
 Re-verified the same way: full monorepo typecheck and lint both stayed clean, and a fresh `expo export --platform web` produced a complete build (1304 modules, up from 1302).
 
+**Second follow-up: cycle tracking, and real tab navigation**
+
+`app/(app)/cycle.tsx` mirrors `apps/web`'s "today's cycle entry" quick-log (flow picker over `flowIntensitySchema.options`, period-start/end switches, notes) against the same upsert-by-date endpoint — `date` is the entry's identity (one per user per calendar day), so saving again for today updates rather than duplicates, same as web.
+
+With two real screens now, replaced the bare `Stack` in `(app)/_layout.tsx` with a proper `Tabs` navigator (Symptoms / Cycle) — the idiomatic `expo-router` pattern for a main app area, not more work than a single link would have been.
+
+Re-verified again: typecheck and lint both clean, `expo export --platform web` complete (1305 modules).
+
 **Next milestone**
-To be scoped from here — most likely candidates: cycle tracking (mirroring `apps/web`'s `cycleEntries` API, same as symptom logging just did), a date/time picker for backdating a symptom log, or the mobile-specific backend decision flagged above if push notifications become a near-term need.
+To be scoped from here — most likely candidates: trends (mirroring `apps/web`'s symptom-frequency/cycle-length views), a date/time picker for backdating a symptom log or cycle entry, or the mobile-specific backend decision flagged above if push notifications become a near-term need.
 
 ## Repo maintenance — reconciling two parallel mobile-app builds
 

@@ -1,4 +1,10 @@
-import type { AuthSessionResponse, PaginatedResponse, SymptomLogDto, UserDto } from "@embr/types";
+import type {
+  AuthSessionResponse,
+  CycleEntryDto,
+  PaginatedResponse,
+  SymptomLogDto,
+  UserDto,
+} from "@embr/types";
 import { apiFetch } from "./api-client";
 
 export const api = {
@@ -40,5 +46,21 @@ export const api = {
       apiFetch<SymptomLogDto>("/symptom-logs", { method: "POST", body: input }),
 
     delete: (id: string) => apiFetch<void>(`/symptom-logs/${id}`, { method: "DELETE" }),
+  },
+
+  cycleEntries: {
+    list: (query?: { page?: number; pageSize?: number; from?: string; to?: string }) =>
+      apiFetch<PaginatedResponse<CycleEntryDto>>("/cycle-entries", { query }),
+
+    // Upsert, not create — date is the entry's identity (one entry per
+    // user per day), so posting again for a date that already has an
+    // entry updates it rather than erroring or duplicating.
+    upsert: (input: {
+      date: string;
+      flow?: string;
+      isPeriodStart?: boolean;
+      isPeriodEnd?: boolean;
+      notes?: string;
+    }) => apiFetch<CycleEntryDto>("/cycle-entries", { method: "POST", body: input }),
   },
 };
