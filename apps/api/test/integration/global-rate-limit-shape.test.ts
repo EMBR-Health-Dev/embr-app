@@ -15,18 +15,26 @@ vi.mock("../../src/lib/prisma.js", () => ({
   prisma: { $queryRaw: vi.fn().mockResolvedValue([{ "?column?": 1 }]) },
 }));
 
-const { createApp } = await import("../../src/app.js");
-const { redis } = await import("../../src/lib/redis.js");
+const { isRedisReachable } = await import("./redis-reachable.js");
 
-beforeAll(async () => {
-  await expect(redis.ping()).resolves.toBe("PONG");
-});
+// See redis-reachable.ts / rate-limit-redis.test.ts for why this is a raw
+// socket probe rather than beforeAll pinging the real ioredis client —
+// the real client (imported below, only once we know it's worth it)
+// connects eagerly at import time (lazyConnect: false).
+const redisReachable = await isRedisReachable(process.env.REDIS_URL ?? "redis://localhost:6379");
 
-afterAll(async () => {
-  await redis.quit();
-});
+describe.skipIf(!redisReachable)("global rate limiter error shape", () => {
+  let createApp: (typeof import("../../src/app.js"))["createApp"];
+  let redis: (typeof import("../../src/lib/redis.js"))["redis"];
 
-describe("global rate limiter error shape", () => {
+  beforeAll(async () => {
+    ({ createApp } = await import("../../src/app.js"));
+    ({ redis } = await import("../../src/lib/redis.js"));
+  });
+
+  afterAll(async () => {
+    await redis.quit();
+  });
   it("returns the API's standard error shape, not express-rate-limit's default text/html message", async () => {
     const app = createApp();
 
