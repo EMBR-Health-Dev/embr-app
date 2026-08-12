@@ -1,7 +1,9 @@
 import type {
   AuthSessionResponse,
   CycleEntryDto,
+  CycleLengthTrendDto,
   PaginatedResponse,
+  SymptomFrequencyDto,
   SymptomLogDto,
   UserDto,
 } from "@embr/types";
@@ -62,5 +64,13 @@ export const api = {
       isPeriodEnd?: boolean;
       notes?: string;
     }) => apiFetch<CycleEntryDto>("/cycle-entries", { method: "POST", body: input }),
+  },
+
+  trends: {
+    symptomFrequency: (query?: { from?: string; to?: string }) =>
+      apiFetch<SymptomFrequencyDto[]>("/trends/symptom-frequency", { query }),
+
+    cycleLength: (query?: { from?: string; to?: string }) =>
+      apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
   },
 };

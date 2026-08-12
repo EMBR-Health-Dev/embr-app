@@ -465,8 +465,14 @@ With two real screens now, replaced the bare `Stack` in `(app)/_layout.tsx` with
 
 Re-verified again: typecheck and lint both clean, `expo export --platform web` complete (1305 modules).
 
+**Third follow-up: trends**
+
+`app/(app)/trends.tsx` mirrors `apps/web`'s trends view: symptom frequency as horizontal bars over the last 90 days, cycle length between period starts over the last 180 days, both computed server-side (Milestone 9) so neither is subject to any client-side page cap. Kept web's deliberate tone intact rather than reworded it away — the empty-state copy for cycle length says outright that irregular or absent cycles are common in perimenopause and this is a record, not a diagnosis, and the footnote below the data repeats that framing. That wording exists on purpose; a health-tracking view for this population needs to avoid reading as a judgment on what it's showing, and that's exactly the kind of thing that's easy to accidentally lose when porting a screen to a new platform.
+
+Added as a third tab. Re-verified the same way as every prior mobile commit: full monorepo typecheck and lint both clean, `expo export --platform web` complete (1306 modules, up from 1305).
+
 **Next milestone**
-To be scoped from here — most likely candidates: trends (mirroring `apps/web`'s symptom-frequency/cycle-length views), a date/time picker for backdating a symptom log or cycle entry, or the mobile-specific backend decision flagged above if push notifications become a near-term need.
+To be scoped from here — auth, symptom logging, cycle tracking, and trends are all now built and working against the real API. Most likely candidates: a date/time picker for backdating a symptom log or cycle entry, account settings (change password, sessions — `apps/web`'s equivalent already exists to mirror), or the mobile-specific backend decision flagged above if push notifications become a near-term need.
 
 ## Repo maintenance — reconciling two parallel mobile-app builds
 
