@@ -113,6 +113,20 @@ export const organizationRepository = {
    * active one does. Returns both the cohort size and the per-category
    * counts so the service layer can apply the k-anonymity floor before
    * deciding whether to return the categories at all.
+   *
+   * Index note (reviewed against ~8.7M rows / 50k users, a 500-member
+   * cohort — see PR for methodology): the existing `symptom_logs
+   * (userId, occurredAt)` index is exactly right for the common case, a
+   * date-bounded query (~20ms, index-only scan). An unbounded query
+   * (`query.from`/`query.to` both omitted) genuinely is slow at that
+   * scale (~1.9s) — but *adding* an index doesn't fix it. Forcing the
+   * existing index via `enable_seqscan = off` made it slower (4.4s), not
+   * faster: 500 essentially-random userIds scattered across 50k don't
+   * cluster in index order, so a parallel sequential scan legitimately
+   * beats index probing here regardless of which columns are indexed.
+   * If the unbounded case becomes a real problem, the fix is caching or
+   * a precomputed rollup, not a schema change — don't add an index here
+   * without re-running this analysis against then-current data first.
    */
   async symptomFrequencyForMembers(
     memberUserIds: string[],
