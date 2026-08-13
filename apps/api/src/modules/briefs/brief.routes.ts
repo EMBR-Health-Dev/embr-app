@@ -32,8 +32,7 @@ router.get(
   "/briefs",
   validate(paginationQuerySchema, "query"),
   asyncHandler(async (req, res) => {
-    const { page, pageSize } = req.query as unknown as PaginationQuery;
-    const result = await briefService.list(req.user!.sub, page, pageSize);
+    const result = await briefService.list(req.user!.sub, req.query as unknown as PaginationQuery);
     res.status(200).json({ data: result, requestId: req.requestId });
   }),
 );

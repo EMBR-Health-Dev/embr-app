@@ -1,4 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
+import { toSkipTake } from "../../lib/pagination.js";
+import type { PaginationQuery } from "@embr/validation";
 
 export const briefRepository = {
   create(data: {
@@ -13,13 +15,12 @@ export const briefRepository = {
     return prisma.clinicalBrief.create({ data });
   },
 
-  listForUser(userId: string, page: number, pageSize: number) {
+  listForUser(userId: string, query: PaginationQuery) {
     return Promise.all([
       prisma.clinicalBrief.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        ...toSkipTake(query),
       }),
       prisma.clinicalBrief.count({ where: { userId } }),
     ]);

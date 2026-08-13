@@ -439,6 +439,7 @@ paths:
                   total: { type: integer }
                   page: { type: integer }
                   pageSize: { type: integer }
+                  totalPages: { type: integer }
   /briefs/{id}:
     get:
       summary: Get a single brief, including the AI narrative and discussion topics

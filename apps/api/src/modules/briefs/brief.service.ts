@@ -1,6 +1,8 @@
 import { AppError } from "@embr/shared";
-import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
+import type { ClinicalBriefDto, ClinicalBriefListItemDto, PaginatedResponse } from "@embr/types";
+import type { PaginationQuery } from "@embr/validation";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
+import { paginate } from "../../lib/pagination.js";
 import { exportRepository } from "../export/export.repository.js";
 import { cycleLengths } from "../export/pdf.js";
 import { briefRepository } from "./brief.repository.js";
@@ -75,11 +77,10 @@ export const briefService = {
 
   async list(
     userId: string,
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: ClinicalBriefListItemDto[]; total: number; page: number; pageSize: number }> {
-    const [briefs, total] = await briefRepository.listForUser(userId, page, pageSize);
-    return { items: briefs.map(toClinicalBriefListItemDto), total, page, pageSize };
+    query: PaginationQuery,
+  ): Promise<PaginatedResponse<ClinicalBriefListItemDto>> {
+    const [briefs, total] = await briefRepository.listForUser(userId, query);
+    return paginate(briefs.map(toClinicalBriefListItemDto), total, query);
   },
 
   async get(id: string, userId: string): Promise<ClinicalBriefDto> {
