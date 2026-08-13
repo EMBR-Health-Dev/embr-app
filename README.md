@@ -1,6 +1,19 @@
 # EMBR Platform
 
-AI-powered perimenopause and menopause health platform.
+EMBR is the evidence infrastructure for menopause.
+
+Most menopause apps ask a woman to track symptoms and hand her a chart. EMBR is built around a different loop:
+
+Women generate longitudinal data
+→ EMBR structures it
+→ EMBR identifies meaningful patterns
+→ EMBR converts those patterns into clinician-ready evidence
+→ Clinicians make better-informed decisions
+→ Employers understand population-level impact without ever accessing individual health data
+
+EMBR is not a diagnostic tool and does not give medical advice. It turns what a woman already tracks into structured, observational evidence she can bring into a clinical conversation — and, in aggregate and fully anonymized, into workplace impact data an employer can act on without seeing anyone's individual health information.
+
+**Current status**: production deployment in progress (web, admin, API) with a companion mobile app in active development (Expo, iOS/Android). See `docs/DEPLOYMENT.md` for the deploy architecture and `docs/MILESTONES.md` for the milestone plan.
 
 ## Stack
 

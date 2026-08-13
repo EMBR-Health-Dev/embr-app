@@ -2,6 +2,7 @@ import type {
   AuthSessionResponse,
   CycleEntryDto,
   CycleLengthTrendDto,
+  DeviceSessionDto,
   PaginatedResponse,
   SymptomFrequencyDto,
   SymptomLogDto,
@@ -33,6 +34,18 @@ export const api = {
 
     forgotPassword: (email: string) =>
       apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
+
+    // Server-side revokes every session on success (see
+    // auth.service.ts) — same as apps/web, the caller is expected to
+    // treat this as an implicit logout on this device too, not just a
+    // password update.
+    changePassword: (input: { currentPassword: string; newPassword: string }) =>
+      apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
+
+    sessions: {
+      list: () => apiFetch<DeviceSessionDto[]>("/auth/sessions"),
+      revoke: (id: string) => apiFetch<void>(`/auth/sessions/${id}`, { method: "DELETE" }),
+    },
   },
 
   symptomLogs: {

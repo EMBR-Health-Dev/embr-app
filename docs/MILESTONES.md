@@ -495,3 +495,11 @@ Both found already on `main`'s branch list, both high-quality and non-conflictin
 **`chore/sso-oidc-coverage-and-test-hygiene`** — two things: (1) direct unit test coverage for `sso.oidc.ts` (12 new tests, mocking `openid-client` itself rather than the wrapper) — including verifying the SSRF guard is actually wired into the discovery call, closing a coverage gap Milestone 15 knowingly left; (2) a real fix for the two Redis-dependent integration tests that had been failing in this sandbox (and presumably any environment without Redis) every single run this whole document's history — a new `isRedisReachable()` raw-TCP-probe helper, checked _before_ importing the real `ioredis` client (which connects eagerly at import time), gating both files with `describe.skipIf`. Confirmed: `apps/api` test suite now reports 17/17 test files passing with 2 cleanly _skipped_ (not failed) — the first time in this document's history that command hasn't required an explanatory caveat about Redis.
 
 **Verification**: full monorepo `pnpm typecheck` (12/13, confirmed pre-existing Prisma-generation sandbox gap), `pnpm lint` (13/13, clean), `apps/api` full suite: 148/148 passing, 5 skipped (unrelated, pre-existing conditional skips), the 2 Redis-integration files now skip cleanly instead of failing.
+
+## Mobile: account settings (change password, device sessions, log out everywhere)
+
+Mirrors `apps/web`'s `/settings` page — the one piece of the auth surface mobile didn't have yet. Reuses the same `changePasswordSchema` validation and `DeviceSessionDto` shape; no backend changes needed since `requireCsrfToken()`'s cookie-presence check (see the earlier "mobile-viable auth" entry) already makes `/auth/change-password`, `/auth/sessions`, and `/auth/logout-all` work correctly for Bearer-authenticated requests with no further work.
+
+Added as a 4th tab. The existing quick "Log out" link on the Symptoms screen stays where it is — this is additive, not a replacement.
+
+**Verification**: `apps/mobile` typecheck and eslint both clean; full monorepo typecheck 12/13 (confirmed Prisma-generation sandbox gap), lint 13/13.

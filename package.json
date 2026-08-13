@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "EMBR \u2014 AI-powered perimenopause and menopause health platform",
+  "description": "EMBR \u2014 evidence infrastructure for menopause",
   "engines": {
     "node": ">=20.11.0",
     "pnpm": ">=9.0.0"

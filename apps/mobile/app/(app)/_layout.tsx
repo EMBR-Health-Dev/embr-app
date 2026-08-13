@@ -22,6 +22,7 @@ export default function AppLayout() {
       <Tabs.Screen name="index" options={{ title: "Symptoms" }} />
       <Tabs.Screen name="cycle" options={{ title: "Cycle" }} />
       <Tabs.Screen name="trends" options={{ title: "Trends" }} />
+      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
     </Tabs>
   );
 }
