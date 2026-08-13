@@ -157,6 +157,9 @@ export default function DashboardPage() {
           <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
             Trends
           </Link>
+          <Link href="/brief" className="underline underline-offset-2 hover:text-navy">
+            BRIEF
+          </Link>
           <Link href="/export" className="underline underline-offset-2 hover:text-navy">
             Export
           </Link>

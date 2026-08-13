@@ -1,5 +1,7 @@
 import type {
   AuthSessionResponse,
+  ClinicalBriefDto,
+  ClinicalBriefListItemDto,
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
@@ -140,6 +142,23 @@ export const api = {
           body: input,
         }),
     },
+  },
+
+  briefs: {
+    generate: (input: { fromDate: string; toDate: string }) =>
+      apiFetch<ClinicalBriefDto>("/briefs", { method: "POST", body: input }),
+
+    list: (query?: { page?: number; pageSize?: number }) =>
+      apiFetch<PaginatedResponse<ClinicalBriefListItemDto>>("/briefs", { query }),
+
+    get: (id: string) => apiFetch<ClinicalBriefDto>(`/briefs/${id}`),
+
+    delete: (id: string) => apiFetch<void>(`/briefs/${id}`, { method: "DELETE" }),
+
+    // Not a JSON call — same reasoning as the export page's downloads:
+    // a plain same-origin URL the browser handles natively (cookies
+    // included automatically via the /api proxy), not a fetch() call.
+    pdfUrl: (id: string) => `/api/briefs/${id}/pdf`,
   },
 
   sso: {
