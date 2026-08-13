@@ -385,6 +385,100 @@ paths:
           description: "PDF file (Content-Disposition: attachment)"
           content:
             application/pdf: {}
+  /briefs:
+    post:
+      summary: Generate a new EMBR BRIEF
+      description: >
+        Computes a structured summary (symptom frequency + severity
+        breakdown, cycle length trend) over the given range, sends only
+        that aggregate — never raw free-text notes — to the AI for a
+        narrative and GP discussion questions, and persists the result
+        as a point-in-time snapshot. Re-downloading later reproduces
+        this exact brief even if the underlying logs have since
+        changed. See brief.ai.ts for the system prompt's safety scope
+        (data-grounded only, never diagnostic, questions not
+        assertions).
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromDate, toDate]
+              properties:
+                fromDate: { type: string, format: date }
+                toDate: { type: string, format: date }
+      responses:
+        "201":
+          description: The generated brief
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClinicalBriefDto" }
+        "400": { description: "Validation failed, or fromDate is not before toDate" }
+    get:
+      summary: List past briefs (paginated, newest first)
+      description: List items omit the AI content — fetch GET /briefs/{id} for the full narrative.
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200":
+          description: Paginated brief history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/ClinicalBriefListItemDto" }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+  /briefs/{id}:
+    get:
+      summary: Get a single brief, including the AI narrative and discussion topics
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The brief
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClinicalBriefDto" }
+        "404":
+          {
+            description: "Doesn't exist, or belongs to a different user — not distinguished, to avoid confirming existence",
+          }
+    delete:
+      summary: Delete a brief
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+  /briefs/{id}/pdf:
+    get:
+      summary: Download a brief as PDF
+      description: Rendered entirely from the stored snapshot — never re-queries symptom/cycle data and never re-calls the AI.
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: "PDF file (Content-Disposition: attachment)"
+          content:
+            application/pdf: {}
+        "404": { description: "Doesn't exist, or belongs to a different user" }
   /trends/symptom-frequency:
     get:
       summary: Symptom frequency by category (DB-side aggregate)
@@ -771,6 +865,40 @@ components:
           { type: boolean, description: "Reserved — not read anywhere yet as of Milestone 15" }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    ClinicalBriefListItemDto:
+      type: object
+      description: The list-view shape — no AI content, keeps history/pagination responses small.
+      properties:
+        id: { type: string, format: uuid }
+        fromDate: { type: string, format: date }
+        toDate: { type: string, format: date }
+        createdAt: { type: string, format: date-time }
+    ClinicalBriefDto:
+      allOf:
+        - { $ref: "#/components/schemas/ClinicalBriefListItemDto" }
+        - type: object
+          properties:
+            symptomSummary:
+              type: array
+              items:
+                type: object
+                properties:
+                  category: { $ref: "#/components/schemas/SymptomCategory" }
+                  count: { type: integer }
+                  severityBreakdown: { type: object, additionalProperties: { type: integer } }
+            cycleSummary:
+              type: object
+              properties:
+                averageCycleLengthDays: { type: integer, nullable: true }
+                cycleCount: { type: integer }
+                periodDaysLogged: { type: integer }
+            aiNarrative:
+              type: string
+              description: AI-generated from symptomSummary/cycleSummary only — never from raw log notes.
+            aiDiscussionTopics:
+              type: array
+              items: { type: string }
+              description: Always phrased as questions to ask a GP, never as assertions or advice — see brief.ai.ts's system prompt.
     OrganizationDto:
       type: object
       properties:

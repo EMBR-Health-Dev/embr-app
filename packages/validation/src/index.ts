@@ -264,3 +264,21 @@ export const upsertSsoConnectionSchema = z.object({
   enabled: z.boolean().default(false),
 });
 export type UpsertSsoConnectionInput = z.infer<typeof upsertSsoConnectionSchema>;
+
+// ---- EMBR BRIEF (Milestone 17) ----
+
+// Unlike exportQuerySchema/trendsQuerySchema, both dates are required
+// here — an unbounded "all time" AI-summarized brief is a worse
+// product decision than requiring the person to pick a range (and
+// doesn't map to how GP-visit prep actually works: "since my last
+// visit," not "ever").
+export const generateBriefSchema = z
+  .object({
+    fromDate: z.coerce.date(),
+    toDate: z.coerce.date(),
+  })
+  .refine((v) => v.fromDate < v.toDate, {
+    message: "fromDate must be before toDate",
+    path: ["toDate"],
+  });
+export type GenerateBriefInput = z.infer<typeof generateBriefSchema>;

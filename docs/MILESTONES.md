@@ -503,3 +503,25 @@ Mirrors `apps/web`'s `/settings` page — the one piece of the auth surface mobi
 Added as a 4th tab. The existing quick "Log out" link on the Symptoms screen stays where it is — this is additive, not a replacement.
 
 **Verification**: `apps/mobile` typecheck and eslint both clean; full monorepo typecheck 12/13 (confirmed Prisma-generation sandbox gap), lint 13/13.
+
+## Milestone 17 — EMBR BRIEF, backend (AI-generated GP visit prep, saved & re-downloadable)
+
+**Why this, now**: three separate product documents in the team's Drive all independently converge on the same point — EMBR BRIEF is "the beachhead," "highest clinical value," "the single feature with the clearest aha moment," and infrastructure (auth, sync, mobile shell) is "necessary but is not the product." Scoped collaboratively before building: ships on both web and mobile, AI both summarizes patterns _and_ suggests GP discussion topics (not a pure-structured v1), and generated briefs are saved with a re-downloadable history — all three explicit product decisions, not assumed.
+
+**What changed**
+
+- New `ClinicalBrief` model: a **point-in-time snapshot**, not a live view — stores the structured summary (symptom frequency + severity breakdown, cycle length trend) _and_ the AI-generated narrative/discussion-topics together, so re-downloading a brief a year later reproduces exactly what was generated even if the underlying logs have since been edited.
+- `brief.ai.ts` — the safety-critical piece, given EMBR's explicit "not a diagnostic tool, no medical advice" positioning (see README.md). The system prompt is deliberately narrow: describe only patterns the structured data actually supports, never diagnose or recommend treatment, and — since the person chose "summarize + suggest discussion topics" over a pure-narrative version — every discussion topic must be phrased as a question the person could ask their own GP ("ask whether X is typical"), never as an assertion or recommendation, which is what keeps "discussion topics" from quietly becoming a rule-2 violation under a different name. Only the structured, aggregated summary is ever sent to the model — never raw free-text symptom-log notes, both as privacy minimization and to keep the model's input (and therefore its output) tightly scoped to what this feature is for. Response is JSON-parsed and zod-validated, not trusted blindly; a malformed model response is a thrown error, not a silently-corrupted brief.
+- Routes: `POST /briefs` (generate), `GET /briefs` (paginated history, list view omits AI content to keep it light), `GET /briefs/:id` (full content), `GET /briefs/:id/pdf` (rendered from the stored snapshot — never re-queries live data or re-calls the AI), `DELETE /briefs/:id`. Access control scoped in the query itself (`findFirst({ where: { id, userId } })`) — another user's brief 404s rather than 403ing, matching the SSO-connection pattern's reasoning: don't confirm existence.
+- `brief.pdf.ts` extends the existing `export/pdf.ts` clinician-summary builder — reused `cycleLengths`/`categoryLabel` rather than reimplementing (exported both for that purpose), consistent with the DRY precedent `issue-25-org-repo-dedup` set earlier.
+- Model pinned explicitly (`ANTHROPIC_BRIEF_MODEL`, defaults to `claude-sonnet-5`) rather than left to resolve against "latest" — a clinical-adjacent feature's tone/shape changing silently on a provider-side model swap is worse than this needing a deliberate version bump later. Sonnet-tier: this task doesn't need Opus-level reasoning, and Haiku is a worse fit for a tone-sensitive, safety-sensitive task.
+
+**Verification**: 17 new tests — 7 unit tests on `brief.ai.ts`'s response parsing/validation (malformed JSON, missing fields, empty topics array, no text block all correctly rejected; confirmed via direct assertion on the mocked call that raw notes never appear anywhere in what's sent to the model, and that the system prompt actually contains the safety-rule language) and 10 on the routes (computation correctness — symptom counts/severity breakdown and cycle-length averaging checked against known fixture data, not just "did it return 200" — plus real access-control tests: another user's brief 404s on GET and on DELETE, and DELETE-for-a-non-owned-id verified to not actually delete anything). Full monorepo typecheck 12/13 (confirmed pre-existing Prisma-generation sandbox gap, nothing new), lint 13/13, full `apps/api` suite 165/165 passing (up from 148), 2 cleanly skipped.
+
+**Remaining work (explicitly out of scope for this delivery)**
+
+- Both frontends (web page, mobile screen) — backend-only so far, next immediately.
+- No rate limiting specific to brief generation (each call is a real Anthropic API spend) — worth a limiter before this is live for real users, same pattern as `loginLimiter`/`refreshLimiter`.
+- No way to regenerate a brief with corrected data without creating a whole new one — acceptable for v1 given briefs are meant to be point-in-time snapshots anyway.
+
+**Next**: both frontends, then the rate-limit gap above before this goes live for real.
