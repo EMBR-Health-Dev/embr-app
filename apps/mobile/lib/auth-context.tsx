@@ -7,7 +7,7 @@ import { tokenStorage } from "./token-storage";
 interface AuthContextValue {
   user: UserDto | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<UserDto>;
   register: (email: string, password: string) => Promise<UserDto>;
   logout: () => Promise<void>;
 }
@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshToken: session.refreshToken,
     });
     setUser(session.user);
+    return session.user;
   }, []);
 
   const register = useCallback(async (email: string, password: string) => {

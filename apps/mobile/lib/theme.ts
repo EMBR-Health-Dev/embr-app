@@ -1,0 +1,32 @@
+/**
+ * EMBR mobile design tokens. Every value here traces back to the
+ * approved web palette (navy #0f1b2d, bone #f4f1ea, brass #b8974f,
+ * teal #3a6b6a) — see apps/web/tailwind.config.ts.
+ *
+ * Deliberately semantic, not literal color names — "accent" not
+ * "brass," "textPrimary" not "navy" — so a future palette change is
+ * one edit here, not a find-and-replace across every screen. This
+ * milestone applies these to onboarding's new screens and to
+ * chip.tsx (reused by onboarding); the other ~78 existing hardcoded
+ * color literals across the rest of the app are a deliberately
+ * separate cleanup, not retrofitted here.
+ */
+export const theme = {
+  colors: {
+    background: "#f4f1ea", // bone
+    surface: "#ffffff",
+    surfaceElevated: "#faf8f4", // a hair off bone, for subtle layering without a border
+    textPrimary: "#0f1b2d", // navy
+    textSecondary: "#0f1b2d99", // navy at ~60% — matches web's text-navy/60 convention
+    textMuted: "#0f1b2d80", // navy at ~50%
+    accent: "#b8974f", // brass
+    accentSoft: "#b8974f26", // brass at ~15%, for selected-state fills/backgrounds
+    border: "#0f1b2d1a", // navy at ~10%
+    borderStrong: "#0f1b2d33", // navy at ~20%
+    success: "#3a6b6a", // teal — EMBR has no separate "green," teal fills this role
+    error: "#b3261e",
+    selected: "#0f1b2d", // navy — a fully-selected/filled state, e.g. chip.tsx's active fill
+  },
+} as const;
+
+export type ThemeColor = keyof typeof theme.colors;

@@ -1,24 +1,34 @@
 import { useCallback, useEffect, useState } from "react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { severityLevelSchema, symptomCategorySchema } from "@embr/validation";
-import type { SymptomLogDto } from "@embr/types";
+import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { categoryLabel, severityLabel } from "../../lib/format";
 import { Chip } from "../../components/chip";
+import { theme } from "../../lib/theme";
+import { startingPointMessage } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = symptomCategorySchema.options;
 const SEVERITIES = severityLevelSchema.options;
 
+function isCategory(value: unknown): value is (typeof CATEGORIES)[number] {
+  return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
+}
+
 export default function HomeScreen() {
   const { user, logout } = useAuth();
+  const params = useLocalSearchParams<{ logCategory?: string; firstLog?: string }>();
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
+  const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
 
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number] | null>(null);
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number] | null>(
+    isCategory(params.logCategory) ? params.logCategory : null,
+  );
   const [severity, setSeverity] = useState<(typeof SEVERITIES)[number] | null>(null);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -36,6 +46,28 @@ export default function HomeScreen() {
   useEffect(() => {
     void loadLogs();
   }, [loadLogs]);
+
+  // Soft, not a block: /onboarding's skip link reaches this same
+  // screen in one tap from any onboarding screen, and completing/
+  // skipping sets onboardingCompletedAt either way, so this redirect
+  // only ever fires once per person, not on every visit. Mirrors
+  // apps/web/src/app/dashboard/page.tsx's identical redirect.
+  useEffect(() => {
+    if (user && !user.onboardingCompletedAt) router.replace("/onboarding");
+  }, [user]);
+
+  useEffect(() => {
+    // Only reachable once onboardingCompletedAt is set (the redirect
+    // above sends anyone else to /onboarding first), so there's
+    // always a real profile to fetch by the time this runs. Mirrors
+    // apps/web/src/app/dashboard/page.tsx's identical fetch.
+    if (user?.onboardingCompletedAt) {
+      api.onboarding
+        .get()
+        .then(setOnboardingProfile)
+        .catch(() => setOnboardingProfile(null));
+    }
+  }, [user]);
 
   async function handleLogSymptom() {
     setFormError(null);
@@ -95,6 +127,12 @@ export default function HomeScreen() {
                 <Text style={styles.logoutText}>Log out</Text>
               </Pressable>
             </View>
+
+            {startingPointMessage(onboardingProfile?.jobToBeDone ?? null) && (
+              <Text style={styles.startingPoint}>
+                {startingPointMessage(onboardingProfile?.jobToBeDone ?? null)}
+              </Text>
+            )}
 
             <Text style={styles.sectionLabel}>How are you feeling right now?</Text>
             <View style={styles.chipRow}>
@@ -176,6 +214,12 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 22, fontWeight: "600" },
   logoutText: { fontSize: 14, color: "#6B7280" },
+  startingPoint: {
+    fontSize: 15,
+    fontStyle: "italic",
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
   sectionLabel: { fontSize: 14, fontWeight: "500", color: "#374151", marginTop: 8 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   notesInput: {
