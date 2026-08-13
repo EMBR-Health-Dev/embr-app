@@ -538,3 +538,9 @@ New dependencies: `expo-file-system` and `expo-sharing`, both pinned to their re
 **Verification**: `apps/mobile` typecheck and eslint both clean on the first pass (including the new `File`/`Directory`/`Paths`-based download helper, which validates the SDK-57-current API usage was correct). Full monorepo typecheck 12/13 (confirmed Prisma-generation sandbox gap), lint 13/13.
 
 EMBR BRIEF now ships as designed: generate on either platform, saved with a re-downloadable history on either platform.
+
+## EMBR BRIEF: generation rate limit (cost control)
+
+The one gap explicitly flagged as needed before launch, closed now rather than left open: `POST /briefs` had no rate limit, and every call is a real Anthropic API spend. Unlike `auth/rate-limiters.ts`'s limiters (anti-brute-force, keyed by IP or email+IP on _unauthenticated_ endpoints), this one is pure cost control on an already-`requireAuth()`-gated endpoint — keyed by user ID, not IP. 10/hour, well above any real GP-prep use case, caps the blast radius of a client bug or an account generating far more than anyone would organically need.
+
+No new tests — this follows the exact same `skipInTest()` pattern the auth limiters already established (a no-op during the test suite; actual rate-limiting behavior is covered by the real-Redis integration tests, not the unit suite). Verified the brief test suite is unaffected: still 17/17.

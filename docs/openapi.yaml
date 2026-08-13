@@ -417,6 +417,10 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ClinicalBriefDto" }
         "400": { description: "Validation failed, or fromDate is not before toDate" }
+        "429":
+          {
+            description: "Generation rate limit exceeded — 10 per hour, keyed by user (cost control, not brute-force protection)",
+          }
     get:
       summary: List past briefs (paginated, newest first)
       description: List items omit the AI content — fetch GET /briefs/{id} for the full narrative.
