@@ -25,7 +25,7 @@ export class ApiError extends Error {
 // configured rather than implied. EXPO_PUBLIC_-prefixed vars are the
 // only ones Expo inlines into the built app; anything else read from
 // process.env here would be undefined at runtime.
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000";
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000";
 
 // Auth endpoints never go through the refresh-and-retry path below —
 // a 401 from /auth/login is just "wrong password," not "your session

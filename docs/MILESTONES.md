@@ -525,3 +525,16 @@ Added as a 4th tab. The existing quick "Log out" link on the Symptoms screen sta
 - No way to regenerate a brief with corrected data without creating a whole new one — acceptable for v1 given briefs are meant to be point-in-time snapshots anyway.
 
 **Next**: both frontends, then the rate-limit gap above before this goes live for real.
+
+## EMBR BRIEF: mobile frontend
+
+Completes the "ships on both web and mobile simultaneously" decision from Milestone 17's scoping. Same generate/history/view/delete flow as the web page, adapted for two mobile-specific realities:
+
+- No native date picker in this app yet (nothing elsewhere uses one — `cycle.tsx` only ever logs "today"), so date range entry is plain `YYYY-MM-DD` text input with client-side format validation, matching this app's established preference for simplicity over adding a new native dependency for one screen.
+- No browser download mechanism and no cookie to authenticate a plain link with (unlike web's `<a href="/api/briefs/:id/pdf">`) — `brief-pdf.ts` fetches the PDF with an explicit Bearer header via `expo-file-system`'s current `File.downloadFileAsync(url, dir, { headers })` API (confirmed against the actual SDK 57 docs/changelog before writing this, not assumed from older `FileSystem.downloadAsync` memory — the file-system API was substantially rewritten in SDK 54, and the two are not interchangeable), then hands the local file to `expo-sharing`'s native share sheet so the person can actually save or send it somewhere.
+
+New dependencies: `expo-file-system` and `expo-sharing`, both pinned to their real current registry versions.
+
+**Verification**: `apps/mobile` typecheck and eslint both clean on the first pass (including the new `File`/`Directory`/`Paths`-based download helper, which validates the SDK-57-current API usage was correct). Full monorepo typecheck 12/13 (confirmed Prisma-generation sandbox gap), lint 13/13.
+
+EMBR BRIEF now ships as designed: generate on either platform, saved with a re-downloadable history on either platform.

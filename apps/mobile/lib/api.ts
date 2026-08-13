@@ -1,5 +1,7 @@
 import type {
   AuthSessionResponse,
+  ClinicalBriefDto,
+  ClinicalBriefListItemDto,
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
@@ -85,5 +87,17 @@ export const api = {
 
     cycleLength: (query?: { from?: string; to?: string }) =>
       apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
+  },
+
+  briefs: {
+    generate: (input: { fromDate: string; toDate: string }) =>
+      apiFetch<ClinicalBriefDto>("/briefs", { method: "POST", body: input }),
+
+    list: (query?: { page?: number; pageSize?: number }) =>
+      apiFetch<PaginatedResponse<ClinicalBriefListItemDto>>("/briefs", { query }),
+
+    get: (id: string) => apiFetch<ClinicalBriefDto>(`/briefs/${id}`),
+
+    delete: (id: string) => apiFetch<void>(`/briefs/${id}`, { method: "DELETE" }),
   },
 };
