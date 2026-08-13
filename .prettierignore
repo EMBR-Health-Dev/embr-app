@@ -1,0 +1,10 @@
+# Machine-generated lockfiles — pnpm/npm/yarn each write these in their
+# own dialect. Reformatting them with Prettier serves no readability
+# purpose (nobody hand-edits a lockfile) and risks Prettier's YAML/JSON
+# printer not round-tripping every edge case the package manager relies
+# on. Without this, every dependency bump that regenerates the lockfile
+# trips a false-positive Format Check failure unrelated to the actual
+# change.
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
