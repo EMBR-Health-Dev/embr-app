@@ -39,6 +39,7 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^9.0.3",
     "openid-client": "^6.8.0",
+    "@anthropic-ai/sdk": "^0.116.0",
     "pdfkit": "^0.15.0"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
 
-function categoryLabel(category: string): string {
+export function categoryLabel(category: string): string {
   return category
     .toLowerCase()
     .split("_")
@@ -29,7 +29,7 @@ function symptomFrequency(logs: SymptomLog[]): Array<{ category: string; count: 
     .sort((a, b) => b.count - a.count);
 }
 
-function cycleLengths(entries: CycleEntry[]): number[] {
+export function cycleLengths(entries: CycleEntry[]): number[] {
   const starts = entries
     .filter((e) => e.isPeriodStart)
     .map((e) => e.date.getTime())

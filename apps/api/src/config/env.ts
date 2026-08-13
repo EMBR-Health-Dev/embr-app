@@ -81,6 +81,18 @@ const apiEnvSchema = z.object({
     .int()
     .positive()
     .default(10 * 60),
+
+  // ---- EMBR BRIEF (Milestone 17) ----
+  ANTHROPIC_API_KEY: z.string().min(1),
+  // Pinned to a specific model rather than left to whatever "latest"
+  // resolves to — a clinical-adjacent feature's output changing
+  // shape/tone silently on a provider-side model swap is worse than
+  // this needing a deliberate version bump later. Sonnet-tier: this
+  // task (summarize structured data, generate neutrally-framed
+  // discussion questions) doesn't need Opus-level reasoning, and
+  // Haiku is a worse fit for a safety-sensitive, tone-sensitive task
+  // like this one.
+  ANTHROPIC_BRIEF_MODEL: z.string().default("claude-sonnet-5"),
 });
 
 export const env = loadEnv(apiEnvSchema);

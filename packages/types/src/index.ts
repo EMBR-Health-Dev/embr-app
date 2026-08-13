@@ -217,3 +217,37 @@ export interface SsoConnectionDto {
   createdAt: string;
   updatedAt: string;
 }
+
+// ---- EMBR BRIEF (Milestone 17) ----
+
+export interface BriefSymptomSummaryEntryDto {
+  category: SymptomCategory;
+  count: number;
+  severityBreakdown: Record<string, number>;
+}
+
+export interface BriefCycleSummaryDto {
+  averageCycleLengthDays: number | null;
+  cycleCount: number;
+  periodDaysLogged: number;
+}
+
+/** The list view — no AI content, keeps history/pagination responses
+ * small. Fetch the full ClinicalBriefDto to read the narrative. */
+export interface ClinicalBriefListItemDto {
+  id: string;
+  fromDate: string;
+  toDate: string;
+  createdAt: string;
+}
+
+/** aiNarrative and aiDiscussionTopics are AI-generated from the
+ * structured summary alone — see brief.ai.ts's system prompt for the
+ * exact scope constraints (data-grounded only, never diagnostic,
+ * discussion topics framed as questions, never assertions). */
+export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
+  symptomSummary: BriefSymptomSummaryEntryDto[];
+  cycleSummary: BriefCycleSummaryDto;
+  aiNarrative: string;
+  aiDiscussionTopics: string[];
+}

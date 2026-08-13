@@ -46,6 +46,7 @@ model User {
   cycleEntries            CycleEntry[]
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
+  clinicalBriefs          ClinicalBrief[]
 
   @@map("users")
 }
@@ -328,4 +329,43 @@ model OrganizationSsoConnection {
   updatedAt DateTime @updatedAt
 
   @@map("organization_sso_connections")
+}
+
+// ---- Clinical briefs (EMBR BRIEF) ----
+//
+// A generated, persisted point-in-time snapshot — not a live view.
+// Re-downloading later must reproduce exactly what was generated, even
+// if the person has since edited or added logs in that date range, so
+// the structured summary AND the AI-generated text are both stored
+// here rather than recomputed on read. See brief.ai.ts for the (very
+// deliberately narrow) scope of what the AI is allowed to say.
+
+/// A generated clinical brief: a structured summary of symptom/cycle
+/// data over a date range, plus an AI-generated narrative and
+/// discussion-topic list intended to help a GP conversation, not
+/// replace one. Never contains raw free-text symptom-log notes — see
+/// brief.service.ts for why those are deliberately excluded from what
+/// gets sent to the model.
+model ClinicalBrief {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fromDate DateTime
+  toDate   DateTime
+
+  /// Array<{ category: SymptomCategory, count: number, severityBreakdown: Record<SeverityLevel, number> }>
+  symptomSummary Json
+  /// { averageCycleLengthDays: number | null, cycleCount: number, periodDaysLogged: number }
+  cycleSummary Json
+
+  aiNarrative        String
+  /// string[] — see brief.ai.ts's system prompt for the exact framing
+  /// constraint (questions to ask, never assertions or suggestions).
+  aiDiscussionTopics Json
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("clinical_briefs")
 }
