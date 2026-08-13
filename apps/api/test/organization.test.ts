@@ -136,6 +136,9 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
+    onboardingProfile: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     symptomLog: {
       create: vi.fn(
         ({ data }: { data: { userId: string; category: string; occurredAt: Date } }) => {

@@ -104,6 +104,9 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
+    onboardingProfile: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     cycleEntry: {
       upsert: vi.fn(
         ({

@@ -128,6 +128,9 @@ vi.mock("../src/lib/prisma.js", () => ({
     auditLog: {
       create: vi.fn().mockResolvedValue({}),
     },
+    onboardingProfile: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     symptomLog: {
       create: vi.fn(
         ({

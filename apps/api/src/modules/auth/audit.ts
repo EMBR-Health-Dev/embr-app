@@ -38,7 +38,9 @@ export type AuditAction =
   | "SSO_LOGIN_FAILED"
   | "CLINICAL_BRIEF_GENERATED"
   | "CLINICAL_BRIEF_DOWNLOADED"
-  | "CLINICAL_BRIEF_DELETED";
+  | "CLINICAL_BRIEF_DELETED"
+  | "ONBOARDING_COMPLETED"
+  | "ONBOARDING_SKIPPED";
 
 /**
  * Actions worth a human noticing in a log aggregator / alert rather than

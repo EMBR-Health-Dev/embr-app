@@ -138,6 +138,9 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
+    onboardingProfile: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
       // Fake tx object reuses the same mocked model methods above.
       const tx = { session: (await import("../src/lib/prisma.js")).prisma.session };

@@ -133,6 +133,9 @@ vi.mock("../src/lib/prisma.js", () => ({
         return Promise.resolve(items.length);
       }),
     },
+    onboardingProfile: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
   },
 }));
 

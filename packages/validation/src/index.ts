@@ -282,3 +282,53 @@ export const generateBriefSchema = z
     path: ["toDate"],
   });
 export type GenerateBriefInput = z.infer<typeof generateBriefSchema>;
+
+// ---- Onboarding (Milestone 18) ----
+
+export const onboardingJobToBeDoneSchema = z.enum([
+  "UNDERSTAND_EXPERIENCE",
+  "UNDERSTAND_PATTERNS",
+  "PREPARE_FOR_APPOINTMENT",
+  "KEEP_RECORD",
+  "NOT_SURE",
+]);
+
+// Broad, non-clinical buckets — see schema.prisma's OnboardingArea doc
+// comment for why this is deliberately not SymptomCategory.
+export const onboardingAreaSchema = z.enum(["SLEEP", "ENERGY", "MOOD", "BODY", "FOCUS"]);
+
+export const onboardingAppointmentStatusSchema = z.enum([
+  "WITHIN_MONTH",
+  "UNSURE_WHEN",
+  "NO",
+  "UNSURE",
+]);
+
+export const onboardingStepSchema = z.enum([
+  "WELCOME",
+  "JOB_TO_BE_DONE",
+  "WHATS_GOING_ON",
+  "APPOINTMENT_STATUS",
+  "THE_LOOP",
+]);
+
+// Every field optional (a genuine partial update — the client PATCHes
+// after each screen with only what that screen collected) but every
+// value strictly validated against a closed enum when present; unknown
+// top-level keys are rejected outright via .strict() rather than
+// silently ignored.
+export const patchOnboardingSchema = z
+  .object({
+    currentStep: onboardingStepSchema.optional(),
+    jobToBeDone: onboardingJobToBeDoneSchema.optional(),
+    noticedAreas: z.array(onboardingAreaSchema).optional(),
+    appointmentStatus: onboardingAppointmentStatusSchema.optional(),
+    // Two distinct terminal actions, not a boolean "done" flag — a
+    // skip and a full completion both end onboarding the same way
+    // (completedAt gets set, onboarding never shows again) but mean
+    // different things for later analysis, so the API needs to know
+    // which one happened, not just that *an* ending happened.
+    status: z.enum(["completed", "skipped"]).optional(),
+  })
+  .strict();
+export type PatchOnboardingInput = z.infer<typeof patchOnboardingSchema>;

@@ -8,7 +8,16 @@ import { paginate } from "../../lib/pagination.js";
 export const adminService = {
   async listUsers(query: AdminUserQuery): Promise<PaginatedResponse<UserDto>> {
     const { items, total } = await adminRepository.listUsers(query);
-    return paginate(items.map(toUserDto), total, query);
+    // Not items.map(toUserDto) directly -- Array.map calls its callback
+    // with (element, index, array), and toUserDto's second parameter
+    // (onboardingCompletedAt) would silently receive the numeric index
+    // instead of its intended default, throwing the moment the mapper
+    // tries to call .toISOString() on a number.
+    return paginate(
+      items.map((user) => toUserDto(user)),
+      total,
+      query,
+    );
   },
 
   async listAuditLogs(query: AdminAuditLogQuery): Promise<PaginatedResponse<AuditLogDto>> {
