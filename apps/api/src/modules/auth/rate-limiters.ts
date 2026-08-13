@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import type { Request } from "express";
 import { env } from "../../config/env.js";
 import { redisRateLimitStore } from "../../lib/rate-limit-store.js";
@@ -10,10 +10,21 @@ import { rateLimitExceededHandler } from "../../lib/rate-limit-handler.js";
  * tighter and keyed so one abusive IP can't lock out other IPs sharing
  * a NAT trying the *same* account (keyed by email+IP, not IP alone,
  * where the endpoint takes an email).
+ *
+ * ipKeyGenerator (not raw req.ip) matters here, not just for lint
+ * compliance: residential ISPs typically hand each customer a full /56
+ * or /64 IPv6 subnet, so an attacker brute-forcing a login has an
+ * effectively unlimited supply of distinct IPv6 addresses to rotate
+ * through within their own subnet. Keying on the raw address string
+ * makes that rotation trivially bypass this limiter entirely, on
+ * exactly the endpoints (login, password reset) it exists to protect.
+ * ipKeyGenerator collapses IPv6 addresses to their /56 subnet (leaving
+ * IPv4 untouched) so the limit actually applies per-attacker rather
+ * than per-address.
  */
-function keyByEmailAndIp(req: Request): string {
+export function keyByEmailAndIp(req: Request): string {
   const email = typeof req.body?.email === "string" ? req.body.email.toLowerCase() : "unknown";
-  return `${req.ip}:${email}`;
+  return `${ipKeyGenerator(req.ip ?? "unknown")}:${email}`;
 }
 
 // These limiters are process-wide singletons sharing one Redis-backed
