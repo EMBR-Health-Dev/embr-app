@@ -23,6 +23,13 @@ const apiEnvSchema = z.object({
   // that's a decision worth making deliberately, not guessing at.
   SMTP_SECURE: z.coerce.boolean().default(false),
   SMTP_REQUIRE_TLS: z.coerce.boolean().default(false),
+
+  // ---- Retention (closed-beta minimum) ----
+  // Applies only to already-dead rows (expired tokens, expired/revoked
+  // sessions) — see retention.repository.ts's doc comment. Deliberately
+  // NOT covering AuditLog, which has its own separate, undecided policy
+  // — see docs/RETENTION.md.
+  RETENTION_GRACE_PERIOD_DAYS: z.coerce.number().int().positive().default(30),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
 
   // ---- Auth (Milestone 2) ----
