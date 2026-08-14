@@ -267,6 +267,25 @@ describe("ownership scoping", () => {
     expect(patchRes.status).toBe(404);
   });
 
+  it("returns 404 when deleting another user's entry — and it must still be there afterward", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "cycleDelA@embr.health");
+    await registerAndLogin(agentB, "cycleDelB@embr.health");
+
+    const createRes = await agentA
+      .post("/cycle-entries")
+      .send({ date: "2026-07-24", flow: "LIGHT" });
+    const entryId = createRes.body.data.id;
+
+    const deleteRes = await agentB.delete(`/cycle-entries/${entryId}`);
+    expect(deleteRes.status).toBe(404);
+
+    const stillThereRes = await agentA.get(`/cycle-entries/${entryId}`);
+    expect(stillThereRes.status).toBe(200);
+  });
+
   it("allows the owner to update and delete their own entry", async () => {
     const app = createApp();
     const agent = request.agent(app);

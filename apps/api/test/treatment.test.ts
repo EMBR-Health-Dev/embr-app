@@ -357,6 +357,25 @@ describe("ownership scoping on single-resource routes", () => {
     expect(res.status).toBe(404);
   });
 
+  it("returns 404 when deleting another user's treatment — and it must still be there afterward", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "delA@embr.health");
+    await registerAndLogin(agentB, "delB@embr.health");
+
+    const createRes = await agentA
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    const treatmentId = createRes.body.data.id;
+
+    const deleteRes = await agentB.delete(`/treatments/${treatmentId}`);
+    expect(deleteRes.status).toBe(404);
+
+    const stillThereRes = await agentA.get(`/treatments/${treatmentId}`);
+    expect(stillThereRes.status).toBe(200);
+  });
+
   it("allows the owner to update and delete their own treatment", async () => {
     const app = createApp();
     const agent = request.agent(app);
