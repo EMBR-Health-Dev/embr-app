@@ -18,6 +18,7 @@ import { authService } from "./auth.service.js";
 import { authRepository } from "./auth.repository.js";
 import { toUserDto } from "./auth.mappers.js";
 import { requireAuth } from "./auth.middleware.js";
+import { onboardingRepository } from "../onboarding/onboarding.repository.js";
 import { writeAuditLog } from "./audit.js";
 import { requireCsrfToken, issueCsrfToken } from "./csrf.js";
 import {
@@ -183,7 +184,10 @@ router.get(
   asyncHandler(async (req, res) => {
     const user = await authRepository.findUserById(req.user!.sub);
     if (!user) throw AppError.unauthorized();
-    res.status(200).json({ data: toUserDto(user), requestId: req.requestId });
+    const onboarding = await onboardingRepository.findByUserId(req.user!.sub);
+    res
+      .status(200)
+      .json({ data: toUserDto(user, onboarding?.completedAt ?? null), requestId: req.requestId });
   }),
 );
 

@@ -54,9 +54,18 @@ function LoginForm() {
 
     setSubmitting(true);
     try {
-      await api.auth.login(parsed.data);
+      const session = await api.auth.login(parsed.data);
       await refresh();
-      router.push(redirectTo);
+      // An explicit redirect param (SSO, accept-invite) always wins —
+      // those flows have their own reason for sending the person
+      // somewhere specific, and onboarding shouldn't interrupt them.
+      if (redirectParam) {
+        router.push(redirectTo);
+      } else if (!session.user.onboardingCompletedAt) {
+        router.push("/onboarding");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       // Deliberately the same message shape the API itself returns for
       // both "wrong password" and "no such account" — no reason for the

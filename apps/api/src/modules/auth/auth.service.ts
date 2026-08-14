@@ -8,6 +8,7 @@ import { generateRefreshToken, generateOpaqueToken, hashToken, signAccessToken }
 import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
 import { writeAuditLog } from "./audit.js";
 import { toUserDto } from "./auth.mappers.js";
+import { onboardingRepository } from "../onboarding/onboarding.repository.js";
 
 interface IssuedSession {
   user: UserDto;
@@ -108,7 +109,8 @@ export const authService = {
     const { accessToken, refreshToken } = await issueSession(req, user);
     await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id);
 
-    return { user: toUserDto(user), accessToken, refreshToken };
+    const onboarding = await onboardingRepository.findByUserId(user.id);
+    return { user: toUserDto(user, onboarding?.completedAt ?? null), accessToken, refreshToken };
   },
 
   async refresh(req: Request, presentedToken: string): Promise<IssuedSession> {
@@ -153,7 +155,8 @@ export const authService = {
     const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
     await writeAuditLog(req, "TOKEN_REFRESHED", user.id, { sessionId: session.id });
 
-    return { user: toUserDto(user), accessToken, refreshToken };
+    const onboarding = await onboardingRepository.findByUserId(user.id);
+    return { user: toUserDto(user, onboarding?.completedAt ?? null), accessToken, refreshToken };
   },
 
   async logout(req: Request, presentedToken: string | undefined): Promise<void> {

@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
+import { theme } from "../lib/theme";
 
 export function Chip({
   label,
@@ -24,21 +25,21 @@ export function Chip({
 const styles = StyleSheet.create({
   chip: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
   chipSelected: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
+    backgroundColor: theme.colors.selected,
+    borderColor: theme.colors.selected,
   },
   label: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#374151",
+    color: theme.colors.textSecondary,
   },
   labelSelected: {
-    color: "#fff",
+    color: theme.colors.surface,
   },
 });

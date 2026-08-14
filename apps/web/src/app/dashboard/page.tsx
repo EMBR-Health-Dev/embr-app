@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import type { SymptomLogDto } from "@embr/types";
+import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
+import { startingPointMessage } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -37,23 +38,34 @@ function categoryLabel(category: string): string {
     .join(" ");
 }
 
+function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
+  return value !== null && (CATEGORIES as readonly string[]).includes(value);
+}
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading, logout } = useAuth();
 
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const [managesOrg, setManagesOrg] = useState(false);
+  const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
 
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("BRAIN_FOG");
+  const suggestedCategory = searchParams.get("logCategory");
+  const wantsFirstLog = searchParams.get("firstLog") !== null || Boolean(suggestedCategory);
+
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(
+    isCategory(suggestedCategory) ? suggestedCategory : "BRAIN_FOG",
+  );
   const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]>("MODERATE");
   const [notes, setNotes] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(wantsFirstLog);
   const [submitting, setSubmitting] = useState(false);
 
   const [flow, setFlow] = useState<(typeof FLOWS)[number] | "">("");
@@ -65,6 +77,28 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
+
+  // Soft, not a block: /onboarding's skip link reaches this same
+  // dashboard in one tap from any screen, and completing/skipping sets
+  // onboardingCompletedAt either way, so this redirect only ever fires
+  // once per person, not on every visit.
+  useEffect(() => {
+    if (!loading && user && !user.onboardingCompletedAt) router.replace("/onboarding");
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    // Matches React's own documented fetch-on-mount pattern — see the
+    // equivalent suppression in apps/admin/dashboard/page.tsx for the
+    // full reasoning. Only reachable once onboardingCompletedAt is set
+    // (the redirect above sends anyone else to /onboarding first), so
+    // there's always a real profile to fetch by the time this runs.
+    if (user?.onboardingCompletedAt) {
+      api.onboarding
+        .get()
+        .then(setOnboardingProfile)
+        .catch(() => setOnboardingProfile(null));
+    }
+  }, [user]);
 
   async function loadLogs() {
     setLogsLoading(true);
@@ -180,6 +214,12 @@ export default function DashboardPage() {
           </button>
         </div>
       </header>
+
+      {startingPointMessage(onboardingProfile?.jobToBeDone ?? null) && (
+        <p className="mt-6 font-display text-lg italic text-navy/80">
+          {startingPointMessage(onboardingProfile?.jobToBeDone ?? null)}
+        </p>
+      )}
 
       {/* Signature interaction: one tap, no form, for the moment that
           actually needs it — mid-hot-flash is not when anyone wants to
@@ -342,5 +382,19 @@ export default function DashboardPage() {
         )}
       </section>
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center">
+          <p className="text-navy/50">Loading…</p>
+        </main>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

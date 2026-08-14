@@ -37,6 +37,16 @@ export interface UserDto {
   role: Role;
   emailVerified: boolean;
   createdAt: string;
+  /** Null until the person finishes or explicitly skips onboarding —
+   * this is the one signal both web and mobile use to decide whether
+   * to route to /onboarding or straight to the dashboard, so it's
+   * carried on the same UserDto every /auth/me (and login/refresh)
+   * call already returns, rather than needing a second request.
+   * Deliberately just a timestamp, not any of the actual onboarding
+   * answers (job-to-be-done, noticed areas, appointment status) —
+   * those are health-adjacent and live only behind GET /onboarding,
+   * never on UserDto. */
+  onboardingCompletedAt: string | null;
 }
 
 export interface AuthSessionResponse {
@@ -266,4 +276,19 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   cycleSummary: BriefCycleSummaryDto;
   aiNarrative: string;
   aiDiscussionTopics: string[];
+}
+
+// ---- Onboarding (Milestone 18) ----
+
+/** Same shape whether a row exists yet or not — a user who's never
+ * touched onboarding gets all-null/empty fields, identical in meaning
+ * to a row that exists with completedAt: null. The client doesn't need
+ * to special-case "no row yet" vs. "row exists, nothing answered." */
+export interface OnboardingProfileDto {
+  jobToBeDone: string | null;
+  noticedAreas: string[];
+  appointmentStatus: string | null;
+  currentStep: string | null;
+  skipped: boolean;
+  completedAt: string | null;
 }

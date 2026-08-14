@@ -6,6 +6,7 @@ import type {
   CycleLengthTrendDto,
   DeviceSessionDto,
   MyOrganizationMembershipDto,
+  OnboardingProfileDto,
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationMemberDto,
@@ -166,5 +167,17 @@ export const api = {
     // sets window.location.href to this rather than awaiting a
     // response. Exposed as a plain URL builder for that reason.
     startUrl: (email: string) => `/api/auth/sso/start?email=${encodeURIComponent(email)}`,
+  },
+
+  onboarding: {
+    get: () => apiFetch<OnboardingProfileDto>("/onboarding"),
+
+    patch: (input: {
+      currentStep?: string;
+      jobToBeDone?: string;
+      noticedAreas?: string[];
+      appointmentStatus?: string;
+      status?: "completed" | "skipped";
+    }) => apiFetch<OnboardingProfileDto>("/onboarding", { method: "PATCH", body: input }),
   },
 };

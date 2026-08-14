@@ -5,6 +5,7 @@ import type {
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
+  OnboardingProfileDto,
   PaginatedResponse,
   SymptomFrequencyDto,
   SymptomLogDto,
@@ -99,5 +100,17 @@ export const api = {
     get: (id: string) => apiFetch<ClinicalBriefDto>(`/briefs/${id}`),
 
     delete: (id: string) => apiFetch<void>(`/briefs/${id}`, { method: "DELETE" }),
+  },
+
+  onboarding: {
+    get: () => apiFetch<OnboardingProfileDto>("/onboarding"),
+
+    patch: (input: {
+      currentStep?: string;
+      jobToBeDone?: string;
+      noticedAreas?: string[];
+      appointmentStatus?: string;
+      status?: "completed" | "skipped";
+    }) => apiFetch<OnboardingProfileDto>("/onboarding", { method: "PATCH", body: input }),
   },
 };

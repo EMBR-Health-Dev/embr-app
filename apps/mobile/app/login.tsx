@@ -26,8 +26,8 @@ export default function LoginScreen() {
 
     setSubmitting(true);
     try {
-      await login(parsed.data.email, parsed.data.password);
-      router.replace("/(app)");
+      const user = await login(parsed.data.email, parsed.data.password);
+      router.replace(user.onboardingCompletedAt ? "/(app)" : "/onboarding");
     } catch (err) {
       setFormError(
         err instanceof ApiError ? err.message : "Something went wrong. Try again in a moment.",

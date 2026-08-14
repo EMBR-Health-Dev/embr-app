@@ -48,6 +48,7 @@ model User {
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
   clinicalBriefs          ClinicalBrief[]
+  onboardingProfile       OnboardingProfile?
 
   @@map("users")
 }
@@ -401,4 +402,84 @@ model ClinicalBrief {
 
   @@index([userId, createdAt])
   @@map("clinical_briefs")
+}
+
+// ---- Onboarding (Milestone 18) ----
+//
+// One row per user, created lazily on the first PATCH /onboarding
+// call — a user with no row at all is equivalent to one with
+// completedAt: null (see onboarding.mappers.ts's toOnboardingProfileDto,
+// which returns the same "nothing yet" shape for both). Every field
+// here is either a closed, purpose-built enum or a plain timestamp —
+// deliberately NOT the real SymptomCategory enum for noticedAreas (see
+// OnboardingArea below), and deliberately no appointment date field at
+// all (see OnboardingAppointmentStatus) — both are onboarding-specific
+// vocabularies that must never be confused with, or joined against,
+// real clinical data.
+
+enum OnboardingJobToBeDone {
+  UNDERSTAND_EXPERIENCE
+  UNDERSTAND_PATTERNS
+  PREPARE_FOR_APPOINTMENT
+  KEEP_RECORD
+  NOT_SURE
+}
+
+/// Broad, non-clinical buckets a new user can pick from during
+/// onboarding to personalize their first logging screen — NOT the real
+/// SymptomCategory taxonomy. Each bucket maps to several real
+/// categories client-side (see apps/web and apps/mobile's onboarding
+/// screens) purely for which chips get pre-highlighted; the mapping
+/// never happens server-side and a selection here never creates a
+/// SymptomLog.
+enum OnboardingArea {
+  SLEEP
+  ENERGY
+  MOOD
+  BODY
+  FOCUS
+}
+
+/// Coarse enough that no appointment date is ever collected during
+/// onboarding — see docs/MILESTONES.md's Milestone 18 entry for why an
+/// exact date was deliberately deferred to a future "Appointment Mode."
+enum OnboardingAppointmentStatus {
+  WITHIN_MONTH
+  UNSURE_WHEN
+  NO
+  UNSURE
+}
+
+/// Which of the five onboarding screens the person last reached —
+/// purely for resuming an interrupted onboarding at the right screen,
+/// not read for anything else.
+enum OnboardingStep {
+  WELCOME
+  JOB_TO_BE_DONE
+  WHATS_GOING_ON
+  APPOINTMENT_STATUS
+  THE_LOOP
+}
+
+model OnboardingProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jobToBeDone       OnboardingJobToBeDone?
+  noticedAreas      OnboardingArea[]             @default([])
+  appointmentStatus OnboardingAppointmentStatus?
+  currentStep       OnboardingStep?
+
+  /// True if the person explicitly skipped to the dashboard rather than
+  /// reaching the final screen — completedAt is set either way (both
+  /// mean "don't show onboarding again"); this is the one field that
+  /// distinguishes them for later analysis.
+  skipped     Boolean   @default(false)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_profiles")
 }
