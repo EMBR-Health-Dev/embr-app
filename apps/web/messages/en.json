@@ -1,0 +1,27 @@
+{
+  "Login": {
+    "title": "Welcome back",
+    "passwordChanged": "Password changed. Log in with your new password.",
+    "ssoError": {
+      "sso_not_configured": "No SSO connection is set up for that email's domain.",
+      "sso_start_failed": "Couldn't start SSO sign-in. Try again in a moment.",
+      "sso_callback_failed": "SSO sign-in didn't complete — try again, or log in with your password below.",
+      "default": "SSO sign-in didn't work. Try again."
+    },
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "enterEmailForSso": "Enter your email above, then continue with SSO.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Log in",
+    "submitting": "Logging in…",
+    "or": "or",
+    "continueWithSso": "Continue with SSO",
+    "newToEmbr": "New to EMBR?",
+    "createAccount": "Create an account"
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

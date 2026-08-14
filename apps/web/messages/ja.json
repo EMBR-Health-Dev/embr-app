@@ -1,0 +1,27 @@
+{
+  "Login": {
+    "title": "おかえりなさい",
+    "passwordChanged": "パスワードを変更しました。新しいパスワードでログインしてください。",
+    "ssoError": {
+      "sso_not_configured": "そのメールアドレスのドメインにはSSO連携が設定されていません。",
+      "sso_start_failed": "SSOログインを開始できませんでした。しばらくしてからもう一度お試しください。",
+      "sso_callback_failed": "SSOログインが完了しませんでした。もう一度お試しいただくか、下のパスワードでログインしてください。",
+      "default": "SSOログインに失敗しました。もう一度お試しください。"
+    },
+    "emailLabel": "メールアドレス",
+    "passwordLabel": "パスワード",
+    "enterEmailForSso": "上にメールアドレスを入力してから、SSOへお進みください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "ログイン",
+    "submitting": "ログイン中…",
+    "or": "または",
+    "continueWithSso": "SSOでログイン",
+    "newToEmbr": "EMBRは初めてですか?",
+    "createAccount": "アカウントを作成"
+  },
+  "LanguageSwitcher": {
+    "label": "言語",
+    "en": "English",
+    "ja": "日本語"
+  }
+}
