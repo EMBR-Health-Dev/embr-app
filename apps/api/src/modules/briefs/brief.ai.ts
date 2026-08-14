@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import { AppError } from "@embr/shared";
 import { env } from "../../config/env.js";
 
 export interface BriefInput {
@@ -69,25 +70,103 @@ Follow these rules strictly:
 Respond with JSON only, no other text, in exactly this shape:
 {"narrative": "...", "discussionTopics": ["...", "..."]}`;
 
+/**
+ * Defense-in-depth, not the primary safety mechanism — the system
+ * prompt above is that. This exists because a system prompt is an
+ * instruction, not a guarantee: a model can drift, and this is a cheap,
+ * deterministic backstop that doesn't depend on the model having
+ * followed instructions correctly. Two checks:
+ *
+ * 1. Every discussion topic must literally end in "?" — mechanically
+ *    verifies rule 3 (questions, never assertions) rather than just
+ *    trusting the prompt was followed.
+ * 2. A short, deliberately narrow deny-list for the clearest possible
+ *    violations of rules 1–2: the word "diagnos-" appearing at all
+ *    (the model was explicitly told never to use it, so any
+ *    occurrence — even hedged — is worth failing closed on),
+ *    "you should take/start/stop/try" and "I recommend" (treatment
+ *    directives), and a dosage-shaped number (nothing in this
+ *    feature's input data could ever legitimately produce one, so its
+ *    presence in the output is itself a red flag). Deliberately not a
+ *    broad classifier — narrow enough to have very few false
+ *    positives, which matters because failing here means throwing
+ *    away a real generation attempt.
+ */
+const PROHIBITED_PATTERNS = [
+  /\bdiagnos(is|ed|e|es|ing)?\b/i,
+  /\byou should (take|start|stop|try)\b/i,
+  /\bi recommend\b/i,
+  /\b\d+\s?(mg|mcg|ml|milligrams?)\b/i,
+];
+
+function failsContentSafety(content: BriefContent): string | null {
+  for (const topic of content.discussionTopics) {
+    if (!topic.trim().endsWith("?")) {
+      return `Discussion topic was not phrased as a question: "${topic}"`;
+    }
+  }
+
+  const combinedText = [content.narrative, ...content.discussionTopics].join(" ");
+  for (const pattern of PROHIBITED_PATTERNS) {
+    if (pattern.test(combinedText)) {
+      return `Output matched a prohibited pattern: ${pattern}`;
+    }
+  }
+
+  return null;
+}
+
 export const briefAi = {
   async generate(input: BriefInput): Promise<BriefContent> {
-    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-
-    const message = await client.messages.create({
-      model: env.ANTHROPIC_BRIEF_MODEL,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify({
-            dateRange: { from: input.fromDate, to: input.toDate },
-            symptomSummary: input.symptomSummary,
-            cycleSummary: input.cycleSummary,
-          }),
-        },
-      ],
+    const client = new Anthropic({
+      apiKey: env.ANTHROPIC_API_KEY,
+      // Explicit, reviewed values — not the SDK's own defaults (a
+      // 10-minute timeout and its own retry count), which are tuned
+      // for long-running/background use, not a synchronous request a
+      // person is sitting in front of a "Generating…" spinner for.
+      // maxRetries only applies to the SDK's own retryable conditions
+      // (connection errors, 408/429/5xx) — not reimplementing retry
+      // logic here, just making the count a deliberate decision
+      // instead of an implicit default.
+      timeout: 30_000,
+      maxRetries: 2,
     });
+
+    let message: Anthropic.Message;
+    try {
+      message = await client.messages.create({
+        model: env.ANTHROPIC_BRIEF_MODEL,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content: JSON.stringify({
+              dateRange: { from: input.fromDate, to: input.toDate },
+              symptomSummary: input.symptomSummary,
+              cycleSummary: input.cycleSummary,
+            }),
+          },
+        ],
+      });
+    } catch (err) {
+      // Anthropic's own SDK errors (APIError and its subclasses --
+      // AuthenticationError, RateLimitError, BadRequestError, ...)
+      // carry a real, readonly `.status` property in the same 4xx/5xx
+      // shape this API's own client-facing errors use. Without this
+      // catch, the global error handler's duck-typed
+      // hasClientErrorStatus() check would misclassify e.g. a 401 from
+      // a misconfigured ANTHROPIC_API_KEY as *our own user's* bad
+      // request -- passing Anthropic's raw error message straight
+      // through to them, and, worse, logging it at warn instead of
+      // error, silently missing the Sentry page for what's actually a
+      // real incident on our side. Wrapping here guarantees every
+      // failure from this call is always a 500, always logged and
+      // alerted as an incident, and never leaks upstream error detail
+      // to the client -- the original error is preserved as `cause`
+      // for our own logs/Sentry, just never sent over the wire.
+      throw AppError.internal("Couldn't generate the brief right now. Try again in a moment.", err);
+    }
 
     const textBlock = message.content.find((block) => block.type === "text");
     if (!textBlock || textBlock.type !== "text") {
@@ -106,6 +185,15 @@ export const briefAi = {
       throw new Error(
         `Anthropic response didn't match the expected shape: ${result.error.message}`,
       );
+    }
+
+    const safetyFailure = failsContentSafety(result.data);
+    if (safetyFailure) {
+      // Fail closed, same as every other validation failure above --
+      // brief.service.ts awaits this call before ever persisting
+      // anything, so throwing here means no ClinicalBrief is created
+      // at all, not a partially-trusted one.
+      throw new Error(`Brief output failed content safety check: ${safetyFailure}`);
     }
 
     return result.data;
