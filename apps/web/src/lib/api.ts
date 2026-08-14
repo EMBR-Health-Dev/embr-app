@@ -36,6 +36,9 @@ export const api = {
     changePassword: (input: { currentPassword: string; newPassword: string }) =>
       apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
 
+    deleteAccount: (input: { password: string }) =>
+      apiFetch<void>("/auth/me", { method: "DELETE", body: input }),
+
     sessions: {
       list: () => apiFetch<DeviceSessionDto[]>("/auth/sessions"),
       revoke: (id: string) => apiFetch<void>(`/auth/sessions/${id}`, { method: "DELETE" }),

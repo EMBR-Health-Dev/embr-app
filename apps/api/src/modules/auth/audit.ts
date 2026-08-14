@@ -43,7 +43,8 @@ export type AuditAction =
   | "CLINICAL_BRIEF_DOWNLOADED"
   | "CLINICAL_BRIEF_DELETED"
   | "ONBOARDING_COMPLETED"
-  | "ONBOARDING_SKIPPED";
+  | "ONBOARDING_SKIPPED"
+  | "ACCOUNT_DELETED";
 
 /**
  * Actions worth a human noticing in a log aggregator / alert rather than

@@ -220,6 +220,39 @@ export const authService = {
     await writeAuditLog(req, "PASSWORD_CHANGED", userId);
   },
 
+  /**
+   * Requires the current password — same bar as changePassword — since
+   * this is destructive and irreversible. Sessions don't need a
+   * separate explicit revoke call: they're rows in a table with
+   * `onDelete: Cascade` on User, so they're gone the instant the
+   * transaction commits, same as every other user-owned table.
+   *
+   * Known, accepted limitation, not fixed here: access tokens are
+   * stateless JWTs verified by signature/expiry alone (see
+   * auth.middleware.ts's requireAuth — no DB lookup on every request),
+   * so an access token issued moments before deletion remains
+   * signature-valid for up to its remaining TTL (max 15 minutes) even
+   * though the account and its session are already gone. Any request
+   * that tries to use it to write new data fails at the database's own
+   * foreign-key constraint (userId no longer references a real user),
+   * not cleanly at the API layer. Closing this fully would mean adding
+   * token revocation/blocklist infrastructure — out of scope for a
+   * closed-beta minimum, and not something to introduce silently here.
+   */
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await authRepository.findUserById(userId);
+    if (!user) throw AppError.unauthorized();
+
+    const valid = await verifyPassword(user.passwordHash, password);
+    if (!valid) {
+      throw AppError.validation("Password is incorrect", [
+        { field: "password", message: "Password is incorrect" },
+      ]);
+    }
+
+    await authRepository.deleteUserAccount(userId);
+  },
+
   async listSessions(userId: string, currentSessionId: string | null): Promise<DeviceSessionDto[]> {
     const sessions = await authRepository.listActiveSessionsForUser(userId);
     return sessions.map((s: SessionRecord) => ({

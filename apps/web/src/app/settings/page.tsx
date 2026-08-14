@@ -26,6 +26,11 @@ export default function SettingsPage() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
 
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
@@ -82,6 +87,23 @@ export default function SettingsPage() {
       router.push("/login");
     } finally {
       setLoggingOutAll(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteError(null);
+    if (!deletePassword) {
+      setDeleteError("Enter your password to confirm.");
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.auth.deleteAccount({ password: deletePassword });
+      router.push("/login");
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -181,6 +203,53 @@ export default function SettingsPage() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="mt-10 border-t border-red-200 pt-8">
+        <h2 className="font-display text-lg text-navy">Delete account</h2>
+        <p className="mt-2 text-sm text-navy/60">
+          This permanently deletes your account and everything in it — symptom logs, cycle entries,
+          briefs, and settings. This cannot be undone.
+        </p>
+
+        {!deleteConfirming ? (
+          <button
+            onClick={() => setDeleteConfirming(true)}
+            className="mt-4 text-sm font-medium text-red-600 underline underline-offset-2"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="mt-4 flex max-w-sm flex-col gap-3">
+            <Field
+              label="Confirm your password"
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+            />
+            {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="rounded-sm bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Permanently delete my account"}
+              </button>
+              <button
+                onClick={() => {
+                  setDeleteConfirming(false);
+                  setDeletePassword("");
+                  setDeleteError(null);
+                }}
+                disabled={deleting}
+                className="text-sm text-navy/60 underline underline-offset-2 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
       </section>
     </main>

@@ -385,3 +385,14 @@ export const patchOnboardingSchema = z
   })
   .strict();
 export type PatchOnboardingInput = z.infer<typeof patchOnboardingSchema>;
+
+// ---- Account deletion (closed-beta minimum) ----
+
+// Same password-confirmation bar as changePasswordSchema — this is a
+// destructive, irreversible action, and a still-logged-in-but-hijacked
+// or accidentally-tapped session shouldn't be able to trigger it
+// without re-proving the password.
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1),
+});
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

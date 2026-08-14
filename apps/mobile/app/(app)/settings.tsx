@@ -22,6 +22,11 @@ export default function SettingsScreen() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
 
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const loadSessions = useCallback(async () => {
     try {
       const list = await api.auth.sessions.list();
@@ -88,6 +93,24 @@ export default function SettingsScreen() {
   async function handleLogout() {
     await logout();
     router.replace("/login");
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteError(null);
+    if (!deletePassword) {
+      setDeleteError("Enter your password to confirm.");
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.auth.deleteAccount({ password: deletePassword });
+      await logout();
+      router.replace("/login");
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -182,9 +205,59 @@ export default function SettingsScreen() {
           !sessionsLoading ? <Text style={styles.emptyText}>No active sessions.</Text> : null
         }
         ListFooterComponent={
-          <Pressable style={styles.logoutRow} onPress={() => void handleLogout()}>
-            <Text style={styles.dangerText}>Log out</Text>
-          </Pressable>
+          <View>
+            <Pressable style={styles.logoutRow} onPress={() => void handleLogout()}>
+              <Text style={styles.dangerText}>Log out</Text>
+            </Pressable>
+
+            <View style={styles.deleteSection}>
+              <Text style={styles.sectionTitle}>Delete account</Text>
+              <Text style={styles.sectionHint}>
+                This permanently deletes your account and everything in it — symptom logs, cycle
+                entries, briefs, and settings. This cannot be undone.
+              </Text>
+
+              {!deleteConfirming ? (
+                <Pressable onPress={() => setDeleteConfirming(true)}>
+                  <Text style={styles.dangerText}>Delete my account</Text>
+                </Pressable>
+              ) : (
+                <View style={{ marginTop: 8 }}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirm your password"
+                    placeholderTextColor="#9CA3AF"
+                    secureTextEntry
+                    autoComplete="current-password"
+                    value={deletePassword}
+                    onChangeText={setDeletePassword}
+                  />
+                  {deleteError && <Text style={styles.error}>{deleteError}</Text>}
+                  <View style={styles.deleteActionsRow}>
+                    <Pressable
+                      style={[styles.deleteButton, deleting && styles.buttonDisabled]}
+                      onPress={() => void handleDeleteAccount()}
+                      disabled={deleting}
+                    >
+                      <Text style={styles.buttonText}>
+                        {deleting ? "Deleting…" : "Permanently delete"}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      disabled={deleting}
+                      onPress={() => {
+                        setDeleteConfirming(false);
+                        setDeletePassword("");
+                        setDeleteError(null);
+                      }}
+                    >
+                      <Text style={styles.sectionHint}>Cancel</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
         }
         contentContainerStyle={styles.listContent}
       />
@@ -250,4 +323,22 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontWeight: "600", color: "#059669" },
   emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
   logoutRow: { marginTop: 20, paddingVertical: 12 },
+  deleteSection: {
+    marginTop: 12,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+  deleteActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 12,
+  },
+  deleteButton: {
+    backgroundColor: "#DC2626",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
 });

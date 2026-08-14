@@ -2,6 +2,7 @@ import { Router, type Router as ExpressRouter } from "express";
 import { AppError } from "@embr/shared";
 import {
   changePasswordSchema,
+  deleteAccountSchema,
   forgotPasswordSchema,
   idParamSchema,
   loginSchema,
@@ -173,6 +174,22 @@ router.post(
       req.body.currentPassword,
       req.body.newPassword,
     );
+    clearAuthCookies(res);
+    res.status(204).send();
+  }),
+);
+
+router.delete(
+  "/auth/me",
+  requireAuth(),
+  requireCsrfToken(),
+  validate(deleteAccountSchema),
+  asyncHandler(async (req, res) => {
+    // No :id anywhere on this route — structurally, there is no
+    // user-supplied identifier for a caller to target another
+    // account with. req.user!.sub (from the verified access token)
+    // is the only source of "which account."
+    await authService.deleteAccount(req.user!.sub, req.body.password);
     clearAuthCookies(res);
     res.status(204).send();
   }),
