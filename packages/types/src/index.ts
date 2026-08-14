@@ -95,6 +95,22 @@ export interface SymptomLogDto {
   updatedAt: string;
 }
 
+// ---- Treatments ----
+
+export type TreatmentCategory = "HRT" | "SUPPLEMENT" | "MEDICATION" | "LIFESTYLE" | "OTHER";
+
+export interface TreatmentDto {
+  id: string;
+  name: string;
+  category: TreatmentCategory;
+  startDate: string;
+  /** Null means ongoing/current. */
+  endDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type FlowIntensity = "SPOTTING" | "LIGHT" | "MEDIUM" | "HEAVY";
 
 export interface CycleEntryDto {

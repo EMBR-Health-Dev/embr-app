@@ -544,3 +544,27 @@ EMBR BRIEF now ships as designed: generate on either platform, saved with a re-d
 The one gap explicitly flagged as needed before launch, closed now rather than left open: `POST /briefs` had no rate limit, and every call is a real Anthropic API spend. Unlike `auth/rate-limiters.ts`'s limiters (anti-brute-force, keyed by IP or email+IP on _unauthenticated_ endpoints), this one is pure cost control on an already-`requireAuth()`-gated endpoint — keyed by user ID, not IP. 10/hour, well above any real GP-prep use case, caps the blast radius of a client bug or an account generating far more than anyone would organically need.
 
 No new tests — this follows the exact same `skipInTest()` pattern the auth limiters already established (a no-op during the test suite; actual rate-limiting behavior is covered by the real-Redis integration tests, not the unit suite). Verified the brief test suite is unaffected: still 17/17.
+
+## Milestone 18 — Treatment tracking (backend)
+
+New `Treatment` model and full CRUD API — the "what was being done" layer that symptom/cycle logs alone don't capture (started X on date Y, stopped on date Z). Backend-only, matching the precedent Milestone 12 set: ship the data model and API, scope the frontend as its own follow-up rather than guess at the UI alongside the schema.
+
+**What changed**
+
+- `Treatment` model: `name`, `category` (`HRT` / `SUPPLEMENT` / `MEDICATION` / `LIFESTYLE` / `OTHER`), `startDate`, `endDate` (nullable — null means ongoing/current, same open-ended pattern as `OrganizationInvite.consumedAt`), `notes`. Deliberately no separate "outcome" model: correlating a treatment's date range against the existing `SymptomLog`/`CycleEntry` history already covers "what changed afterward" without a new table to keep in sync.
+- Full module (`apps/api/src/modules/treatments`) mirroring `symptoms`'s exact shape: `POST /treatments`, `GET /treatments` (paginated, filterable by `category` and `active` — "currently on" computed as `startDate <= today AND (endDate IS NULL OR endDate >= today)`, since that's the query a treatment list actually wants most of the time, not a raw date-range filter), `GET /treatments/:id`, `PATCH /treatments/:id`, `DELETE /treatments/:id`. Same ownership-scoping precedent as every other personal-data module: another user's treatment id 404s, never 403s.
+- `endDate >= startDate` is enforced two ways: the Zod schema's own `.refine()` catches a request supplying both fields inconsistently; a service-layer check (fetching the existing record) catches a partial update touching only one of the two fields, which the schema alone can't validate since the other value isn't in that request body at all.
+- 14 new tests, full suite 179/179 (up from 165), 5 skipped (the pre-existing conditional Redis-integration skips, unrelated).
+
+**Why now**
+
+Prompted by an outside strategic read on the repo that argued (among a lot of speculative, unverified business-strategy content not treated as settled fact here) that treatment/outcome data is what turns a symptom diary into something with real longitudinal value — for the person using it, and eventually for whatever a clinician-facing view (EMBR BRIEF, already shipped) does with it. That specific point held up on its own merits independent of the surrounding pitch, and was a clean, well-scoped, immediately buildable gap regardless of where the larger strategic conversation lands.
+
+**Remaining work**
+
+- No frontend yet — neither `apps/web` nor `apps/mobile` have a treatments screen. Natural next step, following the same pattern symptom logging and cycle tracking already used on mobile.
+- EMBR BRIEF doesn't reference treatment data yet — a brief that could say "started HRT on this date, sleep disruption changed over the following N days" would be substantially more useful than symptoms/cycles alone. Deliberately not touched here: `brief.ai.ts` is a careful, safety-scoped module (data-grounded only, never diagnosis/treatment recommendations) that shouldn't be extended by someone who didn't write its constraints, without at least a conversation about how "what treatment was the patient on" should be represented to the model without drifting toward the AI making treatment-efficacy claims it's explicitly designed not to make.
+- No correlation/analytics endpoint (e.g. "symptom frequency before vs. after this treatment's start date") — noted as a possible dedicated `trends`-style endpoint if that turns out to be worth building, not assumed necessary yet.
+
+**Next milestone**
+To be scoped from here — most likely candidates: treatment tracking UI on `apps/mobile` (and/or `apps/web`), or wiring treatment data into EMBR BRIEF's context (with real care given that module's existing safety constraints).
