@@ -3,20 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 
 const WINDOW_DAYS = 90;
 const CYCLE_WINDOW_DAYS = 180;
-
-function categoryLabel(category: string): string {
-  return category
-    .toLowerCase()
-    .split("_")
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join(" ");
-}
 
 function daysAgoIso(days: number): string {
   const d = new Date();
@@ -25,6 +18,9 @@ function daysAgoIso(days: number): string {
 }
 
 export default function TrendsPage() {
+  const t = useTranslations("Trends");
+  const tEnum = useTranslations("Enums");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -66,7 +62,7 @@ export default function TrendsPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -74,30 +70,30 @@ export default function TrendsPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">Trends</h1>
+        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
         <Link
           href="/dashboard"
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          ← Dashboard
+          {t("backToDashboard")}
         </Link>
       </header>
 
       {dataLoading ? (
-        <p className="mt-8 text-sm text-navy/50">Loading…</p>
+        <p className="mt-8 text-sm text-navy/50">{tCommon("loading")}</p>
       ) : (
         <>
           <section className="mt-10">
-            <h2 className="font-display text-lg text-navy">Symptoms, last {WINDOW_DAYS} days</h2>
+            <h2 className="font-display text-lg text-navy">
+              {t("symptomsHeader", { days: WINDOW_DAYS })}
+            </h2>
             {frequency.length === 0 ? (
-              <p className="mt-3 text-sm text-navy/50">
-                Nothing logged in this window yet — patterns will show up here as you go.
-              </p>
+              <p className="mt-3 text-sm text-navy/50">{t("noSymptomsYet")}</p>
             ) : (
               <ul className="mt-4 flex flex-col gap-2">
                 {frequency.map(({ category, count }) => (
                   <li key={category} className="flex items-center gap-3 text-sm">
-                    <span className="w-36 shrink-0 text-navy">{categoryLabel(category)}</span>
+                    <span className="w-36 shrink-0 text-navy">{tEnum(`category.${category}`)}</span>
                     <div className="h-2.5 flex-1 rounded-full bg-navy/5">
                       <div
                         className="h-2.5 rounded-full bg-brass"
@@ -113,21 +109,18 @@ export default function TrendsPage() {
 
           <section className="mt-10">
             <h2 className="font-display text-lg text-navy">
-              Cycle length, last {CYCLE_WINDOW_DAYS} days
+              {t("cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
             </h2>
             {lengths.length === 0 ? (
-              <p className="mt-3 text-sm text-navy/50">
-                Log at least two period-start days to see cycle lengths here. Irregular or absent
-                cycles are common in perimenopause — this is a record for you and your provider, not
-                a diagnosis.
-              </p>
+              <p className="mt-3 text-sm text-navy/50">{t("noCycleDataYet")}</p>
             ) : (
               <>
                 {averageCycleLength !== null && (
                   <p className="mt-3 text-sm text-navy/70">
-                    Averaging{" "}
-                    <span className="font-medium text-navy">{averageCycleLength} days</span> between
-                    period starts over this window.
+                    {t.rich("averagingDays", {
+                      days: averageCycleLength,
+                      strong: (chunks) => <span className="font-medium text-navy">{chunks}</span>,
+                    })}
                   </p>
                 )}
                 <ul className="mt-4 divide-y divide-navy/10">
@@ -136,14 +129,13 @@ export default function TrendsPage() {
                       <span className="text-navy/60">
                         {l.from} → {l.to}
                       </span>
-                      <span className="font-medium text-navy">{l.days} days</span>
+                      <span className="font-medium text-navy">
+                        {l.days} {t("daysUnit")}
+                      </span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 text-xs text-navy/40">
-                  Cycle irregularity is expected during perimenopause — this view is here to help
-                  you notice your own pattern, not to flag it as a problem.
-                </p>
+                <p className="mt-4 text-xs text-navy/40">{t("irregularityNote")}</p>
               </>
             )}
           </section>
