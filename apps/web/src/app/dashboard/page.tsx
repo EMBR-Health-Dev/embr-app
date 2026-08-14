@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -30,14 +31,6 @@ const CATEGORIES = [
 const SEVERITIES = ["MILD", "MODERATE", "SEVERE"] as const;
 const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
 
-function categoryLabel(category: string): string {
-  return category
-    .toLowerCase()
-    .split("_")
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
   return value !== null && (CATEGORIES as readonly string[]).includes(value);
 }
@@ -47,6 +40,9 @@ function todayIso(): string {
 }
 
 function DashboardContent() {
+  const t = useTranslations("Dashboard");
+  const tEnum = useTranslations("Enums");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading, logout } = useAuth();
@@ -136,10 +132,10 @@ function DashboardContent() {
         severity: "MODERATE",
         occurredAt: new Date().toISOString(),
       });
-      setConfirmation("Logged. Adjust the severity below if it wasn't moderate.");
+      setConfirmation(t("hotFlashConfirmation"));
       await loadLogs();
     } catch (err) {
-      setConfirmation(err instanceof ApiError ? err.message : "Couldn't log that — try again.");
+      setConfirmation(err instanceof ApiError ? err.message : t("hotFlashError"));
     }
   }
 
@@ -178,7 +174,7 @@ function DashboardContent() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -189,28 +185,28 @@ function DashboardContent() {
         <h1 className="font-display text-2xl text-navy">EMBR</h1>
         <div className="flex items-center gap-4 text-sm text-navy/60">
           <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
-            Trends
+            {t("trends")}
           </Link>
           <Link href="/brief" className="underline underline-offset-2 hover:text-navy">
-            BRIEF
+            {t("brief")}
           </Link>
           <Link href="/export" className="underline underline-offset-2 hover:text-navy">
-            Export
+            {t("export")}
           </Link>
           {managesOrg && (
             <Link href="/organization" className="underline underline-offset-2 hover:text-navy">
-              Organization
+              {t("organization")}
             </Link>
           )}
           <Link href="/settings" className="underline underline-offset-2 hover:text-navy">
-            Settings
+            {t("settings")}
           </Link>
           <span>{user.email}</span>
           <button
             onClick={() => logout().then(() => router.replace("/login"))}
             className="underline underline-offset-2 hover:text-navy"
           >
-            Log out
+            {t("logout")}
           </button>
         </div>
       </header>
@@ -228,12 +224,12 @@ function DashboardContent() {
         <button
           onClick={logHotFlashNow}
           className="flex h-24 w-24 items-center justify-center rounded-full bg-brass text-bone shadow-[0_0_0_6px_rgba(184,151,79,0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy active:scale-95"
-          aria-label="Log a hot flash happening right now"
+          aria-label={t("hotFlashAriaLabel")}
         >
           <span className="text-3xl">◉</span>
         </button>
-        <p className="font-display text-lg text-navy">Having a hot flash right now?</p>
-        <p className="text-sm text-navy/60">Tap it. That&apos;s the whole log entry.</p>
+        <p className="font-display text-lg text-navy">{t("hotFlashPrompt")}</p>
+        <p className="text-sm text-navy/60">{t("hotFlashHint")}</p>
         {confirmation && <p className="text-sm font-medium text-teal">{confirmation}</p>}
       </section>
 
@@ -243,13 +239,13 @@ function DashboardContent() {
           onClick={() => setFormOpen((v) => !v)}
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          {formOpen ? "Close" : "Log a different symptom"}
+          {formOpen ? t("close") : t("logDifferentSymptom")}
         </button>
 
         {formOpen && (
           <div className="mt-4 flex flex-col gap-4 rounded border border-navy/10 p-5">
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-navy">Symptom</span>
+              <span className="font-medium text-navy">{t("symptomLabel")}</span>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
@@ -257,32 +253,32 @@ function DashboardContent() {
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
-                    {categoryLabel(c)}
+                    {tEnum(`category.${c}`)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-navy">Severity</span>
+              <span className="font-medium text-navy">{t("severityLabel")}</span>
               <div className="flex gap-2">
                 {SEVERITIES.map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setSeverity(s)}
-                    className={`flex-1 rounded-sm border px-3 py-2 text-sm capitalize ${
+                    className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
                       severity === s ? "border-navy bg-navy text-bone" : "border-navy/20 text-navy"
                     }`}
                   >
-                    {s.toLowerCase()}
+                    {tEnum(`severity.${s}`)}
                   </button>
                 ))}
               </div>
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-navy">Notes (optional)</span>
+              <span className="font-medium text-navy">{t("notesLabel")}</span>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -292,7 +288,7 @@ function DashboardContent() {
             </label>
 
             <Button onClick={handleLogSubmit} disabled={submitting}>
-              {submitting ? "Saving…" : "Save"}
+              {submitting ? t("saving") : t("save")}
             </Button>
           </div>
         )}
@@ -300,10 +296,10 @@ function DashboardContent() {
 
       {/* Cycle quick-log for today. */}
       <section className="mt-8 rounded border border-teal/20 bg-teal/5 p-5">
-        <h2 className="font-display text-lg text-navy">Today&apos;s cycle entry</h2>
+        <h2 className="font-display text-lg text-navy">{t("todaysCycleEntry")}</h2>
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-navy">Flow</span>
+            <span className="font-medium text-navy">{t("flowLabel")}</span>
             <select
               value={flow}
               onChange={(e) => {
@@ -312,10 +308,10 @@ function DashboardContent() {
               }}
               className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
             >
-              <option value="">None</option>
+              <option value="">{t("flowNone")}</option>
               {FLOWS.map((f) => (
                 <option key={f} value={f}>
-                  {categoryLabel(f)}
+                  {tEnum(`flow.${f}`)}
                 </option>
               ))}
             </select>
@@ -330,7 +326,7 @@ function DashboardContent() {
                 setCycleSaved(false);
               }}
             />
-            Period started today
+            {t("periodStartedToday")}
           </label>
 
           <label className="flex items-center gap-2 text-sm text-navy">
@@ -342,30 +338,28 @@ function DashboardContent() {
                 setCycleSaved(false);
               }}
             />
-            Period ended today
+            {t("periodEndedToday")}
           </label>
         </div>
         <Button variant="ghost" onClick={saveCycleEntry} disabled={cycleSaving} className="mt-4">
-          {cycleSaving ? "Saving…" : cycleSaved ? "Saved ✓" : "Save today's entry"}
+          {cycleSaving ? t("saving") : cycleSaved ? t("saved") : t("saveTodaysEntry")}
         </Button>
       </section>
 
       {/* Recent history. */}
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">Recent symptoms</h2>
+        <h2 className="font-display text-lg text-navy">{t("recentSymptoms")}</h2>
         {logsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">Loading…</p>
+          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
         ) : logs.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">
-            Nothing logged yet — use the button above whenever something happens.
-          </p>
+          <p className="mt-3 text-sm text-navy/50">{t("noLogsYet")}</p>
         ) : (
           <ul className="mt-3 divide-y divide-navy/10">
             {logs.map((log) => (
               <li key={log.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
-                  <span className="font-medium text-navy">{categoryLabel(log.category)}</span>
-                  <span className="ml-2 text-navy/50 capitalize">{log.severity.toLowerCase()}</span>
+                  <span className="font-medium text-navy">{tEnum(`category.${log.category}`)}</span>
+                  <span className="ml-2 text-navy/50">{tEnum(`severity.${log.severity}`)}</span>
                   {log.notes && <p className="mt-1 text-navy/60">{log.notes}</p>}
                 </div>
                 <time className="text-navy/40" dateTime={log.occurredAt}>
@@ -386,11 +380,12 @@ function DashboardContent() {
 }
 
 export default function DashboardPage() {
+  const t = useTranslations("Common");
   return (
     <Suspense
       fallback={
         <main className="flex min-h-screen items-center justify-center">
-          <p className="text-navy/50">Loading…</p>
+          <p className="text-navy/50">{t("loading")}</p>
         </main>
       }
     >

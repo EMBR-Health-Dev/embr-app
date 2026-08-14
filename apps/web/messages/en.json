@@ -93,5 +93,63 @@
       "logFirstEntry": "Log your first entry",
       "goToDashboard": "Go to dashboard instead"
     }
+  },
+  "Enums": {
+    "category": {
+      "HOT_FLASH": "Hot Flash",
+      "NIGHT_SWEATS": "Night Sweats",
+      "MOOD_CHANGE": "Mood Change",
+      "SLEEP_DISTURBANCE": "Sleep Disturbance",
+      "BRAIN_FOG": "Brain Fog",
+      "JOINT_PAIN": "Joint Pain",
+      "FATIGUE": "Fatigue",
+      "ANXIETY": "Anxiety",
+      "IRREGULAR_HEARTBEAT": "Irregular Heartbeat",
+      "VAGINAL_DRYNESS": "Vaginal Dryness",
+      "LIBIDO_CHANGE": "Libido Change",
+      "WEIGHT_CHANGE": "Weight Change",
+      "HEADACHE": "Headache",
+      "OTHER": "Other"
+    },
+    "severity": {
+      "MILD": "Mild",
+      "MODERATE": "Moderate",
+      "SEVERE": "Severe"
+    },
+    "flow": {
+      "SPOTTING": "Spotting",
+      "LIGHT": "Light",
+      "MEDIUM": "Medium",
+      "HEAVY": "Heavy"
+    }
+  },
+  "Dashboard": {
+    "trends": "Trends",
+    "brief": "BRIEF",
+    "export": "Export",
+    "organization": "Organization",
+    "settings": "Settings",
+    "logout": "Log out",
+    "hotFlashAriaLabel": "Log a hot flash happening right now",
+    "hotFlashPrompt": "Having a hot flash right now?",
+    "hotFlashHint": "Tap it. That's the whole log entry.",
+    "hotFlashConfirmation": "Logged. Adjust the severity below if it wasn't moderate.",
+    "hotFlashError": "Couldn't log that — try again.",
+    "logDifferentSymptom": "Log a different symptom",
+    "close": "Close",
+    "symptomLabel": "Symptom",
+    "severityLabel": "Severity",
+    "notesLabel": "Notes (optional)",
+    "save": "Save",
+    "saving": "Saving…",
+    "todaysCycleEntry": "Today's cycle entry",
+    "flowLabel": "Flow",
+    "flowNone": "None",
+    "periodStartedToday": "Period started today",
+    "periodEndedToday": "Period ended today",
+    "saveTodaysEntry": "Save today's entry",
+    "saved": "Saved ✓",
+    "recentSymptoms": "Recent symptoms",
+    "noLogsYet": "Nothing logged yet — use the button above whenever something happens."
   }
 }

@@ -93,5 +93,63 @@
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
     }
+  },
+  "Enums": {
+    "category": {
+      "HOT_FLASH": "ホットフラッシュ",
+      "NIGHT_SWEATS": "寝汗",
+      "MOOD_CHANGE": "気分の変化",
+      "SLEEP_DISTURBANCE": "睡眠障害",
+      "BRAIN_FOG": "ブレインフォグ",
+      "JOINT_PAIN": "関節痛",
+      "FATIGUE": "倦怠感",
+      "ANXIETY": "不安",
+      "IRREGULAR_HEARTBEAT": "不整脈",
+      "VAGINAL_DRYNESS": "膣の乾燥",
+      "LIBIDO_CHANGE": "性欲の変化",
+      "WEIGHT_CHANGE": "体重の変化",
+      "HEADACHE": "頭痛",
+      "OTHER": "その他"
+    },
+    "severity": {
+      "MILD": "軽度",
+      "MODERATE": "中等度",
+      "SEVERE": "重度"
+    },
+    "flow": {
+      "SPOTTING": "少量",
+      "LIGHT": "軽い",
+      "MEDIUM": "普通",
+      "HEAVY": "多い"
+    }
+  },
+  "Dashboard": {
+    "trends": "Trends",
+    "brief": "BRIEF",
+    "export": "エクスポート",
+    "organization": "組織",
+    "settings": "設定",
+    "logout": "ログアウト",
+    "hotFlashAriaLabel": "今起きているホットフラッシュを記録",
+    "hotFlashPrompt": "今、ホットフラッシュが起きていますか?",
+    "hotFlashHint": "タップするだけで記録が完了します。",
+    "hotFlashConfirmation": "記録しました。中等度でなかった場合は、下で重症度を調整してください。",
+    "hotFlashError": "記録できませんでした。もう一度お試しください。",
+    "logDifferentSymptom": "別の症状を記録する",
+    "close": "閉じる",
+    "symptomLabel": "症状",
+    "severityLabel": "重症度",
+    "notesLabel": "メモ(任意)",
+    "save": "保存",
+    "saving": "保存中…",
+    "todaysCycleEntry": "今日の周期記録",
+    "flowLabel": "経血量",
+    "flowNone": "なし",
+    "periodStartedToday": "今日、生理が始まった",
+    "periodEndedToday": "今日、生理が終わった",
+    "saveTodaysEntry": "今日の記録を保存",
+    "saved": "保存しました ✓",
+    "recentSymptoms": "最近の症状",
+    "noLogsYet": "まだ記録がありません。何かあれば上のボタンから記録してください。"
   }
 }
