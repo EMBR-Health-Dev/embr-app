@@ -1,0 +1,441 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import request from "supertest";
+import { randomUUID } from "node:crypto";
+import { createApp } from "../src/app.js";
+
+const { state, nextId } = vi.hoisted(() => {
+  return {
+    state: {
+      users: [] as Array<{
+        id: string;
+        email: string;
+        passwordHash: string;
+        role: "MEMBER" | "ADMIN";
+        emailVerifiedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>,
+      treatments: [] as Array<{
+        id: string;
+        userId: string;
+        name: string;
+        category: string;
+        startDate: Date;
+        endDate: Date | null;
+        notes: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>,
+      auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
+    },
+    nextId: () => randomUUID(),
+  };
+});
+
+const now = () => new Date();
+
+vi.mock("../src/lib/redis.js", () => ({
+  redis: { ping: vi.fn().mockResolvedValue("PONG"), quit: vi.fn() },
+}));
+
+vi.mock("../src/modules/auth/mailer.js", () => ({
+  sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../src/lib/prisma.js", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
+        const found = state.users.find((u) => u.email === where.email || u.id === where.id);
+        return Promise.resolve(found ?? null);
+      }),
+      create: vi.fn(({ data }: { data: { email: string; passwordHash: string } }) => {
+        const user = {
+          id: nextId(),
+          email: data.email,
+          passwordHash: data.passwordHash,
+          role: "MEMBER" as const,
+          emailVerifiedAt: null,
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        state.users.push(user);
+        return Promise.resolve(user);
+      }),
+      update: vi.fn(({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+        const user = state.users.find((u) => u.id === where.id)!;
+        Object.assign(user, data);
+        return Promise.resolve(user);
+      }),
+    },
+    session: {
+      create: vi.fn(({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: nextId(),
+          revokedAt: null,
+          replacedBySessionId: null,
+          createdAt: now(),
+          ...data,
+        }),
+      ),
+      findUnique: vi.fn().mockResolvedValue(null),
+      update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    emailVerificationToken: {
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      create: vi.fn().mockResolvedValue({ id: nextId() }),
+      findFirst: vi.fn().mockResolvedValue(null),
+      update: vi.fn().mockResolvedValue({}),
+    },
+    passwordResetToken: {
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      create: vi.fn().mockResolvedValue({ id: nextId() }),
+      findFirst: vi.fn().mockResolvedValue(null),
+      update: vi.fn().mockResolvedValue({}),
+    },
+    auditLog: {
+      create: vi.fn(
+        ({ data }: { data: { action: string; userId: string | null; metadata?: unknown } }) => {
+          state.auditLogEntries.push(data);
+          return Promise.resolve({ id: nextId(), ...data });
+        },
+      ),
+    },
+    treatment: {
+      create: vi.fn(
+        ({
+          data,
+        }: {
+          data: Omit<(typeof state.treatments)[number], "id" | "createdAt" | "updatedAt">;
+        }) => {
+          const treatment = { id: nextId(), createdAt: now(), updatedAt: now(), ...data };
+          state.treatments.push(treatment);
+          return Promise.resolve(treatment);
+        },
+      ),
+      findMany: vi.fn(
+        ({
+          where,
+          orderBy,
+          skip = 0,
+          take = 20,
+        }: {
+          where: {
+            userId: string;
+            category?: string;
+            startDate?: { lte: Date };
+            OR?: Array<{ endDate: null } | { endDate: { gte: Date } }>;
+          };
+          orderBy?: { startDate: "asc" | "desc" };
+          skip?: number;
+          take?: number;
+        }) => {
+          let items = state.treatments.filter((t) => t.userId === where.userId);
+          if (where.category) items = items.filter((t) => t.category === where.category);
+          if (where.startDate?.lte) {
+            items = items.filter((t) => t.startDate <= where.startDate!.lte);
+          }
+          if (where.OR) {
+            items = items.filter(
+              (t) =>
+                t.endDate === null ||
+                t.endDate >= (where.OR![1] as { endDate: { gte: Date } }).endDate.gte,
+            );
+          }
+          items = [...items].sort((a, b) =>
+            orderBy?.startDate === "asc"
+              ? a.startDate.getTime() - b.startDate.getTime()
+              : b.startDate.getTime() - a.startDate.getTime(),
+          );
+          return Promise.resolve(items.slice(skip, skip + take));
+        },
+      ),
+      count: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(state.treatments.filter((t) => t.userId === where.userId).length),
+      ),
+      findFirst: vi.fn(({ where }: { where: { id: string; userId: string } }) => {
+        const found = state.treatments.find((t) => t.id === where.id && t.userId === where.userId);
+        return Promise.resolve(found ?? null);
+      }),
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { id: string; userId: string };
+          data: Record<string, unknown>;
+        }) => {
+          const found = state.treatments.find(
+            (t) => t.id === where.id && t.userId === where.userId,
+          );
+          if (!found) return Promise.resolve({ count: 0 });
+          Object.assign(found, data, { updatedAt: now() });
+          return Promise.resolve({ count: 1 });
+        },
+      ),
+      deleteMany: vi.fn(({ where }: { where: { id: string; userId: string } }) => {
+        const idx = state.treatments.findIndex(
+          (t) => t.id === where.id && t.userId === where.userId,
+        );
+        if (idx === -1) return Promise.resolve({ count: 0 });
+        state.treatments.splice(idx, 1);
+        return Promise.resolve({ count: 1 });
+      }),
+    },
+  },
+}));
+
+const VALID_PASSWORD = "Sup3rSecret!Pass";
+
+async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
+  await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  return agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
+}
+
+beforeEach(() => {
+  state.users = [];
+  state.treatments = [];
+  state.auditLogEntries = [];
+});
+
+describe("POST /treatments", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    expect(res.status).toBe(401);
+  });
+
+  it("creates a treatment for the authenticated user", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "treatments@embr.health");
+
+    const res = await agent.post("/treatments").send({
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: "2026-06-01",
+      notes: "0.05mg, twice weekly",
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.name).toBe("Estradiol patch");
+    expect(res.body.data.category).toBe("HRT");
+    expect(res.body.data.startDate).toBe("2026-06-01");
+    expect(res.body.data.endDate).toBeNull();
+    expect(res.body.data.notes).toBe("0.05mg, twice weekly");
+  });
+
+  it("rejects an invalid category", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "invalidcat@embr.health");
+
+    const res = await agent
+      .post("/treatments")
+      .send({ name: "Something", category: "NOT_A_REAL_CATEGORY", startDate: "2026-06-01" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects an endDate before startDate", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "baddates@embr.health");
+
+    const res = await agent.post("/treatments").send({
+      name: "Something",
+      category: "SUPPLEMENT",
+      startDate: "2026-06-10",
+      endDate: "2026-06-01",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
+
+describe("GET /treatments", () => {
+  it("only returns the authenticated user's own treatments", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "userA@embr.health");
+    await registerAndLogin(agentB, "userB@embr.health");
+
+    await agentA
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    await agentB
+      .post("/treatments")
+      .send({ name: "Magnesium", category: "SUPPLEMENT", startDate: "2026-06-01" });
+
+    const resA = await agentA.get("/treatments");
+    expect(resA.status).toBe(200);
+    expect(resA.body.data.items).toHaveLength(1);
+    expect(resA.body.data.items[0].name).toBe("HRT patch");
+    expect(resA.body.data.total).toBe(1);
+  });
+
+  it("filters by category", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "filter@embr.health");
+    await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    await agent
+      .post("/treatments")
+      .send({ name: "Magnesium", category: "SUPPLEMENT", startDate: "2026-06-01" });
+
+    const res = await agent.get("/treatments").query({ category: "SUPPLEMENT" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toBe("Magnesium");
+  });
+
+  it("active=true excludes treatments that have already ended", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "active@embr.health");
+
+    await agent.post("/treatments").send({
+      name: "Old supplement",
+      category: "SUPPLEMENT",
+      startDate: "2025-01-01",
+      endDate: "2025-06-01",
+    });
+    await agent
+      .post("/treatments")
+      .send({ name: "Current HRT", category: "HRT", startDate: "2025-01-01" });
+
+    const res = await agent.get("/treatments").query({ active: "true" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toBe("Current HRT");
+  });
+});
+
+describe("ownership scoping on single-resource routes", () => {
+  it("returns 404 (not 403) when reading another user's treatment", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "ownerA@embr.health");
+    await registerAndLogin(agentB, "ownerB@embr.health");
+
+    const createRes = await agentA
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    const treatmentId = createRes.body.data.id;
+
+    const res = await agentB.get(`/treatments/${treatmentId}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when updating another user's treatment", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "updA@embr.health");
+    await registerAndLogin(agentB, "updB@embr.health");
+
+    const createRes = await agentA
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    const treatmentId = createRes.body.data.id;
+
+    const res = await agentB.patch(`/treatments/${treatmentId}`).send({ name: "Renamed" });
+    expect(res.status).toBe(404);
+  });
+
+  it("allows the owner to update and delete their own treatment", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "owner@embr.health");
+
+    const createRes = await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    const treatmentId = createRes.body.data.id;
+
+    const updateRes = await agent
+      .patch(`/treatments/${treatmentId}`)
+      .send({ endDate: "2026-07-01" });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.data.endDate).toBe("2026-07-01");
+
+    const deleteRes = await agent.delete(`/treatments/${treatmentId}`);
+    expect(deleteRes.status).toBe(204);
+
+    const getRes = await agent.get(`/treatments/${treatmentId}`);
+    expect(getRes.status).toBe(404);
+  });
+
+  it("rejects a partial update that would put endDate before the existing startDate", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "partialupdate@embr.health");
+
+    const createRes = await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-10" });
+    const treatmentId = createRes.body.data.id;
+
+    // Only endDate supplied — the cross-field check has to compare
+    // against the *existing* startDate, not just what's in this body.
+    const res = await agent.patch(`/treatments/${treatmentId}`).send({ endDate: "2026-06-01" });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("audit log coverage for treatment mutations", () => {
+  it("logs TREATMENT_CREATED on create", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-create@embr.health");
+
+    const res = await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+
+    const entry = state.auditLogEntries.find((e) => e.action === "TREATMENT_CREATED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { treatmentId?: string })?.treatmentId).toBe(res.body.data.id);
+  });
+
+  it("logs TREATMENT_UPDATED on update", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-update@embr.health");
+    const createRes = await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+
+    await agent.patch(`/treatments/${createRes.body.data.id}`).send({ name: "Renamed" });
+
+    const entry = state.auditLogEntries.find((e) => e.action === "TREATMENT_UPDATED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { treatmentId?: string })?.treatmentId).toBe(createRes.body.data.id);
+  });
+
+  it("logs TREATMENT_DELETED on delete", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "audit-delete@embr.health");
+    const createRes = await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+
+    await agent.delete(`/treatments/${createRes.body.data.id}`);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "TREATMENT_DELETED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { treatmentId?: string })?.treatmentId).toBe(createRes.body.data.id);
+  });
+});

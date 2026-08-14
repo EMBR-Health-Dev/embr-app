@@ -44,6 +44,7 @@ model User {
   auditLogs               AuditLog[]
   symptomLogs             SymptomLog[]
   cycleEntries            CycleEntry[]
+  treatments              Treatment[]
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
   clinicalBriefs          ClinicalBrief[]
@@ -198,6 +199,38 @@ model CycleEntry {
   @@unique([userId, date])
   @@index([userId, date])
   @@map("cycle_entries")
+}
+
+enum TreatmentCategory {
+  HRT
+  SUPPLEMENT
+  MEDICATION
+  LIFESTYLE
+  OTHER
+}
+
+/// A treatment or intervention the user is tracking — the "what was
+/// done" layer that symptom/cycle logs alone don't capture. `endDate`
+/// null means ongoing/current, same nullable-means-open-ended pattern
+/// as OrganizationInvite's `consumedAt`. Deliberately no separate
+/// "outcome" model: correlating a treatment's date range against the
+/// existing SymptomLog/CycleEntry history already covers "what changed
+/// afterward" without a new table to keep in sync — see
+/// trends.repository.ts if that ever needs its own dedicated endpoint.
+model Treatment {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  category  TreatmentCategory
+  startDate DateTime          @db.Date
+  endDate   DateTime?         @db.Date
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([userId, startDate])
+  @@map("treatments")
 }
 
 // ---- Organizations (Milestone 12) ----

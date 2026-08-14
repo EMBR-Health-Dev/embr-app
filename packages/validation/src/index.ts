@@ -122,6 +122,59 @@ export const symptomLogQuerySchema = paginationQuerySchema.extend({
 });
 export type SymptomLogQuery = z.infer<typeof symptomLogQuerySchema>;
 
+// ---- Treatments ----
+
+export const treatmentCategorySchema = z.enum([
+  "HRT",
+  "SUPPLEMENT",
+  "MEDICATION",
+  "LIFESTYLE",
+  "OTHER",
+]);
+
+export const createTreatmentSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    category: treatmentCategorySchema,
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date().optional(),
+    notes: z.string().trim().max(2000).optional(),
+  })
+  .refine((v) => !v.endDate || v.endDate >= v.startDate, {
+    message: "endDate cannot be before startDate",
+    path: ["endDate"],
+  });
+export type CreateTreatmentInput = z.infer<typeof createTreatmentSchema>;
+
+// Deliberately not `createTreatmentSchema.partial()` like
+// updateSymptomLogSchema — .partial() would drop the endDate>=startDate
+// refinement (ZodEffects can't be partial()'d directly), and a partial
+// update still needs that invariant to hold against whichever fields
+// are actually being changed.
+export const updateTreatmentSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    category: treatmentCategorySchema.optional(),
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().nullable().optional(),
+    notes: z.string().trim().max(2000).optional(),
+  })
+  .refine((v) => !v.startDate || !v.endDate || v.endDate >= v.startDate, {
+    message: "endDate cannot be before startDate",
+    path: ["endDate"],
+  });
+export type UpdateTreatmentInput = z.infer<typeof updateTreatmentSchema>;
+
+export const treatmentQuerySchema = paginationQuerySchema.extend({
+  category: treatmentCategorySchema.optional(),
+  // "Currently active" — startDate <= today and (endDate is null or
+  // endDate >= today) — rather than a raw date-range filter, since
+  // that's the query a treatment list screen actually wants ("what am
+  // I on right now") most of the time.
+  active: z.coerce.boolean().optional(),
+});
+export type TreatmentQuery = z.infer<typeof treatmentQuerySchema>;
+
 export const flowIntensitySchema = z.enum(["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"]);
 
 export const upsertCycleEntrySchema = z.object({
