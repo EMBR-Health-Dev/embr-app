@@ -110,6 +110,21 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api exec prisma generate
+      # prisma migrate deploy exits 0 and logs "No pending migrations
+      # to apply" when apps/api/prisma/migrations is empty or missing —
+      # it does not fail. Every test in this suite mocks prisma.js and
+      # never touches the real Postgres service container below, so a
+      # silently-empty migrations directory would otherwise never
+      # surface as a CI failure at all (see docs/MIGRATION-AUDIT.md).
+      # This check exists specifically so that blind spot can't persist
+      # unnoticed once real migrations exist and one of them is ever
+      # accidentally missing from a commit.
+      - name: Verify migration history exists
+        run: |
+          if [ -z "$(ls -A apps/api/prisma/migrations 2>/dev/null)" ]; then
+            echo "::error::apps/api/prisma/migrations is empty or missing — 'prisma migrate deploy' below would silently apply nothing. See docs/MIGRATION-AUDIT.md."
+            exit 1
+          fi
       - run: pnpm --filter @embr/api exec prisma migrate deploy
       - run: pnpm test
       - name: Upload coverage report
