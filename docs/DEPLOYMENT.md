@@ -77,6 +77,44 @@ no-op until `SENTRY_DSN` is set, so:
    `request.cookies` and `request.data` — this handles health data, so
    don't relax that without a specific reason.
 
+## Email delivery
+
+`apps/api/src/modules/auth/mailer.ts` sends verification, password-reset,
+and organization-invite emails via SMTP (`nodemailer`). Local dev/test
+points at MailHog (`docker-compose.yml`), which accepts unauthenticated
+connections — this is why `SMTP_USER`/`SMTP_PASS` aren't required by
+default.
+
+**What's already handled from the repo, no code change needed to go
+live**: point `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` at any
+real SMTP-speaking provider (SES's SMTP interface, Postmark, SendGrid,
+...) and set `SMTP_REQUIRE_TLS=true` — the transport wires
+authentication and TLS correctly based on these alone.
+
+**What's genuinely external, not something a code change can do**:
+
+- An actual provider account and its SMTP credentials.
+- **Sending-domain DNS records** — SPF, DKIM, and ideally DMARC for
+  whatever domain `SMTP_FROM` uses. Without these, most providers will
+  still accept the send but real inboxes (especially Gmail/Outlook)
+  will mark the mail as spam or reject it outright — this is the
+  single most common reason "email works in testing but nobody gets
+  the verification link in production" happens, and it's entirely a
+  DNS/provider-console task, not a repo one.
+- Provider-side sending limits/reputation warm-up for a new sending
+  domain, if the provider requires it.
+
+**Verifying it's actually working**: `GET /health/ready` now includes
+an `smtp` check (`verifyMailTransport()` in mailer.ts) that confirms
+the transport can connect and authenticate — hit this in staging after
+setting the env vars above to confirm SMTP is genuinely configured
+correctly, rather than discovering it's broken only when a real user's
+verification email silently never arrives. Deliberately excluded from
+the endpoint's overall pass/fail status (a mail-provider outage
+shouldn't pull an otherwise-healthy API instance out of a load
+balancer's rotation) — check the `checks.smtp` field specifically, not
+just the top-level `status`.
+
 ## Health check monitoring
 
 `GET /health/live` and `GET /health/ready` already exist

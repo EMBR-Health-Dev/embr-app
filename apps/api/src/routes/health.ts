@@ -2,6 +2,7 @@ import { Router, type Router as ExpressRouter } from "express";
 import type { HealthCheckResponse } from "@embr/types";
 import { prisma } from "../lib/prisma.js";
 import { redis } from "../lib/redis.js";
+import { verifyMailTransport } from "../modules/auth/mailer.js";
 import { asyncHandler } from "../lib/async-handler.js";
 
 const router: ExpressRouter = Router();
@@ -35,7 +36,17 @@ router.get(
       await redis.ping();
     });
 
+    // Deliberately excluded from `allOk` below — see verifyMailTransport's
+    // doc comment. Reported for visibility (so a broken SMTP config in
+    // staging is a thing you can *see* by hitting this endpoint,
+    // instead of discovering it only when a real user's verification
+    // email silently never arrives), but a mail-provider outage
+    // shouldn't take an otherwise-healthy API instance out of a load
+    // balancer's rotation.
+    const smtpCheck = await timedCheck(verifyMailTransport);
+
     const allOk = Object.values(checks).every((c) => c.status === "ok");
+    checks.smtp = smtpCheck;
 
     const body: HealthCheckResponse = {
       status: allOk ? "ok" : "degraded",
