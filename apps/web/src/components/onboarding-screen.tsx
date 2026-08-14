@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useOnboarding } from "../lib/onboarding-context";
 import { ONBOARDING_STEPS, type OnboardingStep } from "../lib/onboarding-steps";
 
@@ -11,6 +12,7 @@ export function OnboardingScreen({
   step: OnboardingStep;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("Onboarding");
   const router = useRouter();
   const { patch } = useOnboarding();
   const index = ONBOARDING_STEPS.indexOf(step);
@@ -38,7 +40,7 @@ export function OnboardingScreen({
             onClick={() => void handleSkip()}
             className="text-xs font-medium text-navy/50 underline underline-offset-2 hover:text-navy"
           >
-            Skip to dashboard
+            {t("skipToDashboard")}
           </button>
         </div>
 

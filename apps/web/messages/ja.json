@@ -23,5 +23,75 @@
     "label": "言語",
     "en": "English",
     "ja": "日本語"
+  },
+  "Common": {
+    "loading": "読み込み中…"
+  },
+  "Register": {
+    "checkEmailTitle": "メールをご確認ください",
+    "checkEmailBody": "<strong>{email}</strong> 宛に確認用リンクを送信しました。確認後、こちらに戻ってログインしてください。",
+    "goToLogin": "ログインへ進む",
+    "title": "アカウントを作成",
+    "subtitle": "症状や周期を、あなたのペースで、非公開を基本として記録できます。",
+    "emailLabel": "メールアドレス",
+    "passwordLabel": "パスワード",
+    "passwordHint": "12文字以上で、大文字・小文字・数字をそれぞれ1つ以上含めてください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "アカウントを作成",
+    "submitting": "作成中…",
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか?",
+    "logIn": "ログイン"
+  },
+  "Onboarding": {
+    "skipToDashboard": "ダッシュボードへスキップ",
+    "welcome": {
+      "headline": "あなたに実際に起きていることを、記録しておく場所。",
+      "body": "EMBRは、あなたが経験していることを、あとで振り返り、理解し、いずれ担当医との会話に役立てられる形にします。診断をしたり、担当医の代わりになったりすることはありません。あなた自身のペースで、あなた自身の記録を整理する手助けをします。",
+      "getStarted": "はじめる"
+    },
+    "jobToBeDone": {
+      "headline": "EMBRにどんなことを手伝ってほしいですか?",
+      "hint": "最初に何を表示するかの参考にするだけです。いつでも変更できます。",
+      "understandExperience": "自分に起きていることを理解したい",
+      "understandPatterns": "時間の経過とともにパターンを理解したい",
+      "prepareForAppointment": "診察に向けて準備したい",
+      "keepRecord": "長期的に記録を残したい",
+      "notSure": "まだよくわからない"
+    },
+    "whatsGoingOn": {
+      "headline": "最近、何か気になることはありましたか?",
+      "hint": "変化を感じたものを選んでください。まだ記録にはなりません。最初のチェックインが、あなたのことをすでに知っているように感じられるための準備です。",
+      "continue": "次へ",
+      "sleep": "睡眠",
+      "energy": "エネルギー",
+      "mood": "気分",
+      "body": "身体",
+      "focus": "集中力"
+    },
+    "appointmentStatus": {
+      "headline": "近々、診察の予定はありますか?",
+      "hint": "正確な日付はまだ不要です。BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
+      "withinMonth": "はい、1か月以内にあります",
+      "unsureWhen": "はい、ただしいつかは未定です",
+      "no": "いいえ",
+      "unsure": "まだわかりません"
+    },
+    "theLoop": {
+      "headline": "EMBRの仕組みをご紹介します。",
+      "trackFallback": "睡眠 · エネルギー · 気分",
+      "patternsLabel": "パターン",
+      "patternsTitle": "数週間記録を続けると、例えばこのように見えてくることがあります:",
+      "patternsExample": "「睡眠の乱れは、エネルギー低下とともに6日間見られました。」",
+      "patternsCaveat": "これは記述であり、診断ではありません。EMBRが原因を特定することはありません。",
+      "trackLabel": "記録",
+      "briefLabel": "BRIEF",
+      "briefTitle": "エビデンス · パターン · 質問",
+      "briefBody": "準備ができたときに作成される、あなたの記録の要約です。自動では作成されません。",
+      "conversationLabel": "診察での会話",
+      "conversationTitle": "次回の診察に持っていける、具体的な材料になります。",
+      "conversationBody": "完全に任意で、あなただけのものです。",
+      "logFirstEntry": "最初の記録をつける",
+      "goToDashboard": "代わりにダッシュボードへ"
+    }
   }
 }

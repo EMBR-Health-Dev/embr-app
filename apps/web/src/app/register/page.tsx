@@ -3,6 +3,7 @@
 import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { registerSchema } from "@embr/validation";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -10,6 +11,7 @@ import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 
 function RegisterForm() {
+  const t = useTranslations("Register");
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
   const loginHref = redirectParam
@@ -46,7 +48,7 @@ function RegisterForm() {
       if (err instanceof ApiError) {
         setFormError(err.message);
       } else {
-        setFormError("Something went wrong. Try again in a moment.");
+        setFormError(t("genericError"));
       }
     } finally {
       setSubmitting(false);
@@ -56,16 +58,18 @@ function RegisterForm() {
   if (done) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <h1 className="font-display text-3xl text-navy">Check your email</h1>
+        <h1 className="font-display text-3xl text-navy">{t("checkEmailTitle")}</h1>
         <p className="max-w-sm text-navy/70">
-          We&apos;ve sent a verification link to <span className="font-medium">{email}</span>. Once
-          you&apos;ve confirmed it, come back and log in.
+          {t.rich("checkEmailBody", {
+            email,
+            strong: (chunks) => <span className="font-medium">{chunks}</span>,
+          })}
         </p>
         <Link
           href={loginHref}
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          Go to login
+          {t("goToLogin")}
         </Link>
       </main>
     );
@@ -74,14 +78,12 @@ function RegisterForm() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl text-navy">Create your account</h1>
-        <p className="mt-2 text-sm text-navy/60">
-          Track symptoms and cycles on your terms — private by default.
-        </p>
+        <h1 className="font-display text-3xl text-navy">{t("title")}</h1>
+        <p className="mt-2 text-sm text-navy/60">{t("subtitle")}</p>
 
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" noValidate>
           <Field
-            label="Email"
+            label={t("emailLabel")}
             type="email"
             autoComplete="email"
             value={email}
@@ -89,28 +91,26 @@ function RegisterForm() {
             error={fieldErrors.email}
           />
           <Field
-            label="Password"
+            label={t("passwordLabel")}
             type="password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
           />
-          <p className="text-xs text-navy/50">
-            At least 12 characters, with an uppercase letter, a lowercase letter, and a digit.
-          </p>
+          <p className="text-xs text-navy/50">{t("passwordHint")}</p>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
 
           <Button type="submit" disabled={submitting} className="mt-2">
-            {submitting ? "Creating account…" : "Create account"}
+            {submitting ? t("submitting") : t("submit")}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-navy/60">
-          Already have an account?{" "}
+          {t("alreadyHaveAccount")}{" "}
           <Link href={loginHref} className="font-medium text-teal underline underline-offset-2">
-            Log in
+            {t("logIn")}
           </Link>
         </p>
       </div>

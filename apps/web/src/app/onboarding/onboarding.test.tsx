@@ -1,7 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NextIntlClientProvider } from "next-intl";
 import type { OnboardingProfileDto } from "@embr/types";
+import messages from "../../../messages/en.json";
+
+function renderWithIntl(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
 
 const routerPush = vi.fn();
 const routerReplace = vi.fn();
@@ -61,7 +71,7 @@ describe("OnboardingLayout — auth gate", () => {
     authState.loading = false;
     const { default: OnboardingLayout } = await import("./layout");
 
-    render(<OnboardingLayout>{null}</OnboardingLayout>);
+    renderWithIntl(<OnboardingLayout>{null}</OnboardingLayout>);
 
     await waitFor(() => expect(routerReplace).toHaveBeenCalledWith("/login"));
   });
@@ -69,7 +79,7 @@ describe("OnboardingLayout — auth gate", () => {
   it("does not redirect once a user is present", async () => {
     const { default: OnboardingLayout } = await import("./layout");
 
-    render(<OnboardingLayout>content</OnboardingLayout>);
+    renderWithIntl(<OnboardingLayout>content</OnboardingLayout>);
 
     await waitFor(() => expect(screen.getByText("content")).toBeInTheDocument());
     expect(routerReplace).not.toHaveBeenCalled();
@@ -81,7 +91,7 @@ describe("Onboarding index — resume behavior", () => {
     onboardingProfile = emptyProfile({ currentStep: null });
     const { default: OnboardingIndex } = await import("./page");
 
-    render(<OnboardingIndex />);
+    renderWithIntl(<OnboardingIndex />);
 
     await waitFor(() => expect(routerReplace).toHaveBeenCalledWith("/onboarding/welcome"));
   });
@@ -90,7 +100,7 @@ describe("Onboarding index — resume behavior", () => {
     onboardingProfile = emptyProfile({ currentStep: "APPOINTMENT_STATUS" });
     const { default: OnboardingIndex } = await import("./page");
 
-    render(<OnboardingIndex />);
+    renderWithIntl(<OnboardingIndex />);
 
     await waitFor(() =>
       expect(routerReplace).toHaveBeenCalledWith("/onboarding/appointment-status"),
@@ -101,7 +111,7 @@ describe("Onboarding index — resume behavior", () => {
     onboardingProfile = emptyProfile({ currentStep: "SOMETHING_MADE_UP" });
     const { default: OnboardingIndex } = await import("./page");
 
-    render(<OnboardingIndex />);
+    renderWithIntl(<OnboardingIndex />);
 
     await waitFor(() => expect(routerReplace).toHaveBeenCalledWith("/onboarding/welcome"));
   });
@@ -112,7 +122,7 @@ describe("Screen 2 — job to be done", () => {
     const user = userEvent.setup();
     const { default: JobToBeDoneScreen } = await import("./job-to-be-done/page");
 
-    render(<JobToBeDoneScreen />);
+    renderWithIntl(<JobToBeDoneScreen />);
     await user.click(screen.getByText("Prepare for a healthcare conversation"));
 
     await waitFor(() =>
@@ -129,7 +139,7 @@ describe("Screen 3 — what's going on", () => {
     const user = userEvent.setup();
     const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
 
-    render(<WhatsGoingOnScreen />);
+    renderWithIntl(<WhatsGoingOnScreen />);
     await user.click(screen.getByText("Sleep"));
     await user.click(screen.getByText("Mood"));
     await user.click(screen.getByText("Continue"));
@@ -146,7 +156,7 @@ describe("Screen 3 — what's going on", () => {
     const user = userEvent.setup();
     const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
 
-    render(<WhatsGoingOnScreen />);
+    renderWithIntl(<WhatsGoingOnScreen />);
     await user.click(screen.getByText("Energy"));
     await user.click(screen.getByText("Energy"));
     await user.click(screen.getByText("Continue"));
@@ -163,7 +173,7 @@ describe("Screen 3 — what's going on", () => {
     onboardingProfile = emptyProfile({ noticedAreas: ["FOCUS"] });
     const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
 
-    render(<WhatsGoingOnScreen />);
+    renderWithIntl(<WhatsGoingOnScreen />);
 
     await waitFor(() => expect(screen.getByText("Focus")).toHaveAttribute("aria-pressed", "true"));
   });
@@ -174,7 +184,7 @@ describe("Screen 4 — appointment status", () => {
     const user = userEvent.setup();
     const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
 
-    render(<AppointmentStatusScreen />);
+    renderWithIntl(<AppointmentStatusScreen />);
     await user.click(screen.getByText("Yes, within the next month"));
 
     await waitFor(() =>
@@ -187,7 +197,7 @@ describe("Screen 4 — appointment status", () => {
 
   it("never renders any date input — no exact date is ever collected here", async () => {
     const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
-    const { container } = render(<AppointmentStatusScreen />);
+    const { container } = renderWithIntl(<AppointmentStatusScreen />);
 
     expect(container.querySelector('input[type="date"]')).toBeNull();
   });
@@ -198,7 +208,7 @@ describe("Screen 5 — the loop", () => {
     const user = userEvent.setup();
     const { default: TheLoopScreen } = await import("./the-loop/page");
 
-    render(<TheLoopScreen />);
+    renderWithIntl(<TheLoopScreen />);
     await user.click(screen.getByText("Log your first entry"));
 
     await waitFor(() => expect(onboardingPatch).toHaveBeenCalledWith({ status: "completed" }));
@@ -213,7 +223,7 @@ describe("Screen 5 — the loop", () => {
     const user = userEvent.setup();
     const { default: TheLoopScreen } = await import("./the-loop/page");
 
-    render(<TheLoopScreen />);
+    renderWithIntl(<TheLoopScreen />);
     await user.click(screen.getByText("Go to dashboard instead"));
 
     await waitFor(() => expect(onboardingPatch).toHaveBeenCalledWith({ status: "completed" }));
@@ -224,7 +234,7 @@ describe("Screen 5 — the loop", () => {
     onboardingProfile = emptyProfile({ noticedAreas: ["SLEEP", "ENERGY"] });
     const { default: TheLoopScreen } = await import("./the-loop/page");
 
-    render(<TheLoopScreen />);
+    renderWithIntl(<TheLoopScreen />);
 
     expect(
       screen.getByText('"Your sleep disruption appeared alongside lower energy on 6 days."'),
@@ -236,7 +246,7 @@ describe("Screen 5 — the loop", () => {
     onboardingProfile = emptyProfile({ noticedAreas: ["MOOD", "FOCUS"] });
     const { default: TheLoopScreen } = await import("./the-loop/page");
 
-    render(<TheLoopScreen />);
+    renderWithIntl(<TheLoopScreen />);
 
     expect(screen.getByText("Mood · Focus")).toBeInTheDocument();
   });
@@ -245,7 +255,7 @@ describe("Screen 5 — the loop", () => {
     onboardingProfile = emptyProfile({ noticedAreas: [] });
     const { default: TheLoopScreen } = await import("./the-loop/page");
 
-    render(<TheLoopScreen />);
+    renderWithIntl(<TheLoopScreen />);
 
     expect(screen.getByText("Sleep · Energy · Mood")).toBeInTheDocument();
   });
@@ -256,7 +266,7 @@ describe("OnboardingScreen — skip behavior (shared by every screen)", () => {
     const user = userEvent.setup();
     const { default: WelcomeScreen } = await import("./welcome/page");
 
-    render(<WelcomeScreen />);
+    renderWithIntl(<WelcomeScreen />);
     await user.click(screen.getByText("Skip to dashboard"));
 
     await waitFor(() => expect(onboardingPatch).toHaveBeenCalledWith({ status: "skipped" }));
