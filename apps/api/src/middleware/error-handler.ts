@@ -16,7 +16,13 @@ export function errorHandlerMiddleware() {
 
     const logPayload = {
       requestId: req.requestId,
-      path: req.originalUrl,
+      // req.path, not req.originalUrl — the latter includes the query
+      // string, which several routes carry genuinely sensitive values
+      // in by nature of how their protocol works (GET /auth/sso/callback
+      // receives an OAuth authorization code exactly this way). See
+      // sentry.ts's beforeSend for the equivalent fix on Sentry's own
+      // auto-captured request context, which this doesn't cover.
+      path: req.path,
       method: req.method,
       code: appError.code,
       statusCode: appError.statusCode,

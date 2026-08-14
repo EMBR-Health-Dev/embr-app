@@ -8,6 +8,9 @@ vi.mock("../src/lib/prisma.js", () => ({
 vi.mock("../src/lib/redis.js", () => ({
   redis: { ping: vi.fn().mockResolvedValue("PONG"), on: vi.fn() },
 }));
+vi.mock("../src/lib/sentry.js", () => ({
+  captureException: vi.fn(),
+}));
 
 // Error-handling audit: body-parser (and anything else built on the
 // `http-errors` convention) throws a plain Error with a numeric
@@ -28,5 +31,44 @@ describe("malformed request bodies", () => {
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
     expect(res.body.error.requestId).toBeDefined();
+  });
+});
+
+describe("error logging never includes a query string", () => {
+  it("uses req.path (no query string) in the logged/reported payload, not req.originalUrl", async () => {
+    const { captureException } = await import("../src/lib/sentry.js");
+    const { logger } = await import("../src/lib/logger.js");
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => logger);
+    const captureSpy = vi.mocked(captureException);
+
+    const { errorHandlerMiddleware } = await import("../src/middleware/error-handler.js");
+
+    const req = {
+      requestId: "req-123",
+      // Exactly the real-world shape: GET /auth/sso/callback carries a
+      // real OAuth authorization code in the query string.
+      originalUrl: "/auth/sso/callback?code=real-secret-oauth-code&state=xyz",
+      path: "/auth/sso/callback",
+      method: "GET",
+    };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    errorHandlerMiddleware()(new Error("unexpected failure"), req as never, res as never, vi.fn());
+
+    expect(errorSpy).toHaveBeenCalled();
+    const loggedPayload = errorSpy.mock.calls[0][0] as { path: string };
+    expect(loggedPayload.path).toBe("/auth/sso/callback");
+    expect(loggedPayload.path).not.toContain("code=");
+    expect(loggedPayload.path).not.toContain("real-secret-oauth-code");
+
+    expect(captureSpy).toHaveBeenCalled();
+    const capturedPayload = captureSpy.mock.calls[0][1] as { path: string };
+    expect(capturedPayload.path).toBe("/auth/sso/callback");
+    expect(capturedPayload.path).not.toContain("real-secret-oauth-code");
+
+    errorSpy.mockRestore();
   });
 });
