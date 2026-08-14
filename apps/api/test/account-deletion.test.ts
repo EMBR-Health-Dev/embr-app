@@ -20,6 +20,7 @@ const { state, nextId } = vi.hoisted(() => {
       cycleEntries: [] as Array<{ id: string; userId: string }>,
       onboardingProfiles: [] as Array<{ id: string; userId: string }>,
       clinicalBriefs: [] as Array<{ id: string; userId: string }>,
+      treatments: [] as Array<{ id: string; userId: string }>,
       emailVerificationTokens: [] as Array<{ id: string; userId: string }>,
       passwordResetTokens: [] as Array<{ id: string; userId: string }>,
       auditLogEntries: [] as Array<{ id: string; userId: string | null; action: string }>,
@@ -58,6 +59,7 @@ function deleteUserWhereCascade(userId: string) {
   state.cycleEntries = state.cycleEntries.filter((e) => e.userId !== userId);
   state.onboardingProfiles = state.onboardingProfiles.filter((p) => p.userId !== userId);
   state.clinicalBriefs = state.clinicalBriefs.filter((b) => b.userId !== userId);
+  state.treatments = state.treatments.filter((t) => t.userId !== userId);
   state.emailVerificationTokens = state.emailVerificationTokens.filter((t) => t.userId !== userId);
   state.passwordResetTokens = state.passwordResetTokens.filter((t) => t.userId !== userId);
   for (const entry of state.auditLogEntries) {
@@ -183,6 +185,13 @@ vi.mock("../src/lib/prisma.js", () => {
           ),
         ),
       },
+      treatment: {
+        findMany: vi.fn(({ where }: { where?: { userId?: string } }) =>
+          Promise.resolve(
+            state.treatments.filter((t) => !where?.userId || t.userId === where.userId),
+          ),
+        ),
+      },
     },
   };
 });
@@ -206,6 +215,7 @@ beforeEach(() => {
   state.cycleEntries = [];
   state.onboardingProfiles = [];
   state.clinicalBriefs = [];
+  state.treatments = [];
   state.emailVerificationTokens = [];
   state.passwordResetTokens = [];
   state.auditLogEntries = [];
@@ -250,6 +260,7 @@ describe("DELETE /auth/me", () => {
     state.cycleEntries.push({ id: nextId(), userId });
     state.onboardingProfiles.push({ id: nextId(), userId });
     state.clinicalBriefs.push({ id: nextId(), userId });
+    state.treatments.push({ id: nextId(), userId });
     state.emailVerificationTokens.push({ id: nextId(), userId });
     state.passwordResetTokens.push({ id: nextId(), userId });
     state.auditLogEntries.push({ id: nextId(), userId, action: "LOGIN_SUCCEEDED" });
@@ -267,6 +278,7 @@ describe("DELETE /auth/me", () => {
     expect(state.cycleEntries.some((e) => e.userId === userId)).toBe(false);
     expect(state.onboardingProfiles.some((p) => p.userId === userId)).toBe(false);
     expect(state.clinicalBriefs.some((b) => b.userId === userId)).toBe(false);
+    expect(state.treatments.some((t) => t.userId === userId)).toBe(false);
     expect(state.emailVerificationTokens.some((t) => t.userId === userId)).toBe(false);
     expect(state.passwordResetTokens.some((t) => t.userId === userId)).toBe(false);
 
