@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "../../../lib/auth-context";
 import { api } from "../../../lib/api";
 import { ApiError } from "../../../lib/api-client";
@@ -11,6 +12,8 @@ import { Button } from "../../../components/button";
 type Status = "checking" | "accepting" | "accepted" | "already-member" | "wrong-account" | "error";
 
 function AcceptInviteScreen() {
+  const t = useTranslations("AcceptInvite");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -77,32 +80,25 @@ function AcceptInviteScreen() {
           setStatus("wrong-account");
         } else {
           setStatus("error");
-          setErrorMessage(
-            err instanceof ApiError
-              ? err.message
-              : "Something went wrong accepting that invite. Try again in a moment.",
-          );
+          setErrorMessage(err instanceof ApiError ? err.message : t("genericError"));
         }
       });
-  }, [loading, user, token]);
+  }, [loading, user, token, t]);
 
   if (loading) {
-    return <p className="text-navy/50">Loading…</p>;
+    return <p className="text-navy/50">{tCommon("loading")}</p>;
   }
 
   if (!token) {
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">Couldn&apos;t accept that invite</h1>
-        <p className="mt-3 text-sm text-red-600">
-          This invite link is missing its token — check that you copied the whole link from the
-          email.
-        </p>
+        <h1 className="font-display text-2xl text-navy">{t("couldntAccept")}</h1>
+        <p className="mt-3 text-sm text-red-600">{t("missingToken")}</p>
         <Link
           href="/dashboard"
           className="mt-6 inline-block text-sm font-medium text-teal underline underline-offset-2"
         >
-          Go to dashboard
+          {t("goToDashboard")}
         </Link>
       </div>
     );
@@ -113,21 +109,18 @@ function AcceptInviteScreen() {
     const encoded = encodeURIComponent(returnTo);
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">You&apos;ve been invited</h1>
-        <p className="mt-3 text-sm text-navy/60">
-          Log in or create an EMBR account using the same email this invite was sent to, and
-          you&apos;ll come right back here to join.
-        </p>
+        <h1 className="font-display text-2xl text-navy">{t("youveBeenInvited")}</h1>
+        <p className="mt-3 text-sm text-navy/60">{t("loginPrompt")}</p>
         <div className="mt-6 flex flex-col gap-3">
           <Button className="w-full" onClick={() => router.push(`/login?redirect=${encoded}`)}>
-            Log in
+            {t("logIn")}
           </Button>
           <Button
             variant="ghost"
             className="w-full"
             onClick={() => router.push(`/register?redirect=${encoded}`)}
           >
-            Create an account
+            {t("createAccount")}
           </Button>
         </div>
       </div>
@@ -135,24 +128,23 @@ function AcceptInviteScreen() {
   }
 
   if (status === "checking" || status === "accepting") {
-    return <p className="text-navy/50">Loading…</p>;
+    return <p className="text-navy/50">{tCommon("loading")}</p>;
   }
 
   if (status === "accepted") {
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">You&apos;re in</h1>
+        <h1 className="font-display text-2xl text-navy">{t("youreIn")}</h1>
         <p className="mt-3 text-sm text-navy/60">
-          {orgName ? (
-            <>
-              You&apos;ve joined <span className="font-medium text-navy">{orgName}</span>.
-            </>
-          ) : (
-            "You've joined the organization."
-          )}
+          {orgName
+            ? t.rich("joinedNamed", {
+                orgName,
+                strong: (chunks) => <span className="font-medium text-navy">{chunks}</span>,
+              })
+            : t("joinedUnnamed")}
         </p>
         <Button className="mt-6" onClick={() => router.push("/organization")}>
-          Go to organization
+          {t("goToOrganization")}
         </Button>
       </div>
     );
@@ -161,12 +153,10 @@ function AcceptInviteScreen() {
   if (status === "already-member") {
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">Already a member</h1>
-        <p className="mt-3 text-sm text-navy/60">
-          You&apos;re already part of this organization — nothing more to do here.
-        </p>
+        <h1 className="font-display text-2xl text-navy">{t("alreadyMember")}</h1>
+        <p className="mt-3 text-sm text-navy/60">{t("alreadyMemberBody")}</p>
         <Button className="mt-6" onClick={() => router.push("/organization")}>
-          Go to organization
+          {t("goToOrganization")}
         </Button>
       </div>
     );
@@ -188,20 +178,21 @@ function AcceptInviteScreen() {
 
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">Wrong account</h1>
+        <h1 className="font-display text-2xl text-navy">{t("wrongAccount")}</h1>
         <p className="mt-3 text-sm text-navy/60">
-          This invitation was sent to a different email address than{" "}
-          <span className="font-medium text-navy">{user?.email}</span>, the account you&apos;re
-          currently signed into. Log out and sign back in with the email the invite was sent to.
+          {t.rich("wrongAccountBody", {
+            email: user?.email ?? "",
+            strong: (chunks) => <span className="font-medium text-navy">{chunks}</span>,
+          })}
         </p>
         <Button className="mt-6 w-full" disabled={loggingOut} onClick={() => void logOutAndRetry()}>
-          {loggingOut ? "Logging out…" : "Log out and try again"}
+          {loggingOut ? t("loggingOut") : t("logOutAndRetry")}
         </Button>
         <Link
           href="/dashboard"
           className="mt-4 inline-block text-sm font-medium text-teal underline underline-offset-2"
         >
-          Stay signed in and go to dashboard
+          {t("stayAndGoToDashboard")}
         </Link>
       </div>
     );
@@ -209,22 +200,23 @@ function AcceptInviteScreen() {
 
   return (
     <div className="w-full max-w-sm text-center">
-      <h1 className="font-display text-2xl text-navy">Couldn&apos;t accept that invite</h1>
+      <h1 className="font-display text-2xl text-navy">{t("couldntAccept")}</h1>
       <p className="mt-3 text-sm text-red-600">{errorMessage}</p>
       <Link
         href="/dashboard"
         className="mt-6 inline-block text-sm font-medium text-teal underline underline-offset-2"
       >
-        Go to dashboard
+        {t("goToDashboard")}
       </Link>
     </div>
   );
 }
 
 export default function AcceptInvitePage() {
+  const t = useTranslations("Common");
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <Suspense fallback={<p className="text-navy/50">Loading…</p>}>
+      <Suspense fallback={<p className="text-navy/50">{t("loading")}</p>}>
         <AcceptInviteScreen />
       </Suspense>
     </main>

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { changePasswordSchema } from "@embr/validation";
 import type { DeviceSessionDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
@@ -12,6 +13,8 @@ import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 
 export default function SettingsPage() {
+  const t = useTranslations("Settings");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -64,7 +67,7 @@ export default function SettingsPage() {
       // a bug, so the redirect here is expected, not an error state.
       router.push("/login?reason=password-changed");
     } catch (err) {
-      setPasswordError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+      setPasswordError(err instanceof ApiError ? err.message : t("genericError"));
     } finally {
       setChangingPassword(false);
     }
@@ -93,7 +96,7 @@ export default function SettingsPage() {
   async function handleDeleteAccount() {
     setDeleteError(null);
     if (!deletePassword) {
-      setDeleteError("Enter your password to confirm.");
+      setDeleteError(t("enterPasswordToConfirm"));
       return;
     }
     setDeleting(true);
@@ -101,7 +104,7 @@ export default function SettingsPage() {
       await api.auth.deleteAccount({ password: deletePassword });
       router.push("/login");
     } catch (err) {
-      setDeleteError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+      setDeleteError(err instanceof ApiError ? err.message : t("genericError"));
     } finally {
       setDeleting(false);
     }
@@ -110,7 +113,7 @@ export default function SettingsPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -118,24 +121,21 @@ export default function SettingsPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">Settings</h1>
+        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
         <Link
           href="/dashboard"
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          ← Dashboard
+          {t("backToDashboard")}
         </Link>
       </header>
 
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">Change password</h2>
-        <p className="mt-1 text-sm text-navy/60">
-          Changing your password signs you out everywhere, including this device — you&apos;ll need
-          to log back in.
-        </p>
+        <h2 className="font-display text-lg text-navy">{t("changePasswordTitle")}</h2>
+        <p className="mt-1 text-sm text-navy/60">{t("changePasswordDescription")}</p>
         <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4" noValidate>
           <Field
-            label="Current password"
+            label={t("currentPasswordLabel")}
             type="password"
             autoComplete="current-password"
             value={currentPassword}
@@ -143,7 +143,7 @@ export default function SettingsPage() {
             error={fieldErrors.currentPassword}
           />
           <Field
-            label="New password"
+            label={t("newPasswordLabel")}
             type="password"
             autoComplete="new-password"
             value={newPassword}
@@ -152,42 +152,42 @@ export default function SettingsPage() {
           />
           {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
           <Button type="submit" disabled={changingPassword} className="self-start">
-            {changingPassword ? "Changing…" : "Change password"}
+            {changingPassword ? t("changing") : t("changePassword")}
           </Button>
         </form>
       </section>
 
       <section className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg text-navy">Devices</h2>
+          <h2 className="font-display text-lg text-navy">{t("devices")}</h2>
           <button
             onClick={logoutEverywhere}
             disabled={loggingOutAll}
             className="text-sm font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
           >
-            {loggingOutAll ? "Logging out…" : "Log out everywhere"}
+            {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
           </button>
         </div>
 
         {sessionsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">Loading…</p>
+          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
         ) : sessions.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">No active sessions.</p>
+          <p className="mt-3 text-sm text-navy/50">{t("noActiveSessions")}</p>
         ) : (
           <ul className="mt-4 divide-y divide-navy/10">
             {sessions.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
                   <p className="text-navy">
-                    {s.userAgent ?? "Unknown device"}
+                    {s.userAgent ?? t("unknownDevice")}
                     {s.current && (
                       <span className="ml-2 rounded-sm bg-teal/10 px-1.5 py-0.5 text-xs font-medium text-teal">
-                        This device
+                        {t("thisDevice")}
                       </span>
                     )}
                   </p>
                   <p className="text-navy/50">
-                    {s.ipAddress ?? "Unknown IP"} · signed in{" "}
+                    {s.ipAddress ?? t("unknownIp")} · {t("signedIn")}{" "}
                     {new Date(s.createdAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -197,7 +197,7 @@ export default function SettingsPage() {
                     disabled={revokingId === s.id}
                     className="text-red-600 underline underline-offset-2 disabled:opacity-50"
                   >
-                    {revokingId === s.id ? "Revoking…" : "Revoke"}
+                    {revokingId === s.id ? t("revoking") : t("revoke")}
                   </button>
                 )}
               </li>
@@ -207,23 +207,20 @@ export default function SettingsPage() {
       </section>
 
       <section className="mt-10 border-t border-red-200 pt-8">
-        <h2 className="font-display text-lg text-navy">Delete account</h2>
-        <p className="mt-2 text-sm text-navy/60">
-          This permanently deletes your account and everything in it — symptom logs, cycle entries,
-          briefs, and settings. This cannot be undone.
-        </p>
+        <h2 className="font-display text-lg text-navy">{t("deleteAccountTitle")}</h2>
+        <p className="mt-2 text-sm text-navy/60">{t("deleteAccountDescription")}</p>
 
         {!deleteConfirming ? (
           <button
             onClick={() => setDeleteConfirming(true)}
             className="mt-4 text-sm font-medium text-red-600 underline underline-offset-2"
           >
-            Delete my account
+            {t("deleteMyAccount")}
           </button>
         ) : (
           <div className="mt-4 flex max-w-sm flex-col gap-3">
             <Field
-              label="Confirm your password"
+              label={t("confirmPasswordLabel")}
               type="password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
@@ -235,7 +232,7 @@ export default function SettingsPage() {
                 disabled={deleting}
                 className="rounded-sm bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
-                {deleting ? "Deleting…" : "Permanently delete my account"}
+                {deleting ? t("deleting") : t("permanentlyDelete")}
               </button>
               <button
                 onClick={() => {
@@ -246,7 +243,7 @@ export default function SettingsPage() {
                 disabled={deleting}
                 className="text-sm text-navy/60 underline underline-offset-2 disabled:opacity-50"
               >
-                Cancel
+                {t("cancel")}
               </button>
             </div>
           </div>

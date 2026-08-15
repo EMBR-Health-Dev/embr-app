@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -11,6 +12,8 @@ import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 
 export default function BriefPage() {
+  const t = useTranslations("Brief");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -42,7 +45,7 @@ export default function BriefPage() {
     setGenerateError(null);
 
     if (!fromDate || !toDate) {
-      setGenerateError("Pick both a start and end date.");
+      setGenerateError(t("pickDates"));
       return;
     }
 
@@ -52,9 +55,7 @@ export default function BriefPage() {
       setJustGenerated(brief);
       loadHistory();
     } catch (err) {
-      setGenerateError(
-        err instanceof ApiError ? err.message : "Couldn't generate a brief — try again.",
-      );
+      setGenerateError(err instanceof ApiError ? err.message : t("generateError"));
     } finally {
       setGenerating(false);
     }
@@ -90,7 +91,7 @@ export default function BriefPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -98,53 +99,55 @@ export default function BriefPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">EMBR BRIEF</h1>
+        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
         <Link
           href="/dashboard"
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          ← Dashboard
+          {t("backToDashboard")}
         </Link>
       </header>
 
-      <p className="mt-3 text-sm text-navy/60">
-        A summary of your tracked symptoms and cycle data, with questions you can bring to your GP.
-        This is a data summary to help your conversation — not a diagnosis, and not medical advice.
-      </p>
+      <p className="mt-3 text-sm text-navy/60">{t("description")}</p>
 
       <form onSubmit={handleGenerate} className="mt-8 flex flex-wrap items-end gap-4">
         <Field
-          label="From"
+          label={t("fromLabel")}
           type="date"
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
         />
-        <Field label="To" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+        <Field
+          label={t("toLabel")}
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
         <Button type="submit" disabled={generating}>
-          {generating ? "Generating…" : "Generate brief"}
+          {generating ? t("generating") : t("generate")}
         </Button>
       </form>
       {generateError && <p className="mt-2 text-sm text-red-600">{generateError}</p>}
 
       {justGenerated && (
         <section className="mt-8 rounded border border-brass/40 bg-brass/5 p-5">
-          <h2 className="font-display text-lg text-navy">Your brief is ready</h2>
+          <h2 className="font-display text-lg text-navy">{t("briefReady")}</h2>
           <BriefContent brief={justGenerated} />
           <a
             href={api.briefs.pdfUrl(justGenerated.id)}
             className="mt-4 inline-block text-sm font-medium text-teal underline underline-offset-2"
           >
-            Download PDF
+            {t("downloadPdf")}
           </a>
         </section>
       )}
 
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">Past briefs</h2>
+        <h2 className="font-display text-lg text-navy">{t("pastBriefs")}</h2>
         {history === null ? (
-          <p className="mt-3 text-sm text-navy/50">Loading…</p>
+          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
         ) : history.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">No briefs generated yet.</p>
+          <p className="mt-3 text-sm text-navy/50">{t("noBriefsYet")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {history.map((item) => (
@@ -156,7 +159,7 @@ export default function BriefPage() {
                   >
                     {item.fromDate} to {item.toDate}
                     <span className="ml-2 text-xs font-normal text-navy/50">
-                      generated {new Date(item.createdAt).toLocaleDateString()}
+                      {t("generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                     </span>
                   </button>
                   <div className="flex items-center gap-3">
@@ -164,14 +167,14 @@ export default function BriefPage() {
                       href={api.briefs.pdfUrl(item.id)}
                       className="text-xs font-medium text-teal underline underline-offset-2"
                     >
-                      PDF
+                      {t("pdf")}
                     </a>
                     <button
                       onClick={() => void handleDelete(item.id)}
                       disabled={deletingId === item.id}
                       className="text-xs font-medium text-red-600"
                     >
-                      {deletingId === item.id ? "…" : "Delete"}
+                      {deletingId === item.id ? "…" : t("delete")}
                     </button>
                   </div>
                 </div>
@@ -179,7 +182,7 @@ export default function BriefPage() {
                   (openBrief ? (
                     <BriefContent brief={openBrief} />
                   ) : (
-                    <p className="mt-3 text-sm text-navy/50">Loading…</p>
+                    <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
                   ))}
               </li>
             ))}
@@ -191,12 +194,15 @@ export default function BriefPage() {
 }
 
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
+  const t = useTranslations("Brief");
+  const tEnum = useTranslations("Enums");
+
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
       <p className="text-navy/80">{brief.aiNarrative}</p>
 
       <div>
-        <h3 className="font-medium text-navy">Questions to bring to your GP</h3>
+        <h3 className="font-medium text-navy">{t("questionsForGp")}</h3>
         <ul className="mt-1 list-disc pl-5 text-navy/80">
           {brief.aiDiscussionTopics.map((topic, i) => (
             <li key={i}>{topic}</li>
@@ -205,23 +211,25 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       </div>
 
       <div>
-        <h3 className="font-medium text-navy">Symptom frequency</h3>
+        <h3 className="font-medium text-navy">{t("symptomFrequency")}</h3>
         <ul className="mt-1 text-navy/70">
           {brief.symptomSummary.map((entry) => (
             <li key={entry.category}>
-              {entry.category.replace(/_/g, " ").toLowerCase()} — {entry.count} occurrence
-              {entry.count === 1 ? "" : "s"}
+              {tEnum(`category.${entry.category}`)} — {t("occurrenceCount", { count: entry.count })}
             </li>
           ))}
         </ul>
       </div>
 
       <div>
-        <h3 className="font-medium text-navy">Cycle summary</h3>
+        <h3 className="font-medium text-navy">{t("cycleSummary")}</h3>
         <p className="mt-1 text-navy/70">
           {brief.cycleSummary.averageCycleLengthDays === null
-            ? "Not enough period-start entries in this range to compute cycle length."
-            : `Average cycle length: ${brief.cycleSummary.averageCycleLengthDays} days (${brief.cycleSummary.cycleCount} cycles recorded)`}
+            ? t("notEnoughCycleData")
+            : t("averageCycleLength", {
+                days: brief.cycleSummary.averageCycleLengthDays,
+                count: brief.cycleSummary.cycleCount,
+              })}
         </p>
       </div>
     </div>
