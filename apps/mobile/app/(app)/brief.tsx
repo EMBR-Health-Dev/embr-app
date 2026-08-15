@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
@@ -7,15 +7,13 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
 import { theme } from "../../lib/theme";
-
-function isValidDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
-}
+import { DatePickerField } from "../../components/date-picker-field";
+import { toIsoDate } from "../../lib/date-format";
 
 export default function BriefScreen() {
   const { t } = useTranslation();
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
@@ -43,14 +41,17 @@ export default function BriefScreen() {
   async function handleGenerate() {
     setGenerateError(null);
 
-    if (!isValidDate(fromDate) || !isValidDate(toDate)) {
+    if (!fromDate || !toDate || fromDate > toDate) {
       setGenerateError(t("brief.invalidDates"));
       return;
     }
 
     setGenerating(true);
     try {
-      const brief = await api.briefs.generate({ fromDate, toDate });
+      const brief = await api.briefs.generate({
+        fromDate: toIsoDate(fromDate),
+        toDate: toIsoDate(toDate),
+      });
       setJustGenerated(brief);
       await loadHistory();
     } catch (err) {
@@ -111,21 +112,18 @@ export default function BriefScreen() {
             <Text style={styles.hint}>{t("brief.hint")}</Text>
 
             <View style={styles.dateRow}>
-              <TextInput
-                style={[styles.input, styles.dateInput]}
-                placeholder={t("brief.fromPlaceholder")}
-                placeholderTextColor={theme.colors.textMuted}
-                autoCapitalize="none"
+              <DatePickerField
+                label={t("brief.fromPlaceholder")}
                 value={fromDate}
-                onChangeText={setFromDate}
+                onChange={setFromDate}
+                maximumDate={toDate ?? new Date()}
               />
-              <TextInput
-                style={[styles.input, styles.dateInput]}
-                placeholder={t("brief.toPlaceholder")}
-                placeholderTextColor={theme.colors.textMuted}
-                autoCapitalize="none"
+              <DatePickerField
+                label={t("brief.toPlaceholder")}
                 value={toDate}
-                onChangeText={setToDate}
+                onChange={setToDate}
+                minimumDate={fromDate ?? undefined}
+                maximumDate={new Date()}
               />
             </View>
             {generateError && <Text style={styles.error}>{generateError}</Text>}
@@ -245,17 +243,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
   hint: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4, marginBottom: 16 },
   dateRow: { flexDirection: "row", gap: 8 },
-  dateInput: { flex: 1 },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.colors.borderStrong,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    backgroundColor: theme.colors.surface,
-  },
   error: { color: theme.colors.error, fontSize: 13, marginTop: 8 },
   button: {
     backgroundColor: theme.colors.textPrimary,

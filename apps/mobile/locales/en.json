@@ -1,6 +1,7 @@
 {
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "done": "Done"
   },
   "login": {
     "title": "Welcome back",
@@ -164,9 +165,9 @@
   "brief": {
     "title": "EMBR BRIEF",
     "hint": "A summary of your tracked data, with questions to bring to your GP — not a diagnosis, and not medical advice.",
-    "fromPlaceholder": "From (YYYY-MM-DD)",
-    "toPlaceholder": "To (YYYY-MM-DD)",
-    "invalidDates": "Enter both dates as YYYY-MM-DD.",
+    "fromPlaceholder": "From",
+    "toPlaceholder": "To",
+    "invalidDates": "Pick a start and end date, with the start before the end.",
     "generate": "Generate brief",
     "generating": "Generating…",
     "generateError": "Couldn't generate a brief.",

@@ -1,6 +1,7 @@
 {
   "common": {
-    "loading": "読み込み中…"
+    "loading": "読み込み中…",
+    "done": "完了"
   },
   "login": {
     "title": "おかえりなさい",
@@ -164,9 +165,9 @@
   "brief": {
     "title": "EMBR BRIEF",
     "hint": "記録した症状と周期データの要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、診断や医学的アドバイスではありません。",
-    "fromPlaceholder": "開始日 (YYYY-MM-DD)",
-    "toPlaceholder": "終了日 (YYYY-MM-DD)",
-    "invalidDates": "両方の日付をYYYY-MM-DD形式で入力してください。",
+    "fromPlaceholder": "開始日",
+    "toPlaceholder": "終了日",
+    "invalidDates": "開始日が終了日より前になるように、両方の日付を選択してください。",
     "generate": "BRIEFを作成",
     "generating": "作成中…",
     "generateError": "BRIEFを作成できませんでした。",
