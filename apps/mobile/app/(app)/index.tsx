@@ -2,12 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { severityLevelSchema, symptomCategorySchema } from "@embr/validation";
 import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
-import { categoryLabel, severityLabel } from "../../lib/format";
 import { Chip } from "../../components/chip";
 import { theme } from "../../lib/theme";
 import { startingPointMessage } from "../../lib/onboarding-starting-point";
@@ -20,6 +20,7 @@ function isCategory(value: unknown): value is (typeof CATEGORIES)[number] {
 }
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const params = useLocalSearchParams<{ logCategory?: string; firstLog?: string }>();
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
@@ -72,7 +73,7 @@ export default function HomeScreen() {
   async function handleLogSymptom() {
     setFormError(null);
     if (!category || !severity) {
-      setFormError("Pick a category and severity first.");
+      setFormError(t("home.pickCategoryAndSeverity"));
       return;
     }
 
@@ -89,9 +90,7 @@ export default function HomeScreen() {
       setNotes("");
       await loadLogs();
     } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : "Something went wrong. Try again in a moment.",
-      );
+      setFormError(err instanceof ApiError ? err.message : t("home.genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -122,9 +121,13 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <Text style={styles.title}>Hi{user ? `, ${user.email.split("@")[0]}` : ""}</Text>
+              <Text style={styles.title}>
+                {user
+                  ? t("home.greetingWithName", { name: user.email.split("@")[0] })
+                  : t("home.greeting")}
+              </Text>
               <Pressable onPress={handleLogout}>
-                <Text style={styles.logoutText}>Log out</Text>
+                <Text style={styles.logoutText}>{t("home.logout")}</Text>
               </Pressable>
             </View>
 
@@ -134,24 +137,24 @@ export default function HomeScreen() {
               </Text>
             )}
 
-            <Text style={styles.sectionLabel}>How are you feeling right now?</Text>
+            <Text style={styles.sectionLabel}>{t("home.howAreYouFeeling")}</Text>
             <View style={styles.chipRow}>
               {CATEGORIES.map((c) => (
                 <Chip
                   key={c}
-                  label={categoryLabel(c)}
+                  label={t(`enums.category.${c}`)}
                   selected={category === c}
                   onPress={() => setCategory(c)}
                 />
               ))}
             </View>
 
-            <Text style={styles.sectionLabel}>Severity</Text>
+            <Text style={styles.sectionLabel}>{t("home.severity")}</Text>
             <View style={styles.chipRow}>
               {SEVERITIES.map((s) => (
                 <Chip
                   key={s}
-                  label={severityLabel(s)}
+                  label={t(`enums.severity.${s}`)}
                   selected={severity === s}
                   onPress={() => setSeverity(s)}
                 />
@@ -160,7 +163,7 @@ export default function HomeScreen() {
 
             <TextInput
               style={styles.notesInput}
-              placeholder="Notes (optional)"
+              placeholder={t("home.notesPlaceholder")}
               value={notes}
               onChangeText={setNotes}
               multiline
@@ -173,28 +176,31 @@ export default function HomeScreen() {
               onPress={handleLogSymptom}
               disabled={submitting}
             >
-              <Text style={styles.buttonText}>{submitting ? "Logging…" : "Log symptom"}</Text>
+              <Text style={styles.buttonText}>
+                {submitting ? t("home.logging") : t("home.logSymptom")}
+              </Text>
             </Pressable>
 
-            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>Recent logs</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>{t("home.recentLogs")}</Text>
           </View>
         }
         renderItem={({ item }) => (
           <View style={styles.logRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.logCategory}>{categoryLabel(item.category)}</Text>
+              <Text style={styles.logCategory}>{t(`enums.category.${item.category}`)}</Text>
               <Text style={styles.logMeta}>
-                {severityLabel(item.severity)} · {new Date(item.occurredAt).toLocaleString()}
+                {t(`enums.severity.${item.severity}`)} ·{" "}
+                {new Date(item.occurredAt).toLocaleString()}
               </Text>
               {item.notes && <Text style={styles.logNotes}>{item.notes}</Text>}
             </View>
             <Pressable onPress={() => void handleDelete(item.id)}>
-              <Text style={styles.deleteText}>Delete</Text>
+              <Text style={styles.deleteText}>{t("home.delete")}</Text>
             </Pressable>
           </View>
         )}
         ListEmptyComponent={
-          !loadingLogs ? <Text style={styles.emptyText}>No symptoms logged yet.</Text> : null
+          !loadingLogs ? <Text style={styles.emptyText}>{t("home.noSymptomsYet")}</Text> : null
         }
         contentContainerStyle={styles.listContent}
       />

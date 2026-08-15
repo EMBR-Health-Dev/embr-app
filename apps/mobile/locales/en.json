@@ -81,5 +81,56 @@
       "logFirstEntry": "Log your first entry",
       "goToDashboard": "Go to dashboard instead"
     }
+  },
+  "enums": {
+    "category": {
+      "HOT_FLASH": "Hot Flash",
+      "NIGHT_SWEATS": "Night Sweats",
+      "MOOD_CHANGE": "Mood Change",
+      "SLEEP_DISTURBANCE": "Sleep Disturbance",
+      "BRAIN_FOG": "Brain Fog",
+      "JOINT_PAIN": "Joint Pain",
+      "FATIGUE": "Fatigue",
+      "ANXIETY": "Anxiety",
+      "IRREGULAR_HEARTBEAT": "Irregular Heartbeat",
+      "VAGINAL_DRYNESS": "Vaginal Dryness",
+      "LIBIDO_CHANGE": "Libido Change",
+      "WEIGHT_CHANGE": "Weight Change",
+      "HEADACHE": "Headache",
+      "OTHER": "Other"
+    },
+    "severity": {
+      "MILD": "Mild",
+      "MODERATE": "Moderate",
+      "SEVERE": "Severe"
+    },
+    "flow": {
+      "SPOTTING": "Spotting",
+      "LIGHT": "Light",
+      "MEDIUM": "Medium",
+      "HEAVY": "Heavy"
+    }
+  },
+  "tabs": {
+    "symptoms": "Symptoms",
+    "cycle": "Cycle",
+    "trends": "Trends",
+    "brief": "BRIEF",
+    "settings": "Settings"
+  },
+  "home": {
+    "greeting": "Hi",
+    "greetingWithName": "Hi, {{name}}",
+    "logout": "Log out",
+    "howAreYouFeeling": "How are you feeling right now?",
+    "severity": "Severity",
+    "notesPlaceholder": "Notes (optional)",
+    "pickCategoryAndSeverity": "Pick a category and severity first.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "logSymptom": "Log symptom",
+    "logging": "Logging…",
+    "recentLogs": "Recent logs",
+    "delete": "Delete",
+    "noSymptomsYet": "No symptoms logged yet."
   }
 }

@@ -81,5 +81,56 @@
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
     }
+  },
+  "enums": {
+    "category": {
+      "HOT_FLASH": "ホットフラッシュ",
+      "NIGHT_SWEATS": "寝汗",
+      "MOOD_CHANGE": "気分の変化",
+      "SLEEP_DISTURBANCE": "睡眠障害",
+      "BRAIN_FOG": "ブレインフォグ",
+      "JOINT_PAIN": "関節痛",
+      "FATIGUE": "倦怠感",
+      "ANXIETY": "不安",
+      "IRREGULAR_HEARTBEAT": "不整脈",
+      "VAGINAL_DRYNESS": "膣の乾燥",
+      "LIBIDO_CHANGE": "性欲の変化",
+      "WEIGHT_CHANGE": "体重の変化",
+      "HEADACHE": "頭痛",
+      "OTHER": "その他"
+    },
+    "severity": {
+      "MILD": "軽度",
+      "MODERATE": "中等度",
+      "SEVERE": "重度"
+    },
+    "flow": {
+      "SPOTTING": "少量",
+      "LIGHT": "軽い",
+      "MEDIUM": "普通",
+      "HEAVY": "多い"
+    }
+  },
+  "tabs": {
+    "symptoms": "症状",
+    "cycle": "周期",
+    "trends": "Trends",
+    "brief": "BRIEF",
+    "settings": "設定"
+  },
+  "home": {
+    "greeting": "こんにちは",
+    "greetingWithName": "こんにちは、{{name}}さん",
+    "logout": "ログアウト",
+    "howAreYouFeeling": "今、どのように感じていますか?",
+    "severity": "重症度",
+    "notesPlaceholder": "メモ(任意)",
+    "pickCategoryAndSeverity": "症状と重症度を選択してください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "logSymptom": "症状を記録",
+    "logging": "記録中…",
+    "recentLogs": "最近の記録",
+    "delete": "削除",
+    "noSymptomsYet": "まだ症状が記録されていません。"
   }
 }

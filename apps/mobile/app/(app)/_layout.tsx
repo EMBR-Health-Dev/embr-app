@@ -1,8 +1,10 @@
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../lib/auth-context";
 
 export default function AppLayout() {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -19,11 +21,11 @@ export default function AppLayout() {
 
   return (
     <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index" options={{ title: "Symptoms" }} />
-      <Tabs.Screen name="cycle" options={{ title: "Cycle" }} />
-      <Tabs.Screen name="trends" options={{ title: "Trends" }} />
-      <Tabs.Screen name="brief" options={{ title: "BRIEF" }} />
-      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+      <Tabs.Screen name="index" options={{ title: t("tabs.symptoms") }} />
+      <Tabs.Screen name="cycle" options={{ title: t("tabs.cycle") }} />
+      <Tabs.Screen name="trends" options={{ title: t("tabs.trends") }} />
+      <Tabs.Screen name="brief" options={{ title: t("tabs.brief") }} />
+      <Tabs.Screen name="settings" options={{ title: t("tabs.settings") }} />
     </Tabs>
   );
 }
