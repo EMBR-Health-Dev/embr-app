@@ -6,6 +6,7 @@ import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
+import { theme } from "../../lib/theme";
 
 function isValidDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
@@ -113,7 +114,7 @@ export default function BriefScreen() {
               <TextInput
                 style={[styles.input, styles.dateInput]}
                 placeholder={t("brief.fromPlaceholder")}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.colors.textMuted}
                 autoCapitalize="none"
                 value={fromDate}
                 onChangeText={setFromDate}
@@ -121,7 +122,7 @@ export default function BriefScreen() {
               <TextInput
                 style={[styles.input, styles.dateInput]}
                 placeholder={t("brief.toPlaceholder")}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.colors.textMuted}
                 autoCapitalize="none"
                 value={toDate}
                 onChangeText={setToDate}
@@ -238,55 +239,73 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 4, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: "600" },
-  hint: { fontSize: 13, color: "#6B7280", marginTop: 4, marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
+  hint: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4, marginBottom: 16 },
   dateRow: { flexDirection: "row", gap: 8 },
   dateInput: { flex: 1 },
   input: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
+    color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
   },
-  error: { color: "#DC2626", fontSize: 13, marginTop: 8 },
+  error: { color: theme.colors.error, fontSize: 13, marginTop: 8 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 12,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 15, fontWeight: "600" },
   freshBrief: {
     marginTop: 20,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: "#FFFBEB",
+    backgroundColor: theme.colors.accentSoft,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: theme.colors.accent,
   },
-  freshBriefTitle: { fontSize: 16, fontWeight: "600", marginBottom: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginTop: 28, marginBottom: 4 },
+  freshBriefTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+    color: theme.colors.textPrimary,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 28,
+    marginBottom: 4,
+    color: theme.colors.textPrimary,
+  },
   briefContent: { marginTop: 10, gap: 4 },
-  narrative: { fontSize: 14, color: "#374151", lineHeight: 20 },
-  contentSectionTitle: { fontSize: 13, fontWeight: "600", marginTop: 12, color: "#111827" },
-  topic: { fontSize: 13, color: "#374151", marginTop: 2 },
-  summaryLine: { fontSize: 13, color: "#6B7280", marginTop: 2 },
-  link: { fontSize: 13, color: "#2563EB", fontWeight: "500" },
-  dangerText: { fontSize: 13, color: "#DC2626" },
+  narrative: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
+  contentSectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 12,
+    color: theme.colors.textPrimary,
+  },
+  topic: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
+  summaryLine: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  link: { fontSize: 13, color: theme.colors.success, fontWeight: "500" },
+  dangerText: { fontSize: 13, color: theme.colors.error },
   briefRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
   briefRowHeader: { flexDirection: "row", alignItems: "center" },
-  briefRowTitle: { fontSize: 14, fontWeight: "500" },
-  briefRowMeta: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
+  briefRowTitle: { fontSize: 14, fontWeight: "500", color: theme.colors.textPrimary },
+  briefRowMeta: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
 });

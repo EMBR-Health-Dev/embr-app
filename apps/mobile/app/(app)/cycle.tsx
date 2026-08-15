@@ -7,6 +7,7 @@ import type { CycleEntryDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Chip } from "../../components/chip";
+import { theme } from "../../lib/theme";
 
 const FLOWS = flowIntensitySchema.options;
 
@@ -168,11 +169,16 @@ export default function CycleScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 10, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: "600", marginBottom: 8 },
-  sectionLabel: { fontSize: 14, fontWeight: "500", color: "#374151", marginTop: 8 },
+  title: { fontSize: 22, fontWeight: "600", marginBottom: 8, color: theme.colors.textPrimary },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+  },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   switchRow: {
     flexDirection: "row",
@@ -180,10 +186,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
-  switchLabel: { fontSize: 15, color: "#111827" },
+  switchLabel: { fontSize: 15, color: theme.colors.textPrimary },
   notesInput: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -191,24 +197,25 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: "top",
     marginTop: 8,
+    color: theme.colors.textPrimary,
   },
-  error: { color: "#DC2626", fontSize: 14 },
+  error: { color: theme.colors.error, fontSize: 14 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
   entryRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
-  entryDate: { fontSize: 15, fontWeight: "500" },
-  entryMeta: { fontSize: 13, color: "#6B7280", marginTop: 2 },
-  entryNotes: { fontSize: 13, color: "#4B5563", marginTop: 4 },
-  emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
+  entryDate: { fontSize: 15, fontWeight: "500", color: theme.colors.textPrimary },
+  entryMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  entryNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
 });

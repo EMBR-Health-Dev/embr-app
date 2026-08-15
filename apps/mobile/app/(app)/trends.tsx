@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../../lib/api";
+import { theme } from "../../lib/theme";
 
 const WINDOW_DAYS = 90;
 const CYCLE_WINDOW_DAYS = 180;
@@ -117,27 +118,27 @@ export default function TrendsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 22, fontWeight: "600" },
-  loadingText: { fontSize: 14, color: "#9CA3AF", marginTop: 16 },
+  title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
+  loadingText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 16 },
   section: { marginTop: 28 },
-  sectionTitle: { fontSize: 16, fontWeight: "600" },
-  emptyText: { fontSize: 13, color: "#6B7280", marginTop: 8, lineHeight: 19 },
+  sectionTitle: { fontSize: 16, fontWeight: "600", color: theme.colors.textPrimary },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8, lineHeight: 19 },
   barRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  barLabel: { width: 110, fontSize: 13, color: "#111827" },
-  barTrack: { flex: 1, height: 10, borderRadius: 5, backgroundColor: "#F3F4F6" },
-  barFill: { height: 10, borderRadius: 5, backgroundColor: "#B08D57" },
-  barCount: { width: 24, textAlign: "right", fontSize: 13, color: "#6B7280" },
-  averageText: { fontSize: 13, color: "#374151", marginTop: 8 },
+  barLabel: { width: 110, fontSize: 13, color: theme.colors.textPrimary },
+  barTrack: { flex: 1, height: 10, borderRadius: 5, backgroundColor: theme.colors.border },
+  barFill: { height: 10, borderRadius: 5, backgroundColor: theme.colors.accent },
+  barCount: { width: 24, textAlign: "right", fontSize: 13, color: theme.colors.textMuted },
+  averageText: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 8 },
   lengthRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
-  lengthRange: { fontSize: 13, color: "#6B7280" },
-  lengthDays: { fontSize: 13, fontWeight: "500", color: "#111827" },
-  footnote: { fontSize: 11, color: "#9CA3AF", marginTop: 12, lineHeight: 16 },
+  lengthRange: { fontSize: 13, color: theme.colors.textMuted },
+  lengthDays: { fontSize: 13, fontWeight: "500", color: theme.colors.textPrimary },
+  footnote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 12, lineHeight: 16 },
 });

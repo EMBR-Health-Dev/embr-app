@@ -5,11 +5,15 @@
  *
  * Deliberately semantic, not literal color names — "accent" not
  * "brass," "textPrimary" not "navy" — so a future palette change is
- * one edit here, not a find-and-replace across every screen. This
- * milestone applies these to onboarding's new screens and to
- * chip.tsx (reused by onboarding); the other ~78 existing hardcoded
- * color literals across the rest of the app are a deliberately
- * separate cleanup, not retrofitted here.
+ * one edit here, not a find-and-replace across every screen. Applied
+ * across the entire app as of the design-system retrofit milestone —
+ * confirmed via a full grep sweep that no hardcoded hex literal
+ * remains anywhere outside this file (a handful of generic Tailwind-
+ * gray/blue/red defaults — #6B7280, #9CA3AF, #2563EB, #DC2626, and
+ * so on — were mapped onto the closest existing semantic token rather
+ * than left as-is or given new one-off tokens; #B08D57 in trends.tsx
+ * was a manual drift from the real brass #b8974f, corrected to the
+ * real value in the process, not just tokenized as-is).
  */
 export const theme = {
   colors: {
@@ -23,7 +27,8 @@ export const theme = {
     accentSoft: "#b8974f26", // brass at ~15%, for selected-state fills/backgrounds
     border: "#0f1b2d1a", // navy at ~10%
     borderStrong: "#0f1b2d33", // navy at ~20%
-    success: "#3a6b6a", // teal — EMBR has no separate "green," teal fills this role
+    success: "#3a6b6a", // teal — EMBR has no separate "green," teal fills this role. Also EMBR's link/interactive-text color, matching web's consistent text-teal underline convention.
+    successSoft: "#3a6b6a1a", // teal at ~10%, for soft badge backgrounds (e.g. a "this device" indicator) — same pattern as accentSoft below, just the other brand color
     error: "#b3261e",
     selected: "#0f1b2d", // navy — a fully-selected/filled state, e.g. chip.tsx's active fill
   },

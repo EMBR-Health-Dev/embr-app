@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { registerSchema } from "@embr/validation";
 import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
+import { theme } from "../lib/theme";
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -107,30 +108,32 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.background },
   content: { flex: 1, justifyContent: "center", padding: 24, gap: 16 },
-  title: { fontSize: 28, fontWeight: "600", marginBottom: 8 },
-  body: { fontSize: 16, color: "#374151", lineHeight: 22 },
+  title: { fontSize: 28, fontWeight: "600", marginBottom: 8, color: theme.colors.textPrimary },
+  body: { fontSize: 16, color: theme.colors.textSecondary, lineHeight: 22 },
   field: { gap: 6 },
-  label: { fontSize: 14, fontWeight: "500", color: "#374151" },
+  label: { fontSize: 14, fontWeight: "500", color: theme.colors.textSecondary },
   input: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+    color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
   },
-  error: { color: "#DC2626", fontSize: 14 },
+  error: { color: theme.colors.error, fontSize: 14 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
   link: { marginTop: 8, alignSelf: "center" },
-  linkText: { color: "#2563EB", fontWeight: "500" },
+  linkText: { color: theme.colors.success, fontWeight: "500" },
 });

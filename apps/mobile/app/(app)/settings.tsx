@@ -8,6 +8,7 @@ import type { DeviceSessionDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
+import { theme } from "../../lib/theme";
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -131,7 +132,7 @@ export default function SettingsScreen() {
             <TextInput
               style={styles.input}
               placeholder={t("settings.currentPasswordPlaceholder")}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.colors.textMuted}
               secureTextEntry
               autoComplete="current-password"
               value={currentPassword}
@@ -143,7 +144,7 @@ export default function SettingsScreen() {
             <TextInput
               style={styles.input}
               placeholder={t("settings.newPasswordPlaceholder")}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.colors.textMuted}
               secureTextEntry
               autoComplete="new-password"
               value={newPassword}
@@ -229,7 +230,7 @@ export default function SettingsScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder={t("settings.confirmPasswordPlaceholder")}
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={theme.colors.textMuted}
                     secureTextEntry
                     autoComplete="current-password"
                     value={deletePassword}
@@ -269,26 +270,34 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 4, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: "600" },
-  email: { fontSize: 14, color: "#6B7280", marginBottom: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginTop: 24, marginBottom: 4 },
-  sectionHint: { fontSize: 13, color: "#6B7280", marginBottom: 8 },
+  title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
+  email: { fontSize: 14, color: theme.colors.textMuted, marginBottom: 8 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 24,
+    marginBottom: 4,
+    color: theme.colors.textPrimary,
+  },
+  sectionHint: { fontSize: 13, color: theme.colors.textMuted, marginBottom: 8 },
   input: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
     marginTop: 8,
+    color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
   },
-  fieldError: { color: "#DC2626", fontSize: 12, marginTop: 4 },
-  error: { color: "#DC2626", fontSize: 14, marginTop: 8 },
+  fieldError: { color: theme.colors.error, fontSize: 12, marginTop: 4 },
+  error: { color: theme.colors.error, fontSize: 14, marginTop: 8 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
@@ -297,40 +306,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 15, fontWeight: "600" },
   devicesHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 24,
   },
-  dangerText: { fontSize: 14, color: "#DC2626", fontWeight: "500" },
-  dangerTextSmall: { fontSize: 13, color: "#DC2626" },
+  dangerText: { fontSize: 14, color: theme.colors.error, fontWeight: "500" },
+  dangerTextSmall: { fontSize: 13, color: theme.colors.error },
   sessionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
   sessionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  sessionDevice: { fontSize: 14, fontWeight: "500" },
-  sessionMeta: { fontSize: 12, color: "#6B7280", marginTop: 2 },
+  sessionDevice: { fontSize: 14, fontWeight: "500", color: theme.colors.textPrimary },
+  sessionMeta: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   badge: {
-    backgroundColor: "#ECFDF5",
+    backgroundColor: theme.colors.successSoft,
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  badgeText: { fontSize: 11, fontWeight: "600", color: "#059669" },
-  emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
+  badgeText: { fontSize: 11, fontWeight: "600", color: theme.colors.success },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
   logoutRow: { marginTop: 20, paddingVertical: 12 },
   deleteSection: {
     marginTop: 12,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
+    borderTopColor: theme.colors.border,
   },
   deleteActionsRow: {
     flexDirection: "row",
@@ -339,7 +348,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   deleteButton: {
-    backgroundColor: "#DC2626",
+    backgroundColor: theme.colors.error,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
