@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../../lib/api";
-import { categoryLabel } from "../../lib/format";
 
 const WINDOW_DAYS = 90;
 const CYCLE_WINDOW_DAYS = 180;
@@ -15,6 +15,7 @@ function daysAgoIso(days: number): string {
 }
 
 export default function TrendsScreen() {
+  const { t } = useTranslation();
   const [frequency, setFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [lengths, setLengths] = useState<CycleLengthEntryDto[]>([]);
   const [averageCycleLength, setAverageCycleLength] = useState<number | null>(null);
@@ -41,24 +42,24 @@ export default function TrendsScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Trends</Text>
+        <Text style={styles.title}>{t("trends.title")}</Text>
 
         {loading ? (
-          <Text style={styles.loadingText}>Loading…</Text>
+          <Text style={styles.loadingText}>{t("common.loading")}</Text>
         ) : (
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Symptoms, last {WINDOW_DAYS} days</Text>
+              <Text style={styles.sectionTitle}>
+                {t("trends.symptomsHeader", { days: WINDOW_DAYS })}
+              </Text>
               {frequency.length === 0 ? (
-                <Text style={styles.emptyText}>
-                  Nothing logged in this window yet — patterns will show up here as you go.
-                </Text>
+                <Text style={styles.emptyText}>{t("trends.noSymptomsYet")}</Text>
               ) : (
                 <View style={{ gap: 10, marginTop: 12 }}>
                   {frequency.map(({ category, count }) => (
                     <View key={category} style={styles.barRow}>
                       <Text style={styles.barLabel} numberOfLines={1}>
-                        {categoryLabel(category)}
+                        {t(`enums.category.${category}`)}
                       </Text>
                       <View style={styles.barTrack}>
                         <View
@@ -76,19 +77,20 @@ export default function TrendsScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Cycle length, last {CYCLE_WINDOW_DAYS} days</Text>
+              <Text style={styles.sectionTitle}>
+                {t("trends.cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
+              </Text>
               {lengths.length === 0 ? (
-                <Text style={styles.emptyText}>
-                  Log at least two period-start days to see cycle lengths here. Irregular or absent
-                  cycles are common in perimenopause — this is a record for you and your provider,
-                  not a diagnosis.
-                </Text>
+                <Text style={styles.emptyText}>{t("trends.noCycleDataYet")}</Text>
               ) : (
                 <>
                   {averageCycleLength !== null && (
                     <Text style={styles.averageText}>
-                      Averaging <Text style={{ fontWeight: "600" }}>{averageCycleLength} days</Text>{" "}
-                      between period starts over this window.
+                      {t("trends.averagingPrefix")}
+                      <Text style={{ fontWeight: "600" }}>
+                        {averageCycleLength} {t("trends.daysUnit")}
+                      </Text>
+                      {t("trends.averagingSuffix")}
                     </Text>
                   )}
                   <View style={{ marginTop: 12 }}>
@@ -97,14 +99,13 @@ export default function TrendsScreen() {
                         <Text style={styles.lengthRange}>
                           {l.from} → {l.to}
                         </Text>
-                        <Text style={styles.lengthDays}>{l.days} days</Text>
+                        <Text style={styles.lengthDays}>
+                          {l.days} {t("trends.daysUnit")}
+                        </Text>
                       </View>
                     ))}
                   </View>
-                  <Text style={styles.footnote}>
-                    Cycle irregularity is expected during perimenopause — this view is here to help
-                    you notice your own pattern, not to flag it as a problem.
-                  </Text>
+                  <Text style={styles.footnote}>{t("trends.irregularityNote")}</Text>
                 </>
               )}
             </View>

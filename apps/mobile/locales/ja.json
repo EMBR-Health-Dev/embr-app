@@ -132,5 +132,33 @@
     "recentLogs": "最近の記録",
     "delete": "削除",
     "noSymptomsYet": "まだ症状が記録されていません。"
+  },
+  "cycle": {
+    "title": "今日の周期記録",
+    "flow": "経血量",
+    "none": "なし",
+    "periodStartedToday": "今日、生理が始まった",
+    "periodEndedToday": "今日、生理が終わった",
+    "notesPlaceholder": "メモ(任意)",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "saving": "保存中…",
+    "saved": "保存しました ✓",
+    "saveTodaysEntry": "今日の記録を保存",
+    "recentEntries": "最近の記録",
+    "noFlowLogged": "経血量の記録なし",
+    "periodStart": " · 生理開始",
+    "periodEnd": " · 生理終了",
+    "noEntriesYet": "まだ記録がありません。"
+  },
+  "trends": {
+    "title": "Trends",
+    "symptomsHeader": "過去{{days}}日間の症状",
+    "noSymptomsYet": "まだこの期間の記録がありません。記録が増えると、ここにパターンが表示されます。",
+    "cycleLengthHeader": "過去{{days}}日間の周期の長さ",
+    "noCycleDataYet": "周期の長さを表示するには、生理開始日を2回以上記録してください。周閉経期には周期が不規則になったり、なくなったりすることはよくあります。これはあなたと担当医のための記録であり、診断ではありません。",
+    "averagingPrefix": "この期間、生理開始日の間隔は平均",
+    "averagingSuffix": "です。",
+    "daysUnit": "日",
+    "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
   }
 }
