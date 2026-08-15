@@ -1,0 +1,20 @@
+{
+  "common": {
+    "loading": "Loading…"
+  },
+  "login": {
+    "title": "Welcome back",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Log in",
+    "submitting": "Logging in…",
+    "newToEmbr": "New to EMBR?",
+    "createAccount": "Create an account"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

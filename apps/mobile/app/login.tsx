@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Link, router } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { loginSchema } from "@embr/validation";
 import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
+import { LanguageSwitcher } from "../components/language-switcher";
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,9 +32,7 @@ export default function LoginScreen() {
       const user = await login(parsed.data.email, parsed.data.password);
       router.replace(user.onboardingCompletedAt ? "/(app)" : "/onboarding");
     } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : "Something went wrong. Try again in a moment.",
-      );
+      setFormError(err instanceof ApiError ? err.message : t("login.genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -40,10 +41,12 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome back</Text>
+        <LanguageSwitcher />
+
+        <Text style={styles.title}>{t("login.title")}</Text>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t("login.emailLabel")}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -56,7 +59,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>{t("login.passwordLabel")}</Text>
           <TextInput
             style={styles.input}
             value={password}
@@ -75,12 +78,14 @@ export default function LoginScreen() {
           onPress={handleSubmit}
           disabled={submitting}
         >
-          <Text style={styles.buttonText}>{submitting ? "Logging in…" : "Log in"}</Text>
+          <Text style={styles.buttonText}>
+            {submitting ? t("login.submitting") : t("login.submit")}
+          </Text>
         </Pressable>
 
         <Link href="/register" style={styles.link}>
           <Text>
-            New to EMBR? <Text style={styles.linkText}>Create an account</Text>
+            {t("login.newToEmbr")} <Text style={styles.linkText}>{t("login.createAccount")}</Text>
           </Text>
         </Link>
       </View>
