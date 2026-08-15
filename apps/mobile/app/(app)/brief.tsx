@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
-import { categoryLabel } from "../../lib/format";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
 
 function isValidDate(value: string): boolean {
@@ -12,6 +12,7 @@ function isValidDate(value: string): boolean {
 }
 
 export default function BriefScreen() {
+  const { t } = useTranslation();
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -42,7 +43,7 @@ export default function BriefScreen() {
     setGenerateError(null);
 
     if (!isValidDate(fromDate) || !isValidDate(toDate)) {
-      setGenerateError("Enter both dates as YYYY-MM-DD.");
+      setGenerateError(t("brief.invalidDates"));
       return;
     }
 
@@ -52,7 +53,7 @@ export default function BriefScreen() {
       setJustGenerated(brief);
       await loadHistory();
     } catch (err) {
-      setGenerateError(err instanceof ApiError ? err.message : "Couldn't generate a brief.");
+      setGenerateError(err instanceof ApiError ? err.message : t("brief.generateError"));
     } finally {
       setGenerating(false);
     }
@@ -105,16 +106,13 @@ export default function BriefScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>EMBR BRIEF</Text>
-            <Text style={styles.hint}>
-              A summary of your tracked data, with questions to bring to your GP — not a diagnosis,
-              and not medical advice.
-            </Text>
+            <Text style={styles.title}>{t("brief.title")}</Text>
+            <Text style={styles.hint}>{t("brief.hint")}</Text>
 
             <View style={styles.dateRow}>
               <TextInput
                 style={[styles.input, styles.dateInput]}
-                placeholder="From (YYYY-MM-DD)"
+                placeholder={t("brief.fromPlaceholder")}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="none"
                 value={fromDate}
@@ -122,7 +120,7 @@ export default function BriefScreen() {
               />
               <TextInput
                 style={[styles.input, styles.dateInput]}
-                placeholder="To (YYYY-MM-DD)"
+                placeholder={t("brief.toPlaceholder")}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="none"
                 value={toDate}
@@ -136,26 +134,28 @@ export default function BriefScreen() {
               onPress={() => void handleGenerate()}
               disabled={generating}
             >
-              <Text style={styles.buttonText}>{generating ? "Generating…" : "Generate brief"}</Text>
+              <Text style={styles.buttonText}>
+                {generating ? t("brief.generating") : t("brief.generate")}
+              </Text>
             </Pressable>
 
             {justGenerated && (
               <View style={styles.freshBrief}>
-                <Text style={styles.freshBriefTitle}>Your brief is ready</Text>
+                <Text style={styles.freshBriefTitle}>{t("brief.briefReady")}</Text>
                 <BriefContent brief={justGenerated} />
                 <Pressable
                   onPress={() => void handleShare(justGenerated.id)}
                   disabled={sharingId === justGenerated.id}
                 >
                   <Text style={styles.link}>
-                    {sharingId === justGenerated.id ? "Preparing…" : "Share / Save PDF"}
+                    {sharingId === justGenerated.id ? t("brief.preparing") : t("brief.sharePdf")}
                   </Text>
                 </Pressable>
               </View>
             )}
 
-            <Text style={[styles.sectionTitle]}>Past briefs</Text>
-            {historyLoading && <Text style={styles.emptyText}>Loading…</Text>}
+            <Text style={[styles.sectionTitle]}>{t("brief.pastBriefs")}</Text>
+            {historyLoading && <Text style={styles.emptyText}>{t("common.loading")}</Text>}
           </View>
         }
         renderItem={({ item }) => (
@@ -166,30 +166,32 @@ export default function BriefScreen() {
                   {item.fromDate} to {item.toDate}
                 </Text>
                 <Text style={styles.briefRowMeta}>
-                  generated {new Date(item.createdAt).toLocaleDateString()}
+                  {t("brief.generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                 </Text>
               </Pressable>
               <Pressable onPress={() => void handleShare(item.id)} disabled={sharingId === item.id}>
-                <Text style={styles.link}>{sharingId === item.id ? "…" : "PDF"}</Text>
+                <Text style={styles.link}>{sharingId === item.id ? "…" : t("brief.pdf")}</Text>
               </Pressable>
               <Pressable
                 onPress={() => void handleDelete(item.id)}
                 disabled={deletingId === item.id}
                 style={{ marginLeft: 16 }}
               >
-                <Text style={styles.dangerText}>{deletingId === item.id ? "…" : "Delete"}</Text>
+                <Text style={styles.dangerText}>
+                  {deletingId === item.id ? "…" : t("brief.delete")}
+                </Text>
               </Pressable>
             </View>
             {openBriefId === item.id &&
               (openBrief ? (
                 <BriefContent brief={openBrief} />
               ) : (
-                <Text style={styles.emptyText}>Loading…</Text>
+                <Text style={styles.emptyText}>{t("common.loading")}</Text>
               ))}
           </View>
         )}
         ListEmptyComponent={
-          !historyLoading ? <Text style={styles.emptyText}>No briefs generated yet.</Text> : null
+          !historyLoading ? <Text style={styles.emptyText}>{t("brief.noBriefsYet")}</Text> : null
         }
         contentContainerStyle={styles.listContent}
       />
@@ -198,33 +200,38 @@ export default function BriefScreen() {
 }
 
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.briefContent}>
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
 
-      <Text style={styles.contentSectionTitle}>Questions to bring to your GP</Text>
+      <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
       {brief.aiDiscussionTopics.map((topic, i) => (
         <Text key={i} style={styles.topic}>
           • {topic}
         </Text>
       ))}
 
-      <Text style={styles.contentSectionTitle}>Symptom frequency</Text>
+      <Text style={styles.contentSectionTitle}>{t("brief.symptomFrequency")}</Text>
       {brief.symptomSummary.length === 0 ? (
-        <Text style={styles.summaryLine}>No symptoms logged in this range.</Text>
+        <Text style={styles.summaryLine}>{t("brief.noSymptomsInRange")}</Text>
       ) : (
         brief.symptomSummary.map((entry) => (
           <Text key={entry.category} style={styles.summaryLine}>
-            {categoryLabel(entry.category)} — {entry.count} occurrence{entry.count === 1 ? "" : "s"}
+            {t(`enums.category.${entry.category}`)} —{" "}
+            {t("brief.occurrenceCount", { count: entry.count })}
           </Text>
         ))
       )}
 
-      <Text style={styles.contentSectionTitle}>Cycle summary</Text>
+      <Text style={styles.contentSectionTitle}>{t("brief.cycleSummary")}</Text>
       <Text style={styles.summaryLine}>
         {brief.cycleSummary.averageCycleLengthDays === null
-          ? "Not enough period-start entries in this range to compute cycle length."
-          : `Average cycle length: ${brief.cycleSummary.averageCycleLengthDays} days (${brief.cycleSummary.cycleCount} cycles recorded)`}
+          ? t("brief.notEnoughCycleData")
+          : t("brief.averageCycleLength", {
+              days: brief.cycleSummary.averageCycleLengthDays,
+              count: brief.cycleSummary.cycleCount,
+            })}
       </Text>
     </View>
   );

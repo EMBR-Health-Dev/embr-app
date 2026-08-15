@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { changePasswordSchema } from "@embr/validation";
 import type { DeviceSessionDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
@@ -9,6 +10,7 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -61,7 +63,7 @@ export default function SettingsScreen() {
       await logout();
       router.replace("/login?reason=password-changed");
     } catch (err) {
-      setPasswordError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+      setPasswordError(err instanceof ApiError ? err.message : t("settings.genericError"));
     } finally {
       setChangingPassword(false);
     }
@@ -98,7 +100,7 @@ export default function SettingsScreen() {
   async function handleDeleteAccount() {
     setDeleteError(null);
     if (!deletePassword) {
-      setDeleteError("Enter your password to confirm.");
+      setDeleteError(t("settings.enterPasswordToConfirm"));
       return;
     }
     setDeleting(true);
@@ -107,7 +109,7 @@ export default function SettingsScreen() {
       await logout();
       router.replace("/login");
     } catch (err) {
-      setDeleteError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+      setDeleteError(err instanceof ApiError ? err.message : t("settings.genericError"));
     } finally {
       setDeleting(false);
     }
@@ -120,17 +122,15 @@ export default function SettingsScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Settings</Text>
+            <Text style={styles.title}>{t("settings.title")}</Text>
             {user && <Text style={styles.email}>{user.email}</Text>}
 
-            <Text style={styles.sectionTitle}>Change password</Text>
-            <Text style={styles.sectionHint}>
-              Changing your password signs you out everywhere, including this device.
-            </Text>
+            <Text style={styles.sectionTitle}>{t("settings.changePasswordTitle")}</Text>
+            <Text style={styles.sectionHint}>{t("settings.changePasswordHint")}</Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Current password"
+              placeholder={t("settings.currentPasswordPlaceholder")}
               placeholderTextColor="#9CA3AF"
               secureTextEntry
               autoComplete="current-password"
@@ -142,7 +142,7 @@ export default function SettingsScreen() {
             )}
             <TextInput
               style={styles.input}
-              placeholder="New password"
+              placeholder={t("settings.newPasswordPlaceholder")}
               placeholderTextColor="#9CA3AF"
               secureTextEntry
               autoComplete="new-password"
@@ -161,35 +161,37 @@ export default function SettingsScreen() {
               disabled={changingPassword}
             >
               <Text style={styles.buttonText}>
-                {changingPassword ? "Changing…" : "Change password"}
+                {changingPassword ? t("settings.changing") : t("settings.changePassword")}
               </Text>
             </Pressable>
 
             <View style={styles.devicesHeaderRow}>
-              <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Devices</Text>
+              <Text style={[styles.sectionTitle, { marginTop: 0 }]}>{t("settings.devices")}</Text>
               <Pressable onPress={() => void logoutEverywhere()} disabled={loggingOutAll}>
                 <Text style={styles.dangerText}>
-                  {loggingOutAll ? "Logging out…" : "Log out everywhere"}
+                  {loggingOutAll ? t("settings.loggingOut") : t("settings.logoutEverywhere")}
                 </Text>
               </Pressable>
             </View>
 
-            {sessionsLoading && <Text style={styles.emptyText}>Loading…</Text>}
+            {sessionsLoading && <Text style={styles.emptyText}>{t("common.loading")}</Text>}
           </View>
         }
         renderItem={({ item }) => (
           <View style={styles.sessionRow}>
             <View style={{ flex: 1 }}>
               <View style={styles.sessionTitleRow}>
-                <Text style={styles.sessionDevice}>{item.userAgent ?? "Unknown device"}</Text>
+                <Text style={styles.sessionDevice}>
+                  {item.userAgent ?? t("settings.unknownDevice")}
+                </Text>
                 {item.current && (
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>This device</Text>
+                    <Text style={styles.badgeText}>{t("settings.thisDevice")}</Text>
                   </View>
                 )}
               </View>
               <Text style={styles.sessionMeta}>
-                {item.ipAddress ?? "Unknown IP"} · signed in{" "}
+                {item.ipAddress ?? t("settings.unknownIp")} · {t("settings.signedIn")}{" "}
                 {new Date(item.createdAt).toLocaleDateString()}
               </Text>
             </View>
@@ -197,35 +199,36 @@ export default function SettingsScreen() {
               onPress={() => void revokeSession(item.id)}
               disabled={revokingId === item.id}
             >
-              <Text style={styles.dangerTextSmall}>{revokingId === item.id ? "…" : "Revoke"}</Text>
+              <Text style={styles.dangerTextSmall}>
+                {revokingId === item.id ? "…" : t("settings.revoke")}
+              </Text>
             </Pressable>
           </View>
         )}
         ListEmptyComponent={
-          !sessionsLoading ? <Text style={styles.emptyText}>No active sessions.</Text> : null
+          !sessionsLoading ? (
+            <Text style={styles.emptyText}>{t("settings.noActiveSessions")}</Text>
+          ) : null
         }
         ListFooterComponent={
           <View>
             <Pressable style={styles.logoutRow} onPress={() => void handleLogout()}>
-              <Text style={styles.dangerText}>Log out</Text>
+              <Text style={styles.dangerText}>{t("settings.logout")}</Text>
             </Pressable>
 
             <View style={styles.deleteSection}>
-              <Text style={styles.sectionTitle}>Delete account</Text>
-              <Text style={styles.sectionHint}>
-                This permanently deletes your account and everything in it — symptom logs, cycle
-                entries, briefs, and settings. This cannot be undone.
-              </Text>
+              <Text style={styles.sectionTitle}>{t("settings.deleteAccountTitle")}</Text>
+              <Text style={styles.sectionHint}>{t("settings.deleteAccountHint")}</Text>
 
               {!deleteConfirming ? (
                 <Pressable onPress={() => setDeleteConfirming(true)}>
-                  <Text style={styles.dangerText}>Delete my account</Text>
+                  <Text style={styles.dangerText}>{t("settings.deleteMyAccount")}</Text>
                 </Pressable>
               ) : (
                 <View style={{ marginTop: 8 }}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Confirm your password"
+                    placeholder={t("settings.confirmPasswordPlaceholder")}
                     placeholderTextColor="#9CA3AF"
                     secureTextEntry
                     autoComplete="current-password"
@@ -240,7 +243,7 @@ export default function SettingsScreen() {
                       disabled={deleting}
                     >
                       <Text style={styles.buttonText}>
-                        {deleting ? "Deleting…" : "Permanently delete"}
+                        {deleting ? t("settings.deleting") : t("settings.permanentlyDelete")}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -251,7 +254,7 @@ export default function SettingsScreen() {
                         setDeleteError(null);
                       }}
                     >
-                      <Text style={styles.sectionHint}>Cancel</Text>
+                      <Text style={styles.sectionHint}>{t("settings.cancel")}</Text>
                     </Pressable>
                   </View>
                 </View>
