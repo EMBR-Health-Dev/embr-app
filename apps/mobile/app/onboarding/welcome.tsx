@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
 import { theme } from "../../lib/theme";
 import { STEP_ROUTES } from "../../lib/onboarding-steps";
 
 export default function WelcomeScreen() {
+  const { t } = useTranslation();
   const { patch } = useOnboarding();
   const [starting, setStarting] = useState(false);
 
@@ -22,21 +24,14 @@ export default function WelcomeScreen() {
 
   return (
     <OnboardingScreen step="WELCOME">
-      <Text style={styles.headline}>
-        A place to keep track of what&apos;s actually happening to you.
-      </Text>
-      <Text style={styles.body}>
-        EMBR helps you turn what you&apos;re experiencing into something you can look back on,
-        understand, and eventually bring into a conversation with your doctor. It doesn&apos;t
-        diagnose you or replace your clinician. It helps you organize your own record, on your own
-        terms.
-      </Text>
+      <Text style={styles.headline}>{t("onboarding.welcome.headline")}</Text>
+      <Text style={styles.body}>{t("onboarding.welcome.body")}</Text>
       <Pressable
         onPress={() => void handleContinue()}
         disabled={starting}
         style={[styles.button, starting && styles.buttonDisabled]}
       >
-        <Text style={styles.buttonText}>{starting ? "…" : "Get started"}</Text>
+        <Text style={styles.buttonText}>{starting ? "…" : t("onboarding.welcome.getStarted")}</Text>
       </Pressable>
     </OnboardingScreen>
   );

@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
 import { theme } from "../../lib/theme";
 import { STEP_ROUTES } from "../../lib/onboarding-steps";
 
-const OPTIONS: { value: string; label: string }[] = [
-  { value: "WITHIN_MONTH", label: "Yes, within the next month" },
-  { value: "UNSURE_WHEN", label: "Yes, but I'm not sure when" },
-  { value: "NO", label: "No" },
-  { value: "UNSURE", label: "I'm not sure yet" },
-];
+const OPTION_VALUES = ["WITHIN_MONTH", "UNSURE_WHEN", "NO", "UNSURE"] as const;
+const OPTION_KEYS: Record<(typeof OPTION_VALUES)[number], string> = {
+  WITHIN_MONTH: "withinMonth",
+  UNSURE_WHEN: "unsureWhen",
+  NO: "no",
+  UNSURE: "unsure",
+};
 
 export default function AppointmentStatusScreen() {
+  const { t } = useTranslation();
   const { patch } = useOnboarding();
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -26,21 +29,15 @@ export default function AppointmentStatusScreen() {
 
   return (
     <OnboardingScreen step="APPOINTMENT_STATUS">
-      <Text style={styles.headline}>Do you have a healthcare appointment coming up?</Text>
-      <Text style={styles.hint}>
-        No need for the exact date yet. Just helps us know whether to keep BRIEF close at hand.
-      </Text>
+      <Text style={styles.headline}>{t("onboarding.appointmentStatus.headline")}</Text>
+      <Text style={styles.hint}>{t("onboarding.appointmentStatus.hint")}</Text>
       <View style={styles.list}>
-        {OPTIONS.map((opt) => {
-          const isSelected = selected === opt.value;
+        {OPTION_VALUES.map((value) => {
+          const isSelected = selected === value;
           return (
-            <Pressable
-              key={opt.value}
-              onPress={() => void handleSelect(opt.value)}
-              style={styles.row}
-            >
+            <Pressable key={value} onPress={() => void handleSelect(value)} style={styles.row}>
               <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>
-                {opt.label}
+                {t(`onboarding.appointmentStatus.${OPTION_KEYS[value]}`)}
               </Text>
               <View style={[styles.dot, isSelected && styles.dotSelected]} />
             </Pressable>

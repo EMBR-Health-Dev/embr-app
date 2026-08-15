@@ -1,20 +1,32 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
 import { theme } from "../../lib/theme";
 import { ONBOARDING_AREA_LABELS, firstSuggestedCategory } from "../../lib/onboarding-areas";
 
+const AREA_KEYS: Record<string, string> = {
+  SLEEP: "onboarding.whatsGoingOn.sleep",
+  ENERGY: "onboarding.whatsGoingOn.energy",
+  MOOD: "onboarding.whatsGoingOn.mood",
+  BODY: "onboarding.whatsGoingOn.body",
+  FOCUS: "onboarding.whatsGoingOn.focus",
+};
+
 export default function TheLoopScreen() {
+  const { t } = useTranslation();
   const { profile, patch } = useOnboarding();
   const [finishing, setFinishing] = useState(false);
 
   const noticedAreas = profile?.noticedAreas ?? [];
   const trackLabel =
     noticedAreas.length > 0
-      ? noticedAreas.map((a) => ONBOARDING_AREA_LABELS[a] ?? a).join(" · ")
-      : "Sleep · Energy · Mood";
+      ? noticedAreas
+          .map((a) => (AREA_KEYS[a] ? t(AREA_KEYS[a]) : (ONBOARDING_AREA_LABELS[a] ?? a)))
+          .join(" · ")
+      : t("onboarding.theLoop.trackFallback");
 
   async function finishAndGo(params?: Record<string, string>) {
     setFinishing(true);
@@ -33,34 +45,31 @@ export default function TheLoopScreen() {
 
   return (
     <OnboardingScreen step="THE_LOOP">
-      <Text style={styles.headline}>Here&apos;s how EMBR works.</Text>
+      <Text style={styles.headline}>{t("onboarding.theLoop.headline")}</Text>
 
       <View style={styles.timeline}>
         <View style={styles.connectingLine} />
 
-        <LoopStage label="Track" title={trackLabel} />
+        <LoopStage label={t("onboarding.theLoop.trackLabel")} title={trackLabel} />
         <LoopStage
-          label="Patterns"
-          title="Once you've logged for a couple of weeks, you might see something like:"
+          label={t("onboarding.theLoop.patternsLabel")}
+          title={t("onboarding.theLoop.patternsTitle")}
         >
-          <Text style={styles.exampleQuote}>
-            &quot;Your sleep disruption appeared alongside lower energy on 6 days.&quot;
-          </Text>
-          <Text style={styles.caveat}>
-            Descriptive, not diagnostic. EMBR never tells you what&apos;s causing something.
-          </Text>
-        </LoopStage>
-        <LoopStage label="Brief" title="Evidence · Patterns · Questions">
-          <Text style={styles.stageBody}>
-            A structured summary of your record, built when you&apos;re ready. Not automatically.
-          </Text>
+          <Text style={styles.exampleQuote}>{t("onboarding.theLoop.patternsExample")}</Text>
+          <Text style={styles.caveat}>{t("onboarding.theLoop.patternsCaveat")}</Text>
         </LoopStage>
         <LoopStage
-          label="Healthcare conversation"
-          title="Something concrete to bring into your next appointment."
+          label={t("onboarding.theLoop.briefLabel")}
+          title={t("onboarding.theLoop.briefTitle")}
+        >
+          <Text style={styles.stageBody}>{t("onboarding.theLoop.briefBody")}</Text>
+        </LoopStage>
+        <LoopStage
+          label={t("onboarding.theLoop.conversationLabel")}
+          title={t("onboarding.theLoop.conversationTitle")}
           last
         >
-          <Text style={styles.stageBody}>Entirely optional, and entirely yours.</Text>
+          <Text style={styles.stageBody}>{t("onboarding.theLoop.conversationBody")}</Text>
         </LoopStage>
       </View>
 
@@ -70,10 +79,12 @@ export default function TheLoopScreen() {
           disabled={finishing}
           style={[styles.button, finishing && styles.buttonDisabled]}
         >
-          <Text style={styles.buttonText}>{finishing ? "…" : "Log your first entry"}</Text>
+          <Text style={styles.buttonText}>
+            {finishing ? "…" : t("onboarding.theLoop.logFirstEntry")}
+          </Text>
         </Pressable>
         <Pressable onPress={() => void finishAndGo()} disabled={finishing}>
-          <Text style={styles.secondaryLink}>Go to dashboard instead</Text>
+          <Text style={styles.secondaryLink}>{t("onboarding.theLoop.goToDashboard")}</Text>
         </Pressable>
       </View>
     </OnboardingScreen>

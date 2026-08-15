@@ -16,5 +16,70 @@
     "label": "Language",
     "en": "English",
     "ja": "日本語"
+  },
+  "register": {
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "We sent a verification link to {{email}}. Verify your email, then log in.",
+    "goToLogin": "Go to login",
+    "title": "Create your account",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Create account",
+    "submitting": "Creating account…",
+    "alreadyHaveAccount": "Already have an account?",
+    "logIn": "Log in"
+  },
+  "onboarding": {
+    "skipToDashboard": "Skip to dashboard",
+    "welcome": {
+      "headline": "A place to keep track of what's actually happening to you.",
+      "body": "EMBR helps you turn what you're experiencing into something you can look back on, understand, and eventually bring into a conversation with your doctor. It doesn't diagnose you or replace your clinician. It helps you organize your own record, on your own terms.",
+      "getStarted": "Get started"
+    },
+    "jobToBeDone": {
+      "headline": "What do you want EMBR to help you with?",
+      "hint": "This just shapes what we show you first. You can always change your mind later.",
+      "understandExperience": "Understand what I'm experiencing",
+      "understandPatterns": "Understand patterns over time",
+      "prepareForAppointment": "Prepare for a healthcare conversation",
+      "keepRecord": "Keep a better record, long term",
+      "notSure": "Not sure yet"
+    },
+    "whatsGoingOn": {
+      "headline": "What have you noticed lately?",
+      "hint": "Pick anything that's felt different. This isn't a log yet. It just helps your first check-in feel like it already knows you.",
+      "continue": "Continue",
+      "sleep": "Sleep",
+      "energy": "Energy",
+      "mood": "Mood",
+      "body": "Body",
+      "focus": "Focus"
+    },
+    "appointmentStatus": {
+      "headline": "Do you have a healthcare appointment coming up?",
+      "hint": "No need for the exact date yet. Just helps us know whether to keep BRIEF close at hand.",
+      "withinMonth": "Yes, within the next month",
+      "unsureWhen": "Yes, but I'm not sure when",
+      "no": "No",
+      "unsure": "I'm not sure yet"
+    },
+    "theLoop": {
+      "headline": "Here's how EMBR works.",
+      "trackFallback": "Sleep · Energy · Mood",
+      "patternsLabel": "Patterns",
+      "patternsTitle": "Once you've logged for a couple of weeks, you might see something like:",
+      "patternsExample": "\"Your sleep disruption appeared alongside lower energy on 6 days.\"",
+      "patternsCaveat": "Descriptive, not diagnostic. EMBR never tells you what's causing something.",
+      "trackLabel": "Track",
+      "briefLabel": "Brief",
+      "briefTitle": "Evidence · Patterns · Questions",
+      "briefBody": "A structured summary of your record, built when you're ready. Not automatically.",
+      "conversationLabel": "Healthcare conversation",
+      "conversationTitle": "Something concrete to bring into your next appointment.",
+      "conversationBody": "Entirely optional, and entirely yours.",
+      "logFirstEntry": "Log your first entry",
+      "goToDashboard": "Go to dashboard instead"
+    }
   }
 }

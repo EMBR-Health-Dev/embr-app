@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { registerSchema } from "@embr/validation";
 import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const { register } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,9 +32,7 @@ export default function RegisterScreen() {
       await register(parsed.data.email, parsed.data.password);
       setDone(true);
     } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : "Something went wrong. Try again in a moment.",
-      );
+      setFormError(err instanceof ApiError ? err.message : t("register.genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -42,12 +42,10 @@ export default function RegisterScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.content}>
-          <Text style={styles.title}>Check your email</Text>
-          <Text style={styles.body}>
-            We sent a verification link to {email}. Verify your email, then log in.
-          </Text>
+          <Text style={styles.title}>{t("register.checkEmailTitle")}</Text>
+          <Text style={styles.body}>{t("register.checkEmailBody", { email })}</Text>
           <Link href="/login" style={styles.link}>
-            <Text style={styles.linkText}>Go to login</Text>
+            <Text style={styles.linkText}>{t("register.goToLogin")}</Text>
           </Link>
         </View>
       </SafeAreaView>
@@ -57,10 +55,10 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
-        <Text style={styles.title}>Create your account</Text>
+        <Text style={styles.title}>{t("register.title")}</Text>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t("register.emailLabel")}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -73,7 +71,7 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>{t("register.passwordLabel")}</Text>
           <TextInput
             style={styles.input}
             value={password}
@@ -93,13 +91,14 @@ export default function RegisterScreen() {
           disabled={submitting}
         >
           <Text style={styles.buttonText}>
-            {submitting ? "Creating account…" : "Create account"}
+            {submitting ? t("register.submitting") : t("register.submit")}
           </Text>
         </Pressable>
 
         <Link href="/login" style={styles.link}>
           <Text>
-            Already have an account? <Text style={styles.linkText}>Log in</Text>
+            {t("register.alreadyHaveAccount")}{" "}
+            <Text style={styles.linkText}>{t("register.logIn")}</Text>
           </Text>
         </Link>
       </View>

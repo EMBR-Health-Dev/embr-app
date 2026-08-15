@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
 import { Chip } from "../../components/chip";
@@ -8,9 +9,17 @@ import { theme } from "../../lib/theme";
 import { STEP_ROUTES } from "../../lib/onboarding-steps";
 import { ONBOARDING_AREA_LABELS } from "../../lib/onboarding-areas";
 
-const AREAS = Object.keys(ONBOARDING_AREA_LABELS);
+const AREAS = Object.keys(ONBOARDING_AREA_LABELS) as (keyof typeof ONBOARDING_AREA_LABELS)[];
+const AREA_KEYS: Record<string, string> = {
+  SLEEP: "sleep",
+  ENERGY: "energy",
+  MOOD: "mood",
+  BODY: "body",
+  FOCUS: "focus",
+};
 
 export default function WhatsGoingOnScreen() {
+  const { t } = useTranslation();
   const { profile, patch } = useOnboarding();
   // Lazy initializer covers profile already being populated at this
   // component's very first render (e.g. the person went forward then
@@ -49,16 +58,13 @@ export default function WhatsGoingOnScreen() {
 
   return (
     <OnboardingScreen step="WHATS_GOING_ON">
-      <Text style={styles.headline}>What have you noticed lately?</Text>
-      <Text style={styles.hint}>
-        Pick anything that&apos;s felt different. This isn&apos;t a log yet. It just helps your
-        first check-in feel like it already knows you.
-      </Text>
+      <Text style={styles.headline}>{t("onboarding.whatsGoingOn.headline")}</Text>
+      <Text style={styles.hint}>{t("onboarding.whatsGoingOn.hint")}</Text>
       <View style={styles.chips}>
         {AREAS.map((value) => (
           <Chip
             key={value}
-            label={ONBOARDING_AREA_LABELS[value]}
+            label={t(`onboarding.whatsGoingOn.${AREA_KEYS[value]}`)}
             selected={selected.includes(value)}
             onPress={() => toggle(value)}
           />
@@ -69,7 +75,9 @@ export default function WhatsGoingOnScreen() {
         disabled={saving}
         style={[styles.button, saving && styles.buttonDisabled]}
       >
-        <Text style={styles.buttonText}>{saving ? "…" : "Continue"}</Text>
+        <Text style={styles.buttonText}>
+          {saving ? "…" : t("onboarding.whatsGoingOn.continue")}
+        </Text>
       </Pressable>
     </OnboardingScreen>
   );
