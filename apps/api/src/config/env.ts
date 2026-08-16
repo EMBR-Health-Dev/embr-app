@@ -30,6 +30,13 @@ const apiEnvSchema = z.object({
   // NOT covering AuditLog, which has its own separate, undecided policy
   // — see docs/RETENTION.md.
   RETENTION_GRACE_PERIOD_DAYS: z.coerce.number().int().positive().default(30),
+  // Comma-separated list of allowed origins. A single value keeps the
+  // original single-origin behavior working unchanged; a real deploy
+  // adds the landing page's own origin alongside the app's, so
+  // POST /public/perimenopause-assessment can be called cross-origin
+  // from the separate landing-page repo without loosening anything
+  // else — every other route still requires a session cookie those
+  // requests will never carry anyway, cross-origin.
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
 
   // ---- Auth (Milestone 2) ----

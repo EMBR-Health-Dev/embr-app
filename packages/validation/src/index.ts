@@ -396,3 +396,19 @@ export const deleteAccountSchema = z.object({
   password: z.string().min(1),
 });
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
+// ---- Public perimenopause assessment (unauthenticated, no persistence) ----
+
+// Reuses the real symptomCategorySchema — no separate, drifting list of
+// symptom names for this public-facing entry point. A max() guards
+// against a payload trying to submit the same category dozens of times
+// to inflate a score; the scoring function also de-duplicates
+// defensively (see assessment-scoring.ts), this is just a cheap
+// request-level sanity bound.
+export const perimenopauseAssessmentSchema = z
+  .object({
+    symptoms: z.array(symptomCategorySchema).max(20),
+    hasIrregularPeriods: z.boolean(),
+  })
+  .strict();
+export type PerimenopauseAssessmentInput = z.infer<typeof perimenopauseAssessmentSchema>;

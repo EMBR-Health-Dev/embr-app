@@ -171,6 +171,18 @@ export interface SymptomCoOccurrenceDto {
   days: number;
 }
 
+// ---- Public perimenopause assessment (unauthenticated) ----
+
+/** score is a plain count, never weighted or modeled — deliberately
+ * transparent and reproducible, not a "clinical algorithm." tier is
+ * derived from score purely for the client to pick which follow-up
+ * copy/CTA to show; it is not, and must never be presented as, a
+ * diagnosis. */
+export interface PerimenopauseAssessmentResultDto {
+  score: number;
+  tier: "low" | "high";
+}
+
 // ---- Admin (Milestone 7) ----
 
 export interface AuditLogDto {
