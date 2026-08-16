@@ -9,7 +9,7 @@ import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
-import { startingPointMessage } from "../../lib/onboarding-starting-point";
+import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -179,6 +179,8 @@ function DashboardContent() {
     );
   }
 
+  const startingPointKey = startingPointMessageKey(onboardingProfile?.jobToBeDone ?? null);
+
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
@@ -211,10 +213,8 @@ function DashboardContent() {
         </div>
       </header>
 
-      {startingPointMessage(onboardingProfile?.jobToBeDone ?? null) && (
-        <p className="mt-6 font-display text-lg italic text-navy/80">
-          {startingPointMessage(onboardingProfile?.jobToBeDone ?? null)}
-        </p>
+      {startingPointKey && (
+        <p className="mt-6 font-display text-lg italic text-navy/80">{t(startingPointKey)}</p>
       )}
 
       {/* Signature interaction: one tap, no form, for the moment that

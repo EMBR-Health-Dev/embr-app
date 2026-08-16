@@ -150,7 +150,14 @@
     "saveTodaysEntry": "Save today's entry",
     "saved": "Saved ✓",
     "recentSymptoms": "Recent symptoms",
-    "noLogsYet": "Nothing logged yet — use the button above whenever something happens."
+    "noLogsYet": "Nothing logged yet — use the button above whenever something happens.",
+    "startingPoint": {
+      "understandExperience": "Let's start building your record.",
+      "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
+      "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
+      "keepRecord": "Let's start building your record over time.",
+      "notSure": "Let's see what your record starts to show."
+    }
   },
   "Trends": {
     "title": "Trends",

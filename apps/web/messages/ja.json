@@ -150,7 +150,14 @@
     "saveTodaysEntry": "今日の記録を保存",
     "saved": "保存しました ✓",
     "recentSymptoms": "最近の症状",
-    "noLogsYet": "まだ記録がありません。何かあれば上のボタンから記録してください。"
+    "noLogsYet": "まだ記録がありません。何かあれば上のボタンから記録してください。",
+    "startingPoint": {
+      "understandExperience": "記録を始めましょう。",
+      "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
+      "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
+      "keepRecord": "長期的な記録を始めましょう。",
+      "notSure": "記録を続けると見えてくるものがあります。"
+    }
   },
   "Trends": {
     "title": "Trends",

@@ -8,11 +8,12 @@ import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
+import { AppointmentCard } from "../../components/appointment-card";
 import { Chip } from "../../components/chip";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
-import { startingPointMessage } from "../../lib/onboarding-starting-point";
+import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = symptomCategorySchema.options;
 const SEVERITIES = severityLevelSchema.options;
@@ -115,6 +116,8 @@ export default function HomeScreen() {
     router.replace("/login");
   }
 
+  const startingPointKey = startingPointMessageKey(onboardingProfile?.jobToBeDone ?? null);
+
   return (
     <SafeAreaView style={styles.screen}>
       <FlatList
@@ -133,11 +136,9 @@ export default function HomeScreen() {
               </Pressable>
             </View>
 
-            {startingPointMessage(onboardingProfile?.jobToBeDone ?? null) && (
-              <Text style={styles.startingPoint}>
-                {startingPointMessage(onboardingProfile?.jobToBeDone ?? null)}
-              </Text>
-            )}
+            {startingPointKey && <Text style={styles.startingPoint}>{t(startingPointKey)}</Text>}
+
+            <AppointmentCard appointmentStatus={onboardingProfile?.appointmentStatus ?? null} />
 
             <Text style={styles.sectionLabel}>{t("home.howAreYouFeeling")}</Text>
             <View style={styles.chipRow}>

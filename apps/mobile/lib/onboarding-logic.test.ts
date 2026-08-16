@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll } from "vitest";
+import i18next from "i18next";
 import { isOnboardingStep, STEP_ROUTES, ONBOARDING_STEPS } from "./onboarding-steps";
 import { firstSuggestedCategory, ONBOARDING_AREA_TO_CATEGORIES } from "./onboarding-areas";
-import { startingPointMessage } from "./onboarding-starting-point";
+import { startingPointMessageKey } from "./onboarding-starting-point";
+import en from "../locales/en.json";
 
 describe("isOnboardingStep", () => {
   it("accepts every real step", () => {
@@ -42,21 +44,40 @@ describe("firstSuggestedCategory", () => {
   });
 });
 
-describe("startingPointMessage", () => {
-  it("matches web's approved copy exactly, for every jobToBeDone value", () => {
-    expect(startingPointMessage("UNDERSTAND_EXPERIENCE")).toBe("Let's start building your record.");
-    expect(startingPointMessage("UNDERSTAND_PATTERNS")).toBe(
+describe("startingPointMessageKey", () => {
+  beforeAll(async () => {
+    // eslint-disable-next-line import/no-named-as-default-member -- same known i18next default/named-export false positive already noted and suppressed in lib/i18n/plurals.test.ts
+    await i18next.init({
+      resources: { en: { translation: en } },
+      lng: "en",
+      fallbackLng: "en",
+      compatibilityJSON: "v4",
+      interpolation: { escapeValue: false },
+    });
+  });
+
+  it("returns the correct key for every jobToBeDone value, resolving to the approved copy", () => {
+    // eslint-disable-next-line import/no-named-as-default-member
+    const t = i18next.t.bind(i18next);
+    expect(t(startingPointMessageKey("UNDERSTAND_EXPERIENCE")!)).toBe(
+      "Let's start building your record.",
+    );
+    expect(t(startingPointMessageKey("UNDERSTAND_PATTERNS")!)).toBe(
       "You're here to understand patterns. We'll start surfacing them as you log.",
     );
-    expect(startingPointMessage("PREPARE_FOR_APPOINTMENT")).toBe(
+    expect(t(startingPointMessageKey("PREPARE_FOR_APPOINTMENT")!)).toBe(
       "You're preparing for a healthcare conversation. Let's help you build something concrete.",
     );
-    expect(startingPointMessage("KEEP_RECORD")).toBe("Let's start building your record over time.");
-    expect(startingPointMessage("NOT_SURE")).toBe("Let's see what your record starts to show.");
+    expect(t(startingPointMessageKey("KEEP_RECORD")!)).toBe(
+      "Let's start building your record over time.",
+    );
+    expect(t(startingPointMessageKey("NOT_SURE")!)).toBe(
+      "Let's see what your record starts to show.",
+    );
   });
 
   it("returns null for no answer or an unrecognized value", () => {
-    expect(startingPointMessage(null)).toBeNull();
-    expect(startingPointMessage("SOMETHING_UNEXPECTED")).toBeNull();
+    expect(startingPointMessageKey(null)).toBeNull();
+    expect(startingPointMessageKey("SOMETHING_UNEXPECTED")).toBeNull();
   });
 });

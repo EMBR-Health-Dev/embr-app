@@ -132,7 +132,14 @@
     "logging": "記録中…",
     "recentLogs": "最近の記録",
     "delete": "削除",
-    "noSymptomsYet": "まだ症状が記録されていません。"
+    "noSymptomsYet": "まだ症状が記録されていません。",
+    "startingPoint": {
+      "understandExperience": "記録を始めましょう。",
+      "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
+      "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
+      "keepRecord": "長期的な記録を始めましょう。",
+      "notSure": "記録を続けると見えてくるものがあります。"
+    }
   },
   "cycle": {
     "title": "今日の周期記録",
@@ -215,5 +222,10 @@
     "permanentlyDelete": "完全に削除",
     "deleting": "削除中…",
     "cancel": "キャンセル"
+  },
+  "appointmentCard": {
+    "withinMonth": "近々、診察の予定があるとのことでしたね。BRIEFがあれば、具体的な材料を持って診察に臨めます。",
+    "unsureWhen": "診察の予定があるかもしれないとのことでしたね。BRIEFはいつでも作成できます。",
+    "generateBrief": "BRIEFを作成する"
   }
 }

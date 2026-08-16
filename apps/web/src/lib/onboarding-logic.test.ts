@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { createTranslator } from "next-intl";
 import { isOnboardingStep, STEP_ROUTES, ONBOARDING_STEPS } from "./onboarding-steps";
 import { firstSuggestedCategory, ONBOARDING_AREA_TO_CATEGORIES } from "./onboarding-areas";
-import { startingPointMessage } from "./onboarding-starting-point";
+import { startingPointMessageKey } from "./onboarding-starting-point";
+import en from "../../messages/en.json";
 
 describe("isOnboardingStep", () => {
   it("accepts every real step", () => {
@@ -42,21 +44,35 @@ describe("firstSuggestedCategory", () => {
   });
 });
 
-describe("startingPointMessage", () => {
-  it("returns the exact approved copy for each jobToBeDone value", () => {
-    expect(startingPointMessage("UNDERSTAND_EXPERIENCE")).toBe("Let's start building your record.");
-    expect(startingPointMessage("UNDERSTAND_PATTERNS")).toBe(
+describe("startingPointMessageKey", () => {
+  const t = createTranslator({ locale: "en", messages: en, namespace: "Dashboard" });
+  // startingPointMessageKey returns a plain `string | null`, not a
+  // literal union next-intl's strict key typing can verify statically
+  // — the values are correct (this test's whole job is proving that),
+  // this cast just tells the type system what the runtime already
+  // confirms.
+  const tKey = t as (key: string) => string;
+
+  it("returns the correct key for every jobToBeDone value, resolving to the approved copy", () => {
+    expect(tKey(startingPointMessageKey("UNDERSTAND_EXPERIENCE")!)).toBe(
+      "Let's start building your record.",
+    );
+    expect(tKey(startingPointMessageKey("UNDERSTAND_PATTERNS")!)).toBe(
       "You're here to understand patterns. We'll start surfacing them as you log.",
     );
-    expect(startingPointMessage("PREPARE_FOR_APPOINTMENT")).toBe(
+    expect(tKey(startingPointMessageKey("PREPARE_FOR_APPOINTMENT")!)).toBe(
       "You're preparing for a healthcare conversation. Let's help you build something concrete.",
     );
-    expect(startingPointMessage("KEEP_RECORD")).toBe("Let's start building your record over time.");
-    expect(startingPointMessage("NOT_SURE")).toBe("Let's see what your record starts to show.");
+    expect(tKey(startingPointMessageKey("KEEP_RECORD")!)).toBe(
+      "Let's start building your record over time.",
+    );
+    expect(tKey(startingPointMessageKey("NOT_SURE")!)).toBe(
+      "Let's see what your record starts to show.",
+    );
   });
 
   it("returns null for no answer or an unrecognized value", () => {
-    expect(startingPointMessage(null)).toBeNull();
-    expect(startingPointMessage("SOMETHING_UNEXPECTED")).toBeNull();
+    expect(startingPointMessageKey(null)).toBeNull();
+    expect(startingPointMessageKey("SOMETHING_UNEXPECTED")).toBeNull();
   });
 });
