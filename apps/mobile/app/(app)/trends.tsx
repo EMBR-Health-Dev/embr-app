@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../../lib/api";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
 
 const WINDOW_DAYS = 90;
@@ -46,7 +48,7 @@ export default function TrendsScreen() {
         <Text style={styles.title}>{t("trends.title")}</Text>
 
         {loading ? (
-          <Text style={styles.loadingText}>{t("common.loading")}</Text>
+          <LoadingState label={t("common.loading")} />
         ) : (
           <>
             <View style={styles.section}>
@@ -54,7 +56,7 @@ export default function TrendsScreen() {
                 {t("trends.symptomsHeader", { days: WINDOW_DAYS })}
               </Text>
               {frequency.length === 0 ? (
-                <Text style={styles.emptyText}>{t("trends.noSymptomsYet")}</Text>
+                <EmptyState icon="pulse-outline" label={t("trends.noSymptomsYet")} />
               ) : (
                 <View style={{ gap: 10, marginTop: 12 }}>
                   {frequency.map(({ category, count }) => (
@@ -82,7 +84,7 @@ export default function TrendsScreen() {
                 {t("trends.cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
               </Text>
               {lengths.length === 0 ? (
-                <Text style={styles.emptyText}>{t("trends.noCycleDataYet")}</Text>
+                <EmptyState icon="calendar-outline" label={t("trends.noCycleDataYet")} />
               ) : (
                 <>
                   {averageCycleLength !== null && (
@@ -121,10 +123,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.surface },
   content: { padding: 20, paddingBottom: 40 },
   title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
-  loadingText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 16 },
   section: { marginTop: 28 },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: theme.colors.textPrimary },
-  emptyText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8, lineHeight: 19 },
   barRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   barLabel: { width: 110, fontSize: 13, color: theme.colors.textPrimary },
   barTrack: { flex: 1, height: 10, borderRadius: 5, backgroundColor: theme.colors.border },

@@ -8,6 +8,8 @@ import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
 import { theme } from "../../lib/theme";
 import { DatePickerField } from "../../components/date-picker-field";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
 import { toIsoDate } from "../../lib/date-format";
 
 export default function BriefScreen() {
@@ -154,7 +156,7 @@ export default function BriefScreen() {
             )}
 
             <Text style={[styles.sectionTitle]}>{t("brief.pastBriefs")}</Text>
-            {historyLoading && <Text style={styles.emptyText}>{t("common.loading")}</Text>}
+            {historyLoading && <LoadingState label={t("common.loading")} compact />}
           </View>
         }
         renderItem={({ item }) => (
@@ -182,15 +184,13 @@ export default function BriefScreen() {
               </Pressable>
             </View>
             {openBriefId === item.id &&
-              (openBrief ? (
-                <BriefContent brief={openBrief} />
-              ) : (
-                <Text style={styles.emptyText}>{t("common.loading")}</Text>
-              ))}
+              (openBrief ? <BriefContent brief={openBrief} /> : <LoadingState compact />)}
           </View>
         )}
         ListEmptyComponent={
-          !historyLoading ? <Text style={styles.emptyText}>{t("brief.noBriefsYet")}</Text> : null
+          historyLoading ? null : (
+            <EmptyState icon="document-text-outline" label={t("brief.noBriefsYet")} />
+          )
         }
         contentContainerStyle={styles.listContent}
       />
@@ -294,5 +294,4 @@ const styles = StyleSheet.create({
   briefRowHeader: { flexDirection: "row", alignItems: "center" },
   briefRowTitle: { fontSize: 14, fontWeight: "500", color: theme.colors.textPrimary },
   briefRowMeta: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
 });

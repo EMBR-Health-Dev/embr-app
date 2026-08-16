@@ -9,6 +9,8 @@ import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Chip } from "../../components/chip";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
 import { startingPointMessage } from "../../lib/onboarding-starting-point";
 
@@ -200,7 +202,11 @@ export default function HomeScreen() {
           </View>
         )}
         ListEmptyComponent={
-          !loadingLogs ? <Text style={styles.emptyText}>{t("home.noSymptomsYet")}</Text> : null
+          loadingLogs ? (
+            <LoadingState />
+          ) : (
+            <EmptyState icon="pulse-outline" label={t("home.noSymptomsYet")} />
+          )
         }
         contentContainerStyle={styles.listContent}
       />
@@ -267,5 +273,4 @@ const styles = StyleSheet.create({
   logMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
   logNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
   deleteText: { fontSize: 13, color: theme.colors.error },
-  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
 });

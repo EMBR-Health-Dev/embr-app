@@ -8,6 +8,8 @@ import type { DeviceSessionDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
 
 export default function SettingsScreen() {
@@ -175,7 +177,7 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
 
-            {sessionsLoading && <Text style={styles.emptyText}>{t("common.loading")}</Text>}
+            {sessionsLoading && <LoadingState label={t("common.loading")} compact />}
           </View>
         }
         renderItem={({ item }) => (
@@ -208,7 +210,7 @@ export default function SettingsScreen() {
         )}
         ListEmptyComponent={
           !sessionsLoading ? (
-            <Text style={styles.emptyText}>{t("settings.noActiveSessions")}</Text>
+            <EmptyState icon="phone-portrait-outline" label={t("settings.noActiveSessions")} />
           ) : null
         }
         ListFooterComponent={
@@ -333,7 +335,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   badgeText: { fontSize: 11, fontWeight: "600", color: theme.colors.success },
-  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
   logoutRow: { marginTop: 20, paddingVertical: 12 },
   deleteSection: {
     marginTop: 12,

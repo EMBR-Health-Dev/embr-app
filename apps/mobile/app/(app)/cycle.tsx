@@ -7,6 +7,8 @@ import type { CycleEntryDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Chip } from "../../components/chip";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
 
 const FLOWS = flowIntensitySchema.options;
@@ -160,7 +162,11 @@ export default function CycleScreen() {
           </View>
         )}
         ListEmptyComponent={
-          !loadingEntries ? <Text style={styles.emptyText}>{t("cycle.noEntriesYet")}</Text> : null
+          loadingEntries ? (
+            <LoadingState />
+          ) : (
+            <EmptyState icon="calendar-outline" label={t("cycle.noEntriesYet")} />
+          )
         }
         contentContainerStyle={styles.listContent}
       />
@@ -217,5 +223,4 @@ const styles = StyleSheet.create({
   entryDate: { fontSize: 15, fontWeight: "500", color: theme.colors.textPrimary },
   entryMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
   entryNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
-  emptyText: { fontSize: 14, color: theme.colors.textMuted, paddingVertical: 12 },
 });
