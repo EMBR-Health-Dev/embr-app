@@ -1,6 +1,12 @@
 import type { TrendsQuery } from "@embr/validation";
-import type { CycleLengthTrendDto, SymptomCategory, SymptomFrequencyDto } from "@embr/types";
+import type {
+  CycleLengthTrendDto,
+  SymptomCategory,
+  SymptomCoOccurrenceDto,
+  SymptomFrequencyDto,
+} from "@embr/types";
 import { trendsRepository } from "./trends.repository.js";
+import { detectSymptomCoOccurrence } from "./co-occurrence.js";
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -31,5 +37,19 @@ export const trendsService = {
         : null;
 
     return { averageDays, lengths };
+  },
+
+  /** Fetches the raw rows and hands them to the pure pattern-engine
+   * function (co-occurrence.ts) — this service method owns the I/O,
+   * the function owns the (fully unit-testable, DB-independent)
+   * detection logic. */
+  async coOccurrence(userId: string, query: TrendsQuery): Promise<SymptomCoOccurrenceDto | null> {
+    const logs = await trendsRepository.symptomLogsForCoOccurrence(userId, query);
+    return detectSymptomCoOccurrence(
+      logs.map((log) => ({
+        category: log.category as SymptomCategory,
+        occurredAt: log.occurredAt,
+      })),
+    );
   },
 };

@@ -7,6 +7,7 @@ import type {
   DeviceSessionDto,
   OnboardingProfileDto,
   PaginatedResponse,
+  SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
   UserDto,
@@ -91,6 +92,9 @@ export const api = {
 
     cycleLength: (query?: { from?: string; to?: string }) =>
       apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
+
+    coOccurrence: (query?: { from?: string; to?: string }) =>
+      apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
   },
 
   briefs: {

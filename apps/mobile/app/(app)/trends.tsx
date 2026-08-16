@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../../lib/api";
+import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
@@ -77,6 +78,10 @@ export default function TrendsScreen() {
                   ))}
                 </View>
               )}
+            </View>
+
+            <View style={{ marginTop: 20 }}>
+              <CoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
             </View>
 
             <View style={styles.section}>

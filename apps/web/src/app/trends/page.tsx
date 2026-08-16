@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
+import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 
 const WINDOW_DAYS = 90;
 const CYCLE_WINDOW_DAYS = 180;
@@ -106,6 +107,8 @@ export default function TrendsPage() {
               </ul>
             )}
           </section>
+
+          <CoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
 
           <section className="mt-10">
             <h2 className="font-display text-lg text-navy">

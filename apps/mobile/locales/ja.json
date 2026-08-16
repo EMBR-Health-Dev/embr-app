@@ -227,5 +227,10 @@
     "withinMonth": "近々、診察の予定があるとのことでしたね。BRIEFがあれば、具体的な材料を持って診察に臨めます。",
     "unsureWhen": "診察の予定があるかもしれないとのことでしたね。BRIEFはいつでも作成できます。",
     "generateBrief": "BRIEFを作成する"
+  },
+  "coOccurrence": {
+    "heading": "一緒に記録されたもの",
+    "message_other": "{{categoryA}}は{{categoryB}}とともに、{{count}}日記録されています。",
+    "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。"
   }
 }

@@ -160,6 +160,17 @@ export interface CycleLengthTrendDto {
   lengths: CycleLengthEntryDto[];
 }
 
+/** Structured data only, deliberately no preformatted sentence — the
+ * exact wording (and its translation) is a client concern, not an API
+ * one. null means no pair of categories met the co-occurrence
+ * threshold in the queried window, which is the normal, expected case
+ * for most people, not an error. */
+export interface SymptomCoOccurrenceDto {
+  categoryA: SymptomCategory;
+  categoryB: SymptomCategory;
+  days: number;
+}
+
 // ---- Admin (Milestone 7) ----
 
 export interface AuditLogDto {

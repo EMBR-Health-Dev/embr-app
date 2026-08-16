@@ -170,6 +170,11 @@
     "daysUnit": "日",
     "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
   },
+  "CoOccurrence": {
+    "heading": "一緒に記録されたもの",
+    "message": "{categoryA}は{categoryB}とともに、{days, plural, other {#日}}記録されています。",
+    "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。"
+  },
   "Organization": {
     "title": "組織",
     "backToDashboard": "← ダッシュボード",

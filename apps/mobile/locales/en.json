@@ -229,5 +229,11 @@
     "withinMonth": "You mentioned a healthcare appointment coming up soon — a BRIEF can help you walk in with something concrete.",
     "unsureWhen": "You mentioned a healthcare appointment might be coming up — a BRIEF is ready whenever you are.",
     "generateBrief": "Generate a BRIEF"
+  },
+  "coOccurrence": {
+    "heading": "What you've logged together",
+    "message_one": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} day.",
+    "message_other": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} days.",
+    "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
   }
 }

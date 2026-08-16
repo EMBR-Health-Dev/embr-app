@@ -161,6 +161,17 @@ vi.mock("../src/lib/prisma.js", () => ({
           })),
         );
       }),
+      // Raw rows for the co-occurrence pattern engine — real Postgres
+      // findMany behavior: one row per log, unaggregated, unlike
+      // groupBy above.
+      findMany: vi.fn(({ where }: SymptomGroupByArgs) => {
+        const matching = state.logs.filter(
+          (l) => l.userId === where.userId && inRange(l.occurredAt, where.occurredAt),
+        );
+        return Promise.resolve(
+          matching.map((l) => ({ category: l.category, occurredAt: l.occurredAt })),
+        );
+      }),
     },
     cycleEntry: {
       upsert: vi.fn(
@@ -316,5 +327,91 @@ describe("GET /trends/cycle-length", () => {
       { from: "2026-01-29", to: "2026-03-01", days: 31 },
     ]);
     expect(res.body.data.averageDays).toBe(30);
+  });
+});
+
+describe("GET /trends/co-occurrence", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/trends/co-occurrence");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns null with no qualifying pair", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "cooccurrence-empty@embr.health");
+
+    const res = await agent.get("/trends/co-occurrence");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeNull();
+  });
+
+  it("returns the pair once real logged data meets the threshold, scoped to the authenticated user only", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "cooccurrenceA@embr.health");
+    await registerAndLogin(agentB, "cooccurrenceB@embr.health");
+
+    for (const day of [1, 2, 3]) {
+      await agentA.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MODERATE",
+        occurredAt: new Date(Date.UTC(2026, 5, day, 8)).toISOString(),
+      });
+      await agentA.post("/symptom-logs").send({
+        category: "SLEEP_DISTURBANCE",
+        severity: "MODERATE",
+        occurredAt: new Date(Date.UTC(2026, 5, day, 22)).toISOString(),
+      });
+    }
+    // Agent B's own data must never influence agent A's result.
+    await agentB.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "SEVERE",
+      occurredAt: "2026-06-01T08:00:00.000Z",
+    });
+    await agentB.post("/symptom-logs").send({
+      category: "ANXIETY",
+      severity: "SEVERE",
+      occurredAt: "2026-06-01T08:00:00.000Z",
+    });
+
+    const res = await agentA.get("/trends/co-occurrence");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      categoryA: "HOT_FLASH",
+      categoryB: "SLEEP_DISTURBANCE",
+      days: 3,
+    });
+  });
+
+  it("respects the from/to range", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "cooccurrencerange@embr.health");
+
+    // 3 qualifying days in January.
+    for (const day of [1, 2, 3]) {
+      await agent.post("/symptom-logs").send({
+        category: "HEADACHE",
+        severity: "MILD",
+        occurredAt: new Date(Date.UTC(2026, 0, day, 8)).toISOString(),
+      });
+      await agent.post("/symptom-logs").send({
+        category: "FATIGUE",
+        severity: "MILD",
+        occurredAt: new Date(Date.UTC(2026, 0, day, 20)).toISOString(),
+      });
+    }
+
+    const res = await agent
+      .get("/trends/co-occurrence")
+      .query({ from: "2026-06-01T00:00:00.000Z" });
+    expect(res.status).toBe(200);
+    // The January data falls entirely outside the June-onward window,
+    // so nothing here should qualify.
+    expect(res.body.data).toBeNull();
   });
 });

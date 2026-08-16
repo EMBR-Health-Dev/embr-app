@@ -170,6 +170,11 @@
     "daysUnit": "days",
     "irregularityNote": "Cycle irregularity is expected during perimenopause — this view is here to help you notice your own pattern, not to flag it as a problem."
   },
+  "CoOccurrence": {
+    "heading": "What you've logged together",
+    "message": "{categoryA} appeared alongside {categoryB} on {days, plural, one {# day} other {# days}}.",
+    "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
+  },
   "Organization": {
     "title": "Organization",
     "backToDashboard": "← Dashboard",

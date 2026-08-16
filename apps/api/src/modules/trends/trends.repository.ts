@@ -13,6 +13,13 @@ import { prisma } from "../../lib/prisma.js";
  */
 const CYCLE_ENTRY_ROW_CAP = 5000;
 
+/** Same reasoning as CYCLE_ENTRY_ROW_CAP above — co-occurrence, like
+ * cycle length, is a set operation across raw rows that can't be
+ * expressed as a single Postgres aggregate, so it has to happen in
+ * application code once the rows are fetched. A generous safety
+ * ceiling, not a real pagination story. */
+const SYMPTOM_LOG_ROW_CAP = 5000;
+
 export const trendsRepository = {
   /**
    * True DB-side aggregate (COUNT ... GROUP BY category) — this is the
@@ -66,6 +73,32 @@ export const trendsRepository = {
       select: { date: true },
       orderBy: { date: "asc" },
       take: CYCLE_ENTRY_ROW_CAP,
+    });
+  },
+
+  /** Raw category + occurredAt rows for the co-occurrence pattern
+   * engine (co-occurrence.ts) to build per-category date sets from —
+   * deliberately not a GROUP BY, since the actual computation (set
+   * intersection across category pairs) has to happen in application
+   * code the same way cycle length's does. */
+  symptomLogsForCoOccurrence(
+    userId: string,
+    query: TrendsQuery,
+  ): Promise<Array<{ category: string; occurredAt: Date }>> {
+    return prisma.symptomLog.findMany({
+      where: {
+        userId,
+        ...(query.from || query.to
+          ? {
+              occurredAt: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
+          : {}),
+      },
+      select: { category: true, occurredAt: true },
+      take: SYMPTOM_LOG_ROW_CAP,
     });
   },
 };
