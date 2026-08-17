@@ -110,6 +110,13 @@
       "LIGHT": "Light",
       "MEDIUM": "Medium",
       "HEAVY": "Heavy"
+    },
+    "treatmentCategory": {
+      "HRT": "HRT",
+      "SUPPLEMENT": "Supplement",
+      "MEDICATION": "Medication",
+      "LIFESTYLE": "Lifestyle",
+      "OTHER": "Other"
     }
   },
   "tabs": {
@@ -194,7 +201,11 @@
     "cycleSummary": "Cycle summary",
     "notEnoughCycleData": "Not enough period-start entries in this range to compute cycle length.",
     "averageCycleLength_one": "Average cycle length: {{days}} days ({{count}} cycle recorded)",
-    "averageCycleLength_other": "Average cycle length: {{days}} days ({{count}} cycles recorded)"
+    "averageCycleLength_other": "Average cycle length: {{days}} days ({{count}} cycles recorded)",
+    "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
+    "noTreatmentsInRange": "No treatments logged in this range.",
+    "ongoing": "Ongoing",
+    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations."
   },
   "settings": {
     "title": "Settings",

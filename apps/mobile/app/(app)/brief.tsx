@@ -232,6 +232,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               count: brief.cycleSummary.cycleCount,
             })}
       </Text>
+
+      <Text style={styles.contentSectionTitle}>{t("brief.treatmentsLoggedDuringPeriod")}</Text>
+      {brief.treatmentSummary.length === 0 ? (
+        <Text style={styles.summaryLine}>{t("brief.noTreatmentsInRange")}</Text>
+      ) : (
+        brief.treatmentSummary.map((entry, i) => (
+          <Text key={i} style={styles.summaryLine}>
+            {entry.name} — {t(`enums.treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
+            {entry.endDate ?? t("brief.ongoing")}
+          </Text>
+        ))
+      )}
+      <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>
     </View>
   );
 }
@@ -284,6 +297,12 @@ const styles = StyleSheet.create({
   },
   topic: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
   summaryLine: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  treatmentSafetyNote: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    marginTop: 6,
+    lineHeight: 15,
+  },
   link: { fontSize: 13, color: theme.colors.success, fontWeight: "500" },
   dangerText: { fontSize: 13, color: theme.colors.error },
   briefRow: {

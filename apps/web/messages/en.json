@@ -121,6 +121,13 @@
       "LIGHT": "Light",
       "MEDIUM": "Medium",
       "HEAVY": "Heavy"
+    },
+    "treatmentCategory": {
+      "HRT": "HRT",
+      "SUPPLEMENT": "Supplement",
+      "MEDICATION": "Medication",
+      "LIFESTYLE": "Lifestyle",
+      "OTHER": "Other"
     }
   },
   "Dashboard": {
@@ -268,7 +275,11 @@
     "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",
     "cycleSummary": "Cycle summary",
     "notEnoughCycleData": "Not enough period-start entries in this range to compute cycle length.",
-    "averageCycleLength": "Average cycle length: {days} days ({count, plural, one {# cycle} other {# cycles}} recorded)"
+    "averageCycleLength": "Average cycle length: {days} days ({count, plural, one {# cycle} other {# cycles}} recorded)",
+    "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
+    "noTreatmentsInRange": "No treatments logged in this range.",
+    "ongoing": "Ongoing",
+    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",

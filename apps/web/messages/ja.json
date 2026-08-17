@@ -121,6 +121,13 @@
       "LIGHT": "軽い",
       "MEDIUM": "普通",
       "HEAVY": "多い"
+    },
+    "treatmentCategory": {
+      "HRT": "HRT（ホルモン補充療法）",
+      "SUPPLEMENT": "サプリメント",
+      "MEDICATION": "医薬品",
+      "LIFESTYLE": "生活習慣",
+      "OTHER": "その他"
     }
   },
   "Dashboard": {
@@ -268,7 +275,11 @@
     "occurrenceCount": "{count, plural, other {#回}}",
     "cycleSummary": "周期の要約",
     "notEnoughCycleData": "この期間の周期の長さを計算するには、生理開始日の記録が不足しています。",
-    "averageCycleLength": "平均周期: {days}日({count, plural, other {#周期}}記録あり)"
+    "averageCycleLength": "平均周期: {days}日({count, plural, other {#周期}}記録あり)",
+    "treatmentsLoggedDuringPeriod": "この期間に記録された治療",
+    "noTreatmentsInRange": "この期間に記録された治療はありません。",
+    "ongoing": "継続中",
+    "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

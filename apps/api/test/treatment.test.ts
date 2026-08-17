@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { treatmentRepository } from "../src/modules/treatments/treatment.repository.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -459,5 +460,142 @@ describe("audit log coverage for treatment mutations", () => {
     const entry = state.auditLogEntries.find((e) => e.action === "TREATMENT_DELETED");
     expect(entry).toBeDefined();
     expect((entry?.metadata as { treatmentId?: string })?.treatmentId).toBe(createRes.body.data.id);
+  });
+});
+
+// Direct, isolated tests of the repository method itself — no HTTP
+// layer, no brief.service.ts — used only by brief.service.ts today
+// (see brief.test.ts's own overlap-scenario coverage), but tested here
+// on its own merits so its correctness doesn't depend on how any one
+// caller happens to use it.
+describe("treatmentRepository.listOverlappingRange", () => {
+  const USER_ID = "repo-test-user";
+
+  beforeEach(() => {
+    state.treatments = [];
+  });
+
+  it("includes a treatment fully inside the range", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: USER_ID,
+      name: "In range",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: new Date("2026-01-20"),
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.name).toBe("In range");
+  });
+
+  it("scopes strictly to the given userId", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: "a-different-user",
+      name: "Not this user",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("excludes a treatment entirely before the range", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: USER_ID,
+      name: "Too early",
+      category: "SUPPLEMENT",
+      startDate: new Date("2025-01-01"),
+      endDate: new Date("2025-06-01"),
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("excludes a treatment entirely after the range", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: USER_ID,
+      name: "Too late",
+      category: "MEDICATION",
+      startDate: new Date("2026-06-01"),
+      endDate: null,
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("returns results ordered by startDate descending", async () => {
+    state.treatments.push(
+      {
+        id: nextId(),
+        userId: USER_ID,
+        name: "Earlier",
+        category: "HRT",
+        startDate: new Date("2026-01-05"),
+        endDate: null,
+        notes: null,
+        createdAt: now(),
+        updatedAt: now(),
+      },
+      {
+        id: nextId(),
+        userId: USER_ID,
+        name: "Later",
+        category: "SUPPLEMENT",
+        startDate: new Date("2026-01-20"),
+        endDate: null,
+        notes: null,
+        createdAt: now(),
+        updatedAt: now(),
+      },
+    );
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results.map((t) => t.name)).toEqual(["Later", "Earlier"]);
   });
 });

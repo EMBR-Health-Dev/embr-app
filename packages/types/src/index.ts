@@ -281,6 +281,20 @@ export interface BriefCycleSummaryDto {
   periodDaysLogged: number;
 }
 
+/** A deterministic snapshot of Treatment records overlapping the
+ * BRIEF's date range, taken at generation time — never a live query.
+ * Deliberately excludes notes: see the Treatment-in-BRIEF design
+ * notes in brief.service.ts for why free-text treatment notes are
+ * excluded from BRIEF entirely, the same way SymptomLog.notes always
+ * has been. Never sent to the AI — this type has no relationship to
+ * BriefInput in brief.ai.ts. */
+export interface BriefTreatmentSummaryEntryDto {
+  name: string;
+  category: TreatmentCategory;
+  startDate: string;
+  endDate: string | null;
+}
+
 /** The list view — no AI content, keeps history/pagination responses
  * small. Fetch the full ClinicalBriefDto to read the narrative. */
 export interface ClinicalBriefListItemDto {
@@ -293,10 +307,13 @@ export interface ClinicalBriefListItemDto {
 /** aiNarrative and aiDiscussionTopics are AI-generated from the
  * structured summary alone — see brief.ai.ts's system prompt for the
  * exact scope constraints (data-grounded only, never diagnostic,
- * discussion topics framed as questions, never assertions). */
+ * discussion topics framed as questions, never assertions).
+ * treatmentSummary is never part of that — it's a deterministic,
+ * database-sourced snapshot with no AI involvement at all. */
 export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   symptomSummary: BriefSymptomSummaryEntryDto[];
   cycleSummary: BriefCycleSummaryDto;
+  treatmentSummary: BriefTreatmentSummaryEntryDto[];
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

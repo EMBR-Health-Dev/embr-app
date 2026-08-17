@@ -2,6 +2,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { briefAi } from "../src/modules/briefs/brief.ai.js";
+import { prisma } from "../src/lib/prisma.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -30,6 +32,15 @@ const { state, nextId } = vi.hoisted(() => {
         flow: string | null;
         isPeriodStart: boolean;
         isPeriodEnd: boolean;
+        notes: string | null;
+      }>,
+      treatments: [] as Array<{
+        id: string;
+        userId: string;
+        name: string;
+        category: string;
+        startDate: Date;
+        endDate: Date | null;
         notes: string | null;
       }>,
       briefs: [] as Array<{
@@ -164,6 +175,30 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
+    treatment: {
+      // Matches treatment.repository.ts's listOverlappingRange exactly:
+      // where: { userId, startDate: { lte: toDate }, OR: [{ endDate: null }, { endDate: { gte: fromDate } }] }
+      findMany: vi.fn(
+        ({
+          where,
+        }: {
+          where: {
+            userId: string;
+            startDate: { lte: Date };
+            OR: [{ endDate: null }, { endDate: { gte: Date } }];
+          };
+        }) => {
+          const toDate = where.startDate.lte;
+          const fromDate = where.OR[1].endDate.gte;
+          const results = state.treatments
+            .filter((t) => t.userId === where.userId)
+            .filter((t) => t.startDate <= toDate)
+            .filter((t) => t.endDate === null || t.endDate >= fromDate)
+            .sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+          return Promise.resolve(results);
+        },
+      ),
+    },
     clinicalBrief: {
       create: vi.fn(({ data }: { data: Record<string, unknown> }) => {
         const brief = { id: nextId(), createdAt: now(), ...data } as (typeof state.briefs)[number];
@@ -222,10 +257,26 @@ function addSymptomLog(
   return log;
 }
 
+function addTreatment(userId: string, overrides: Partial<(typeof state.treatments)[number]> = {}) {
+  const treatment = {
+    id: nextId(),
+    userId,
+    name: "Estradiol patch",
+    category: "HRT",
+    startDate: new Date("2026-01-10"),
+    endDate: null,
+    notes: null,
+    ...overrides,
+  };
+  state.treatments.push(treatment);
+  return treatment;
+}
+
 beforeEach(() => {
   state.users = [];
   state.symptomLogs = [];
   state.cycleEntries = [];
+  state.treatments = [];
   state.briefs = [];
   aiState.nextResponse = null;
   aiState.shouldThrow = false;
@@ -343,6 +394,225 @@ describe("POST /briefs", () => {
 
     expect(res.status).toBeGreaterThanOrEqual(500);
     expect(state.briefs).toHaveLength(0);
+  });
+});
+
+describe("POST /briefs — treatment summary (deterministic, no AI involvement)", () => {
+  beforeEach(() => {
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
+  });
+
+  it("includes a treatment entirely inside the BRIEF period", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-inside@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: new Date("2026-01-20"),
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toEqual([
+      { name: "Estradiol patch", category: "HRT", startDate: "2026-01-10", endDate: "2026-01-20" },
+    ]);
+  });
+
+  it("includes a treatment that started before the period but continues into it", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-overlap-start@embr.health");
+    // RANGE is 2026-01-01 to 2026-02-01 — this treatment started well
+    // before the range but is still active partway through it.
+    addTreatment(userId, {
+      name: "Magnesium glycinate",
+      category: "SUPPLEMENT",
+      startDate: new Date("2025-11-01"),
+      endDate: new Date("2026-01-15"),
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toHaveLength(1);
+    expect(res.body.data.treatmentSummary[0].startDate).toBe("2025-11-01");
+  });
+
+  it("includes an ongoing treatment (endDate null)", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-ongoing@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2025-06-01"),
+      endDate: null,
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toEqual([
+      { name: "Estradiol patch", category: "HRT", startDate: "2025-06-01", endDate: null },
+    ]);
+  });
+
+  it("excludes a treatment that ended before the period started", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-ended-before@embr.health");
+    addTreatment(userId, {
+      name: "Old supplement",
+      category: "SUPPLEMENT",
+      startDate: new Date("2025-10-01"),
+      endDate: new Date("2025-12-15"),
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toEqual([]);
+  });
+
+  it("excludes a treatment that starts after the period ends", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-starts-after@embr.health");
+    addTreatment(userId, {
+      name: "Future treatment",
+      category: "MEDICATION",
+      startDate: new Date("2026-03-01"),
+      endDate: null,
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toEqual([]);
+  });
+
+  it("includes multiple overlapping treatments correctly", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-multiple@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2025-06-01"),
+      endDate: null,
+    });
+    addTreatment(userId, {
+      name: "Magnesium",
+      category: "SUPPLEMENT",
+      startDate: new Date("2026-01-05"),
+      endDate: new Date("2026-01-25"),
+    });
+    addTreatment(userId, {
+      name: "Not in range",
+      category: "OTHER",
+      startDate: new Date("2026-06-01"),
+      endDate: null,
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toHaveLength(2);
+    expect(res.body.data.treatmentSummary.map((t: { name: string }) => t.name).sort()).toEqual([
+      "Estradiol patch",
+      "Magnesium",
+    ]);
+  });
+
+  it("never includes notes, even when a treatment has efficacy-adjacent notes text", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-notes@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+      notes: "Seems to be helping a lot, hot flashes much better since starting.",
+    });
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toEqual([
+      { name: "Estradiol patch", category: "HRT", startDate: "2026-01-10", endDate: null },
+    ]);
+    expect(JSON.stringify(res.body)).not.toContain("helping");
+    expect(JSON.stringify(res.body)).not.toContain("Seems to be");
+  });
+
+  it("CRITICAL: treatment data is never included in the object passed to briefAi.generate()", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-ai-boundary@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+      notes: "This should never reach the model under any circumstances.",
+    });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-12") });
+
+    const res = await agent.post("/briefs").send(RANGE);
+    expect(res.status).toBe(201);
+
+    // The real object passed to the mocked briefAi.generate() call —
+    // not a re-derivation, the actual argument.
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+
+    expect(Object.keys(lastCallArg).sort()).toEqual([
+      "cycleSummary",
+      "fromDate",
+      "symptomSummary",
+      "toDate",
+    ]);
+    expect(lastCallArg).not.toHaveProperty("treatmentSummary");
+    expect(lastCallArg).not.toHaveProperty("treatments");
+    expect(JSON.stringify(lastCallArg)).not.toContain("Estradiol");
+    expect(JSON.stringify(lastCallArg)).not.toContain("HRT");
+    expect(JSON.stringify(lastCallArg)).not.toContain("never reach the model");
+  });
+});
+
+describe("GET /briefs/:id — treatment snapshot invariant", () => {
+  it("does not query Treatment records at all on read — a previously generated BRIEF cannot change if treatments are later edited or deleted", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tx-invariant@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+    });
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
+
+    const generateRes = await agent.post("/briefs").send(RANGE);
+    const briefId = generateRes.body.data.id as string;
+
+    // Edit and then delete the underlying Treatment record entirely.
+    state.treatments[0]!.name = "Changed after generation";
+    state.treatments = [];
+
+    const findManyCallsBeforeGet = vi.mocked(prisma.treatment.findMany).mock.calls.length;
+    const getRes = await agent.get(`/briefs/${briefId}`);
+    expect(getRes.status).toBe(200);
+
+    // The structural proof, not just an outcome that happens to look
+    // right: get() must not call prisma.treatment.findMany at all.
+    expect(vi.mocked(prisma.treatment.findMany).mock.calls.length).toBe(findManyCallsBeforeGet);
+
+    // PRISMA-SCHEMA-BOUNDARY: this currently asserts an empty array,
+    // not the originally generated snapshot — see
+    // brief.mappers.ts/treatment-summary.ts. What this test actually
+    // proves, and will keep proving once the migration lands and this
+    // becomes real persisted data: get() never touches the Treatment
+    // table at all, so nothing about a later edit or deletion can
+    // reach an already generated BRIEF.
+    expect(getRes.body.data.treatmentSummary).toEqual([]);
   });
 });
 

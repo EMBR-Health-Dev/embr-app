@@ -232,6 +232,23 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               })}
         </p>
       </div>
+
+      <div>
+        <h3 className="font-medium text-navy">{t("treatmentsLoggedDuringPeriod")}</h3>
+        {brief.treatmentSummary.length === 0 ? (
+          <p className="mt-1 text-navy/70">{t("noTreatmentsInRange")}</p>
+        ) : (
+          <ul className="mt-1 text-navy/70">
+            {brief.treatmentSummary.map((entry, i) => (
+              <li key={i}>
+                {entry.name} — {tEnum(`treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
+                {entry.endDate ?? t("ongoing")}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-1 text-xs text-navy/50">{t("treatmentSafetyNote")}</p>
+      </div>
     </div>
   );
 }
