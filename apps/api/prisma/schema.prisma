@@ -392,6 +392,13 @@ model ClinicalBrief {
   symptomSummary Json
   /// { averageCycleLengthDays: number | null, cycleCount: number, periodDaysLogged: number }
   cycleSummary Json
+  /// Array<{ name: string, category: TreatmentCategory, startDate: string, endDate: string | null }>
+  /// A snapshot of Treatment records overlapping [fromDate, toDate],
+  /// taken at generation time — deliberately NOT a live query (see
+  /// brief.pdf.ts's reproducibility invariant). Never sent to the AI —
+  /// see brief.ai.ts's BriefInput, which this is not part of. notes is
+  /// deliberately excluded — see treatment-summary.ts's doc comment.
+  treatmentSummary Json
 
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing
