@@ -55,4 +55,8 @@ export class AppError extends Error {
   static internal(message = "An unexpected error occurred", cause?: unknown) {
     return new AppError({ code: ErrorCode.INTERNAL_ERROR, message, cause });
   }
+
+  static serviceUnavailable(message = "Service temporarily unavailable", cause?: unknown) {
+    return new AppError({ code: ErrorCode.SERVICE_UNAVAILABLE, message, cause });
+  }
 }
