@@ -3,6 +3,7 @@ import type { ClinicalBriefDto, ClinicalBriefListItemDto, PaginatedResponse } fr
 import type { PaginationQuery } from "@embr/validation";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
 import { paginate } from "../../lib/pagination.js";
+import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 import { exportRepository } from "../export/export.repository.js";
 import { cycleLengths } from "../export/pdf.js";
 import { treatmentRepository } from "../treatments/treatment.repository.js";
@@ -11,22 +12,13 @@ import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
 import { computeTreatmentSummary } from "./treatment-summary.js";
 
+// Thin wrapper preserving this file's existing internal name/call
+// sites — the canonical computation now lives in
+// lib/symptom-frequency.ts (shared with export/pdf.ts's own
+// symptomFrequency(), which reads only {category, count} off the same
+// richer shape and ignores severityBreakdown).
 function computeSymptomSummary(logs: SymptomLog[]) {
-  const byCategory = new Map<
-    string,
-    { count: number; severityBreakdown: Record<string, number> }
-  >();
-
-  for (const log of logs) {
-    const entry = byCategory.get(log.category) ?? { count: 0, severityBreakdown: {} };
-    entry.count += 1;
-    entry.severityBreakdown[log.severity] = (entry.severityBreakdown[log.severity] ?? 0) + 1;
-    byCategory.set(log.category, entry);
-  }
-
-  return [...byCategory.entries()]
-    .map(([category, { count, severityBreakdown }]) => ({ category, count, severityBreakdown }))
-    .sort((a, b) => b.count - a.count);
+  return computeSymptomFrequency(logs);
 }
 
 function computeCycleSummary(entries: CycleEntry[]) {

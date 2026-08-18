@@ -16,6 +16,7 @@ import type {
   SymptomCategory,
 } from "@embr/types";
 import { env } from "../../config/env.js";
+import { isSuppressedByCohortSize } from "../../lib/cohort-suppression.js";
 import { organizationRepository } from "./organization.repository.js";
 import {
   toMyOrganizationMembershipDto,
@@ -165,7 +166,7 @@ export const organizationService = {
       query,
     );
 
-    if (cohortSize < env.ORG_TRENDS_MIN_COHORT_SIZE) {
+    if (isSuppressedByCohortSize(cohortSize, env.ORG_TRENDS_MIN_COHORT_SIZE)) {
       return { suppressed: true, cohortSize, categories: [] };
     }
 
@@ -196,7 +197,7 @@ export const organizationService = {
     const memberships = await organizationRepository.membershipsForActivation(organizationId);
     const eligibleCount = memberships.length;
 
-    if (eligibleCount < env.ORG_TRENDS_MIN_COHORT_SIZE) {
+    if (isSuppressedByCohortSize(eligibleCount, env.ORG_TRENDS_MIN_COHORT_SIZE)) {
       return {
         suppressed: true,
         eligibleCount,
