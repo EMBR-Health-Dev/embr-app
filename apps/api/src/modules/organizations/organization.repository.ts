@@ -7,6 +7,8 @@ import type { OrgRole } from "@embr/types";
 import { prisma } from "../../lib/prisma.js";
 import { toSkipTake } from "../../lib/pagination.js";
 
+const ORG_ACTIVITY_ROW_CAP = 50000;
+
 export const organizationRepository = {
   createOrganization(input: CreateOrganizationInput) {
     return prisma.organization.create({ data: input });
@@ -104,6 +106,65 @@ export const organizationRepository = {
       select: { userId: true },
     });
     return rows.map((r: { userId: string }) => r.userId);
+  },
+
+  /** userId + createdAt for every accepted membership — the join date
+   * is what anchors each member's own 30-day activation window (see
+   * organization.activation.ts), so this can't reuse memberUserIds
+   * above, which deliberately only selects userId. */
+  async membershipsForActivation(
+    organizationId: string,
+  ): Promise<Array<{ userId: string; createdAt: Date }>> {
+    return prisma.organizationMembership.findMany({
+      where: { organizationId },
+      select: { userId: true, createdAt: true },
+    });
+  },
+
+  /** Raw activity rows for a set of members, from the earliest
+   * relevant date onward — bounded by ORG_ACTIVITY_ROW_CAP below as a
+   * safety ceiling, not a real pagination story, the same reasoning as
+   * trends.repository.ts's CYCLE_ENTRY_ROW_CAP/SYMPTOM_LOG_ROW_CAP.
+   * Sized larger than those (this can span an entire cohort's activity
+   * across a 30-day window, not one user's) — not benchmarked against
+   * real production scale yet, unlike trends.repository.ts's own
+   * measured note; revisit if this ever becomes a real bottleneck. */
+  async activityForMembers(
+    memberUserIds: string[],
+    earliestDate: Date,
+  ): Promise<{
+    symptomActivity: Array<{ userId: string; occurredAt: Date }>;
+    cycleActivity: Array<{ userId: string; occurredAt: Date }>;
+  }> {
+    if (memberUserIds.length === 0) {
+      return { symptomActivity: [], cycleActivity: [] };
+    }
+
+    const [symptomLogs, cycleEntries] = await Promise.all([
+      prisma.symptomLog.findMany({
+        where: { userId: { in: memberUserIds }, occurredAt: { gte: earliestDate } },
+        select: { userId: true, occurredAt: true },
+        take: ORG_ACTIVITY_ROW_CAP,
+      }),
+      prisma.cycleEntry.findMany({
+        where: { userId: { in: memberUserIds }, date: { gte: earliestDate } },
+        select: { userId: true, date: true },
+        take: ORG_ACTIVITY_ROW_CAP,
+      }),
+    ]);
+
+    return {
+      symptomActivity: symptomLogs,
+      // CycleEntry's activity timestamp is `date`, not `occurredAt` —
+      // normalized to the same field name here so the caller can merge
+      // both arrays without needing to know which table each row came
+      // from, matching computeActivatedUserIds/computeWeeklyActiveUserIds's
+      // single LoggedActivityRow shape.
+      cycleActivity: cycleEntries.map((e: { userId: string; date: Date }) => ({
+        userId: e.userId,
+        occurredAt: e.date,
+      })),
+    };
   },
 
   /**

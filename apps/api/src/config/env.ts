@@ -9,6 +9,34 @@ const apiEnvSchema = z.object({
   SMTP_HOST: z.string().default("localhost"),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_FROM: z.string().default("no-reply@embr.health"),
+  // Optional: local dev/test points at MailHog (see docker-compose.yml),
+  // which accepts unauthenticated connections, so these have no
+  // default and are simply omitted from the transport config when
+  // unset. Any real provider (SES, Postmark, SendGrid, ...) requires
+  // both — see mailer.ts's doc comment for what was actually missing
+  // here before this.
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  // Defaults match MailHog's plaintext-friendly local setup. A real
+  // deployment should set SMTP_REQUIRE_TLS=true explicitly — this is
+  // never inferred from SMTP_USER/SMTP_PASS being present, since
+  // that's a decision worth making deliberately, not guessing at.
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_REQUIRE_TLS: z.coerce.boolean().default(false),
+
+  // ---- Retention (closed-beta minimum) ----
+  // Applies only to already-dead rows (expired tokens, expired/revoked
+  // sessions) — see retention.repository.ts's doc comment. Deliberately
+  // NOT covering AuditLog, which has its own separate, undecided policy
+  // — see docs/RETENTION.md.
+  RETENTION_GRACE_PERIOD_DAYS: z.coerce.number().int().positive().default(30),
+  // Comma-separated list of allowed origins. A single value keeps the
+  // original single-origin behavior working unchanged; a real deploy
+  // adds the landing page's own origin alongside the app's, so
+  // POST /public/perimenopause-assessment can be called cross-origin
+  // from the separate landing-page repo without loosening anything
+  // else — every other route still requires a session cookie those
+  // requests will never carry anyway, cross-origin.
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
 
   // ---- Auth (Milestone 2) ----

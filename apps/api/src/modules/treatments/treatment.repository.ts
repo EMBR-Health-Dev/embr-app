@@ -53,6 +53,29 @@ export const treatmentRepository = {
     return prisma.treatment.findFirst({ where: { id, userId } });
   },
 
+  /** Every treatment that overlaps [fromDate, toDate] at all — not just
+   * ones that started inside the range. An ongoing treatment (endDate
+   * null) that started before fromDate must still appear, since it was
+   * genuinely active throughout the period; a treatment that only
+   * touches the range for a single day at either edge still counts as
+   * "during this period." Ordered by startDate descending, matching
+   * list()'s existing convention above.
+   *
+   * Used only at BRIEF generation time (see brief.service.ts) — never
+   * called on brief read/PDF-download, which is what keeps a
+   * previously generated BRIEF from silently changing if treatments
+   * are edited or deleted afterward. */
+  listOverlappingRange(userId: string, fromDate: Date, toDate: Date) {
+    return prisma.treatment.findMany({
+      where: {
+        userId,
+        startDate: { lte: toDate },
+        OR: [{ endDate: null }, { endDate: { gte: fromDate } }],
+      },
+      orderBy: { startDate: "desc" },
+    });
+  },
+
   async update(userId: string, id: string, input: UpdateTreatmentInput) {
     // updateMany (not update) so a non-owned id affects zero rows
     // instead of throwing Prisma's "record not found" error — the

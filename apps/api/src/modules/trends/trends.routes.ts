@@ -33,4 +33,16 @@ router.get(
   }),
 );
 
+router.get(
+  "/trends/co-occurrence",
+  validate(trendsQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const data = await trendsService.coOccurrence(
+      req.user!.sub,
+      req.query as unknown as TrendsQuery,
+    );
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
 export { router as trendsRouter };

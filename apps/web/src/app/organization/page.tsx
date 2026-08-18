@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type {
   MyOrganizationMembershipDto,
   OrganizationDto,
@@ -18,14 +19,6 @@ import { Field } from "../../components/field";
 
 const TRENDS_WINDOW_DAYS = 90;
 
-function categoryLabel(category: string): string {
-  return category
-    .toLowerCase()
-    .split("_")
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 function daysAgoIso(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -33,6 +26,9 @@ function daysAgoIso(days: number): string {
 }
 
 export default function OrganizationPage() {
+  const t = useTranslations("Organization");
+  const tEnum = useTranslations("Enums");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -146,13 +142,11 @@ export default function OrganizationPage() {
         email: inviteEmail.trim(),
         role: inviteRole,
       });
-      setInviteSuccess(`Invitation sent to ${invite.email}.`);
+      setInviteSuccess(t("inviteSuccess", { email: invite.email }));
       setInviteEmail("");
       setInviteRole("ORG_MEMBER");
     } catch (err) {
-      setInviteError(
-        err instanceof ApiError ? err.message : "Couldn't send that invite — try again.",
-      );
+      setInviteError(err instanceof ApiError ? err.message : t("inviteError"));
     } finally {
       setInviting(false);
     }
@@ -177,9 +171,9 @@ export default function OrganizationPage() {
       // leaving whatever was typed) matches that it's genuinely gone
       // from the client the moment the request completes.
       setSsoClientSecret("");
-      setSsoSuccess("SSO connection saved.");
+      setSsoSuccess(t("ssoSaveSuccess"));
     } catch (err) {
-      setSsoError(err instanceof ApiError ? err.message : "Couldn't save that — try again.");
+      setSsoError(err instanceof ApiError ? err.message : t("ssoSaveError"));
     } finally {
       setSsoSaving(false);
     }
@@ -188,7 +182,7 @@ export default function OrganizationPage() {
   if (loading || !user || memberships === null) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -199,18 +193,16 @@ export default function OrganizationPage() {
     return (
       <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
         <header className="flex items-center justify-between">
-          <h1 className="font-display text-2xl text-navy">Organization</h1>
+          <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
           <Link
             href="/dashboard"
             className="text-sm font-medium text-teal underline underline-offset-2"
           >
-            ← Dashboard
+            {t("backToDashboard")}
           </Link>
         </header>
         <p className="mt-8 text-sm text-navy/60">
-          {memberships.length === 0
-            ? "You're not part of an organization on EMBR — this page is for the person who administers an employer, insurer, or clinic account."
-            : "You belong to an organization, but only its ORG_ADMIN can manage the roster and see aggregate trends. If that should be you, ask your organization's admin to change your role."}
+          {memberships.length === 0 ? t("notAMember") : t("notAnAdmin")}
         </p>
       </main>
     );
@@ -219,18 +211,18 @@ export default function OrganizationPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">Organization</h1>
+        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
         <Link
           href="/dashboard"
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          ← Dashboard
+          {t("backToDashboard")}
         </Link>
       </header>
 
       {adminOrgs.length > 1 && (
         <label className="mt-6 flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">Managing</span>
+          <span className="font-medium text-navy">{t("managingLabel")}</span>
           <select
             value={selectedOrgId ?? ""}
             onChange={(e) => setSelectedOrgId(e.target.value)}
@@ -249,18 +241,19 @@ export default function OrganizationPage() {
         <h2 className="font-display text-lg text-navy">{org?.name ?? "…"}</h2>
         {org && (
           <p className="mt-1 text-sm text-navy/60">
-            {org.memberCount} member{org.memberCount === 1 ? "" : "s"}
-            {org.seatLimit !== null && <> of {org.seatLimit} seats</>} · <code>{org.slug}</code>
+            {t("memberCount", { count: org.memberCount })}
+            {org.seatLimit !== null && t("ofSeats", { count: org.seatLimit })} ·{" "}
+            <code>{org.slug}</code>
           </p>
         )}
       </section>
 
       {/* Invite. */}
       <section className="mt-8 rounded border border-navy/10 p-5">
-        <h2 className="font-display text-lg text-navy">Invite someone</h2>
+        <h2 className="font-display text-lg text-navy">{t("inviteSomeone")}</h2>
         <form onSubmit={sendInvite} className="mt-4 flex flex-col gap-4" noValidate>
           <Field
-            label="Email"
+            label={t("emailLabel")}
             type="email"
             autoComplete="off"
             value={inviteEmail}
@@ -268,7 +261,7 @@ export default function OrganizationPage() {
             required
           />
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-navy">Role</span>
+            <span className="font-medium text-navy">{t("roleLabel")}</span>
             <div className="flex gap-2">
               {(["ORG_MEMBER", "ORG_ADMIN"] as const).map((r) => (
                 <button
@@ -279,7 +272,7 @@ export default function OrganizationPage() {
                     inviteRole === r ? "border-navy bg-navy text-bone" : "border-navy/20 text-navy"
                   }`}
                 >
-                  {r === "ORG_ADMIN" ? "Admin" : "Member"}
+                  {r === "ORG_ADMIN" ? t("roleAdmin") : t("roleMember")}
                 </button>
               ))}
             </div>
@@ -287,18 +280,18 @@ export default function OrganizationPage() {
           {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
           {inviteSuccess && <p className="text-sm font-medium text-teal">{inviteSuccess}</p>}
           <Button type="submit" disabled={inviting} className="self-start">
-            {inviting ? "Sending…" : "Send invite"}
+            {inviting ? t("sending") : t("sendInvite")}
           </Button>
         </form>
       </section>
 
       {/* Roster. */}
       <section className="mt-8">
-        <h2 className="font-display text-lg text-navy">Members</h2>
+        <h2 className="font-display text-lg text-navy">{t("members")}</h2>
         {rosterLoading ? (
-          <p className="mt-3 text-sm text-navy/50">Loading…</p>
+          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
         ) : roster.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">No members yet — send an invite above.</p>
+          <p className="mt-3 text-sm text-navy/50">{t("noMembersYet")}</p>
         ) : (
           <ul className="mt-4 divide-y divide-navy/10">
             {roster.map((m) => (
@@ -308,12 +301,12 @@ export default function OrganizationPage() {
                     {m.email}
                     {m.userId === user.id && (
                       <span className="ml-2 rounded-sm bg-teal/10 px-1.5 py-0.5 text-xs font-medium text-teal">
-                        You
+                        {t("you")}
                       </span>
                     )}
                   </p>
-                  <p className="text-navy/50 capitalize">
-                    {m.role === "ORG_ADMIN" ? "Admin" : "Member"} · joined{" "}
+                  <p className="text-navy/50">
+                    {m.role === "ORG_ADMIN" ? t("roleAdmin") : t("roleMember")} · {t("joined")}{" "}
                     {new Date(m.joinedAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -323,7 +316,7 @@ export default function OrganizationPage() {
                     disabled={revokingUserId === m.userId}
                     className="text-red-600 underline underline-offset-2 disabled:opacity-50"
                   >
-                    {revokingUserId === m.userId ? "Revoking…" : "Revoke"}
+                    {revokingUserId === m.userId ? t("revoking") : t("revoke")}
                   </button>
                 )}
               </li>
@@ -334,18 +327,15 @@ export default function OrganizationPage() {
 
       {/* Single sign-on. */}
       <section className="mt-8 rounded border border-navy/10 p-5">
-        <h2 className="font-display text-lg text-navy">Single sign-on</h2>
-        <p className="mt-1 text-sm text-navy/60">
-          Let members at your email domain log in through your identity provider instead of a
-          password. Password login keeps working either way — this doesn&apos;t replace it.
-        </p>
+        <h2 className="font-display text-lg text-navy">{t("sso")}</h2>
+        <p className="mt-1 text-sm text-navy/60">{t("ssoDescription")}</p>
 
         {ssoLoading ? (
-          <p className="mt-4 text-sm text-navy/50">Loading…</p>
+          <p className="mt-4 text-sm text-navy/50">{tCommon("loading")}</p>
         ) : (
           <form onSubmit={saveSso} className="mt-4 flex flex-col gap-4" noValidate>
             <Field
-              label="Issuer URL"
+              label={t("issuerUrlLabel")}
               type="url"
               placeholder="https://your-idp.example.com"
               value={ssoIssuerUrl}
@@ -353,21 +343,21 @@ export default function OrganizationPage() {
               required
             />
             <Field
-              label="Client ID"
+              label={t("clientIdLabel")}
               value={ssoClientId}
               onChange={(e) => setSsoClientId(e.target.value)}
               required
             />
             <Field
-              label="Client secret"
+              label={t("clientSecretLabel")}
               type="password"
-              placeholder={ssoConnection ? "Re-enter to update" : undefined}
+              placeholder={ssoConnection ? t("clientSecretPlaceholder") : undefined}
               value={ssoClientSecret}
               onChange={(e) => setSsoClientSecret(e.target.value)}
               required
             />
             <Field
-              label="Allowed email domain"
+              label={t("allowedDomainLabel")}
               placeholder="acme.com"
               value={ssoDomain}
               onChange={(e) => setSsoDomain(e.target.value)}
@@ -380,14 +370,18 @@ export default function OrganizationPage() {
                 onChange={(e) => setSsoEnabled(e.target.checked)}
                 className="h-4 w-4 rounded-sm border-navy/30"
               />
-              Enabled
+              {t("enabledLabel")}
             </label>
 
             {ssoError && <p className="text-sm text-red-600">{ssoError}</p>}
             {ssoSuccess && <p className="text-sm font-medium text-teal">{ssoSuccess}</p>}
 
             <Button type="submit" disabled={ssoSaving} className="self-start">
-              {ssoSaving ? "Saving…" : ssoConnection ? "Update connection" : "Save connection"}
+              {ssoSaving
+                ? t("saving")
+                : ssoConnection
+                  ? t("updateConnection")
+                  : t("saveConnection")}
             </Button>
           </form>
         )}
@@ -396,36 +390,26 @@ export default function OrganizationPage() {
       {/* Aggregate trends — anonymized, cohort-level only. */}
       <section className="mt-10">
         <h2 className="font-display text-lg text-navy">
-          Symptom trends, last {TRENDS_WINDOW_DAYS} days
+          {t("symptomTrendsHeader", { days: TRENDS_WINDOW_DAYS })}
         </h2>
-        <p className="mt-1 text-sm text-navy/60">
-          Anonymized across your organization — never any one member&apos;s individual record.
-        </p>
+        <p className="mt-1 text-sm text-navy/60">{t("trendsAnonymizedNote")}</p>
         {trendsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">Loading…</p>
+          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
         ) : !frequency || frequency.suppressed ? (
-          <p className="mt-4 text-sm text-navy/50">
-            Not enough people have logged symptoms in this window yet to show a trend without
-            risking identifying any one person. This isn&apos;t about your organization being too
-            small overall — it&apos;s about how many members have actually logged something
-            recently.
-          </p>
+          <p className="mt-4 text-sm text-navy/50">{t("trendsSuppressed")}</p>
         ) : frequency.categories.length === 0 ? (
-          <p className="mt-4 text-sm text-navy/50">
-            Nothing logged across the organization in this window yet.
-          </p>
+          <p className="mt-4 text-sm text-navy/50">{t("trendsEmpty")}</p>
         ) : (
           <>
             <p className="mt-3 text-xs text-navy/40">
-              Based on {frequency.cohortSize} member{frequency.cohortSize === 1 ? "" : "s"} who
-              logged something in this window.
+              {t("basedOnCohort", { count: frequency.cohortSize })}
             </p>
             <ul className="mt-4 flex flex-col gap-2">
               {(() => {
                 const maxCount = frequency.categories[0]?.count ?? 1;
                 return frequency.categories.map(({ category, count }) => (
                   <li key={category} className="flex items-center gap-3 text-sm">
-                    <span className="w-36 shrink-0 text-navy">{categoryLabel(category)}</span>
+                    <span className="w-36 shrink-0 text-navy">{tEnum(`category.${category}`)}</span>
                     <div className="h-2.5 flex-1 rounded-full bg-navy/5">
                       <div
                         className="h-2.5 rounded-full bg-brass"

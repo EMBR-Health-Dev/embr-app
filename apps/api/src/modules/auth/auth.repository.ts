@@ -142,6 +142,40 @@ export const authRepository = {
       data: { consumedAt: new Date() },
     });
   },
+
+  // ---- Account deletion ----
+
+  /**
+   * Writes a final audit entry, then deletes the User row, both in one
+   * transaction — if the audit write somehow failed, the deletion
+   * shouldn't proceed silently with no trail of it at all.
+   *
+   * The delete itself is a single native `DELETE FROM users WHERE
+   * id = $1`: every user-owned table (Session, SymptomLog, CycleEntry,
+   * ClinicalBrief, OnboardingProfile, OrganizationMembership, the
+   * verification/reset tokens) declares `onDelete: Cascade` in the
+   * schema, and AuditLog declares `onDelete: SetNull` — Postgres
+   * enforces both as real foreign-key actions (this datasource has no
+   * `relationMode` override, so it's the default `"foreignKeys"` mode,
+   * not Prisma-emulated cascades), meaning the single DELETE statement
+   * removes every row it should and nulls the audit trail's userId —
+   * including the very row this method just wrote — atomically, with
+   * no per-table application code needed here.
+   *
+   * Deliberately bypasses audit.ts's writeAuditLog() helper — that
+   * helper is intentionally "best-effort, never allowed to fail an
+   * otherwise-successful operation" (see its own doc comment), which
+   * is the wrong behavior here: this specific write and the deletion
+   * must succeed or fail together, not independently.
+   */
+  async deleteUserAccount(userId: string): Promise<void> {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.auditLog.create({
+        data: { userId, action: "ACCOUNT_DELETED" },
+      });
+      await tx.user.delete({ where: { id: userId } });
+    });
+  },
 };
 
 export type AuthRepository = typeof authRepository;

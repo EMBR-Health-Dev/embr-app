@@ -1,0 +1,247 @@
+{
+  "common": {
+    "loading": "読み込み中…",
+    "done": "完了"
+  },
+  "login": {
+    "title": "おかえりなさい",
+    "emailLabel": "メールアドレス",
+    "passwordLabel": "パスワード",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "ログイン",
+    "submitting": "ログイン中…",
+    "newToEmbr": "EMBRは初めてですか?",
+    "createAccount": "アカウントを作成"
+  },
+  "languageSwitcher": {
+    "label": "言語",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "register": {
+    "checkEmailTitle": "メールをご確認ください",
+    "checkEmailBody": "{{email}} 宛に確認用リンクを送信しました。メールを確認してからログインしてください。",
+    "goToLogin": "ログインへ進む",
+    "title": "アカウントを作成",
+    "emailLabel": "メールアドレス",
+    "passwordLabel": "パスワード",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "アカウントを作成",
+    "submitting": "作成中…",
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか?",
+    "logIn": "ログイン"
+  },
+  "onboarding": {
+    "skipToDashboard": "ダッシュボードへスキップ",
+    "welcome": {
+      "headline": "あなたに実際に起きていることを、記録しておく場所。",
+      "body": "EMBRは、あなたが経験していることを、あとで振り返り、理解し、いずれ担当医との会話に役立てられる形にします。診断をしたり、担当医の代わりになったりすることはありません。あなた自身のペースで、あなた自身の記録を整理する手助けをします。",
+      "getStarted": "はじめる"
+    },
+    "jobToBeDone": {
+      "headline": "EMBRにどんなことを手伝ってほしいですか?",
+      "hint": "最初に何を表示するかの参考にするだけです。いつでも変更できます。",
+      "understandExperience": "自分に起きていることを理解したい",
+      "understandPatterns": "時間の経過とともにパターンを理解したい",
+      "prepareForAppointment": "診察に向けて準備したい",
+      "keepRecord": "長期的に記録を残したい",
+      "notSure": "まだよくわからない"
+    },
+    "whatsGoingOn": {
+      "headline": "最近、何か気になることはありましたか?",
+      "hint": "変化を感じたものを選んでください。まだ記録にはなりません。最初のチェックインが、あなたのことをすでに知っているように感じられるための準備です。",
+      "continue": "次へ",
+      "sleep": "睡眠",
+      "energy": "エネルギー",
+      "mood": "気分",
+      "body": "身体",
+      "focus": "集中力"
+    },
+    "appointmentStatus": {
+      "headline": "近々、診察の予定はありますか?",
+      "hint": "正確な日付はまだ不要です。BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
+      "withinMonth": "はい、1か月以内にあります",
+      "unsureWhen": "はい、ただしいつかは未定です",
+      "no": "いいえ",
+      "unsure": "まだわかりません"
+    },
+    "theLoop": {
+      "headline": "EMBRの仕組みをご紹介します。",
+      "trackFallback": "睡眠 · エネルギー · 気分",
+      "patternsLabel": "パターン",
+      "patternsTitle": "数週間記録を続けると、例えばこのように見えてくることがあります:",
+      "patternsExample": "「睡眠の乱れは、エネルギー低下とともに6日間見られました。」",
+      "patternsCaveat": "これは記述であり、診断ではありません。EMBRが原因を特定することはありません。",
+      "trackLabel": "記録",
+      "briefLabel": "BRIEF",
+      "briefTitle": "エビデンス · パターン · 質問",
+      "briefBody": "準備ができたときに作成される、あなたの記録の要約です。自動では作成されません。",
+      "conversationLabel": "診察での会話",
+      "conversationTitle": "次回の診察に持っていける、具体的な材料になります。",
+      "conversationBody": "完全に任意で、あなただけのものです。",
+      "logFirstEntry": "最初の記録をつける",
+      "goToDashboard": "代わりにダッシュボードへ"
+    }
+  },
+  "enums": {
+    "category": {
+      "HOT_FLASH": "ホットフラッシュ",
+      "NIGHT_SWEATS": "寝汗",
+      "MOOD_CHANGE": "気分の変化",
+      "SLEEP_DISTURBANCE": "睡眠障害",
+      "BRAIN_FOG": "ブレインフォグ",
+      "JOINT_PAIN": "関節痛",
+      "FATIGUE": "倦怠感",
+      "ANXIETY": "不安",
+      "IRREGULAR_HEARTBEAT": "不整脈",
+      "VAGINAL_DRYNESS": "膣の乾燥",
+      "LIBIDO_CHANGE": "性欲の変化",
+      "WEIGHT_CHANGE": "体重の変化",
+      "HEADACHE": "頭痛",
+      "OTHER": "その他"
+    },
+    "severity": {
+      "MILD": "軽度",
+      "MODERATE": "中等度",
+      "SEVERE": "重度"
+    },
+    "flow": {
+      "SPOTTING": "少量",
+      "LIGHT": "軽い",
+      "MEDIUM": "普通",
+      "HEAVY": "多い"
+    },
+    "treatmentCategory": {
+      "HRT": "HRT（ホルモン補充療法）",
+      "SUPPLEMENT": "サプリメント",
+      "MEDICATION": "医薬品",
+      "LIFESTYLE": "生活習慣",
+      "OTHER": "その他"
+    }
+  },
+  "tabs": {
+    "symptoms": "症状",
+    "cycle": "周期",
+    "trends": "Trends",
+    "brief": "BRIEF",
+    "settings": "設定"
+  },
+  "home": {
+    "greeting": "こんにちは",
+    "greetingWithName": "こんにちは、{{name}}さん",
+    "logout": "ログアウト",
+    "howAreYouFeeling": "今、どのように感じていますか?",
+    "severity": "重症度",
+    "notesPlaceholder": "メモ(任意)",
+    "pickCategoryAndSeverity": "症状と重症度を選択してください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "logSymptom": "症状を記録",
+    "logging": "記録中…",
+    "recentLogs": "最近の記録",
+    "delete": "削除",
+    "noSymptomsYet": "まだ症状が記録されていません。",
+    "startingPoint": {
+      "understandExperience": "記録を始めましょう。",
+      "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
+      "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
+      "keepRecord": "長期的な記録を始めましょう。",
+      "notSure": "記録を続けると見えてくるものがあります。"
+    }
+  },
+  "cycle": {
+    "title": "今日の周期記録",
+    "flow": "経血量",
+    "none": "なし",
+    "periodStartedToday": "今日、生理が始まった",
+    "periodEndedToday": "今日、生理が終わった",
+    "notesPlaceholder": "メモ(任意)",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "saving": "保存中…",
+    "saved": "保存しました ✓",
+    "saveTodaysEntry": "今日の記録を保存",
+    "recentEntries": "最近の記録",
+    "noFlowLogged": "経血量の記録なし",
+    "periodStart": " · 生理開始",
+    "periodEnd": " · 生理終了",
+    "noEntriesYet": "まだ記録がありません。"
+  },
+  "trends": {
+    "title": "Trends",
+    "symptomsHeader": "過去{{days}}日間の症状",
+    "noSymptomsYet": "まだこの期間の記録がありません。記録が増えると、ここにパターンが表示されます。",
+    "cycleLengthHeader": "過去{{days}}日間の周期の長さ",
+    "noCycleDataYet": "周期の長さを表示するには、生理開始日を2回以上記録してください。周閉経期には周期が不規則になったり、なくなったりすることはよくあります。これはあなたと担当医のための記録であり、診断ではありません。",
+    "averagingPrefix": "この期間、生理開始日の間隔は平均",
+    "averagingSuffix": "です。",
+    "daysUnit": "日",
+    "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
+  },
+  "brief": {
+    "title": "EMBR BRIEF",
+    "hint": "記録した症状と周期データの要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、診断や医学的アドバイスではありません。",
+    "fromPlaceholder": "開始日",
+    "toPlaceholder": "終了日",
+    "invalidDates": "開始日が終了日より前になるように、両方の日付を選択してください。",
+    "generate": "BRIEFを作成",
+    "generating": "作成中…",
+    "generateError": "BRIEFを作成できませんでした。",
+    "briefReady": "BRIEFが完成しました",
+    "preparing": "準備中…",
+    "sharePdf": "PDFを共有 / 保存",
+    "pastBriefs": "過去のBRIEF",
+    "noBriefsYet": "まだBRIEFが作成されていません。",
+    "generatedOn": "作成日: {{date}}",
+    "pdf": "PDF",
+    "delete": "削除",
+    "questionsForGp": "担当医への質問",
+    "symptomFrequency": "症状の頻度",
+    "noSymptomsInRange": "この期間に記録された症状はありません。",
+    "occurrenceCount_other": "{{count}}回",
+    "cycleSummary": "周期の要約",
+    "notEnoughCycleData": "この期間の周期の長さを計算するには、生理開始日の記録が不足しています。",
+    "averageCycleLength_other": "平均周期: {{days}}日({{count}}周期記録あり)",
+    "treatmentsLoggedDuringPeriod": "この期間に記録された治療",
+    "noTreatmentsInRange": "この期間に記録された治療はありません。",
+    "ongoing": "継続中",
+    "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。"
+  },
+  "settings": {
+    "title": "設定",
+    "changePasswordTitle": "パスワードの変更",
+    "changePasswordHint": "パスワードを変更すると、この端末を含むすべての端末からログアウトされます。",
+    "currentPasswordPlaceholder": "現在のパスワード",
+    "newPasswordPlaceholder": "新しいパスワード",
+    "genericError": "問題が発生しました。もう一度お試しください。",
+    "changePassword": "パスワードを変更",
+    "changing": "変更中…",
+    "devices": "デバイス",
+    "logoutEverywhere": "すべての端末からログアウト",
+    "loggingOut": "ログアウト中…",
+    "noActiveSessions": "有効なセッションはありません。",
+    "unknownDevice": "不明なデバイス",
+    "thisDevice": "この端末",
+    "unknownIp": "不明なIP",
+    "signedIn": "ログイン日",
+    "revoking": "削除中…",
+    "revoke": "削除",
+    "logout": "ログアウト",
+    "deleteAccountTitle": "アカウントの削除",
+    "deleteAccountHint": "アカウントとその中のすべてのデータ(症状の記録、周期の記録、BRIEF、設定など)を完全に削除します。この操作は取り消せません。",
+    "deleteMyAccount": "アカウントを削除する",
+    "confirmPasswordPlaceholder": "パスワードを確認",
+    "enterPasswordToConfirm": "確認のためパスワードを入力してください。",
+    "permanentlyDelete": "完全に削除",
+    "deleting": "削除中…",
+    "cancel": "キャンセル"
+  },
+  "appointmentCard": {
+    "withinMonth": "近々、診察の予定があるとのことでしたね。BRIEFがあれば、具体的な材料を持って診察に臨めます。",
+    "unsureWhen": "診察の予定があるかもしれないとのことでしたね。BRIEFはいつでも作成できます。",
+    "generateBrief": "BRIEFを作成する"
+  },
+  "coOccurrence": {
+    "heading": "一緒に記録されたもの",
+    "message_other": "{{categoryA}}は{{categoryB}}とともに、{{count}}日記録されています。",
+    "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。"
+  }
+}

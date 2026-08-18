@@ -7,12 +7,35 @@ import { logger } from "../../lib/logger.js";
  * docker-compose.yml) so verification/reset links can be inspected in a
  * browser without a real mail provider; swap SMTP_* for a real provider
  * (SES, Postmark, ...) in production — the calling code never changes.
+ *
+ * `auth` is only included when both SMTP_USER and SMTP_PASS are set —
+ * MailHog accepts unauthenticated connections, so local dev/test never
+ * sets these. Before this, the transport had no auth option at all,
+ * meaning it could never actually authenticate with any real provider
+ * regardless of what credentials were supplied via env vars — every
+ * one of them requires SMTP auth to send anything.
  */
+const auth =
+  env.SMTP_USER && env.SMTP_PASS ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined;
+
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
   port: env.SMTP_PORT,
-  secure: false,
+  secure: env.SMTP_SECURE,
+  requireTLS: env.SMTP_REQUIRE_TLS,
+  auth,
 });
+
+/** Verifies the transport can actually connect and (if configured)
+ * authenticate — used by the /health/ready check so a broken SMTP
+ * config is visible before a real user's verification email silently
+ * fails to send. Deliberately not part of the readiness check's
+ * overall pass/fail status (see health.ts) — email being down
+ * shouldn't pull an otherwise-healthy API instance out of a load
+ * balancer's rotation. */
+export async function verifyMailTransport(): Promise<void> {
+  await transport.verify();
+}
 
 async function sendMail(to: string, subject: string, html: string, text: string) {
   try {

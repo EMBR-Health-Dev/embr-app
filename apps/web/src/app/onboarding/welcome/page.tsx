@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useOnboarding } from "../../../lib/onboarding-context";
 import { OnboardingScreen } from "../../../components/onboarding-screen";
 import { Button } from "../../../components/button";
 import { STEP_ROUTES } from "../../../lib/onboarding-steps";
 
 export default function WelcomeScreen() {
+  const t = useTranslations("Onboarding.welcome");
   const router = useRouter();
   const { patch } = useOnboarding();
   const [starting, setStarting] = useState(false);
@@ -24,21 +26,14 @@ export default function WelcomeScreen() {
 
   return (
     <OnboardingScreen step="WELCOME">
-      <p className="font-display text-[28px] leading-[1.3] text-navy">
-        A place to keep track of what&apos;s actually happening to you.
-      </p>
-      <p className="mt-6 text-[15px] leading-relaxed text-navy/70">
-        EMBR helps you turn what you&apos;re experiencing into something you can look back on,
-        understand, and eventually bring into a conversation with your doctor. It doesn&apos;t
-        diagnose you or replace your clinician. It helps you organize your own record, on your own
-        terms.
-      </p>
+      <p className="font-display text-[28px] leading-[1.3] text-navy">{t("headline")}</p>
+      <p className="mt-6 text-[15px] leading-relaxed text-navy/70">{t("body")}</p>
       <Button
         onClick={() => void handleContinue()}
         disabled={starting}
         className="mt-10 self-start"
       >
-        {starting ? "…" : "Get started"}
+        {starting ? "…" : t("getStarted")}
       </Button>
     </OnboardingScreen>
   );

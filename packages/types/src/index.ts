@@ -160,6 +160,29 @@ export interface CycleLengthTrendDto {
   lengths: CycleLengthEntryDto[];
 }
 
+/** Structured data only, deliberately no preformatted sentence — the
+ * exact wording (and its translation) is a client concern, not an API
+ * one. null means no pair of categories met the co-occurrence
+ * threshold in the queried window, which is the normal, expected case
+ * for most people, not an error. */
+export interface SymptomCoOccurrenceDto {
+  categoryA: SymptomCategory;
+  categoryB: SymptomCategory;
+  days: number;
+}
+
+// ---- Public perimenopause assessment (unauthenticated) ----
+
+/** score is a plain count, never weighted or modeled — deliberately
+ * transparent and reproducible, not a "clinical algorithm." tier is
+ * derived from score purely for the client to pick which follow-up
+ * copy/CTA to show; it is not, and must never be presented as, a
+ * diagnosis. */
+export interface PerimenopauseAssessmentResultDto {
+  score: number;
+  tier: "low" | "high";
+}
+
 // ---- Admin (Milestone 7) ----
 
 export interface AuditLogDto {
@@ -226,6 +249,48 @@ export interface OrgSymptomFrequencyDto {
   categories: Array<{ category: SymptomCategory; count: number }>;
 }
 
+/**
+ * Employer activation metrics — cohort-level, anonymized, no individual
+ * member is ever identifiable from this response. Same k-anonymity
+ * treatment as OrgSymptomFrequencyDto above, applied to eligibleCount
+ * rather than an already-filtered active-logger count (see
+ * organization.service.ts's activation() for why that distinction
+ * matters here specifically).
+ *
+ * BUSINESS DEFINITIONS — these are deliberate product decisions, not
+ * implementation details, and changing any of them changes what this
+ * metric means to a customer. Do not alter without revisiting the
+ * definition itself (see organization.activation.ts for the
+ * authoritative constants and reasoning):
+ *
+ * - Eligible employee: has an accepted OrganizationMembership row for
+ *   this organization. Pending invites do not count.
+ * - Activated employee: an eligible employee with at least one
+ *   SymptomLog or CycleEntry logged within their first 30 days after
+ *   their OrganizationMembership.createdAt — a per-member relative
+ *   window, not a shared org-wide date range.
+ * - Weekly active employee: an eligible employee with at least one
+ *   SymptomLog or CycleEntry in the trailing 7 days from `asOf` — a
+ *   single shared window as of one point in time, not per-member
+ *   relative.
+ *
+ * null (not 0) for every metric beyond eligibleCount when suppressed —
+ * distinguishes "withheld because the cohort is too small" from "this
+ * organization genuinely has zero activated employees," the same
+ * distinction OrgSymptomFrequencyDto's empty-vs-suppressed categories
+ * array already makes.
+ */
+export interface OrgActivationDto {
+  suppressed: boolean;
+  eligibleCount: number;
+  activatedCount: number | null;
+  activationPercentage: number | null;
+  weeklyActiveCount: number | null;
+  weeklyActivePercentage: number | null;
+  activationWindowDays: number;
+  asOf: string;
+}
+
 // ---- SSO (Milestone 15) ----
 
 /** Never includes the client secret, encrypted or otherwise — the
@@ -258,6 +323,20 @@ export interface BriefCycleSummaryDto {
   periodDaysLogged: number;
 }
 
+/** A deterministic snapshot of Treatment records overlapping the
+ * BRIEF's date range, taken at generation time — never a live query.
+ * Deliberately excludes notes: see the Treatment-in-BRIEF design
+ * notes in brief.service.ts for why free-text treatment notes are
+ * excluded from BRIEF entirely, the same way SymptomLog.notes always
+ * has been. Never sent to the AI — this type has no relationship to
+ * BriefInput in brief.ai.ts. */
+export interface BriefTreatmentSummaryEntryDto {
+  name: string;
+  category: TreatmentCategory;
+  startDate: string;
+  endDate: string | null;
+}
+
 /** The list view — no AI content, keeps history/pagination responses
  * small. Fetch the full ClinicalBriefDto to read the narrative. */
 export interface ClinicalBriefListItemDto {
@@ -270,10 +349,13 @@ export interface ClinicalBriefListItemDto {
 /** aiNarrative and aiDiscussionTopics are AI-generated from the
  * structured summary alone — see brief.ai.ts's system prompt for the
  * exact scope constraints (data-grounded only, never diagnostic,
- * discussion topics framed as questions, never assertions). */
+ * discussion topics framed as questions, never assertions).
+ * treatmentSummary is never part of that — it's a deterministic,
+ * database-sourced snapshot with no AI involvement at all. */
 export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   symptomSummary: BriefSymptomSummaryEntryDto[];
   cycleSummary: BriefCycleSummaryDto;
+  treatmentSummary: BriefTreatmentSummaryEntryDto[];
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

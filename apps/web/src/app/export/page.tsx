@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
 
 function buildExportUrl(path: string, from: string, to: string): string {
@@ -14,6 +15,8 @@ function buildExportUrl(path: string, from: string, to: string): string {
 }
 
 export default function ExportPage() {
+  const t = useTranslations("Export");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { user, loading } = useAuth();
   const [from, setFrom] = useState("");
@@ -26,27 +29,25 @@ export default function ExportPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </main>
     );
   }
 
   const downloads = [
     {
-      label: "Clinician summary (PDF)",
-      description:
-        "A short summary formatted for a doctor's visit — symptom frequency, cycle length, and the log itself.",
+      label: t("clinicianSummaryLabel"),
+      description: t("clinicianSummaryDescription"),
       path: buildExportUrl("summary.pdf", from, to),
     },
     {
-      label: "Symptom logs (CSV)",
-      description:
-        "Every symptom entry in the range, one row each — for your own records or another tool.",
+      label: t("symptomLogsLabel"),
+      description: t("symptomLogsDescription"),
       path: buildExportUrl("symptom-logs.csv", from, to),
     },
     {
-      label: "Cycle entries (CSV)",
-      description: "Every cycle entry in the range, one row each.",
+      label: t("cycleEntriesLabel"),
+      description: t("cycleEntriesDescription"),
       path: buildExportUrl("cycle-entries.csv", from, to),
     },
   ];
@@ -54,23 +55,20 @@ export default function ExportPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">Export your data</h1>
+        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
         <Link
           href="/dashboard"
           className="text-sm font-medium text-teal underline underline-offset-2"
         >
-          ← Dashboard
+          {t("backToDashboard")}
         </Link>
       </header>
 
-      <p className="mt-3 text-sm text-navy/60">
-        Everything you export stays on your device — nothing is sent anywhere else. Leave the dates
-        blank to export everything.
-      </p>
+      <p className="mt-3 text-sm text-navy/60">{t("description")}</p>
 
       <section className="mt-8 flex flex-wrap gap-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">From</span>
+          <span className="font-medium text-navy">{t("fromLabel")}</span>
           <input
             type="date"
             value={from}
@@ -79,7 +77,7 @@ export default function ExportPage() {
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">To</span>
+          <span className="font-medium text-navy">{t("toLabel")}</span>
           <input
             type="date"
             value={to}

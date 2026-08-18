@@ -1,20 +1,30 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
 import { theme } from "../../lib/theme";
 import { STEP_ROUTES } from "../../lib/onboarding-steps";
 
-const OPTIONS: { value: string; label: string }[] = [
-  { value: "UNDERSTAND_EXPERIENCE", label: "Understand what I'm experiencing" },
-  { value: "UNDERSTAND_PATTERNS", label: "Understand patterns over time" },
-  { value: "PREPARE_FOR_APPOINTMENT", label: "Prepare for a healthcare conversation" },
-  { value: "KEEP_RECORD", label: "Keep a better record, long term" },
-  { value: "NOT_SURE", label: "Not sure yet" },
-];
+const OPTION_VALUES = [
+  "UNDERSTAND_EXPERIENCE",
+  "UNDERSTAND_PATTERNS",
+  "PREPARE_FOR_APPOINTMENT",
+  "KEEP_RECORD",
+  "NOT_SURE",
+] as const;
+
+const OPTION_KEYS: Record<(typeof OPTION_VALUES)[number], string> = {
+  UNDERSTAND_EXPERIENCE: "understandExperience",
+  UNDERSTAND_PATTERNS: "understandPatterns",
+  PREPARE_FOR_APPOINTMENT: "prepareForAppointment",
+  KEEP_RECORD: "keepRecord",
+  NOT_SURE: "notSure",
+};
 
 export default function JobToBeDoneScreen() {
+  const { t } = useTranslation();
   const { patch } = useOnboarding();
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -27,21 +37,15 @@ export default function JobToBeDoneScreen() {
 
   return (
     <OnboardingScreen step="JOB_TO_BE_DONE">
-      <Text style={styles.headline}>What do you want EMBR to help you with?</Text>
-      <Text style={styles.hint}>
-        This just shapes what we show you first. You can always change your mind later.
-      </Text>
+      <Text style={styles.headline}>{t("onboarding.jobToBeDone.headline")}</Text>
+      <Text style={styles.hint}>{t("onboarding.jobToBeDone.hint")}</Text>
       <View style={styles.list}>
-        {OPTIONS.map((opt) => {
-          const isSelected = selected === opt.value;
+        {OPTION_VALUES.map((value) => {
+          const isSelected = selected === value;
           return (
-            <Pressable
-              key={opt.value}
-              onPress={() => void handleSelect(opt.value)}
-              style={styles.row}
-            >
+            <Pressable key={value} onPress={() => void handleSelect(value)} style={styles.row}>
               <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>
-                {opt.label}
+                {t(`onboarding.jobToBeDone.${OPTION_KEYS[value]}`)}
               </Text>
               <View style={[styles.dot, isSelected && styles.dotSelected]} />
             </Pressable>

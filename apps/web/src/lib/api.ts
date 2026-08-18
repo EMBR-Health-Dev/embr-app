@@ -13,6 +13,7 @@ import type {
   OrgSymptomFrequencyDto,
   PaginatedResponse,
   SsoConnectionDto,
+  SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
   UserDto,
@@ -35,6 +36,9 @@ export const api = {
 
     changePassword: (input: { currentPassword: string; newPassword: string }) =>
       apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
+
+    deleteAccount: (input: { password: string }) =>
+      apiFetch<void>("/auth/me", { method: "DELETE", body: input }),
 
     sessions: {
       list: () => apiFetch<DeviceSessionDto[]>("/auth/sessions"),
@@ -76,6 +80,9 @@ export const api = {
 
     cycleLength: (query?: { from?: string; to?: string }) =>
       apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
+
+    coOccurrence: (query?: { from?: string; to?: string }) =>
+      apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
   },
 
   organizations: {

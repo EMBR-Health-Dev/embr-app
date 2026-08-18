@@ -1,6 +1,7 @@
 import { StyleSheet, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../lib/onboarding-context";
 import { ONBOARDING_STEPS, type OnboardingStep } from "../lib/onboarding-steps";
 import { theme } from "../lib/theme";
@@ -12,6 +13,7 @@ export function OnboardingScreen({
   step: OnboardingStep;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const { patch } = useOnboarding();
   const index = ONBOARDING_STEPS.indexOf(step);
 
@@ -33,7 +35,7 @@ export function OnboardingScreen({
             ))}
           </View>
           <Pressable onPress={() => void handleSkip()}>
-            <Text style={styles.skipText}>Skip to dashboard</Text>
+            <Text style={styles.skipText}>{t("onboarding.skipToDashboard")}</Text>
           </Pressable>
         </View>
 

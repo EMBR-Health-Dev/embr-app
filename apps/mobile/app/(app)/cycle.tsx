@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { flowIntensitySchema } from "@embr/validation";
 import type { CycleEntryDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
-import { categoryLabel } from "../../lib/format";
 import { Chip } from "../../components/chip";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
+import { theme } from "../../lib/theme";
 
 const FLOWS = flowIntensitySchema.options;
 
@@ -19,6 +22,7 @@ function todayIsoDate(): string {
 }
 
 export default function CycleScreen() {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<CycleEntryDto[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
 
@@ -57,9 +61,7 @@ export default function CycleScreen() {
       setSaved(true);
       await loadEntries();
     } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : "Something went wrong. Try again in a moment.",
-      );
+      setFormError(err instanceof ApiError ? err.message : t("cycle.genericError"));
     } finally {
       setSaving(false);
     }
@@ -76,12 +78,12 @@ export default function CycleScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Today&apos;s cycle entry</Text>
+            <Text style={styles.title}>{t("cycle.title")}</Text>
 
-            <Text style={styles.sectionLabel}>Flow</Text>
+            <Text style={styles.sectionLabel}>{t("cycle.flow")}</Text>
             <View style={styles.chipRow}>
               <Chip
-                label="None"
+                label={t("cycle.none")}
                 selected={flow === null}
                 onPress={() => {
                   setFlow(null);
@@ -91,7 +93,7 @@ export default function CycleScreen() {
               {FLOWS.map((f) => (
                 <Chip
                   key={f}
-                  label={categoryLabel(f)}
+                  label={t(`enums.flow.${f}`)}
                   selected={flow === f}
                   onPress={() => {
                     setFlow(f);
@@ -102,7 +104,7 @@ export default function CycleScreen() {
             </View>
 
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Period started today</Text>
+              <Text style={styles.switchLabel}>{t("cycle.periodStartedToday")}</Text>
               <Switch
                 value={periodStart}
                 onValueChange={(v) => {
@@ -112,7 +114,7 @@ export default function CycleScreen() {
               />
             </View>
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Period ended today</Text>
+              <Text style={styles.switchLabel}>{t("cycle.periodEndedToday")}</Text>
               <Switch
                 value={periodEnd}
                 onValueChange={(v) => {
@@ -124,7 +126,7 @@ export default function CycleScreen() {
 
             <TextInput
               style={styles.notesInput}
-              placeholder="Notes (optional)"
+              placeholder={t("cycle.notesPlaceholder")}
               value={notes}
               onChangeText={(v) => {
                 setNotes(v);
@@ -141,26 +143,30 @@ export default function CycleScreen() {
               disabled={saving}
             >
               <Text style={styles.buttonText}>
-                {saving ? "Saving…" : saved ? "Saved ✓" : "Save today's entry"}
+                {saving ? t("cycle.saving") : saved ? t("cycle.saved") : t("cycle.saveTodaysEntry")}
               </Text>
             </Pressable>
 
-            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>Recent entries</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>{t("cycle.recentEntries")}</Text>
           </View>
         }
         renderItem={({ item }) => (
           <View style={styles.entryRow}>
             <Text style={styles.entryDate}>{item.date}</Text>
             <Text style={styles.entryMeta}>
-              {item.flow ? categoryLabel(item.flow) : "No flow logged"}
-              {item.isPeriodStart ? " · Period start" : ""}
-              {item.isPeriodEnd ? " · Period end" : ""}
+              {item.flow ? t(`enums.flow.${item.flow}`) : t("cycle.noFlowLogged")}
+              {item.isPeriodStart ? t("cycle.periodStart") : ""}
+              {item.isPeriodEnd ? t("cycle.periodEnd") : ""}
             </Text>
             {item.notes && <Text style={styles.entryNotes}>{item.notes}</Text>}
           </View>
         )}
         ListEmptyComponent={
-          !loadingEntries ? <Text style={styles.emptyText}>No entries yet.</Text> : null
+          loadingEntries ? (
+            <LoadingState />
+          ) : (
+            <EmptyState icon="calendar-outline" label={t("cycle.noEntriesYet")} />
+          )
         }
         contentContainerStyle={styles.listContent}
       />
@@ -169,11 +175,16 @@ export default function CycleScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 10, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: "600", marginBottom: 8 },
-  sectionLabel: { fontSize: 14, fontWeight: "500", color: "#374151", marginTop: 8 },
+  title: { fontSize: 22, fontWeight: "600", marginBottom: 8, color: theme.colors.textPrimary },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+  },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   switchRow: {
     flexDirection: "row",
@@ -181,10 +192,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
-  switchLabel: { fontSize: 15, color: "#111827" },
+  switchLabel: { fontSize: 15, color: theme.colors.textPrimary },
   notesInput: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -192,24 +203,24 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: "top",
     marginTop: 8,
+    color: theme.colors.textPrimary,
   },
-  error: { color: "#DC2626", fontSize: 14 },
+  error: { color: theme.colors.error, fontSize: 14 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
   entryRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
-  entryDate: { fontSize: 15, fontWeight: "500" },
-  entryMeta: { fontSize: 13, color: "#6B7280", marginTop: 2 },
-  entryNotes: { fontSize: 13, color: "#4B5563", marginTop: 4 },
-  emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
+  entryDate: { fontSize: 15, fontWeight: "500", color: theme.colors.textPrimary },
+  entryMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  entryNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
 });

@@ -385,3 +385,30 @@ export const patchOnboardingSchema = z
   })
   .strict();
 export type PatchOnboardingInput = z.infer<typeof patchOnboardingSchema>;
+
+// ---- Account deletion (closed-beta minimum) ----
+
+// Same password-confirmation bar as changePasswordSchema — this is a
+// destructive, irreversible action, and a still-logged-in-but-hijacked
+// or accidentally-tapped session shouldn't be able to trigger it
+// without re-proving the password.
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1),
+});
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
+// ---- Public perimenopause assessment (unauthenticated, no persistence) ----
+
+// Reuses the real symptomCategorySchema — no separate, drifting list of
+// symptom names for this public-facing entry point. A max() guards
+// against a payload trying to submit the same category dozens of times
+// to inflate a score; the scoring function also de-duplicates
+// defensively (see assessment-scoring.ts), this is just a cheap
+// request-level sanity bound.
+export const perimenopauseAssessmentSchema = z
+  .object({
+    symptoms: z.array(symptomCategorySchema).max(20),
+    hasIrregularPeriods: z.boolean(),
+  })
+  .strict();
+export type PerimenopauseAssessmentInput = z.infer<typeof perimenopauseAssessmentSchema>;

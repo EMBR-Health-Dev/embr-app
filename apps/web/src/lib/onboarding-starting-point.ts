@@ -3,18 +3,27 @@
 // separately on appointmentStatus, so this doesn't invent a variant it
 // wasn't given. Deliberately the only piece of "dashboard
 // personalization" in this delivery — see docs/MILESTONES.md.
-export function startingPointMessage(jobToBeDone: string | null): string | null {
+//
+// Returns a translation key relative to the "Dashboard" namespace, not
+// the message itself — this predates the i18n migration and was
+// missed by it (it returned a plain string, so nothing calling
+// useTranslations() flagged it). Found while building mobile's
+// appointment card, which surfaces in the exact same screen area.
+// dashboard/page.tsx's own `t` is already scoped to "Dashboard" via
+// useTranslations("Dashboard"), so this returns relative keys
+// ("startingPoint.x"), not full paths.
+export function startingPointMessageKey(jobToBeDone: string | null): string | null {
   switch (jobToBeDone) {
     case "UNDERSTAND_EXPERIENCE":
-      return "Let's start building your record.";
+      return "startingPoint.understandExperience";
     case "UNDERSTAND_PATTERNS":
-      return "You're here to understand patterns. We'll start surfacing them as you log.";
+      return "startingPoint.understandPatterns";
     case "PREPARE_FOR_APPOINTMENT":
-      return "You're preparing for a healthcare conversation. Let's help you build something concrete.";
+      return "startingPoint.prepareForAppointment";
     case "KEEP_RECORD":
-      return "Let's start building your record over time.";
+      return "startingPoint.keepRecord";
     case "NOT_SURE":
-      return "Let's see what your record starts to show.";
+      return "startingPoint.notSure";
     default:
       return null;
   }

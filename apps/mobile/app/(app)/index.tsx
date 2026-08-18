@@ -2,15 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { severityLevelSchema, symptomCategorySchema } from "@embr/validation";
 import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
-import { categoryLabel, severityLabel } from "../../lib/format";
+import { AppointmentCard } from "../../components/appointment-card";
 import { Chip } from "../../components/chip";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
-import { startingPointMessage } from "../../lib/onboarding-starting-point";
+import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = symptomCategorySchema.options;
 const SEVERITIES = severityLevelSchema.options;
@@ -20,6 +23,7 @@ function isCategory(value: unknown): value is (typeof CATEGORIES)[number] {
 }
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const params = useLocalSearchParams<{ logCategory?: string; firstLog?: string }>();
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
@@ -72,7 +76,7 @@ export default function HomeScreen() {
   async function handleLogSymptom() {
     setFormError(null);
     if (!category || !severity) {
-      setFormError("Pick a category and severity first.");
+      setFormError(t("home.pickCategoryAndSeverity"));
       return;
     }
 
@@ -89,9 +93,7 @@ export default function HomeScreen() {
       setNotes("");
       await loadLogs();
     } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : "Something went wrong. Try again in a moment.",
-      );
+      setFormError(err instanceof ApiError ? err.message : t("home.genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -114,6 +116,8 @@ export default function HomeScreen() {
     router.replace("/login");
   }
 
+  const startingPointKey = startingPointMessageKey(onboardingProfile?.jobToBeDone ?? null);
+
   return (
     <SafeAreaView style={styles.screen}>
       <FlatList
@@ -122,36 +126,38 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <Text style={styles.title}>Hi{user ? `, ${user.email.split("@")[0]}` : ""}</Text>
+              <Text style={styles.title}>
+                {user
+                  ? t("home.greetingWithName", { name: user.email.split("@")[0] })
+                  : t("home.greeting")}
+              </Text>
               <Pressable onPress={handleLogout}>
-                <Text style={styles.logoutText}>Log out</Text>
+                <Text style={styles.logoutText}>{t("home.logout")}</Text>
               </Pressable>
             </View>
 
-            {startingPointMessage(onboardingProfile?.jobToBeDone ?? null) && (
-              <Text style={styles.startingPoint}>
-                {startingPointMessage(onboardingProfile?.jobToBeDone ?? null)}
-              </Text>
-            )}
+            {startingPointKey && <Text style={styles.startingPoint}>{t(startingPointKey)}</Text>}
 
-            <Text style={styles.sectionLabel}>How are you feeling right now?</Text>
+            <AppointmentCard appointmentStatus={onboardingProfile?.appointmentStatus ?? null} />
+
+            <Text style={styles.sectionLabel}>{t("home.howAreYouFeeling")}</Text>
             <View style={styles.chipRow}>
               {CATEGORIES.map((c) => (
                 <Chip
                   key={c}
-                  label={categoryLabel(c)}
+                  label={t(`enums.category.${c}`)}
                   selected={category === c}
                   onPress={() => setCategory(c)}
                 />
               ))}
             </View>
 
-            <Text style={styles.sectionLabel}>Severity</Text>
+            <Text style={styles.sectionLabel}>{t("home.severity")}</Text>
             <View style={styles.chipRow}>
               {SEVERITIES.map((s) => (
                 <Chip
                   key={s}
-                  label={severityLabel(s)}
+                  label={t(`enums.severity.${s}`)}
                   selected={severity === s}
                   onPress={() => setSeverity(s)}
                 />
@@ -160,7 +166,7 @@ export default function HomeScreen() {
 
             <TextInput
               style={styles.notesInput}
-              placeholder="Notes (optional)"
+              placeholder={t("home.notesPlaceholder")}
               value={notes}
               onChangeText={setNotes}
               multiline
@@ -173,28 +179,35 @@ export default function HomeScreen() {
               onPress={handleLogSymptom}
               disabled={submitting}
             >
-              <Text style={styles.buttonText}>{submitting ? "Logging…" : "Log symptom"}</Text>
+              <Text style={styles.buttonText}>
+                {submitting ? t("home.logging") : t("home.logSymptom")}
+              </Text>
             </Pressable>
 
-            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>Recent logs</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>{t("home.recentLogs")}</Text>
           </View>
         }
         renderItem={({ item }) => (
           <View style={styles.logRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.logCategory}>{categoryLabel(item.category)}</Text>
+              <Text style={styles.logCategory}>{t(`enums.category.${item.category}`)}</Text>
               <Text style={styles.logMeta}>
-                {severityLabel(item.severity)} · {new Date(item.occurredAt).toLocaleString()}
+                {t(`enums.severity.${item.severity}`)} ·{" "}
+                {new Date(item.occurredAt).toLocaleString()}
               </Text>
               {item.notes && <Text style={styles.logNotes}>{item.notes}</Text>}
             </View>
             <Pressable onPress={() => void handleDelete(item.id)}>
-              <Text style={styles.deleteText}>Delete</Text>
+              <Text style={styles.deleteText}>{t("home.delete")}</Text>
             </Pressable>
           </View>
         )}
         ListEmptyComponent={
-          !loadingLogs ? <Text style={styles.emptyText}>No symptoms logged yet.</Text> : null
+          loadingLogs ? (
+            <LoadingState />
+          ) : (
+            <EmptyState icon="pulse-outline" label={t("home.noSymptomsYet")} />
+          )
         }
         contentContainerStyle={styles.listContent}
       />
@@ -203,7 +216,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 10, marginBottom: 8 },
   headerRow: {
@@ -212,19 +225,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  title: { fontSize: 22, fontWeight: "600" },
-  logoutText: { fontSize: 14, color: "#6B7280" },
+  title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
+  logoutText: { fontSize: 14, color: theme.colors.textMuted },
   startingPoint: {
     fontSize: 15,
     fontStyle: "italic",
     color: theme.colors.textSecondary,
     marginBottom: 4,
   },
-  sectionLabel: { fontSize: 14, fontWeight: "500", color: "#374151", marginTop: 8 },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+  },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   notesInput: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -232,28 +250,28 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: "top",
     marginTop: 8,
+    color: theme.colors.textPrimary,
   },
-  error: { color: "#DC2626", fontSize: 14 },
+  error: { color: theme.colors.error, fontSize: 14 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
   logRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
-  logCategory: { fontSize: 15, fontWeight: "500" },
-  logMeta: { fontSize: 13, color: "#6B7280", marginTop: 2 },
-  logNotes: { fontSize: 13, color: "#4B5563", marginTop: 4 },
-  deleteText: { fontSize: 13, color: "#DC2626" },
-  emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
+  logCategory: { fontSize: 15, fontWeight: "500", color: theme.colors.textPrimary },
+  logMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  logNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
+  deleteText: { fontSize: 13, color: theme.colors.error },
 });

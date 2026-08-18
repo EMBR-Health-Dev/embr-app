@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "../../../messages/en.json";
+import ja from "../../../messages/ja.json";
 
 const routerPush = vi.fn();
 let searchParamsValue = new URLSearchParams();
@@ -25,6 +28,14 @@ vi.mock("../../lib/api", () => ({
   },
 }));
 
+function renderWithIntl(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
+
 async function fillAndSubmit() {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Email"), "person@embr.health");
@@ -48,7 +59,7 @@ describe("Login — post-login onboarding routing", () => {
     });
     const { default: LoginPage } = await import("./page");
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
     await fillAndSubmit();
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/onboarding"));
@@ -66,7 +77,7 @@ describe("Login — post-login onboarding routing", () => {
     });
     const { default: LoginPage } = await import("./page");
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
     await fillAndSubmit();
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/dashboard"));
@@ -86,7 +97,7 @@ describe("Login — post-login onboarding routing", () => {
     });
     const { default: LoginPage } = await import("./page");
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
     await fillAndSubmit();
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/dashboard"));
@@ -101,11 +112,53 @@ describe("Login — post-login onboarding routing", () => {
     });
     const { default: LoginPage } = await import("./page");
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
     await fillAndSubmit();
 
     await waitFor(() =>
       expect(routerPush).toHaveBeenCalledWith("/organizations/accept-invite?token=abc"),
     );
+  });
+});
+
+describe("Login — translation", () => {
+  it("renders English strings by default", async () => {
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(screen.getByText("Welcome back")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
+    expect(screen.getByText("Continue with SSO")).toBeInTheDocument();
+  });
+
+  it("renders Japanese strings when the ja locale is active", async () => {
+    const { default: LoginPage } = await import("./page");
+    render(
+      <NextIntlClientProvider locale="ja" messages={ja}>
+        <LoginPage />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getByText("おかえりなさい")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ログイン" })).toBeInTheDocument();
+    expect(screen.getByText("SSOでログイン")).toBeInTheDocument();
+  });
+
+  it("maps a known SSO error code to its translated message", async () => {
+    searchParamsValue = new URLSearchParams({ ssoError: "sso_start_failed" });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(
+      screen.getByText("Couldn't start SSO sign-in. Try again in a moment."),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to a generic translated message for an unrecognized SSO error code", async () => {
+    searchParamsValue = new URLSearchParams({ ssoError: "something_new_the_ui_never_learned" });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(screen.getByText("SSO sign-in didn't work. Try again.")).toBeInTheDocument();
   });
 });

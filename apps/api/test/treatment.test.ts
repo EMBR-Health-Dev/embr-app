@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { treatmentRepository } from "../src/modules/treatments/treatment.repository.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -103,6 +104,9 @@ vi.mock("../src/lib/prisma.js", () => ({
           return Promise.resolve({ id: nextId(), ...data });
         },
       ),
+    },
+    onboardingProfile: {
+      findUnique: vi.fn().mockResolvedValue(null),
     },
     treatment: {
       create: vi.fn(
@@ -354,6 +358,25 @@ describe("ownership scoping on single-resource routes", () => {
     expect(res.status).toBe(404);
   });
 
+  it("returns 404 when deleting another user's treatment — and it must still be there afterward", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "delA@embr.health");
+    await registerAndLogin(agentB, "delB@embr.health");
+
+    const createRes = await agentA
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+    const treatmentId = createRes.body.data.id;
+
+    const deleteRes = await agentB.delete(`/treatments/${treatmentId}`);
+    expect(deleteRes.status).toBe(404);
+
+    const stillThereRes = await agentA.get(`/treatments/${treatmentId}`);
+    expect(stillThereRes.status).toBe(200);
+  });
+
   it("allows the owner to update and delete their own treatment", async () => {
     const app = createApp();
     const agent = request.agent(app);
@@ -437,5 +460,142 @@ describe("audit log coverage for treatment mutations", () => {
     const entry = state.auditLogEntries.find((e) => e.action === "TREATMENT_DELETED");
     expect(entry).toBeDefined();
     expect((entry?.metadata as { treatmentId?: string })?.treatmentId).toBe(createRes.body.data.id);
+  });
+});
+
+// Direct, isolated tests of the repository method itself — no HTTP
+// layer, no brief.service.ts — used only by brief.service.ts today
+// (see brief.test.ts's own overlap-scenario coverage), but tested here
+// on its own merits so its correctness doesn't depend on how any one
+// caller happens to use it.
+describe("treatmentRepository.listOverlappingRange", () => {
+  const USER_ID = "repo-test-user";
+
+  beforeEach(() => {
+    state.treatments = [];
+  });
+
+  it("includes a treatment fully inside the range", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: USER_ID,
+      name: "In range",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: new Date("2026-01-20"),
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.name).toBe("In range");
+  });
+
+  it("scopes strictly to the given userId", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: "a-different-user",
+      name: "Not this user",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("excludes a treatment entirely before the range", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: USER_ID,
+      name: "Too early",
+      category: "SUPPLEMENT",
+      startDate: new Date("2025-01-01"),
+      endDate: new Date("2025-06-01"),
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("excludes a treatment entirely after the range", async () => {
+    state.treatments.push({
+      id: nextId(),
+      userId: USER_ID,
+      name: "Too late",
+      category: "MEDICATION",
+      startDate: new Date("2026-06-01"),
+      endDate: null,
+      notes: null,
+      createdAt: now(),
+      updatedAt: now(),
+    });
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("returns results ordered by startDate descending", async () => {
+    state.treatments.push(
+      {
+        id: nextId(),
+        userId: USER_ID,
+        name: "Earlier",
+        category: "HRT",
+        startDate: new Date("2026-01-05"),
+        endDate: null,
+        notes: null,
+        createdAt: now(),
+        updatedAt: now(),
+      },
+      {
+        id: nextId(),
+        userId: USER_ID,
+        name: "Later",
+        category: "SUPPLEMENT",
+        startDate: new Date("2026-01-20"),
+        endDate: null,
+        notes: null,
+        createdAt: now(),
+        updatedAt: now(),
+      },
+    );
+
+    const results = await treatmentRepository.listOverlappingRange(
+      USER_ID,
+      new Date("2026-01-01"),
+      new Date("2026-02-01"),
+    );
+
+    expect(results.map((t) => t.name)).toEqual(["Later", "Earlier"]);
   });
 });

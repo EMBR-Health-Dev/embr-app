@@ -1,19 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
-import { categoryLabel } from "../../lib/format";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
-
-function isValidDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
-}
+import { theme } from "../../lib/theme";
+import { DatePickerField } from "../../components/date-picker-field";
+import { EmptyState } from "../../components/empty-state";
+import { LoadingState } from "../../components/loading-state";
+import { toIsoDate } from "../../lib/date-format";
 
 export default function BriefScreen() {
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const { t } = useTranslation();
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
@@ -41,18 +43,21 @@ export default function BriefScreen() {
   async function handleGenerate() {
     setGenerateError(null);
 
-    if (!isValidDate(fromDate) || !isValidDate(toDate)) {
-      setGenerateError("Enter both dates as YYYY-MM-DD.");
+    if (!fromDate || !toDate || fromDate > toDate) {
+      setGenerateError(t("brief.invalidDates"));
       return;
     }
 
     setGenerating(true);
     try {
-      const brief = await api.briefs.generate({ fromDate, toDate });
+      const brief = await api.briefs.generate({
+        fromDate: toIsoDate(fromDate),
+        toDate: toIsoDate(toDate),
+      });
       setJustGenerated(brief);
       await loadHistory();
     } catch (err) {
-      setGenerateError(err instanceof ApiError ? err.message : "Couldn't generate a brief.");
+      setGenerateError(err instanceof ApiError ? err.message : t("brief.generateError"));
     } finally {
       setGenerating(false);
     }
@@ -105,28 +110,22 @@ export default function BriefScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>EMBR BRIEF</Text>
-            <Text style={styles.hint}>
-              A summary of your tracked data, with questions to bring to your GP — not a diagnosis,
-              and not medical advice.
-            </Text>
+            <Text style={styles.title}>{t("brief.title")}</Text>
+            <Text style={styles.hint}>{t("brief.hint")}</Text>
 
             <View style={styles.dateRow}>
-              <TextInput
-                style={[styles.input, styles.dateInput]}
-                placeholder="From (YYYY-MM-DD)"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
+              <DatePickerField
+                label={t("brief.fromPlaceholder")}
                 value={fromDate}
-                onChangeText={setFromDate}
+                onChange={setFromDate}
+                maximumDate={toDate ?? new Date()}
               />
-              <TextInput
-                style={[styles.input, styles.dateInput]}
-                placeholder="To (YYYY-MM-DD)"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
+              <DatePickerField
+                label={t("brief.toPlaceholder")}
                 value={toDate}
-                onChangeText={setToDate}
+                onChange={setToDate}
+                minimumDate={fromDate ?? undefined}
+                maximumDate={new Date()}
               />
             </View>
             {generateError && <Text style={styles.error}>{generateError}</Text>}
@@ -136,26 +135,28 @@ export default function BriefScreen() {
               onPress={() => void handleGenerate()}
               disabled={generating}
             >
-              <Text style={styles.buttonText}>{generating ? "Generating…" : "Generate brief"}</Text>
+              <Text style={styles.buttonText}>
+                {generating ? t("brief.generating") : t("brief.generate")}
+              </Text>
             </Pressable>
 
             {justGenerated && (
               <View style={styles.freshBrief}>
-                <Text style={styles.freshBriefTitle}>Your brief is ready</Text>
+                <Text style={styles.freshBriefTitle}>{t("brief.briefReady")}</Text>
                 <BriefContent brief={justGenerated} />
                 <Pressable
                   onPress={() => void handleShare(justGenerated.id)}
                   disabled={sharingId === justGenerated.id}
                 >
                   <Text style={styles.link}>
-                    {sharingId === justGenerated.id ? "Preparing…" : "Share / Save PDF"}
+                    {sharingId === justGenerated.id ? t("brief.preparing") : t("brief.sharePdf")}
                   </Text>
                 </Pressable>
               </View>
             )}
 
-            <Text style={[styles.sectionTitle]}>Past briefs</Text>
-            {historyLoading && <Text style={styles.emptyText}>Loading…</Text>}
+            <Text style={[styles.sectionTitle]}>{t("brief.pastBriefs")}</Text>
+            {historyLoading && <LoadingState label={t("common.loading")} compact />}
           </View>
         }
         renderItem={({ item }) => (
@@ -166,30 +167,30 @@ export default function BriefScreen() {
                   {item.fromDate} to {item.toDate}
                 </Text>
                 <Text style={styles.briefRowMeta}>
-                  generated {new Date(item.createdAt).toLocaleDateString()}
+                  {t("brief.generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                 </Text>
               </Pressable>
               <Pressable onPress={() => void handleShare(item.id)} disabled={sharingId === item.id}>
-                <Text style={styles.link}>{sharingId === item.id ? "…" : "PDF"}</Text>
+                <Text style={styles.link}>{sharingId === item.id ? "…" : t("brief.pdf")}</Text>
               </Pressable>
               <Pressable
                 onPress={() => void handleDelete(item.id)}
                 disabled={deletingId === item.id}
                 style={{ marginLeft: 16 }}
               >
-                <Text style={styles.dangerText}>{deletingId === item.id ? "…" : "Delete"}</Text>
+                <Text style={styles.dangerText}>
+                  {deletingId === item.id ? "…" : t("brief.delete")}
+                </Text>
               </Pressable>
             </View>
             {openBriefId === item.id &&
-              (openBrief ? (
-                <BriefContent brief={openBrief} />
-              ) : (
-                <Text style={styles.emptyText}>Loading…</Text>
-              ))}
+              (openBrief ? <BriefContent brief={openBrief} /> : <LoadingState compact />)}
           </View>
         )}
         ListEmptyComponent={
-          !historyLoading ? <Text style={styles.emptyText}>No briefs generated yet.</Text> : null
+          historyLoading ? null : (
+            <EmptyState icon="document-text-outline" label={t("brief.noBriefsYet")} />
+          )
         }
         contentContainerStyle={styles.listContent}
       />
@@ -198,88 +199,118 @@ export default function BriefScreen() {
 }
 
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.briefContent}>
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
 
-      <Text style={styles.contentSectionTitle}>Questions to bring to your GP</Text>
+      <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
       {brief.aiDiscussionTopics.map((topic, i) => (
         <Text key={i} style={styles.topic}>
           • {topic}
         </Text>
       ))}
 
-      <Text style={styles.contentSectionTitle}>Symptom frequency</Text>
+      <Text style={styles.contentSectionTitle}>{t("brief.symptomFrequency")}</Text>
       {brief.symptomSummary.length === 0 ? (
-        <Text style={styles.summaryLine}>No symptoms logged in this range.</Text>
+        <Text style={styles.summaryLine}>{t("brief.noSymptomsInRange")}</Text>
       ) : (
         brief.symptomSummary.map((entry) => (
           <Text key={entry.category} style={styles.summaryLine}>
-            {categoryLabel(entry.category)} — {entry.count} occurrence{entry.count === 1 ? "" : "s"}
+            {t(`enums.category.${entry.category}`)} —{" "}
+            {t("brief.occurrenceCount", { count: entry.count })}
           </Text>
         ))
       )}
 
-      <Text style={styles.contentSectionTitle}>Cycle summary</Text>
+      <Text style={styles.contentSectionTitle}>{t("brief.cycleSummary")}</Text>
       <Text style={styles.summaryLine}>
         {brief.cycleSummary.averageCycleLengthDays === null
-          ? "Not enough period-start entries in this range to compute cycle length."
-          : `Average cycle length: ${brief.cycleSummary.averageCycleLengthDays} days (${brief.cycleSummary.cycleCount} cycles recorded)`}
+          ? t("brief.notEnoughCycleData")
+          : t("brief.averageCycleLength", {
+              days: brief.cycleSummary.averageCycleLengthDays,
+              count: brief.cycleSummary.cycleCount,
+            })}
       </Text>
+
+      <Text style={styles.contentSectionTitle}>{t("brief.treatmentsLoggedDuringPeriod")}</Text>
+      {brief.treatmentSummary.length === 0 ? (
+        <Text style={styles.summaryLine}>{t("brief.noTreatmentsInRange")}</Text>
+      ) : (
+        brief.treatmentSummary.map((entry, i) => (
+          <Text key={i} style={styles.summaryLine}>
+            {entry.name} — {t(`enums.treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
+            {entry.endDate ?? t("brief.ongoing")}
+          </Text>
+        ))
+      )}
+      <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 4, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: "600" },
-  hint: { fontSize: 13, color: "#6B7280", marginTop: 4, marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
+  hint: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4, marginBottom: 16 },
   dateRow: { flexDirection: "row", gap: 8 },
-  dateInput: { flex: 1 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-  },
-  error: { color: "#DC2626", fontSize: 13, marginTop: 8 },
+  error: { color: theme.colors.error, fontSize: 13, marginTop: 8 },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 12,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.colors.surface, fontSize: 15, fontWeight: "600" },
   freshBrief: {
     marginTop: 20,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: "#FFFBEB",
+    backgroundColor: theme.colors.accentSoft,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: theme.colors.accent,
   },
-  freshBriefTitle: { fontSize: 16, fontWeight: "600", marginBottom: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginTop: 28, marginBottom: 4 },
+  freshBriefTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+    color: theme.colors.textPrimary,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 28,
+    marginBottom: 4,
+    color: theme.colors.textPrimary,
+  },
   briefContent: { marginTop: 10, gap: 4 },
-  narrative: { fontSize: 14, color: "#374151", lineHeight: 20 },
-  contentSectionTitle: { fontSize: 13, fontWeight: "600", marginTop: 12, color: "#111827" },
-  topic: { fontSize: 13, color: "#374151", marginTop: 2 },
-  summaryLine: { fontSize: 13, color: "#6B7280", marginTop: 2 },
-  link: { fontSize: 13, color: "#2563EB", fontWeight: "500" },
-  dangerText: { fontSize: 13, color: "#DC2626" },
+  narrative: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
+  contentSectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 12,
+    color: theme.colors.textPrimary,
+  },
+  topic: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
+  summaryLine: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  treatmentSafetyNote: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    marginTop: 6,
+    lineHeight: 15,
+  },
+  link: { fontSize: 13, color: theme.colors.success, fontWeight: "500" },
+  dangerText: { fontSize: 13, color: theme.colors.error },
   briefRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: theme.colors.border,
   },
   briefRowHeader: { flexDirection: "row", alignItems: "center" },
-  briefRowTitle: { fontSize: 14, fontWeight: "500" },
-  briefRowMeta: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  emptyText: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
+  briefRowTitle: { fontSize: 14, fontWeight: "500", color: theme.colors.textPrimary },
+  briefRowMeta: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
 });

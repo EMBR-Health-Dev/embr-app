@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useOnboarding } from "../../../lib/onboarding-context";
 import { OnboardingScreen } from "../../../components/onboarding-screen";
 import { Button } from "../../../components/button";
 import { STEP_ROUTES } from "../../../lib/onboarding-steps";
 import { ONBOARDING_AREA_LABELS } from "../../../lib/onboarding-areas";
 
-const AREAS = Object.keys(ONBOARDING_AREA_LABELS);
+const AREAS = Object.keys(ONBOARDING_AREA_LABELS) as Array<keyof typeof ONBOARDING_AREA_LABELS>;
+const AREA_KEYS: Record<string, string> = {
+  SLEEP: "sleep",
+  ENERGY: "energy",
+  MOOD: "mood",
+  BODY: "body",
+  FOCUS: "focus",
+};
 
 export default function WhatsGoingOnScreen() {
+  const t = useTranslations("Onboarding.whatsGoingOn");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { profile, loading, patch } = useOnboarding();
   // Lazy initializer covers the case where profile is already populated
@@ -54,18 +64,15 @@ export default function WhatsGoingOnScreen() {
   if (loading) {
     return (
       <OnboardingScreen step="WHATS_GOING_ON">
-        <p className="text-navy/50">Loading…</p>
+        <p className="text-navy/50">{tCommon("loading")}</p>
       </OnboardingScreen>
     );
   }
 
   return (
     <OnboardingScreen step="WHATS_GOING_ON">
-      <p className="font-display text-2xl text-navy">What have you noticed lately?</p>
-      <p className="mt-3 text-sm text-navy/60">
-        Pick anything that&apos;s felt different. This isn&apos;t a log yet. It just helps your
-        first check-in feel like it already knows you.
-      </p>
+      <p className="font-display text-2xl text-navy">{t("headline")}</p>
+      <p className="mt-3 text-sm text-navy/60">{t("hint")}</p>
       <div className="mt-8 flex flex-wrap gap-2.5">
         {AREAS.map((value) => {
           const isSelected = selected.includes(value);
@@ -80,13 +87,13 @@ export default function WhatsGoingOnScreen() {
                   : "border-navy/20 text-navy/75 hover:border-navy/40"
               }`}
             >
-              {ONBOARDING_AREA_LABELS[value]}
+              {t(AREA_KEYS[value])}
             </button>
           );
         })}
       </div>
       <Button onClick={() => void handleContinue()} disabled={saving} className="mt-10 self-start">
-        {saving ? "…" : "Continue"}
+        {saving ? "…" : t("continue")}
       </Button>
     </OnboardingScreen>
   );

@@ -26,6 +26,7 @@ export type AuditAction =
   | "ORG_MEMBER_REVOKED"
   | "ORG_MEMBERS_VIEWED"
   | "ORG_AGGREGATE_TRENDS_VIEWED"
+  | "ORG_ACTIVATION_METRICS_VIEWED"
   | "SYMPTOM_LOG_CREATED"
   | "SYMPTOM_LOG_UPDATED"
   | "SYMPTOM_LOG_DELETED"
@@ -43,7 +44,8 @@ export type AuditAction =
   | "CLINICAL_BRIEF_DOWNLOADED"
   | "CLINICAL_BRIEF_DELETED"
   | "ONBOARDING_COMPLETED"
-  | "ONBOARDING_SKIPPED";
+  | "ONBOARDING_SKIPPED"
+  | "ACCOUNT_DELETED";
 
 /**
  * Actions worth a human noticing in a log aggregator / alert rather than

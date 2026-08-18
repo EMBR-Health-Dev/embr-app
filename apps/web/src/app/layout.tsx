@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { Fraunces, IBM_Plex_Sans } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../lib/auth-context";
@@ -34,8 +37,15 @@ export const metadata: Metadata = {
   description: "Perimenopause and menopause health, understood.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+
   return (
+    <html lang={locale} className={`${fraunces.variable} ${plexSans.variable}`}>
+      <body className="bg-bone text-navy antialiased">
+        <NextIntlClientProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </NextIntlClientProvider>
     <html
       lang="en"
       className={`${instrumentSerif.variable} ${inter.variable} ${jetbrainsMono.variable}`}

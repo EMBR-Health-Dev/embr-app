@@ -73,9 +73,72 @@ no-op until `SENTRY_DSN` is set, so:
    separate so an API 500 spike and a stuck job queue don't get lost in
    each other's noise).
 2. Set `SENTRY_DSN` as a platform secret for each service.
-3. `beforeSend` in `apps/api/src/lib/sentry.ts` already strips
-   `request.cookies` and `request.data` — this handles health data, so
-   don't relax that without a specific reason.
+3. Both services' `beforeSend` (`redactSentryEvent` in `apps/api/src/lib/sentry.ts`,
+   inline in `apps/worker/src/sentry.ts`) strip `request.cookies`,
+   `request.data`, `request.query_string`, and the query portion of
+   `request.url` — the last one matters as much as the others:
+   Sentry's own HTTP integration auto-captures `event.request.url`
+   independently of anything manually passed as `context`, and
+   `GET /auth/sso/callback` carries a real OAuth authorization code
+   in exactly that field. Don't relax any of this without a specific
+   reason.
+4. `captureException(err, context)`'s `context` becomes Sentry's
+   `event.extra`, which is **not** touched by `beforeSend` — every
+   current call site only ever passes identifiers/metadata (requestId,
+   jobId, ...), never raw request/job data, and it needs to stay that
+   way. See the doc comment directly on `captureException` in both
+   files.
+
+**Known gap, not addressed here**: `apps/web`, `apps/admin`, and
+`apps/mobile` have no error monitoring at all — no Sentry (or
+equivalent) dependency, no client-side crash/error capture. This means
+frontend-only failures (a React render error, a mobile crash before a
+request ever reaches the API) are currently invisible to anything but
+a person's own bug report. Setting this up is a real, separate piece
+of work — new dependencies and init code across three apps, plus its
+own PII-redaction pass (client-side error capture commonly includes
+breadcrumbs of user interactions, which is exactly the kind of thing
+that needs the same scrutiny given this product's data) — not
+something to fold into a backend-focused hardening pass. Worth
+prioritizing before a wider beta, not before a small closed one.
+
+## Email delivery
+
+`apps/api/src/modules/auth/mailer.ts` sends verification, password-reset,
+and organization-invite emails via SMTP (`nodemailer`). Local dev/test
+points at MailHog (`docker-compose.yml`), which accepts unauthenticated
+connections — this is why `SMTP_USER`/`SMTP_PASS` aren't required by
+default.
+
+**What's already handled from the repo, no code change needed to go
+live**: point `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` at any
+real SMTP-speaking provider (SES's SMTP interface, Postmark, SendGrid,
+...) and set `SMTP_REQUIRE_TLS=true` — the transport wires
+authentication and TLS correctly based on these alone.
+
+**What's genuinely external, not something a code change can do**:
+
+- An actual provider account and its SMTP credentials.
+- **Sending-domain DNS records** — SPF, DKIM, and ideally DMARC for
+  whatever domain `SMTP_FROM` uses. Without these, most providers will
+  still accept the send but real inboxes (especially Gmail/Outlook)
+  will mark the mail as spam or reject it outright — this is the
+  single most common reason "email works in testing but nobody gets
+  the verification link in production" happens, and it's entirely a
+  DNS/provider-console task, not a repo one.
+- Provider-side sending limits/reputation warm-up for a new sending
+  domain, if the provider requires it.
+
+**Verifying it's actually working**: `GET /health/ready` now includes
+an `smtp` check (`verifyMailTransport()` in mailer.ts) that confirms
+the transport can connect and authenticate — hit this in staging after
+setting the env vars above to confirm SMTP is genuinely configured
+correctly, rather than discovering it's broken only when a real user's
+verification email silently never arrives. Deliberately excluded from
+the endpoint's overall pass/fail status (a mail-provider outage
+shouldn't pull an otherwise-healthy API instance out of a load
+balancer's rotation) — check the `checks.smtp` field specifically, not
+just the top-level `status`.
 
 ## Health check monitoring
 

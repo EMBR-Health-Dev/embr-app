@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { STEP_ROUTES, isOnboardingStep } from "../../lib/onboarding-steps";
 
 export default function OnboardingIndex() {
+  const t = useTranslations("Common");
   const router = useRouter();
   const { profile, loading } = useOnboarding();
 
@@ -18,7 +20,7 @@ export default function OnboardingIndex() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bone">
-      <p className="text-navy/50">Loading…</p>
+      <p className="text-navy/50">{t("loading")}</p>
     </main>
   );
 }

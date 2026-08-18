@@ -27,6 +27,7 @@ import { organizationRouter } from "./modules/organizations/organization.routes.
 import { ssoRouter } from "./modules/sso/sso.routes.js";
 import { briefRouter } from "./modules/briefs/brief.routes.js";
 import { onboardingRouter } from "./modules/onboarding/onboarding.routes.js";
+import { publicAssessmentRouter } from "./modules/public-assessment/public-assessment.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -65,7 +66,33 @@ export function createApp(): Express {
       contentSecurityPolicy: env.NODE_ENV === "production" ? undefined : false,
     }),
   );
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  // env.CORS_ORIGIN is comma-separated — a single value (the default)
+  // behaves exactly as before; this only starts mattering once a
+  // second origin (the landing page) is added in a real deployment.
+  // credentials: true stays correct either way — it only governs
+  // whether cookies get forwarded *if* the browser sends them, and the
+  // landing page's own requests to /public/perimenopause-assessment
+  // never carry EMBR's session cookie in the first place (different
+  // origin, unauthenticated endpoint, nothing to send).
+  const allowedOrigins = env.CORS_ORIGIN.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  app.use(
+    cors({
+      origin(origin, callback) {
+        // No Origin header at all — same-origin requests, curl, server-
+        // to-server health checks — always allowed; CORS only exists to
+        // constrain browsers making cross-origin requests in the first
+        // place.
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      credentials: true,
+    }),
+  );
   app.use(compression());
   app.use(cookieParser());
   app.use(express.json({ limit: "1mb" }));
@@ -95,6 +122,7 @@ export function createApp(): Express {
   app.use(ssoRouter);
   app.use(briefRouter);
   app.use(onboardingRouter);
+  app.use(publicAssessmentRouter);
 
   // ---- 404 + error handling (must be last) ----
   app.use(notFoundMiddleware());

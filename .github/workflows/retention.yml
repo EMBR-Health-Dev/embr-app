@@ -1,0 +1,50 @@
+name: Retention Cleanup
+
+# Runs weekly, off-peak — this deletes only already-dead rows (expired
+# tokens, expired/revoked sessions past a grace period), so there's no
+# urgency to run it more often than that; see docs/RETENTION.md.
+on:
+  schedule:
+    - cron: "30 3 * * 1" # weekly, Mondays 03:30 UTC — after the daily backup job's usual window
+  workflow_dispatch: {} # manual trigger
+
+jobs:
+  cleanup:
+    name: Delete expired sessions and tokens
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @embr/api exec prisma generate
+
+      # The retention script only reads/writes via DATABASE_URL, but it
+      # imports this app's shared env.ts, which validates every
+      # required var at import time regardless of whether this
+      # particular script uses each one — see docs/RETENTION.md for
+      # the full list of secrets this job needs configured, and why.
+      - name: Run retention cleanup
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          REDIS_URL: ${{ secrets.PRODUCTION_REDIS_URL }}
+          JWT_ACCESS_SECRET: ${{ secrets.PRODUCTION_JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.PRODUCTION_JWT_REFRESH_SECRET }}
+          SSO_ENCRYPTION_KEY: ${{ secrets.PRODUCTION_SSO_ENCRYPTION_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.PRODUCTION_ANTHROPIC_API_KEY }}
+        run: pnpm --filter @embr/api exec tsx src/scripts/retention-cleanup.ts
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Retention cleanup failed — not urgent on its own (this only prunes already-dead rows), but investigate before it's been failing silently for weeks."

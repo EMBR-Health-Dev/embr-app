@@ -1,0 +1,250 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "done": "Done"
+  },
+  "login": {
+    "title": "Welcome back",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Log in",
+    "submitting": "Logging in…",
+    "newToEmbr": "New to EMBR?",
+    "createAccount": "Create an account"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "register": {
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "We sent a verification link to {{email}}. Verify your email, then log in.",
+    "goToLogin": "Go to login",
+    "title": "Create your account",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Create account",
+    "submitting": "Creating account…",
+    "alreadyHaveAccount": "Already have an account?",
+    "logIn": "Log in"
+  },
+  "onboarding": {
+    "skipToDashboard": "Skip to dashboard",
+    "welcome": {
+      "headline": "A place to keep track of what's actually happening to you.",
+      "body": "EMBR helps you turn what you're experiencing into something you can look back on, understand, and eventually bring into a conversation with your doctor. It doesn't diagnose you or replace your clinician. It helps you organize your own record, on your own terms.",
+      "getStarted": "Get started"
+    },
+    "jobToBeDone": {
+      "headline": "What do you want EMBR to help you with?",
+      "hint": "This just shapes what we show you first. You can always change your mind later.",
+      "understandExperience": "Understand what I'm experiencing",
+      "understandPatterns": "Understand patterns over time",
+      "prepareForAppointment": "Prepare for a healthcare conversation",
+      "keepRecord": "Keep a better record, long term",
+      "notSure": "Not sure yet"
+    },
+    "whatsGoingOn": {
+      "headline": "What have you noticed lately?",
+      "hint": "Pick anything that's felt different. This isn't a log yet. It just helps your first check-in feel like it already knows you.",
+      "continue": "Continue",
+      "sleep": "Sleep",
+      "energy": "Energy",
+      "mood": "Mood",
+      "body": "Body",
+      "focus": "Focus"
+    },
+    "appointmentStatus": {
+      "headline": "Do you have a healthcare appointment coming up?",
+      "hint": "No need for the exact date yet. Just helps us know whether to keep BRIEF close at hand.",
+      "withinMonth": "Yes, within the next month",
+      "unsureWhen": "Yes, but I'm not sure when",
+      "no": "No",
+      "unsure": "I'm not sure yet"
+    },
+    "theLoop": {
+      "headline": "Here's how EMBR works.",
+      "trackFallback": "Sleep · Energy · Mood",
+      "patternsLabel": "Patterns",
+      "patternsTitle": "Once you've logged for a couple of weeks, you might see something like:",
+      "patternsExample": "\"Your sleep disruption appeared alongside lower energy on 6 days.\"",
+      "patternsCaveat": "Descriptive, not diagnostic. EMBR never tells you what's causing something.",
+      "trackLabel": "Track",
+      "briefLabel": "Brief",
+      "briefTitle": "Evidence · Patterns · Questions",
+      "briefBody": "A structured summary of your record, built when you're ready. Not automatically.",
+      "conversationLabel": "Healthcare conversation",
+      "conversationTitle": "Something concrete to bring into your next appointment.",
+      "conversationBody": "Entirely optional, and entirely yours.",
+      "logFirstEntry": "Log your first entry",
+      "goToDashboard": "Go to dashboard instead"
+    }
+  },
+  "enums": {
+    "category": {
+      "HOT_FLASH": "Hot Flash",
+      "NIGHT_SWEATS": "Night Sweats",
+      "MOOD_CHANGE": "Mood Change",
+      "SLEEP_DISTURBANCE": "Sleep Disturbance",
+      "BRAIN_FOG": "Brain Fog",
+      "JOINT_PAIN": "Joint Pain",
+      "FATIGUE": "Fatigue",
+      "ANXIETY": "Anxiety",
+      "IRREGULAR_HEARTBEAT": "Irregular Heartbeat",
+      "VAGINAL_DRYNESS": "Vaginal Dryness",
+      "LIBIDO_CHANGE": "Libido Change",
+      "WEIGHT_CHANGE": "Weight Change",
+      "HEADACHE": "Headache",
+      "OTHER": "Other"
+    },
+    "severity": {
+      "MILD": "Mild",
+      "MODERATE": "Moderate",
+      "SEVERE": "Severe"
+    },
+    "flow": {
+      "SPOTTING": "Spotting",
+      "LIGHT": "Light",
+      "MEDIUM": "Medium",
+      "HEAVY": "Heavy"
+    },
+    "treatmentCategory": {
+      "HRT": "HRT",
+      "SUPPLEMENT": "Supplement",
+      "MEDICATION": "Medication",
+      "LIFESTYLE": "Lifestyle",
+      "OTHER": "Other"
+    }
+  },
+  "tabs": {
+    "symptoms": "Symptoms",
+    "cycle": "Cycle",
+    "trends": "Trends",
+    "brief": "BRIEF",
+    "settings": "Settings"
+  },
+  "home": {
+    "greeting": "Hi",
+    "greetingWithName": "Hi, {{name}}",
+    "logout": "Log out",
+    "howAreYouFeeling": "How are you feeling right now?",
+    "severity": "Severity",
+    "notesPlaceholder": "Notes (optional)",
+    "pickCategoryAndSeverity": "Pick a category and severity first.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "logSymptom": "Log symptom",
+    "logging": "Logging…",
+    "recentLogs": "Recent logs",
+    "delete": "Delete",
+    "noSymptomsYet": "No symptoms logged yet.",
+    "startingPoint": {
+      "understandExperience": "Let's start building your record.",
+      "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
+      "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
+      "keepRecord": "Let's start building your record over time.",
+      "notSure": "Let's see what your record starts to show."
+    }
+  },
+  "cycle": {
+    "title": "Today's cycle entry",
+    "flow": "Flow",
+    "none": "None",
+    "periodStartedToday": "Period started today",
+    "periodEndedToday": "Period ended today",
+    "notesPlaceholder": "Notes (optional)",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "saveTodaysEntry": "Save today's entry",
+    "recentEntries": "Recent entries",
+    "noFlowLogged": "No flow logged",
+    "periodStart": " · Period start",
+    "periodEnd": " · Period end",
+    "noEntriesYet": "No entries yet."
+  },
+  "trends": {
+    "title": "Trends",
+    "symptomsHeader": "Symptoms, last {{days}} days",
+    "noSymptomsYet": "Nothing logged in this window yet — patterns will show up here as you go.",
+    "cycleLengthHeader": "Cycle length, last {{days}} days",
+    "noCycleDataYet": "Log at least two period-start days to see cycle lengths here. Irregular or absent cycles are common in perimenopause — this is a record for you and your provider, not a diagnosis.",
+    "averagingPrefix": "Averaging ",
+    "averagingSuffix": " between period starts over this window.",
+    "daysUnit": "days",
+    "irregularityNote": "Cycle irregularity is expected during perimenopause — this view is here to help you notice your own pattern, not to flag it as a problem."
+  },
+  "brief": {
+    "title": "EMBR BRIEF",
+    "hint": "A summary of your tracked data, with questions to bring to your GP — not a diagnosis, and not medical advice.",
+    "fromPlaceholder": "From",
+    "toPlaceholder": "To",
+    "invalidDates": "Pick a start and end date, with the start before the end.",
+    "generate": "Generate brief",
+    "generating": "Generating…",
+    "generateError": "Couldn't generate a brief.",
+    "briefReady": "Your brief is ready",
+    "preparing": "Preparing…",
+    "sharePdf": "Share / Save PDF",
+    "pastBriefs": "Past briefs",
+    "noBriefsYet": "No briefs generated yet.",
+    "generatedOn": "generated {{date}}",
+    "pdf": "PDF",
+    "delete": "Delete",
+    "questionsForGp": "Questions to bring to your GP",
+    "symptomFrequency": "Symptom frequency",
+    "noSymptomsInRange": "No symptoms logged in this range.",
+    "occurrenceCount_one": "{{count}} occurrence",
+    "occurrenceCount_other": "{{count}} occurrences",
+    "cycleSummary": "Cycle summary",
+    "notEnoughCycleData": "Not enough period-start entries in this range to compute cycle length.",
+    "averageCycleLength_one": "Average cycle length: {{days}} days ({{count}} cycle recorded)",
+    "averageCycleLength_other": "Average cycle length: {{days}} days ({{count}} cycles recorded)",
+    "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
+    "noTreatmentsInRange": "No treatments logged in this range.",
+    "ongoing": "Ongoing",
+    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations."
+  },
+  "settings": {
+    "title": "Settings",
+    "changePasswordTitle": "Change password",
+    "changePasswordHint": "Changing your password signs you out everywhere, including this device.",
+    "currentPasswordPlaceholder": "Current password",
+    "newPasswordPlaceholder": "New password",
+    "genericError": "Something went wrong. Try again.",
+    "changePassword": "Change password",
+    "changing": "Changing…",
+    "devices": "Devices",
+    "logoutEverywhere": "Log out everywhere",
+    "loggingOut": "Logging out…",
+    "noActiveSessions": "No active sessions.",
+    "unknownDevice": "Unknown device",
+    "thisDevice": "This device",
+    "unknownIp": "Unknown IP",
+    "signedIn": "signed in",
+    "revoking": "Revoking…",
+    "revoke": "Revoke",
+    "logout": "Log out",
+    "deleteAccountTitle": "Delete account",
+    "deleteAccountHint": "This permanently deletes your account and everything in it — symptom logs, cycle entries, briefs, and settings. This cannot be undone.",
+    "deleteMyAccount": "Delete my account",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "enterPasswordToConfirm": "Enter your password to confirm.",
+    "permanentlyDelete": "Permanently delete",
+    "deleting": "Deleting…",
+    "cancel": "Cancel"
+  },
+  "appointmentCard": {
+    "withinMonth": "You mentioned a healthcare appointment coming up soon — a BRIEF can help you walk in with something concrete.",
+    "unsureWhen": "You mentioned a healthcare appointment might be coming up — a BRIEF is ready whenever you are.",
+    "generateBrief": "Generate a BRIEF"
+  },
+  "coOccurrence": {
+    "heading": "What you've logged together",
+    "message_one": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} day.",
+    "message_other": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} days.",
+    "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
+  }
+}
