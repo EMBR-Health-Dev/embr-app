@@ -10,6 +10,7 @@ import type {
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationMemberDto,
+  OrgActivationDto,
   OrgSymptomFrequencyDto,
   PaginatedResponse,
   SymptomCategory,
@@ -23,6 +24,12 @@ import {
   toOrganizationMemberDto,
 } from "./organization.mappers.js";
 import { authRepository } from "../auth/auth.repository.js";
+import {
+  ACTIVATION_WINDOW_DAYS,
+  computeActivatedUserIds,
+  computeWeeklyActiveUserIds,
+  toPercentage,
+} from "./organization.activation.js";
 import { generateOpaqueToken, hashToken } from "../auth/tokens.js";
 import { sendOrganizationInviteEmail } from "../auth/mailer.js";
 
@@ -168,6 +175,72 @@ export const organizationService = {
       categories: categories
         .map((row) => ({ category: row.category as SymptomCategory, count: row.count }))
         .sort((a, b) => b.count - a.count),
+    };
+  },
+
+  /**
+   * See organization.activation.ts for the authoritative business
+   * definitions of "eligible," "activated," and "weekly active" — this
+   * method is the orchestration layer only, not where those
+   * definitions live.
+   *
+   * The k-anonymity floor is applied to eligibleCount, deliberately
+   * before activatedCount/weeklyActiveCount are ever computed — unlike
+   * symptomFrequency above (which gates on an already-activity-filtered
+   * cohort size), gating here on the *raw* membership count is what
+   * correctly suppresses a small org with zero activated employees,
+   * not just a small org with a nonzero one. A 4-person org showing
+   * "0 of 4 activated" is exactly as identifying as "3 of 4."
+   */
+  async activation(organizationId: string, asOf: Date = new Date()): Promise<OrgActivationDto> {
+    const memberships = await organizationRepository.membershipsForActivation(organizationId);
+    const eligibleCount = memberships.length;
+
+    if (eligibleCount < env.ORG_TRENDS_MIN_COHORT_SIZE) {
+      return {
+        suppressed: true,
+        eligibleCount,
+        activatedCount: null,
+        activationPercentage: null,
+        weeklyActiveCount: null,
+        weeklyActivePercentage: null,
+        activationWindowDays: ACTIVATION_WINDOW_DAYS,
+        asOf: asOf.toISOString(),
+      };
+    }
+
+    const eligibleUserIds = memberships.map((m) => m.userId);
+    const earliestJoinDate = memberships.reduce(
+      (earliest, m) => (m.createdAt < earliest ? m.createdAt : earliest),
+      memberships[0]!.createdAt,
+    );
+    // The weekly-active window can reach further back than any
+    // membership's own join date if asOf is far enough in the future
+    // of "now" — fetching from whichever of the two is earlier keeps
+    // both computations correctly bounded from a single query.
+    const weeklyWindowStart = new Date(asOf);
+    weeklyWindowStart.setDate(weeklyWindowStart.getDate() - 7);
+    const earliestNeeded =
+      earliestJoinDate < weeklyWindowStart ? earliestJoinDate : weeklyWindowStart;
+
+    const { symptomActivity, cycleActivity } = await organizationRepository.activityForMembers(
+      eligibleUserIds,
+      earliestNeeded,
+    );
+    const activity = [...symptomActivity, ...cycleActivity];
+
+    const activatedUserIds = computeActivatedUserIds(memberships, activity);
+    const weeklyActiveUserIds = computeWeeklyActiveUserIds(eligibleUserIds, activity, asOf);
+
+    return {
+      suppressed: false,
+      eligibleCount,
+      activatedCount: activatedUserIds.size,
+      activationPercentage: toPercentage(activatedUserIds.size, eligibleCount),
+      weeklyActiveCount: weeklyActiveUserIds.size,
+      weeklyActivePercentage: toPercentage(weeklyActiveUserIds.size, eligibleCount),
+      activationWindowDays: ACTIVATION_WINDOW_DAYS,
+      asOf: asOf.toISOString(),
     };
   },
 };

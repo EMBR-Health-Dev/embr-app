@@ -190,4 +190,31 @@ router.get(
   }),
 );
 
+/**
+ * Employer activation metrics — eligible / activated / weekly-active
+ * counts and percentages. See organization.activation.ts for the
+ * authoritative business definitions (30-day per-member activation
+ * window, 7-day shared weekly-active window) and OrgActivationDto's
+ * doc comment in @embr/types for the customer-facing version.
+ *
+ * Deliberately no query parameters — `asOf` is always the server's own
+ * request time, never client-supplied, so this metric can't be
+ * queried against an arbitrary historical moment and stays
+ * server-authoritative in the same sense the k-anonymity floor is:
+ * the caller doesn't get to pick inputs that could be used to narrow
+ * down what's being suppressed.
+ */
+router.get(
+  "/organizations/:organizationId/trends/activation",
+  requireOrgRole("ORG_ADMIN"),
+  asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
+    const data = await organizationService.activation(organizationId);
+    await writeAuditLog(req, "ORG_ACTIVATION_METRICS_VIEWED", req.user!.sub, {
+      organizationId,
+    });
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
 export { router as organizationRouter };

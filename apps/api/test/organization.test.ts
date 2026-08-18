@@ -16,6 +16,7 @@ const { state, nextId } = vi.hoisted(() => {
         updatedAt: Date;
       }>,
       logs: [] as Array<{ id: string; userId: string; category: string; occurredAt: Date }>,
+      cycleEntries: [] as Array<{ id: string; userId: string; date: Date }>,
       organizations: [] as Array<{
         id: string;
         name: string;
@@ -180,6 +181,33 @@ vi.mock("../src/lib/prisma.js", () => ({
           );
         },
       ),
+      // Used by organizationRepository.activityForMembers — a plain
+      // row fetch, unlike groupBy above, since activation needs raw
+      // per-member timestamps to evaluate each member's own 30-day
+      // window, not an aggregate count.
+      findMany: vi.fn(
+        ({ where }: { where: { userId: { in: string[] }; occurredAt?: { gte?: Date } } }) => {
+          const matching = state.logs.filter(
+            (l) =>
+              where.userId.in.includes(l.userId) &&
+              (!where.occurredAt?.gte || l.occurredAt >= where.occurredAt.gte),
+          );
+          return Promise.resolve(
+            matching.map((l) => ({ userId: l.userId, occurredAt: l.occurredAt })),
+          );
+        },
+      ),
+    },
+    cycleEntry: {
+      findMany: vi.fn(
+        ({ where }: { where: { userId: { in: string[] }; date?: { gte?: Date } } }) => {
+          const matching = state.cycleEntries.filter(
+            (e) =>
+              where.userId.in.includes(e.userId) && (!where.date?.gte || e.date >= where.date.gte),
+          );
+          return Promise.resolve(matching.map((e) => ({ userId: e.userId, date: e.date })));
+        },
+      ),
     },
     organization: {
       create: vi.fn(({ data }: { data: { name: string; slug: string; seatLimit?: number } }) => {
@@ -334,13 +362,27 @@ function promoteToAdmin(email: string) {
   if (user) user.role = "ADMIN";
 }
 
-function addMembership(organizationId: string, userId: string, role: "ORG_ADMIN" | "ORG_MEMBER") {
-  state.memberships.push({ id: nextId(), organizationId, userId, role, createdAt: now() });
+function addMembership(
+  organizationId: string,
+  userId: string,
+  role: "ORG_ADMIN" | "ORG_MEMBER",
+  createdAt: Date = now(),
+) {
+  state.memberships.push({ id: nextId(), organizationId, userId, role, createdAt });
+}
+
+function addSymptomLog(userId: string, occurredAt: Date, category = "HOT_FLASH") {
+  state.logs.push({ id: nextId(), userId, category, occurredAt });
+}
+
+function addCycleEntry(userId: string, date: Date) {
+  state.cycleEntries.push({ id: nextId(), userId, date });
 }
 
 beforeEach(() => {
   state.users = [];
   state.logs = [];
+  state.cycleEntries = [];
   state.organizations = [];
   state.memberships = [];
   state.invites = [];
@@ -717,6 +759,222 @@ describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
 
     const res = await memberAgent.get(`/organizations/${organizationId}/trends/symptom-frequency`);
     expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /organizations/:organizationId/trends/activation", () => {
+  async function setupOrg(suffix: string) {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, `ops-act-${suffix}@embr.health`);
+    promoteToAdmin(`ops-act-${suffix}@embr.health`);
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: `ops-act-${suffix}@embr.health`, password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: `acme-act-${suffix}` });
+    const organizationId = orgRes.body.data.id as string;
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLogin(orgAdminAgent, `orgadmin-act-${suffix}@embr.health`);
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+
+    return { app, orgAdminAgent, organizationId };
+  }
+
+  async function addRegisteredMember(app: ReturnType<typeof createApp>, email: string) {
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, email);
+    return userId;
+  }
+
+  it("suppresses all activation numbers when eligibleCount is below the minimum cohort size", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("suppress");
+    const memberId = await addRegisteredMember(app, "member-suppress-1@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER", new Date("2026-01-01"));
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.suppressed).toBe(true);
+    // setupOrg's own ORG_ADMIN membership is itself an eligible
+    // employee (the approved definition has no role exclusion) — 1
+    // admin + 1 member = 2, still below the default floor of 5.
+    expect(res.body.data.eligibleCount).toBe(2);
+    expect(res.body.data.activatedCount).toBeNull();
+    expect(res.body.data.activationPercentage).toBeNull();
+    expect(res.body.data.weeklyActiveCount).toBeNull();
+    expect(res.body.data.weeklyActivePercentage).toBeNull();
+  });
+
+  it("suppresses even when activatedCount would itself be exactly 0 — the edge case a naive gate would miss", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("suppress-zero");
+    // Only 1 eligible member (below the default floor of 5), and they
+    // have logged nothing at all — a gate keyed on "activated count >
+    // 0" rather than "eligible count >= floor" would incorrectly
+    // treat this as safe to expose ("0 of 1 activated" is exactly as
+    // identifying as any other small-cohort number).
+    const memberId = await addRegisteredMember(app, "member-zero@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER", new Date("2026-01-01"));
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.body.data.suppressed).toBe(true);
+    expect(res.body.data.activatedCount).toBeNull();
+  });
+
+  it("returns real activation and weekly-active numbers once the cohort meets the minimum size", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("real");
+    const joinDate = new Date("2026-01-01T00:00:00.000Z");
+
+    // 5 members total, plus setupOrg's own ORG_ADMIN membership — 6
+    // eligible employees, meeting the default floor of 5.
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-real-${i}@embr.health`);
+      addMembership(organizationId, memberId, "ORG_MEMBER", joinDate);
+      // Members 0-2 logged within their 30-day activation window.
+      if (i < 3) {
+        addSymptomLog(memberId, new Date("2026-01-10T00:00:00.000Z"));
+      }
+    }
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.suppressed).toBe(false);
+    expect(res.body.data.eligibleCount).toBe(6); // 5 members + setupOrg's ORG_ADMIN
+    // The ORG_ADMIN never logged anything in this test, so only
+    // members 0-2 are activated — 3 of the 6 eligible employees.
+    expect(res.body.data.activatedCount).toBe(3);
+    expect(res.body.data.activationPercentage).toBe(50); // 3/6
+    expect(res.body.data.activationWindowDays).toBe(30);
+  });
+
+  it("counts CycleEntry activity toward activation, not just SymptomLog (OR, not AND)", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("cycle-or");
+    const joinDate = new Date("2026-01-01T00:00:00.000Z");
+
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-cycor-${i}@embr.health`);
+      addMembership(organizationId, memberId, "ORG_MEMBER", joinDate);
+    }
+    // Only member 0 has any activity, and it's cycle-only — no
+    // SymptomLog at all for them.
+    const firstMemberId = state.memberships.find(
+      (m) => m.organizationId === organizationId && m.role === "ORG_MEMBER",
+    )!.userId;
+    addCycleEntry(firstMemberId, new Date("2026-01-15T00:00:00.000Z"));
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.body.data.activatedCount).toBe(1);
+  });
+
+  it("does not activate a member whose only activity falls after their 30-day window", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("late");
+    const joinDate = new Date("2026-01-01T00:00:00.000Z");
+
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-late-${i}@embr.health`);
+      addMembership(organizationId, memberId, "ORG_MEMBER", joinDate);
+    }
+    const firstMemberId = state.memberships.find(
+      (m) => m.organizationId === organizationId && m.role === "ORG_MEMBER",
+    )!.userId;
+    // 40 days after joining — outside the 30-day window.
+    addSymptomLog(firstMemberId, new Date("2026-02-10T00:00:00.000Z"));
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.body.data.activatedCount).toBe(0);
+    expect(res.body.data.activationPercentage).toBe(0);
+  });
+
+  it("evaluates each member's activation window against their own join date, not a shared org-wide range", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("own-window");
+
+    // 5 members with staggered join dates.
+    const memberIds: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-own-${i}@embr.health`);
+      const joinDate = new Date(2026, 0, 1 + i * 30); // roughly a month apart
+      addMembership(organizationId, memberId, "ORG_MEMBER", joinDate);
+      memberIds.push(memberId);
+    }
+    // Every member logs exactly 10 days after their own join date —
+    // all should activate, despite none of them sharing a join date.
+    memberIds.forEach((id, i) => {
+      const joinDate = new Date(2026, 0, 1 + i * 30);
+      const logDate = new Date(joinDate);
+      logDate.setDate(logDate.getDate() + 10);
+      addSymptomLog(id, logDate);
+    });
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    // The actual point of this test: all 5 staggered members correctly
+    // activate based on their own join date, none of them sharing one.
+    expect(res.body.data.activatedCount).toBe(5);
+    // eligibleCount is 6 (5 members + setupOrg's own ORG_ADMIN, who
+    // never logs in this test) — so 5/6 rounds to 83%, not 100%. The
+    // percentage math itself is covered separately by "returns real
+    // activation and weekly-active numbers" above; this test's job is
+    // activatedCount being 5, not the resulting percentage.
+    expect(res.body.data.activationPercentage).toBe(83);
+  });
+
+  it("requires ORG_ADMIN, not just ORG_MEMBER", async () => {
+    const { organizationId, app } = await setupOrg("perm-member");
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-perm-${i}@embr.health`);
+      addMembership(organizationId, memberId, "ORG_MEMBER");
+    }
+    const plainMemberId = state.memberships.find(
+      (m) => m.organizationId === organizationId && m.role === "ORG_MEMBER",
+    )!.userId;
+    const plainMemberEmail = state.users.find((u) => u.id === plainMemberId)!.email;
+    const memberAgent = request.agent(app);
+    await memberAgent
+      .post("/auth/login")
+      .send({ email: plainMemberEmail, password: VALID_PASSWORD });
+
+    const res = await memberAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.status).toBe(403);
+  });
+
+  it("404s for a non-member entirely, rather than exposing that the organization exists", async () => {
+    const { organizationId, app } = await setupOrg("perm-nonmember");
+    const outsiderAgent = request.agent(app);
+    await registerAndLogin(outsiderAgent, "outsider-act@embr.health");
+
+    const res = await outsiderAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.status).toBe(404);
+  });
+
+  it("requires authentication", async () => {
+    const { organizationId, app } = await setupOrg("perm-noauth");
+    const res = await request(app).get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.status).toBe(401);
+  });
+
+  it("writes an ORG_ACTIVATION_METRICS_VIEWED audit log entry on every successful view", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("audit");
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-audit-${i}@embr.health`);
+      addMembership(organizationId, memberId, "ORG_MEMBER");
+    }
+
+    await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "ORG_ACTIVATION_METRICS_VIEWED");
+    expect(entry).toBeDefined();
+    expect((entry?.metadata as { organizationId?: string })?.organizationId).toBe(organizationId);
+  });
+
+  it("writes an audit log entry even when the response is suppressed", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("audit-suppressed");
+    const memberId = await addRegisteredMember(app, "member-audsup@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER");
+
+    await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+
+    const entry = state.auditLogEntries.find((e) => e.action === "ORG_ACTIVATION_METRICS_VIEWED");
+    expect(entry).toBeDefined();
   });
 });
 
