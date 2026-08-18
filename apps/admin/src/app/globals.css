@@ -2,13 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * EMBR design tokens — admin (dark theme). See docs/design-tokens.md
+ * for the full rationale and verified WCAG contrast numbers, and
+ * apps/web/src/app/globals.css for the light-theme equivalent.
+ *
+ * Same palette, same semantic token names, as web — only the mapping
+ * from palette to semantic role differs (inverted background/
+ * foreground), so component code never needs to know which theme
+ * it's rendering in.
+ */
 @layer base {
+  :root {
+    /* ---- Palette (identical to web) ---- */
+    --color-graphite-900: 42 31 57;
+    --color-graphite-700: 74 64 88;
+    --color-graphite-500: 116 107 130;
+    --color-graphite-300: 184 178 193;
+    --color-graphite-100: 241 238 244;
+    --color-lilac-100: 241 234 245;
+    --color-lilac-200: 226 215 234;
+    --color-lilac-300: 209 189 217;
+    --color-lilac-400: 190 161 198;
+    --color-lilac-500: 168 136 182;
+    --color-lilac-600: 146 112 160;
+    --color-rose-500: 200 138 161;
+    --color-ice-500: 238 244 249;
+    --color-pearl-50: 250 247 251;
+
+    /* ---- Semantic (dark theme — inverted from web) ---- */
+    --background: var(--color-graphite-900);
+    --foreground: var(--color-pearl-50);
+    --surface: var(--color-graphite-900);
+    --surface-foreground: var(--color-pearl-50);
+    --muted: var(--color-graphite-700);
+    --muted-foreground: var(--color-graphite-300); /* 7.52:1 on background, verified */
+    --primary: var(--color-lilac-500);
+    --primary-hover: var(--color-lilac-600);
+    --primary-foreground: var(--color-graphite-900); /* 5.07:1 on primary — same pair as web, contrast is intrinsic to the button itself */
+    /* A solid, moderately-light dark tone rather than pearl-50 at low
+       opacity — this way the plain `border-border` class (no opacity
+       modifier) produces a sensible subtle border in both themes,
+       keeping component code identical between web and admin instead
+       of admin needing its own opacity convention. Reuses the same
+       value as --muted (a natural "one tone up from background" role
+       serving double duty). */
+    --border: var(--color-graphite-700);
+    --accent: var(--color-ice-500);
+    --accent-foreground: var(--color-graphite-900); /* 14.0:1 on accent, verified */
+    --destructive: var(--color-rose-500);
+    --destructive-foreground: var(--color-graphite-900); /* 5.62:1 on destructive, verified */
+    --ring: var(--color-lilac-500);
+  }
+
   body {
-    font-family: var(--font-body), sans-serif;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body), -apple-system, system-ui, sans-serif;
   }
   h1,
   h2,
   h3 {
     font-family: var(--font-display), serif;
+    font-weight: 400;
   }
 }

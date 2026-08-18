@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { AppError } from "@embr/shared";
 import { env } from "../../config/env.js";
+import { logger } from "../../lib/logger.js";
 
 export interface BriefInput {
   fromDate: string;
@@ -130,6 +131,14 @@ export const briefAi = {
       // instead of an implicit default.
       timeout: 30_000,
       maxRetries: 2,
+      // SDK default is a 10-minute timeout with automatic retries on
+      // timeout — meaning a slow response could hold this synchronous
+      // request/response endpoint open for a very long multiple of that
+      // before failing. This is a short text-generation call
+      // (max_tokens: 1024); 30s with a single retry keeps worst-case
+      // latency bounded and predictable instead of hanging.
+      timeout: 30_000,
+      maxRetries: 1,
     });
 
     let message: Anthropic.Message;
@@ -166,25 +175,28 @@ export const briefAi = {
       // to the client -- the original error is preserved as `cause`
       // for our own logs/Sentry, just never sent over the wire.
       throw AppError.internal("Couldn't generate the brief right now. Try again in a moment.", err);
+      throw classifyAnthropicError(err);
     }
 
     const textBlock = message.content.find((block) => block.type === "text");
     if (!textBlock || textBlock.type !== "text") {
-      throw new Error("Anthropic response contained no text content");
+      throw AppError.internal("Brief generation failed: model returned no text content");
     }
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(textBlock.text);
     } catch {
-      throw new Error("Anthropic response was not valid JSON");
+      throw AppError.internal("Brief generation failed: model response was not valid JSON");
     }
 
     const result = briefResponseSchema.safeParse(parsed);
     if (!result.success) {
-      throw new Error(
-        `Anthropic response didn't match the expected shape: ${result.error.message}`,
+      logger.error(
+        { zodError: result.error.message },
+        "brief AI response didn't match the expected shape",
       );
+      throw AppError.internal("Brief generation failed: unexpected response shape");
     }
 
     const safetyFailure = failsContentSafety(result.data);
@@ -199,3 +211,55 @@ export const briefAi = {
     return result.data;
   },
 };
+
+/**
+ * The Anthropic SDK's error classes (Anthropic.APIError and its
+ * subclasses) carry a real `.status` matching Anthropic's own HTTP
+ * response code, and extend Error. Left uncaught, that status collides
+ * with the global error handler's hasClientErrorStatus check
+ * (error-handler.ts) — any Anthropic 4xx (429 rate-limited, 401 bad API
+ * key, 400 malformed request, etc.) would be reported to *our* client
+ * as a 400 VALIDATION_ERROR, using Anthropic's raw error message
+ * verbatim. That's wrong on two counts: it's not the end user's
+ * request that's invalid (they never control what's sent to Anthropic —
+ * this endpoint only ever forwards aggregated, validated internal
+ * data), and Anthropic's raw error body can describe our own
+ * credentials/config ("invalid x-api-key" etc.), which must never reach
+ * an end user.
+ *
+ * None of these are the requesting user's fault, so nothing here maps
+ * to VALIDATION_ERROR. Two buckets instead:
+ *  - Transient upstream issues (rate limited, connection/timeout, 5xx)
+ *    -> SERVICE_UNAVAILABLE, safe generic message, logged at warn — the
+ *    caller can reasonably retry shortly.
+ *  - Our own misconfiguration (bad API key, malformed request, wrong
+ *    model name) -> INTERNAL_ERROR, safe generic message, logged at
+ *    error — this needs an operator's attention, not a retry.
+ * In both cases the real Anthropic error is logged server-side (for
+ * Sentry/ops), never returned to the client.
+ */
+function classifyAnthropicError(err: unknown): AppError {
+  if (
+    err instanceof Anthropic.RateLimitError ||
+    err instanceof Anthropic.APIConnectionError ||
+    err instanceof Anthropic.InternalServerError
+  ) {
+    logger.warn({ err }, "brief generation: transient Anthropic API error");
+    return AppError.serviceUnavailable(
+      "Brief generation is temporarily unavailable — please try again shortly.",
+      err,
+    );
+  }
+
+  if (err instanceof Anthropic.APIError) {
+    // AuthenticationError, PermissionDeniedError, BadRequestError,
+    // NotFoundError, UnprocessableEntityError, or any other status —
+    // all indicate a bug or misconfiguration on our side, not a
+    // transient upstream blip and not the user's fault.
+    logger.error({ err, status: err.status }, "brief generation: Anthropic API error");
+    return AppError.internal("Brief generation failed", err);
+  }
+
+  logger.error({ err }, "brief generation: unexpected error calling Anthropic");
+  return AppError.internal("Brief generation failed", err);
+}
