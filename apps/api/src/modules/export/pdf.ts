@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
+import { computeCycleLengths } from "../../lib/cycle-length.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 
 export function categoryLabel(category: string): string {
@@ -31,19 +32,14 @@ function symptomFrequency(logs: SymptomLog[]): Array<{ category: string; count: 
   return computeSymptomFrequency(logs);
 }
 
+// Thin wrapper: the canonical computation now lives in
+// lib/cycle-length.ts (shared with trends.service.ts). This file only
+// ever needs the bare day-count array, so the richer
+// {fromDate, toDate, days} shape is mapped down to .days here — the
+// same bare number[] this function has always returned.
 export function cycleLengths(entries: CycleEntry[]): number[] {
-  const starts = entries
-    .filter((e) => e.isPeriodStart)
-    .map((e) => e.date.getTime())
-    .sort((a, b) => a - b);
-  const lengths: number[] = [];
-  for (let i = 1; i < starts.length; i++) {
-    const prev = starts[i - 1];
-    const curr = starts[i];
-    if (prev === undefined || curr === undefined) continue;
-    lengths.push(Math.round((curr - prev) / (1000 * 60 * 60 * 24)));
-  }
-  return lengths;
+  const periodStartDates = entries.filter((e) => e.isPeriodStart).map((e) => e.date);
+  return computeCycleLengths(periodStartDates).map((interval) => interval.days);
 }
 
 /**

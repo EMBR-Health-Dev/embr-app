@@ -5,6 +5,7 @@ import type {
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
 } from "@embr/types";
+import { averageCycleLengthDays, computeCycleLengths } from "../../lib/cycle-length.js";
 import { trendsRepository } from "./trends.repository.js";
 import { detectSymptomCoOccurrence } from "./co-occurrence.js";
 
@@ -22,21 +23,15 @@ export const trendsService = {
 
   async cycleLength(userId: string, query: TrendsQuery): Promise<CycleLengthTrendDto> {
     const starts = await trendsRepository.periodStartDates(userId, query);
+    const intervals = computeCycleLengths(starts.map((s) => s.date));
 
-    const lengths: CycleLengthTrendDto["lengths"] = [];
-    for (let i = 1; i < starts.length; i++) {
-      const prev = starts[i - 1]!.date;
-      const curr = starts[i]!.date;
-      const days = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-      lengths.push({ from: toIsoDate(prev), to: toIsoDate(curr), days });
-    }
+    const lengths: CycleLengthTrendDto["lengths"] = intervals.map((interval) => ({
+      from: toIsoDate(interval.fromDate),
+      to: toIsoDate(interval.toDate),
+      days: interval.days,
+    }));
 
-    const averageDays =
-      lengths.length > 0
-        ? Math.round(lengths.reduce((sum, l) => sum + l.days, 0) / lengths.length)
-        : null;
-
-    return { averageDays, lengths };
+    return { averageDays: averageCycleLengthDays(intervals), lengths };
   },
 
   /** Fetches the raw rows and hands them to the pure pattern-engine
