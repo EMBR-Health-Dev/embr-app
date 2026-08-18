@@ -566,6 +566,7 @@ describe("POST /briefs — treatment summary (deterministic, no AI involvement)"
     expect(Object.keys(lastCallArg).sort()).toEqual([
       "cycleSummary",
       "fromDate",
+      "patternEvidence",
       "symptomSummary",
       "toDate",
     ]);
@@ -574,6 +575,138 @@ describe("POST /briefs — treatment summary (deterministic, no AI involvement)"
     expect(JSON.stringify(lastCallArg)).not.toContain("Estradiol");
     expect(JSON.stringify(lastCallArg)).not.toContain("HRT");
     expect(JSON.stringify(lastCallArg)).not.toContain("never reach the model");
+  });
+});
+
+describe("POST /briefs — pattern evidence (Stage 3 -> Stage 4 -> Stage 5 boundary)", () => {
+  beforeEach(() => {
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
+  });
+
+  /** Adds the same category on 3 distinct calendar days, meeting
+   * co-occurrence.ts's own MIN_CO_OCCURRENCE_DAYS threshold, mirroring
+   * that file's own test fixture convention rather than inventing a
+   * new one. */
+  function addCoOccurringLogs(userId: string, categoryA: string, categoryB: string) {
+    const days = ["2026-01-05", "2026-01-12", "2026-01-19"];
+    for (const day of days) {
+      addSymptomLog(userId, { category: categoryA, occurredAt: new Date(`${day}T08:00:00.000Z`) });
+      addSymptomLog(userId, { category: categoryB, occurredAt: new Date(`${day}T20:00:00.000Z`) });
+    }
+  }
+
+  it("Test 1: a known pattern's curated interpretation reaches the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "pe-known@embr.health");
+    addCoOccurringLogs(userId, "HOT_FLASH", "NIGHT_SWEATS");
+
+    await agent.post("/briefs").send(RANGE);
+
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+
+    expect(lastCallArg.patternEvidence).not.toBeNull();
+    expect(lastCallArg.patternEvidence!.interpretation.available).toBe(true);
+    if (lastCallArg.patternEvidence!.interpretation.available) {
+      expect(lastCallArg.patternEvidence!.interpretation.confidenceLevel).toBe("established");
+      expect(lastCallArg.patternEvidence!.interpretation.text.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("Test 2: an unknown pattern reaches the AI layer only as an observation, no fabricated interpretation", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "pe-unknown@embr.health");
+    // BRAIN_FOG + JOINT_PAIN is not in the clinical-interpretation.ts
+    // registry.
+    addCoOccurringLogs(userId, "BRAIN_FOG", "JOINT_PAIN");
+
+    await agent.post("/briefs").send(RANGE);
+
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+
+    expect(lastCallArg.patternEvidence).not.toBeNull();
+    expect(lastCallArg.patternEvidence!.observation.length).toBeGreaterThan(0);
+    expect(lastCallArg.patternEvidence!.interpretation).toEqual({ available: false });
+  });
+
+  it("Test 3: evidence sources supplied by the Evidence Model are preserved in the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "pe-sources@embr.health");
+    addCoOccurringLogs(userId, "HOT_FLASH", "NIGHT_SWEATS");
+
+    await agent.post("/briefs").send(RANGE);
+
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+
+    if (lastCallArg.patternEvidence!.interpretation.available) {
+      const sources = lastCallArg.patternEvidence!.interpretation.sources;
+      expect(sources.length).toBeGreaterThan(0);
+      expect(sources[0]).toHaveProperty("title");
+      expect(sources[0]).toHaveProperty("organization");
+      // Deliberately narrow — url/sourceType must not reach the AI
+      // input at all (see brief.service.ts's buildPatternEvidence).
+      expect(sources[0]).not.toHaveProperty("url");
+      expect(sources[0]).not.toHaveProperty("sourceType");
+    } else {
+      throw new Error("Expected an available interpretation for this known pair");
+    }
+  });
+
+  it("Test 4: evidence tier is preserved exactly, not upgraded or downgraded", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "pe-tier@embr.health");
+    // Seeded as "emerging" in clinical-interpretation.ts.
+    addCoOccurringLogs(userId, "HOT_FLASH", "SLEEP_DISTURBANCE");
+
+    await agent.post("/briefs").send(RANGE);
+
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+
+    if (lastCallArg.patternEvidence!.interpretation.available) {
+      expect(lastCallArg.patternEvidence!.interpretation.confidenceLevel).toBe("emerging");
+    } else {
+      throw new Error("Expected an available interpretation for this known pair");
+    }
+  });
+
+  it("Test 5: caveats are preserved in the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "pe-caveats@embr.health");
+    addCoOccurringLogs(userId, "HOT_FLASH", "NIGHT_SWEATS");
+
+    await agent.post("/briefs").send(RANGE);
+
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+
+    if (lastCallArg.patternEvidence!.interpretation.available) {
+      expect(lastCallArg.patternEvidence!.interpretation.caveats.length).toBeGreaterThan(0);
+    } else {
+      throw new Error("Expected an available interpretation for this known pair");
+    }
+  });
+
+  it("Test 8: existing BRIEF output behavior is intact when no qualifying pattern exists at all", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "pe-none@embr.health");
+    // A single, isolated symptom log — no co-occurrence possible.
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-12") });
+
+    const res = await agent.post("/briefs").send(RANGE);
+    expect(res.status).toBe(201);
+
+    const calls = vi.mocked(briefAi.generate).mock.calls;
+    const lastCallArg = calls[calls.length - 1]![0];
+    expect(lastCallArg.patternEvidence).toBeNull();
   });
 });
 

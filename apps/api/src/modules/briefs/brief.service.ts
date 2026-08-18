@@ -2,13 +2,18 @@ import { AppError } from "@embr/shared";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto, PaginatedResponse } from "@embr/types";
 import type { PaginationQuery } from "@embr/validation";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
+import {
+  getClinicalInterpretation,
+  coOccurrencePatternId,
+} from "../../lib/clinical-interpretation.js";
 import { paginate } from "../../lib/pagination.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
+import { detectSymptomCoOccurrence } from "../trends/co-occurrence.js";
 import { exportRepository } from "../export/export.repository.js";
-import { cycleLengths } from "../export/pdf.js";
+import { categoryLabel, cycleLengths } from "../export/pdf.js";
 import { treatmentRepository } from "../treatments/treatment.repository.js";
 import { briefRepository } from "./brief.repository.js";
-import { briefAi, type BriefInput } from "./brief.ai.js";
+import { briefAi, type BriefInput, type BriefPatternEvidence } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
 import { computeTreatmentSummary } from "./treatment-summary.js";
 
@@ -30,6 +35,48 @@ function computeCycleSummary(entries: CycleEntry[]) {
     averageCycleLengthDays,
     cycleCount: lengths.length,
     periodDaysLogged: entries.filter((e) => e.flow !== null).length,
+  };
+}
+
+/**
+ * Stage 3 (co-occurrence.ts) -> Stage 4 (clinical-interpretation.ts)
+ * -> this function's output, which becomes BriefInput.patternEvidence
+ * -- the only path by which pattern/evidence data reaches the AI.
+ *
+ * Deliberately maps down to {title, organization} for each source,
+ * dropping url/sourceType from the full EvidenceSource -- a structural
+ * enforcement (the model literally cannot see a URL to embellish or
+ * present as a clickable reference) rather than relying on the prompt
+ * alone, matching the same "application layer enforces the boundary"
+ * principle brief.ai.ts's SYSTEM_PROMPT comment already documents for
+ * why raw symptom notes never reach the model either.
+ */
+function buildPatternEvidence(
+  coOccurrence: ReturnType<typeof detectSymptomCoOccurrence>,
+): BriefPatternEvidence | null {
+  if (!coOccurrence) return null;
+
+  const observation = `${categoryLabel(coOccurrence.categoryA)} and ${categoryLabel(coOccurrence.categoryB)} occurred together on ${coOccurrence.days} days.`;
+
+  const patternId = coOccurrencePatternId(coOccurrence.categoryA, coOccurrence.categoryB);
+  const result = getClinicalInterpretation(patternId);
+
+  if (result.kind === "noInterpretationAvailable") {
+    return { observation, interpretation: { available: false } };
+  }
+
+  return {
+    observation,
+    interpretation: {
+      available: true,
+      text: result.interpretation.interpretation,
+      confidenceLevel: result.interpretation.confidenceLevel,
+      sources: result.interpretation.sources.map((s) => ({
+        title: s.title,
+        organization: s.organization,
+      })),
+      caveats: result.interpretation.caveats,
+    },
   };
 }
 
@@ -56,7 +103,16 @@ export const briefService = {
     // including why notes are excluded.
     const treatmentSummary = computeTreatmentSummary(treatments);
 
-    // aiInput intentionally has exactly four fields. treatmentSummary
+    // Stage 3 -> Stage 4: reuses the same symptomLogs already fetched
+    // above for symptomSummary — no new database query. Structurally
+    // identical to how trends.service.ts's own coOccurrence() method
+    // already calls this same pure function; BRIEF didn't call it at
+    // all before this milestone, which is why this is the first time
+    // pattern detection enters BRIEF's pipeline.
+    const coOccurrence = detectSymptomCoOccurrence(symptomLogs);
+    const patternEvidence = buildPatternEvidence(coOccurrence);
+
+    // aiInput intentionally has exactly five fields. treatmentSummary
     // is never added here, on this object, or anywhere in the
     // briefAi.generate() call below — that is the entire safety
     // boundary this feature depends on. See
@@ -67,6 +123,7 @@ export const briefService = {
       toDate: toDate.toISOString().slice(0, 10),
       symptomSummary,
       cycleSummary,
+      patternEvidence,
     };
     const { narrative, discussionTopics } = await briefAi.generate(aiInput);
 

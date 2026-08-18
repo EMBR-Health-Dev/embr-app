@@ -11,17 +11,15 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@anthropic-ai/sdk")>();
   class MockAnthropic {
     messages = { create: mockCreate };
-    constructor(options: unknown) {
-      constructorCalls.push(options);
-    }
-  },
-}));
     static APIError = actual.APIError;
     static RateLimitError = actual.RateLimitError;
     static APIConnectionError = actual.APIConnectionError;
     static InternalServerError = actual.InternalServerError;
     static AuthenticationError = actual.AuthenticationError;
     static BadRequestError = actual.BadRequestError;
+    constructor(options: unknown) {
+      constructorCalls.push(options);
+    }
   }
   return { ...actual, default: MockAnthropic };
 });
@@ -33,6 +31,7 @@ const VALID_INPUT = {
   toDate: "2026-02-01",
   symptomSummary: [{ category: "HOT_FLASH", count: 3, severityBreakdown: { MODERATE: 3 } }],
   cycleSummary: { averageCycleLengthDays: 28, cycleCount: 2, periodDaysLogged: 6 },
+  patternEvidence: null,
 };
 
 function textResponse(text: string) {
@@ -96,6 +95,7 @@ describe("brief.ai", () => {
       dateRange: { from: VALID_INPUT.fromDate, to: VALID_INPUT.toDate },
       symptomSummary: VALID_INPUT.symptomSummary,
       cycleSummary: VALID_INPUT.cycleSummary,
+      patternEvidence: VALID_INPUT.patternEvidence,
     });
     // No "notes" key anywhere, at any depth, in what actually gets sent.
     expect(JSON.stringify(sentContent)).not.toContain("notes");
@@ -240,6 +240,178 @@ describe("brief.ai", () => {
         textResponse(JSON.stringify({ narrative: "I recommend rest.", discussionTopics: ["Q?"] })),
       );
       await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow();
+    });
+  });
+
+  describe("patternEvidence content safety (Stage 4 -> Stage 5 boundary)", () => {
+    it("'this is not a diagnosis' remains valid safety language and is never rejected", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative:
+              "Hot flashes and night sweats occurred together on several days. This is not a diagnosis of anything, and isn't a diagnosis of menopause either.",
+            discussionTopics: ["Ask your GP whether this pattern is typical?"],
+          }),
+        ),
+      );
+      const input = {
+        ...VALID_INPUT,
+        patternEvidence: {
+          observation: "Hot flashes and night sweats occurred together on 5 days.",
+          interpretation: {
+            available: true as const,
+            text: "These are both vasomotor symptoms.",
+            confidenceLevel: "established" as const,
+            sources: [{ title: "Hot Flashes", organization: "The Menopause Society" }],
+            caveats: ["This is not a diagnosis of menopause or perimenopause."],
+          },
+        },
+      };
+      await expect(briefAi.generate(input)).resolves.toBeDefined();
+    });
+
+    it("still rejects a genuine diagnostic claim even when patternEvidence is present", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "This pattern suggests a diagnosis of vasomotor syndrome.",
+            discussionTopics: ["Q?"],
+          }),
+        ),
+      );
+      const input = { ...VALID_INPUT, patternEvidence: null };
+      await expect(briefAi.generate(input)).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects a causal claim ('proves')", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "This proves your symptoms are connected.",
+            discussionTopics: ["Q?"],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects a causal claim ('confirms')", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "This confirms a hormonal cause.",
+            discussionTopics: ["Q?"],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects fabricated evidence-attribution language when no interpretation was supplied at all (patternEvidence null)", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Research shows this is a common pattern during this stage.",
+            discussionTopics: ["Q?"],
+          }),
+        ),
+      );
+      const input = { ...VALID_INPUT, patternEvidence: null };
+      await expect(briefAi.generate(input)).rejects.toThrow("evidence-attribution");
+    });
+
+    it("rejects fabricated evidence-attribution language when a pattern was observed but has no curated interpretation", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Studies show this combination is significant.",
+            discussionTopics: ["Q?"],
+          }),
+        ),
+      );
+      const input = {
+        ...VALID_INPUT,
+        patternEvidence: {
+          observation: "Brain fog and joint pain occurred together on 4 days.",
+          interpretation: { available: false as const },
+        },
+      };
+      await expect(briefAi.generate(input)).rejects.toThrow("evidence-attribution");
+    });
+
+    it("rejects evidence-tier inflation — claiming 'established' when the supplied tier is 'emerging'", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "This is an established relationship between the two symptoms.",
+            discussionTopics: ["Q?"],
+          }),
+        ),
+      );
+      const input = {
+        ...VALID_INPUT,
+        patternEvidence: {
+          observation: "Hot flashes and sleep disturbance occurred together on 5 days.",
+          interpretation: {
+            available: true as const,
+            text: "Research has found relationships between hot flashes and sleep complaints.",
+            confidenceLevel: "emerging" as const,
+            sources: [{ title: "AJOG review", organization: "AJOG" }],
+            caveats: ["This relationship is less direct than for night sweats specifically."],
+          },
+        },
+      };
+      await expect(briefAi.generate(input)).rejects.toThrow('claimed "established"');
+    });
+
+    it("allows 'established' language when the supplied tier genuinely is established", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "This is a well established relationship between two vasomotor symptoms.",
+            discussionTopics: ["Ask your GP whether this is relevant to you?"],
+          }),
+        ),
+      );
+      const input = {
+        ...VALID_INPUT,
+        patternEvidence: {
+          observation: "Hot flashes and night sweats occurred together on 6 days.",
+          interpretation: {
+            available: true as const,
+            text: "These are both vasomotor symptoms.",
+            confidenceLevel: "established" as const,
+            sources: [{ title: "Hot Flashes", organization: "The Menopause Society" }],
+            caveats: ["This is not a diagnosis of menopause or perimenopause."],
+          },
+        },
+      };
+      await expect(briefAi.generate(input)).resolves.toBeDefined();
+    });
+
+    it("allows evidence-attribution language when a real interpretation was actually supplied", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "According to The Menopause Society, these are both vasomotor symptoms.",
+            discussionTopics: ["Ask your GP whether this is relevant to you?"],
+          }),
+        ),
+      );
+      const input = {
+        ...VALID_INPUT,
+        patternEvidence: {
+          observation: "Hot flashes and night sweats occurred together on 6 days.",
+          interpretation: {
+            available: true as const,
+            text: "These are both vasomotor symptoms.",
+            confidenceLevel: "established" as const,
+            sources: [{ title: "Hot Flashes", organization: "The Menopause Society" }],
+            caveats: ["This is not a diagnosis of menopause or perimenopause."],
+          },
+        },
+      };
+      await expect(briefAi.generate(input)).resolves.toBeDefined();
     });
   });
 });

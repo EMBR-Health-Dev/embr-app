@@ -17,6 +17,35 @@ export interface BriefInput {
     cycleCount: number;
     periodDaysLogged: number;
   };
+  /** Stage 4 (see lib/clinical-interpretation.ts) → Stage 5 boundary.
+   * null means no qualifying pattern was detected at all this period
+   * (e.g. co-occurrence.ts found nothing meeting its own threshold) —
+   * a genuinely different case from a pattern being detected but
+   * having no curated interpretation yet, which `interpretation:
+   * {available: false}` represents explicitly rather than by omission.
+   * Deliberately narrow: sources here are {title, organization} only,
+   * not the full EvidenceSource (no url, no sourceType) — this is a
+   * structural enforcement of "the AI receives what it needs to
+   * narrate, not raw citation data it could be tempted to embellish
+   * or present as a clickable reference," not just a prompt
+   * instruction. */
+  patternEvidence: BriefPatternEvidence | null;
+}
+
+export interface BriefPatternEvidence {
+  /** Plain description of what deterministic pattern detection found
+   * — never interpretation, never diagnosis. Always present when
+   * patternEvidence itself is non-null. */
+  observation: string;
+  interpretation:
+    | {
+        available: true;
+        text: string;
+        confidenceLevel: "established" | "emerging" | "thin";
+        sources: Array<{ title: string; organization: string }>;
+        caveats: string[];
+      }
+    | { available: false };
 }
 
 export interface BriefContent {
@@ -68,6 +97,12 @@ Follow these rules strictly:
 4. If the data is too sparse to support a meaningful summary, say so plainly rather than inventing a pattern.
 5. Keep the narrative factual and neutral — this is a data summary, not medical commentary.
 
+If patternEvidence is provided, it comes from the application's own curated evidence layer — never something you should independently assess or second-guess:
+6. patternEvidence.observation describes what deterministic pattern detection found. You may reference it factually.
+7. If patternEvidence.interpretation.available is true, you may communicate its "text" field, in your own clear words, together with its "confidenceLevel" and its "caveats" — but you must not add any interpretation, evidence, or source beyond what is supplied. Never upgrade "emerging" or "thin" language into "established" language, and never state a caveat more weakly than it was supplied.
+8. If patternEvidence.interpretation.available is false, or patternEvidence is null entirely, you may describe the observation (if one exists) but must not offer any interpretation of what it means. Say plainly that no curated interpretation is available yet, or omit interpretive commentary entirely — never fill that gap with your own reasoning about what the pattern might indicate.
+9. Never cite a source, organization, or study that was not supplied in patternEvidence.interpretation.sources. Never say "studies show," "research suggests," or similar unless patternEvidence.interpretation.available is true and you are describing what was actually supplied.
+
 Respond with JSON only, no other text, in exactly this shape:
 {"narrative": "...", "discussionTopics": ["...", "..."]}`;
 
@@ -94,13 +129,27 @@ Respond with JSON only, no other text, in exactly this shape:
  *    away a real generation attempt.
  */
 const PROHIBITED_PATTERNS = [
-  /\bdiagnos(is|ed|e|es|ing)?\b/i,
   /\byou should (take|start|stop|try)\b/i,
   /\bi recommend\b/i,
   /\b\d+\s?(mg|mcg|ml|milligrams?)\b/i,
+  /\bproves?\b/i,
+  /\bconfirms?\b/i,
 ];
 
-function failsContentSafety(content: BriefContent): string | null {
+/** Evidence-attribution language the model is not entitled to use
+ * unless patternEvidence.interpretation.available is true — checked
+ * separately from PROHIBITED_PATTERNS above because whether these are
+ * violations is conditional on the input, not universally prohibited
+ * the way the checks below are. */
+const EVIDENCE_ATTRIBUTION_PATTERNS = [
+  /\bstudies? show/i,
+  /\bresearch shows?\b/i,
+  /\bresearch suggests?\b/i,
+  /\bevidence suggests?\b/i,
+  /\baccording to\b/i,
+];
+
+function failsContentSafety(content: BriefContent, input: BriefInput): string | null {
   for (const topic of content.discussionTopics) {
     if (!topic.trim().endsWith("?")) {
       return `Discussion topic was not phrased as a question: "${topic}"`;
@@ -108,9 +157,39 @@ function failsContentSafety(content: BriefContent): string | null {
   }
 
   const combinedText = [content.narrative, ...content.discussionTopics].join(" ");
+
+  // "This is not a diagnosis" (and equivalent negated phrasings) is
+  // required, correct safety language — patternEvidence's own seeded
+  // caveats legitimately contain it, and rule 7 explicitly invites the
+  // model to relay caveats in its own words. The word "diagnos-" is
+  // still prohibited everywhere else — this only excludes the specific
+  // safe negation, the same fix an earlier, unrelated feature this
+  // session needed for an identical false positive.
+  const textForDiagnosisCheck = combinedText.replace(
+    /\b(?:(?:is|was|are)\s+not|isn'?t|wasn'?t|aren'?t)\s+a\s+diagnosis\b/gi,
+    "",
+  );
+  if (/\bdiagnos(is|ed|e|es|ing)?\b/i.test(textForDiagnosisCheck)) {
+    return "Output matched a prohibited pattern: diagnosis-related language outside the safe negation";
+  }
+
   for (const pattern of PROHIBITED_PATTERNS) {
     if (pattern.test(combinedText)) {
       return `Output matched a prohibited pattern: ${pattern}`;
+    }
+  }
+
+  const interpretationAvailable = input.patternEvidence?.interpretation.available === true;
+  if (!interpretationAvailable) {
+    for (const pattern of EVIDENCE_ATTRIBUTION_PATTERNS) {
+      if (pattern.test(combinedText)) {
+        return `Output used evidence-attribution language with no interpretation supplied: ${pattern}`;
+      }
+    }
+  } else if (input.patternEvidence!.interpretation.available) {
+    const suppliedTier = input.patternEvidence!.interpretation.confidenceLevel;
+    if (suppliedTier !== "established" && /\bestablished\b/i.test(combinedText)) {
+      return `Output claimed "established" evidence but the supplied confidenceLevel was "${suppliedTier}"`;
     }
   }
 
@@ -121,16 +200,6 @@ export const briefAi = {
   async generate(input: BriefInput): Promise<BriefContent> {
     const client = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
-      // Explicit, reviewed values — not the SDK's own defaults (a
-      // 10-minute timeout and its own retry count), which are tuned
-      // for long-running/background use, not a synchronous request a
-      // person is sitting in front of a "Generating…" spinner for.
-      // maxRetries only applies to the SDK's own retryable conditions
-      // (connection errors, 408/429/5xx) — not reimplementing retry
-      // logic here, just making the count a deliberate decision
-      // instead of an implicit default.
-      timeout: 30_000,
-      maxRetries: 2,
       // SDK default is a 10-minute timeout with automatic retries on
       // timeout — meaning a slow response could hold this synchronous
       // request/response endpoint open for a very long multiple of that
@@ -154,27 +223,12 @@ export const briefAi = {
               dateRange: { from: input.fromDate, to: input.toDate },
               symptomSummary: input.symptomSummary,
               cycleSummary: input.cycleSummary,
+              patternEvidence: input.patternEvidence,
             }),
           },
         ],
       });
     } catch (err) {
-      // Anthropic's own SDK errors (APIError and its subclasses --
-      // AuthenticationError, RateLimitError, BadRequestError, ...)
-      // carry a real, readonly `.status` property in the same 4xx/5xx
-      // shape this API's own client-facing errors use. Without this
-      // catch, the global error handler's duck-typed
-      // hasClientErrorStatus() check would misclassify e.g. a 401 from
-      // a misconfigured ANTHROPIC_API_KEY as *our own user's* bad
-      // request -- passing Anthropic's raw error message straight
-      // through to them, and, worse, logging it at warn instead of
-      // error, silently missing the Sentry page for what's actually a
-      // real incident on our side. Wrapping here guarantees every
-      // failure from this call is always a 500, always logged and
-      // alerted as an incident, and never leaks upstream error detail
-      // to the client -- the original error is preserved as `cause`
-      // for our own logs/Sentry, just never sent over the wire.
-      throw AppError.internal("Couldn't generate the brief right now. Try again in a moment.", err);
       throw classifyAnthropicError(err);
     }
 
@@ -199,7 +253,7 @@ export const briefAi = {
       throw AppError.internal("Brief generation failed: unexpected response shape");
     }
 
-    const safetyFailure = failsContentSafety(result.data);
+    const safetyFailure = failsContentSafety(result.data, input);
     if (safetyFailure) {
       // Fail closed, same as every other validation failure above --
       // brief.service.ts awaits this call before ever persisting
