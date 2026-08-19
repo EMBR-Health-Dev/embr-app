@@ -226,6 +226,8 @@ describe("POST /treatments", () => {
       notes: "0.05mg, twice weekly",
     });
 
+    console.log("STATUS:", res.status);
+    console.log("BODY:", JSON.stringify(res.body, null, 2));
     expect(res.status).toBe(201);
     expect(res.body.data.name).toBe("Estradiol patch");
     expect(res.body.data.category).toBe("HRT");

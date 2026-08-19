@@ -13,6 +13,7 @@ export const briefRepository = {
     toDate: Date;
     symptomSummary: Prisma.InputJsonValue;
     cycleSummary: Prisma.InputJsonValue;
+    treatmentSummary: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {
@@ -30,16 +31,15 @@ export const briefRepository = {
     ]);
   },
 
-  /**
-   * Scoped to userId in the query itself, not checked after the fact.
-   * A brief containing another person's health data must never be
-   * fetchable by guessing an ID, not even to correctly 404 it.
-   */
   findByIdForUser(id: string, userId: string) {
-    return prisma.clinicalBrief.findFirst({ where: { id, userId } });
+    return prisma.clinicalBrief.findFirst({
+      where: { id, userId },
+    });
   },
 
   deleteByIdForUser(id: string, userId: string) {
-    return prisma.clinicalBrief.deleteMany({ where: { id, userId } });
+    return prisma.clinicalBrief.deleteMany({
+      where: { id, userId },
+    });
   },
 };
