@@ -129,8 +129,6 @@ export const briefAi = {
       // (connection errors, 408/429/5xx) — not reimplementing retry
       // logic here, just making the count a deliberate decision
       // instead of an implicit default.
-      timeout: 30_000,
-      maxRetries: 2,
       // SDK default is a 10-minute timeout with automatic retries on
       // timeout — meaning a slow response could hold this synchronous
       // request/response endpoint open for a very long multiple of that
@@ -174,7 +172,6 @@ export const briefAi = {
       // alerted as an incident, and never leaks upstream error detail
       // to the client -- the original error is preserved as `cause`
       // for our own logs/Sentry, just never sent over the wire.
-      throw AppError.internal("Couldn't generate the brief right now. Try again in a moment.", err);
       throw classifyAnthropicError(err);
     }
 
