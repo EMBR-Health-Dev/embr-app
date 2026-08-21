@@ -150,6 +150,7 @@ function DashboardContent() {
       });
       setNotes("");
       setFormOpen(false);
+      setConfirmation(t("logConfirmation"));
       await loadLogs();
     } finally {
       setSubmitting(false);
@@ -188,6 +189,9 @@ function DashboardContent() {
         <div className="flex items-center gap-4 text-sm text-navy/60">
           <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
             {t("trends")}
+          </Link>
+          <Link href="/treatments" className="underline underline-offset-2 hover:text-navy">
+            {t("treatments")}
           </Link>
           <Link href="/brief" className="underline underline-offset-2 hover:text-navy">
             {t("brief")}
@@ -241,6 +245,9 @@ function DashboardContent() {
         >
           {formOpen ? t("close") : t("logDifferentSymptom")}
         </button>
+        {!formOpen && confirmation && (
+          <p className="mt-2 text-sm font-medium text-teal">{confirmation}</p>
+        )}
 
         {formOpen && (
           <div className="mt-4 flex flex-col gap-4 rounded border border-navy/10 p-5">

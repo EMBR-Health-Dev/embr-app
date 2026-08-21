@@ -16,6 +16,7 @@ import type {
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
+  TreatmentDto,
   UserDto,
 } from "@embr/types";
 import { apiFetch } from "./api-client";
@@ -83,6 +84,36 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+  },
+
+  treatments: {
+    list: (query?: {
+      page?: number;
+      pageSize?: number;
+      category?: string;
+      active?: boolean;
+    }) => apiFetch<PaginatedResponse<TreatmentDto>>("/treatments", { query }),
+
+    create: (input: {
+      name: string;
+      category: string;
+      startDate: string;
+      endDate?: string;
+      notes?: string;
+    }) => apiFetch<TreatmentDto>("/treatments", { method: "POST", body: input }),
+
+    update: (
+      id: string,
+      input: Partial<{
+        name: string;
+        category: string;
+        startDate: string;
+        endDate: string | null;
+        notes: string;
+      }>,
+    ) => apiFetch<TreatmentDto>(`/treatments/${id}`, { method: "PATCH", body: input }),
+
+    delete: (id: string) => apiFetch<void>(`/treatments/${id}`, { method: "DELETE" }),
   },
 
   organizations: {

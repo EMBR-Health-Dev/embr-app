@@ -132,6 +132,7 @@
   },
   "Dashboard": {
     "trends": "Trends",
+    "treatments": "Treatments",
     "brief": "BRIEF",
     "export": "Export",
     "organization": "Organization",
@@ -149,6 +150,7 @@
     "notesLabel": "Notes (optional)",
     "save": "Save",
     "saving": "Saving…",
+    "logConfirmation": "Logged.",
     "todaysCycleEntry": "Today's cycle entry",
     "flowLabel": "Flow",
     "flowNone": "None",
@@ -236,6 +238,7 @@
     "changing": "Changing…",
     "devices": "Devices",
     "logoutEverywhere": "Log out everywhere",
+    "confirmLogoutAllMessage": "Every device, including this one, will be signed out.",
     "loggingOut": "Logging out…",
     "noActiveSessions": "No active sessions.",
     "unknownDevice": "Unknown device",
@@ -314,5 +317,25 @@
     "symptomLogsDescription": "Every symptom entry in the range, one row each — for your own records or another tool.",
     "cycleEntriesLabel": "Cycle entries (CSV)",
     "cycleEntriesDescription": "Every cycle entry in the range, one row each."
+  },
+  "Treatments": {
+    "title": "Treatments",
+    "backToDashboard": "← Dashboard",
+    "hint": "What you're doing about it — HRT, supplements, medication, or anything else. Not a diagnosis or treatment recommendation, just your own record.",
+    "namePlaceholder": "Name (e.g. Estradiol patch)",
+    "category": "Category",
+    "startDate": "Start date",
+    "ongoing": "Ongoing",
+    "endDate": "End date",
+    "notesPlaceholder": "Notes (optional)",
+    "fillRequiredFields": "Add a name and start date first.",
+    "pickEndDate": "Pick an end date, or leave it marked as ongoing.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "saving": "Saving…",
+    "addTreatment": "Add treatment",
+    "currentAndPast": "Current and past",
+    "endToday": "End today",
+    "delete": "Delete",
+    "noneYet": "No treatments logged yet."
   }
 }
