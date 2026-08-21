@@ -1,5 +1,9 @@
+import type { Prisma } from "../../generated/prisma/index.js";
+
 import { prisma } from "../../lib/prisma.js";
+
 import { toSkipTake } from "../../lib/pagination.js";
+
 import type { PaginationQuery } from "@embr/validation";
 
 export const briefRepository = {
@@ -7,8 +11,9 @@ export const briefRepository = {
     userId: string;
     fromDate: Date;
     toDate: Date;
-    symptomSummary: unknown;
-    cycleSummary: unknown;
+    symptomSummary: Prisma.InputJsonValue;
+    cycleSummary: Prisma.InputJsonValue;
+    treatmentSummary: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {
@@ -26,14 +31,15 @@ export const briefRepository = {
     ]);
   },
 
-  /** Scoped to userId in the query itself, not checked after the fact
-   * — a brief containing another person's health data must never be
-   * fetchable by guessing an ID, not even to correctly 404 it. */
   findByIdForUser(id: string, userId: string) {
-    return prisma.clinicalBrief.findFirst({ where: { id, userId } });
+    return prisma.clinicalBrief.findFirst({
+      where: { id, userId },
+    });
   },
 
   deleteByIdForUser(id: string, userId: string) {
-    return prisma.clinicalBrief.deleteMany({ where: { id, userId } });
+    return prisma.clinicalBrief.deleteMany({
+      where: { id, userId },
+    });
   },
 };

@@ -6,16 +6,16 @@ const { mockCreate, constructorCalls } = vi.hoisted(() => ({
   mockCreate: vi.fn(),
   constructorCalls: [] as unknown[],
 }));
-
 vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@anthropic-ai/sdk")>();
+
   class MockAnthropic {
     messages = { create: mockCreate };
+
     constructor(options: unknown) {
       constructorCalls.push(options);
     }
-  },
-}));
+
     static APIError = actual.APIError;
     static RateLimitError = actual.RateLimitError;
     static APIConnectionError = actual.APIConnectionError;
@@ -23,10 +23,11 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
     static AuthenticationError = actual.AuthenticationError;
     static BadRequestError = actual.BadRequestError;
   }
+
   return { ...actual, default: MockAnthropic };
 });
 
-const { briefAi } = await import("../src/modules/briefs/brief.ai.js");
+import { briefAi } from "../src/modules/briefs/brief.ai.js";
 
 const VALID_INPUT = {
   fromDate: "2026-01-01",
