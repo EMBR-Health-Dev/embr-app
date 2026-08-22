@@ -139,7 +139,11 @@ export default function TreatmentsPage() {
       <p className="mt-2 text-sm text-navy/60">{t("hint")}</p>
 
       <section className="mt-6 flex flex-col gap-4 rounded border border-navy/10 p-5">
-        <Field label={t("namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
+        <Field
+          label={t("namePlaceholder")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-navy">{t("category")}</span>
