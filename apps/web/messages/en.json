@@ -160,6 +160,8 @@
     "saved": "Saved ✓",
     "recentSymptoms": "Recent symptoms",
     "noLogsYet": "Nothing logged yet — use the button above whenever something happens.",
+    "thisWeek": "{count, plural, one {# log this week} other {# logs this week}}",
+    "mostCommon": "Most common: {category}",
     "startingPoint": {
       "understandExperience": "Let's start building your record.",
       "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",

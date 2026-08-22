@@ -160,6 +160,8 @@
     "saved": "保存しました ✓",
     "recentSymptoms": "最近の症状",
     "noLogsYet": "まだ記録がありません。何かあれば上のボタンから記録してください。",
+    "thisWeek": "{count, plural, other {今週の記録: #件}}",
+    "mostCommon": "最も多い症状: {category}",
     "startingPoint": {
       "understandExperience": "記録を始めましょう。",
       "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
