@@ -121,6 +121,26 @@ export interface TreatmentDto {
   updatedAt: string;
 }
 
+/**
+ * Deterministic before/after symptom-log-frequency comparison around
+ * a treatment's start date — no AI, no interpretation, matching
+ * SymptomCoOccurrenceDto's exact "counts only" precedent. `days` on
+ * each side is how many calendar days that window actually spans (the
+ * "after" window can be shorter than `windowDays` for a treatment
+ * that started recently or already ended) — a client needs this to
+ * render a fair "per day"/"per week" rate rather than comparing raw
+ * counts across windows of different lengths.
+ */
+export interface TreatmentImpactDto {
+  treatmentId: string;
+  windowDays: number;
+  before: { logCount: number; days: number };
+  after: { logCount: number; days: number };
+  /** True when the "after" window hasn't run long enough yet for the
+   * comparison to mean much — see MIN_TREATMENT_IMPACT_DAYS. */
+  insufficientData: boolean;
+}
+
 export type FlowIntensity = "SPOTTING" | "LIGHT" | "MEDIUM" | "HEAVY";
 
 export interface CycleEntryDto {

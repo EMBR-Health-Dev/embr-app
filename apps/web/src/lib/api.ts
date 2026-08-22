@@ -17,6 +17,7 @@ import type {
   SymptomFrequencyDto,
   SymptomLogDto,
   TreatmentDto,
+  TreatmentImpactDto,
   UserDto,
 } from "@embr/types";
 import { apiFetch } from "./api-client";
@@ -118,6 +119,8 @@ export const api = {
     ) => apiFetch<TreatmentDto>(`/treatments/${id}`, { method: "PATCH", body: input }),
 
     delete: (id: string) => apiFetch<void>(`/treatments/${id}`, { method: "DELETE" }),
+
+    impact: (id: string) => apiFetch<TreatmentImpactDto>(`/treatments/${id}/impact`),
   },
 
   organizations: {

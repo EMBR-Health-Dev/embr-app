@@ -67,6 +67,26 @@ export const treatmentRepository = {
     return prisma.treatment.findFirst({ where: { id, userId } });
   },
 
+  /** Two true DB-side COUNT aggregates (not fetched rows) — matches
+   * trends.repository.ts's own documented preference for
+   * Postgres-side aggregation over fetching and counting in
+   * application code, for exactly the same reason: nothing here needs
+   * the individual log rows, only how many exist in each window. */
+  async countSymptomLogsInWindows(
+    userId: string,
+    windows: { before: { from: Date; to: Date }; after: { from: Date; to: Date } },
+  ): Promise<{ beforeLogCount: number; afterLogCount: number }> {
+    const [beforeLogCount, afterLogCount] = await Promise.all([
+      prisma.symptomLog.count({
+        where: { userId, occurredAt: { gte: windows.before.from, lt: windows.before.to } },
+      }),
+      prisma.symptomLog.count({
+        where: { userId, occurredAt: { gte: windows.after.from, lt: windows.after.to } },
+      }),
+    ]);
+    return { beforeLogCount, afterLogCount };
+  },
+
   /** Every treatment that overlaps [fromDate, toDate] at all — not just
    * ones that started inside the range. An ongoing treatment (endDate
    * null) that started before fromDate must still appear, since it was

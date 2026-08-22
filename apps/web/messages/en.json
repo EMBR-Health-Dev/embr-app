@@ -338,6 +338,14 @@
     "currentAndPast": "Current and past",
     "endToday": "End today",
     "delete": "Delete",
-    "noneYet": "No treatments logged yet."
+    "noneYet": "No treatments logged yet.",
+    "showImpact": "See impact",
+    "hideImpact": "Hide impact",
+    "impactError": "Couldn't load this — try again in a moment.",
+    "impactInsufficientData": "Not enough time has passed since starting to show a comparison yet.",
+    "impactBeforeLabel": "Symptom logs before treatment",
+    "impactAfterLabel": "Symptom logs since treatment began",
+    "impactWindow": "{count, plural, one {# day} other {# days}}",
+    "impactDisclaimer": "A count of how often you logged symptoms, not a measure of whether the treatment is working."
   }
 }

@@ -3,7 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-na
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { treatmentCategorySchema } from "@embr/validation";
-import type { TreatmentDto } from "@embr/types";
+import type { TreatmentDto, TreatmentImpactDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Chip } from "../../components/chip";
@@ -11,12 +11,9 @@ import { DatePickerField } from "../../components/date-picker-field";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
+import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = treatmentCategorySchema.options;
-
-function toIsoDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 export default function TreatmentsScreen() {
   const { t } = useTranslation();
@@ -33,6 +30,11 @@ export default function TreatmentsScreen() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [expandedImpactId, setExpandedImpactId] = useState<string | null>(null);
+  const [impactState, setImpactState] = useState<
+    Record<string, { loading: boolean; error: boolean; data: TreatmentImpactDto | null }>
+  >({});
 
   const loadTreatments = useCallback(async () => {
     try {
@@ -109,6 +111,26 @@ export default function TreatmentsScreen() {
       await loadTreatments();
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  // Lazy, cached per treatment: fetched only the first time a row is
+  // expanded, not for every treatment on screen load — matches
+  // apps/web/src/app/treatments/page.tsx's identical toggleImpact.
+  async function toggleImpact(id: string) {
+    if (expandedImpactId === id) {
+      setExpandedImpactId(null);
+      return;
+    }
+    setExpandedImpactId(id);
+    if (impactState[id]) return;
+
+    setImpactState((prev) => ({ ...prev, [id]: { loading: true, error: false, data: null } }));
+    try {
+      const data = await api.treatments.impact(id);
+      setImpactState((prev) => ({ ...prev, [id]: { loading: false, error: false, data } }));
+    } catch {
+      setImpactState((prev) => ({ ...prev, [id]: { loading: false, error: true, data: null } }));
     }
   }
 
@@ -204,37 +226,78 @@ export default function TreatmentsScreen() {
         }
         renderItem={({ item }) => {
           const isOngoing = !item.endDate;
+          const impact = impactState[item.id];
+          const expanded = expandedImpactId === item.id;
           return (
-            <View style={styles.treatmentRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.treatmentName}>{item.name}</Text>
-                <Text style={styles.treatmentMeta}>
-                  {t(`enums.treatmentCategory.${item.category}`)} · {item.startDate}
-                  {" – "}
-                  {isOngoing ? t("treatments.ongoing") : item.endDate}
-                </Text>
-                {item.notes && <Text style={styles.treatmentNotes}>{item.notes}</Text>}
-              </View>
-              <View style={styles.rowActions}>
-                {isOngoing && (
-                  <Pressable
-                    onPress={() => void handleEndToday(item.id)}
-                    disabled={endingId === item.id}
-                  >
+            <View style={styles.treatmentItem}>
+              <View style={styles.treatmentRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.treatmentName}>{item.name}</Text>
+                  <Text style={styles.treatmentMeta}>
+                    {t(`enums.treatmentCategory.${item.category}`)} · {item.startDate}
+                    {" – "}
+                    {isOngoing ? t("treatments.ongoing") : item.endDate}
+                  </Text>
+                  {item.notes && <Text style={styles.treatmentNotes}>{item.notes}</Text>}
+                </View>
+                <View style={styles.rowActions}>
+                  <Pressable onPress={() => void toggleImpact(item.id)}>
                     <Text style={styles.linkText}>
-                      {endingId === item.id ? "…" : t("treatments.endToday")}
+                      {expanded ? t("treatments.hideImpact") : t("treatments.showImpact")}
                     </Text>
                   </Pressable>
-                )}
-                <Pressable
-                  onPress={() => void handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                >
-                  <Text style={styles.deleteText}>
-                    {deletingId === item.id ? "…" : t("treatments.delete")}
-                  </Text>
-                </Pressable>
+                  {isOngoing && (
+                    <Pressable
+                      onPress={() => void handleEndToday(item.id)}
+                      disabled={endingId === item.id}
+                    >
+                      <Text style={styles.linkText}>
+                        {endingId === item.id ? "…" : t("treatments.endToday")}
+                      </Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    onPress={() => void handleDelete(item.id)}
+                    disabled={deletingId === item.id}
+                  >
+                    <Text style={styles.deleteText}>
+                      {deletingId === item.id ? "…" : t("treatments.delete")}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
+
+              {expanded && (
+                <View style={styles.impactPanel}>
+                  {!impact || impact.loading ? (
+                    <Text style={styles.impactMuted}>{t("common.loading")}</Text>
+                  ) : impact.error ? (
+                    <Text style={styles.impactError}>{t("treatments.impactError")}</Text>
+                  ) : impact.data!.insufficientData ? (
+                    <Text style={styles.impactMuted}>{t("treatments.impactInsufficientData")}</Text>
+                  ) : (
+                    <View style={{ gap: 6 }}>
+                      <View style={styles.impactRow}>
+                        <Text style={styles.impactLabel}>{t("treatments.impactBeforeLabel")}</Text>
+                        <Text style={styles.impactValue}>
+                          {impact.data!.before.logCount} ·{" "}
+                          {t("treatments.impactWindow", { count: impact.data!.before.days })}
+                        </Text>
+                      </View>
+                      <View style={styles.impactRow}>
+                        <Text style={styles.impactLabel}>{t("treatments.impactAfterLabel")}</Text>
+                        <Text style={styles.impactValue}>
+                          {impact.data!.after.logCount} ·{" "}
+                          {t("treatments.impactWindow", { count: impact.data!.after.days })}
+                        </Text>
+                      </View>
+                      <Text style={styles.impactDisclaimer}>
+                        {t("treatments.impactDisclaimer")}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           );
         }}
@@ -296,13 +359,15 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  treatmentItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
   treatmentRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   treatmentName: { fontSize: 15, fontWeight: "500", color: theme.colors.textPrimary },
   treatmentMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
@@ -310,4 +375,18 @@ const styles = StyleSheet.create({
   rowActions: { alignItems: "flex-end", gap: 6 },
   linkText: { fontSize: 13, color: theme.colors.success, fontWeight: "500" },
   deleteText: { fontSize: 13, color: theme.colors.error },
+  impactPanel: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.successSoft,
+  },
+  impactMuted: { fontSize: 13, color: theme.colors.textMuted },
+  impactError: { fontSize: 13, color: theme.colors.error },
+  impactRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  impactLabel: { fontSize: 13, color: theme.colors.textSecondary },
+  impactValue: { fontSize: 13, fontWeight: "600", color: theme.colors.textPrimary },
+  impactDisclaimer: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
 });

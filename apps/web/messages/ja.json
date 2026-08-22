@@ -338,6 +338,14 @@
     "currentAndPast": "現在と過去の記録",
     "endToday": "今日で終了",
     "delete": "削除",
-    "noneYet": "まだ治療が記録されていません。"
+    "noneYet": "まだ治療が記録されていません。",
+    "showImpact": "変化を見る",
+    "hideImpact": "変化を隠す",
+    "impactError": "読み込めませんでした。しばらくしてからもう一度お試しください。",
+    "impactInsufficientData": "開始からまだ十分な期間が経っていないため、比較を表示できません。",
+    "impactBeforeLabel": "治療開始前の症状記録",
+    "impactAfterLabel": "治療開始後の症状記録",
+    "impactWindow": "{count, plural, other {#日間}}",
+    "impactDisclaimer": "症状を記録した回数であり、治療の効果を示すものではありません。"
   }
 }

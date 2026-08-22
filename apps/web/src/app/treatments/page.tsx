@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { TreatmentDto } from "@embr/types";
+import type { TreatmentDto, TreatmentImpactDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -34,6 +34,11 @@ export default function TreatmentsPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [expandedImpactId, setExpandedImpactId] = useState<string | null>(null);
+  const [impactState, setImpactState] = useState<
+    Record<string, { loading: boolean; error: boolean; data: TreatmentImpactDto | null }>
+  >({});
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -110,6 +115,27 @@ export default function TreatmentsPage() {
       await loadTreatments();
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  // Lazy, cached per treatment: fetched only the first time a row is
+  // expanded, not for every treatment on page load — this is a
+  // secondary detail view, not something every visit needs for every
+  // row up front.
+  async function toggleImpact(id: string) {
+    if (expandedImpactId === id) {
+      setExpandedImpactId(null);
+      return;
+    }
+    setExpandedImpactId(id);
+    if (impactState[id]) return;
+
+    setImpactState((prev) => ({ ...prev, [id]: { loading: true, error: false, data: null } }));
+    try {
+      const data = await api.treatments.impact(id);
+      setImpactState((prev) => ({ ...prev, [id]: { loading: false, error: false, data } }));
+    } catch {
+      setImpactState((prev) => ({ ...prev, [id]: { loading: false, error: true, data: null } }));
     }
   }
 
@@ -217,34 +243,74 @@ export default function TreatmentsPage() {
           <ul className="mt-3 divide-y divide-navy/10">
             {treatments.map((tr) => {
               const isOngoing = !tr.endDate;
+              const impact = impactState[tr.id];
+              const expanded = expandedImpactId === tr.id;
               return (
-                <li key={tr.id} className="flex items-center justify-between py-3 text-sm">
-                  <div>
-                    <p className="font-medium text-navy">{tr.name}</p>
-                    <p className="text-navy/50">
-                      {tEnum(`treatmentCategory.${tr.category}`)} · {tr.startDate} –{" "}
-                      {isOngoing ? t("ongoing") : tr.endDate}
-                    </p>
-                    {tr.notes && <p className="mt-1 text-navy/60">{tr.notes}</p>}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {isOngoing && (
+                <li key={tr.id} className="py-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-navy">{tr.name}</p>
+                      <p className="text-navy/50">
+                        {tEnum(`treatmentCategory.${tr.category}`)} · {tr.startDate} –{" "}
+                        {isOngoing ? t("ongoing") : tr.endDate}
+                      </p>
+                      {tr.notes && <p className="mt-1 text-navy/60">{tr.notes}</p>}
+                    </div>
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => handleEndToday(tr.id)}
-                        disabled={endingId === tr.id}
-                        className="text-teal underline underline-offset-2 disabled:opacity-50"
+                        onClick={() => void toggleImpact(tr.id)}
+                        className="text-teal underline underline-offset-2"
                       >
-                        {endingId === tr.id ? "…" : t("endToday")}
+                        {expanded ? t("hideImpact") : t("showImpact")}
                       </button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(tr.id)}
-                      disabled={deletingId === tr.id}
-                      className="text-red-600 underline underline-offset-2 disabled:opacity-50"
-                    >
-                      {deletingId === tr.id ? "…" : t("delete")}
-                    </button>
+                      {isOngoing && (
+                        <button
+                          onClick={() => handleEndToday(tr.id)}
+                          disabled={endingId === tr.id}
+                          className="text-teal underline underline-offset-2 disabled:opacity-50"
+                        >
+                          {endingId === tr.id ? "…" : t("endToday")}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(tr.id)}
+                        disabled={deletingId === tr.id}
+                        className="text-red-600 underline underline-offset-2 disabled:opacity-50"
+                      >
+                        {deletingId === tr.id ? "…" : t("delete")}
+                      </button>
+                    </div>
                   </div>
+
+                  {expanded && (
+                    <div className="mt-3 rounded border border-teal/20 bg-teal/5 p-3 text-sm">
+                      {!impact || impact.loading ? (
+                        <p className="text-navy/50">{tCommon("loading")}</p>
+                      ) : impact.error ? (
+                        <p className="text-red-600">{t("impactError")}</p>
+                      ) : impact.data!.insufficientData ? (
+                        <p className="text-navy/60">{t("impactInsufficientData")}</p>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-navy/70">{t("impactBeforeLabel")}</span>
+                            <span className="font-medium text-navy">
+                              {impact.data!.before.logCount} ·{" "}
+                              {t("impactWindow", { count: impact.data!.before.days })}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-navy/70">{t("impactAfterLabel")}</span>
+                            <span className="font-medium text-navy">
+                              {impact.data!.after.logCount} ·{" "}
+                              {t("impactWindow", { count: impact.data!.after.days })}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-navy/50">{t("impactDisclaimer")}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </li>
               );
             })}
