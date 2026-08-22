@@ -7,6 +7,7 @@
     "title": "Welcome back",
     "emailLabel": "Email",
     "passwordLabel": "Password",
+    "forgotPassword": "Forgot password?",
     "genericError": "Something went wrong. Try again in a moment.",
     "submit": "Log in",
     "submitting": "Logging in…",
@@ -30,6 +31,33 @@
     "submitting": "Creating account…",
     "alreadyHaveAccount": "Already have an account?",
     "logIn": "Log in"
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "subtitle": "Enter your email and we'll send you a link to reset your password.",
+    "emailLabel": "Email",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "If an account exists for that email, a password reset link is on its way.",
+    "backToLogin": "Back to login"
+  },
+  "resetPassword": {
+    "title": "Choose a new password",
+    "subtitle": "Paste the reset link or code from your email, then choose a new password.",
+    "tokenLabel": "Reset link or code",
+    "tokenRequired": "Paste the reset link or code from your email.",
+    "newPasswordLabel": "New password",
+    "passwordHint": "At least 12 characters, with an uppercase letter, a lowercase letter, and a digit.",
+    "confirmPasswordLabel": "Confirm new password",
+    "passwordsDontMatch": "Passwords don't match.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Reset password",
+    "submitting": "Resetting…",
+    "successTitle": "Password reset",
+    "successBody": "Your password has been changed. Log in with your new password.",
+    "goToLogin": "Go to login"
   },
   "onboarding": {
     "skipToDashboard": "Skip to dashboard",

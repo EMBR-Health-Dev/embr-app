@@ -7,6 +7,7 @@
     "title": "おかえりなさい",
     "emailLabel": "メールアドレス",
     "passwordLabel": "パスワード",
+    "forgotPassword": "パスワードをお忘れですか?",
     "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
     "submit": "ログイン",
     "submitting": "ログイン中…",
@@ -30,6 +31,33 @@
     "submitting": "作成中…",
     "alreadyHaveAccount": "すでにアカウントをお持ちですか?",
     "logIn": "ログイン"
+  },
+  "forgotPassword": {
+    "title": "パスワードを再設定",
+    "subtitle": "メールアドレスを入力すると、パスワード再設定用のリンクをお送りします。",
+    "emailLabel": "メールアドレス",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "再設定リンクを送信",
+    "submitting": "送信中…",
+    "checkEmailTitle": "メールをご確認ください",
+    "checkEmailBody": "該当するアカウントが存在する場合、パスワード再設定用のリンクをお送りしています。",
+    "backToLogin": "ログインに戻る"
+  },
+  "resetPassword": {
+    "title": "新しいパスワードを設定",
+    "subtitle": "メールに記載のリンクまたはコードを貼り付けて、新しいパスワードを設定してください。",
+    "tokenLabel": "再設定用リンクまたはコード",
+    "tokenRequired": "メールに記載のリンクまたはコードを貼り付けてください。",
+    "newPasswordLabel": "新しいパスワード",
+    "passwordHint": "12文字以上で、大文字・小文字・数字をそれぞれ1つ以上含めてください。",
+    "confirmPasswordLabel": "新しいパスワード(確認)",
+    "passwordsDontMatch": "パスワードが一致しません。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "パスワードを再設定",
+    "submitting": "再設定中…",
+    "successTitle": "パスワードを再設定しました",
+    "successBody": "パスワードを変更しました。新しいパスワードでログインしてください。",
+    "goToLogin": "ログインへ進む"
   },
   "onboarding": {
     "skipToDashboard": "ダッシュボードへスキップ",

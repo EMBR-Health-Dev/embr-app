@@ -41,6 +41,9 @@ export const api = {
     forgotPassword: (email: string) =>
       apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
 
+    resetPassword: (input: { token: string; password: string }) =>
+      apiFetch<void>("/auth/reset-password", { method: "POST", body: input }),
+
     // Server-side revokes every session on success (see
     // auth.service.ts) — same as apps/web, the caller is expected to
     // treat this as an implicit logout on this device too, not just a

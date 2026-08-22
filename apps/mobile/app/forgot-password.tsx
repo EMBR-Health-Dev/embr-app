@@ -1,28 +1,26 @@
 import { useState } from "react";
-import { Link, router } from "expo-router";
+import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { loginSchema } from "@embr/validation";
-import { useAuth } from "../lib/auth-context";
+import { forgotPasswordSchema } from "@embr/validation";
+import { api } from "../lib/api";
 import { ApiError } from "../lib/api-client";
-import { LanguageSwitcher } from "../components/language-switcher";
 import { theme } from "../lib/theme";
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
-  const { login } = useAuth();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
 
   async function handleSubmit() {
     setFormError(null);
     setFieldError(undefined);
 
-    const parsed = loginSchema.safeParse({ email, password });
+    const parsed = forgotPasswordSchema.safeParse({ email });
     if (!parsed.success) {
       setFieldError(parsed.error.issues[0]?.message);
       return;
@@ -30,24 +28,41 @@ export default function LoginScreen() {
 
     setSubmitting(true);
     try {
-      const user = await login(parsed.data.email, parsed.data.password);
-      router.replace(user.onboardingCompletedAt ? "/(app)" : "/onboarding");
+      await api.auth.forgotPassword(parsed.data.email);
+      // The API always returns success here regardless of whether an
+      // account exists for this email (see auth.service.ts's
+      // forgotPassword) — showing the same done state for every
+      // non-error outcome keeps that true on this screen too.
+      setDone(true);
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : t("login.genericError"));
+      setFormError(err instanceof ApiError ? err.message : t("forgotPassword.genericError"));
     } finally {
       setSubmitting(false);
     }
   }
 
+  if (done) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.content}>
+          <Text style={styles.title}>{t("forgotPassword.checkEmailTitle")}</Text>
+          <Text style={styles.body}>{t("forgotPassword.checkEmailBody")}</Text>
+          <Link href="/login" style={styles.link}>
+            <Text style={styles.linkText}>{t("forgotPassword.backToLogin")}</Text>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
-        <LanguageSwitcher />
-
-        <Text style={styles.title}>{t("login.title")}</Text>
+        <Text style={styles.title}>{t("forgotPassword.title")}</Text>
+        <Text style={styles.body}>{t("forgotPassword.subtitle")}</Text>
 
         <View style={styles.field}>
-          <Text style={styles.label}>{t("login.emailLabel")}</Text>
+          <Text style={styles.label}>{t("forgotPassword.emailLabel")}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -59,22 +74,6 @@ export default function LoginScreen() {
           />
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>{t("login.passwordLabel")}</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="current-password"
-            textContentType="password"
-          />
-        </View>
-
-        <Link href="/forgot-password" style={styles.forgotPasswordLink}>
-          <Text style={styles.linkText}>{t("login.forgotPassword")}</Text>
-        </Link>
-
         {fieldError && <Text style={styles.error}>{fieldError}</Text>}
         {formError && <Text style={styles.error}>{formError}</Text>}
 
@@ -84,14 +83,12 @@ export default function LoginScreen() {
           disabled={submitting}
         >
           <Text style={styles.buttonText}>
-            {submitting ? t("login.submitting") : t("login.submit")}
+            {submitting ? t("forgotPassword.submitting") : t("forgotPassword.submit")}
           </Text>
         </Pressable>
 
-        <Link href="/register" style={styles.link}>
-          <Text>
-            {t("login.newToEmbr")} <Text style={styles.linkText}>{t("login.createAccount")}</Text>
-          </Text>
+        <Link href="/login" style={styles.link}>
+          <Text style={styles.linkText}>{t("forgotPassword.backToLogin")}</Text>
         </Link>
       </View>
     </SafeAreaView>
@@ -102,6 +99,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.background },
   content: { flex: 1, justifyContent: "center", padding: 24, gap: 16 },
   title: { fontSize: 28, fontWeight: "600", marginBottom: 8, color: theme.colors.textPrimary },
+  body: { fontSize: 16, color: theme.colors.textSecondary, lineHeight: 22 },
   field: { gap: 6 },
   label: { fontSize: 14, fontWeight: "500", color: theme.colors.textSecondary },
   input: {
@@ -125,6 +123,5 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
   link: { marginTop: 8, alignSelf: "center" },
-  forgotPasswordLink: { alignSelf: "flex-end" },
   linkText: { color: theme.colors.success, fontWeight: "500" },
 });

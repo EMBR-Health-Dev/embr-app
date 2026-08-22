@@ -10,6 +10,7 @@
     },
     "emailLabel": "Email",
     "passwordLabel": "Password",
+    "forgotPassword": "Forgot password?",
     "enterEmailForSso": "Enter your email above, then continue with SSO.",
     "genericError": "Something went wrong. Try again in a moment.",
     "submit": "Log in",
@@ -41,6 +42,34 @@
     "submitting": "Creating account…",
     "alreadyHaveAccount": "Already have an account?",
     "logIn": "Log in"
+  },
+  "ForgotPassword": {
+    "title": "Reset your password",
+    "subtitle": "Enter your email and we'll send you a link to reset your password.",
+    "emailLabel": "Email",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "If an account exists for that email, a password reset link is on its way.",
+    "backToLogin": "Back to login"
+  },
+  "ResetPassword": {
+    "title": "Choose a new password",
+    "subtitle": "Enter a new password for your account.",
+    "newPasswordLabel": "New password",
+    "passwordHint": "At least 12 characters, with an uppercase letter, a lowercase letter, and a digit.",
+    "confirmPasswordLabel": "Confirm new password",
+    "passwordsDontMatch": "Passwords don't match.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Reset password",
+    "submitting": "Resetting…",
+    "successTitle": "Password reset",
+    "successBody": "Your password has been changed. Log in with your new password.",
+    "goToLogin": "Go to login",
+    "invalidLinkTitle": "Link invalid or expired",
+    "invalidLinkBody": "This password reset link is invalid or has expired. Request a new one to continue.",
+    "requestNewLink": "Request a new link"
   },
   "Onboarding": {
     "skipToDashboard": "Skip to dashboard",

@@ -36,6 +36,12 @@ export const api = {
 
     me: () => apiFetch<UserDto>("/auth/me"),
 
+    forgotPassword: (email: string) =>
+      apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
+
+    resetPassword: (input: { token: string; password: string }) =>
+      apiFetch<void>("/auth/reset-password", { method: "POST", body: input }),
+
     changePassword: (input: { currentPassword: string; newPassword: string }) =>
       apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
 
