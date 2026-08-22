@@ -282,6 +282,8 @@
     "deleteAccountDescription": "アカウントとその中のすべてのデータ(症状の記録、周期の記録、BRIEF、設定など)を完全に削除します。この操作は取り消せません。",
     "deleteMyAccount": "アカウントを削除する",
     "confirmPasswordLabel": "パスワードを確認",
+    "forgotPasswordHint": "パスワードをお忘れですか?",
+    "forgotPasswordLink": "再設定する",
     "enterPasswordToConfirm": "確認のためパスワードを入力してください。",
     "permanentlyDelete": "アカウントを完全に削除する",
     "deleting": "削除中…",

@@ -260,6 +260,15 @@ export default function SettingsScreen() {
                     value={deletePassword}
                     onChangeText={setDeletePassword}
                   />
+                  <Pressable
+                    style={styles.forgotPasswordRow}
+                    onPress={() => router.push("/forgot-password")}
+                  >
+                    <Text style={styles.sectionHint}>
+                      {t("settings.forgotPasswordHint")}{" "}
+                      <Text style={styles.linkText}>{t("settings.forgotPasswordLink")}</Text>
+                    </Text>
+                  </Pressable>
                   {deleteError && <Text style={styles.error}>{deleteError}</Text>}
                   <View style={styles.deleteActionsRow}>
                     <Pressable
@@ -307,6 +316,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   sectionHint: { fontSize: 13, color: theme.colors.textMuted, marginBottom: 8 },
+  forgotPasswordRow: { marginTop: 8 },
+  linkText: { color: theme.colors.success, fontWeight: "500" },
   input: {
     borderWidth: 1,
     borderColor: theme.colors.borderStrong,

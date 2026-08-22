@@ -282,6 +282,8 @@
     "deleteAccountDescription": "This permanently deletes your account and everything in it — symptom logs, cycle entries, briefs, and settings. This cannot be undone.",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordLabel": "Confirm your password",
+    "forgotPasswordHint": "Don't know your password?",
+    "forgotPasswordLink": "Reset it",
     "enterPasswordToConfirm": "Enter your password to confirm.",
     "permanentlyDelete": "Permanently delete my account",
     "deleting": "Deleting…",

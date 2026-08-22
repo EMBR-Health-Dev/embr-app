@@ -264,6 +264,12 @@ export default function SettingsPage() {
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
             />
+            <p className="text-xs text-navy/50">
+              {t("forgotPasswordHint")}{" "}
+              <Link href="/forgot-password" className="text-teal underline underline-offset-2">
+                {t("forgotPasswordLink")}
+              </Link>
+            </p>
             {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
             <div className="flex gap-3">
               <button
