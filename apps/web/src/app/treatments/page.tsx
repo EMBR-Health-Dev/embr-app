@@ -10,12 +10,9 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = ["HRT", "SUPPLEMENT", "MEDICATION", "LIFESTYLE", "OTHER"] as const;
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export default function TreatmentsPage() {
   const t = useTranslations("Treatments");
@@ -31,7 +28,7 @@ export default function TreatmentsPage() {
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("HRT");
-  const [startDate, setStartDate] = useState(todayIso());
+  const [startDate, setStartDate] = useState(toIsoDate(new Date()));
   const [ongoing, setOngoing] = useState(true);
   const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -82,7 +79,7 @@ export default function TreatmentsPage() {
       });
       setName("");
       setCategory("HRT");
-      setStartDate(todayIso());
+      setStartDate(toIsoDate(new Date()));
       setOngoing(true);
       setEndDate("");
       setNotes("");
@@ -97,7 +94,7 @@ export default function TreatmentsPage() {
   async function handleEndToday(id: string) {
     setEndingId(id);
     try {
-      await api.treatments.update(id, { endDate: todayIso() });
+      await api.treatments.update(id, { endDate: toIsoDate(new Date()) });
       await loadTreatments();
     } finally {
       setEndingId(null);
@@ -165,7 +162,7 @@ export default function TreatmentsPage() {
             label={t("startDate")}
             type="date"
             value={startDate}
-            max={todayIso()}
+            max={toIsoDate(new Date())}
             onChange={(e) => setStartDate(e.target.value)}
           />
 
@@ -187,7 +184,7 @@ export default function TreatmentsPage() {
               type="date"
               value={endDate}
               min={startDate}
-              max={todayIso()}
+              max={toIsoDate(new Date())}
               onChange={(e) => setEndDate(e.target.value)}
             />
           )}

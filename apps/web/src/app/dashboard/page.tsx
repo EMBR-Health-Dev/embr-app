@@ -10,6 +10,7 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
+import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -33,10 +34,6 @@ const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
 
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
   return value !== null && (CATEGORIES as readonly string[]).includes(value);
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function DashboardContent() {
@@ -183,7 +180,7 @@ function DashboardContent() {
     setCycleSaving(true);
     try {
       await api.cycleEntries.upsert({
-        date: todayIso(),
+        date: toIsoDate(new Date()),
         flow: flow || undefined,
         isPeriodStart: periodStart,
         isPeriodEnd: periodEnd,
