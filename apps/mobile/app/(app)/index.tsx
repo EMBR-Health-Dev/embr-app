@@ -58,15 +58,15 @@ export default function HomeScreen() {
     from.setDate(from.getDate() - 7);
     try {
       const frequency = await api.trends.symptomFrequency({ from: from.toISOString() });
-      setWeeklyFrequency(frequency);
+      return frequency;
     } catch {
-      setWeeklyFrequency([]);
+      return [];
     }
   }, []);
 
   useEffect(() => {
     void loadLogs();
-    void loadWeeklyFrequency();
+    void loadWeeklyFrequency().then(setWeeklyFrequency);
   }, [loadLogs, loadWeeklyFrequency]);
 
   // Soft, not a block: /onboarding's skip link reaches this same
@@ -111,7 +111,8 @@ export default function HomeScreen() {
       setSeverity(null);
       setNotes("");
       setConfirmation(t("home.logConfirmation"));
-      await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+      setWeeklyFrequency(frequency);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : t("home.genericError"));
     } finally {
@@ -164,7 +165,9 @@ export default function HomeScreen() {
                   count: weeklyFrequency.reduce((sum, f) => sum + f.count, 0),
                 })}
                 {" · "}
-                {t("home.mostCommon", { category: t(`enums.category.${weeklyFrequency[0].category}`) })}
+                {t("home.mostCommon", {
+                  category: t(`enums.category.${weeklyFrequency[0].category}`),
+                })}
               </Text>
             )}
 

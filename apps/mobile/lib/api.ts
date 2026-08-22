@@ -99,12 +99,16 @@ export const api = {
   },
 
   treatments: {
-    list: (query?: {
-      page?: number;
-      pageSize?: number;
-      category?: string;
-      active?: boolean;
-    }) => apiFetch<PaginatedResponse<TreatmentDto>>("/treatments", { query }),
+    list: (query?: { page?: number; pageSize?: number; category?: string; active?: boolean }) =>
+      apiFetch<PaginatedResponse<TreatmentDto>>("/treatments", {
+        query:
+          query === undefined
+            ? undefined
+            : {
+                ...query,
+                active: query.active === undefined ? undefined : String(query.active),
+              },
+      }),
 
     create: (input: {
       name: string;
