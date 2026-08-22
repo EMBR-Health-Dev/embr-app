@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { changePasswordSchema } from "@embr/validation";
@@ -73,6 +73,17 @@ export default function SettingsScreen() {
   }
 
   async function revokeSession(id: string) {
+    Alert.alert(t("settings.confirmRevokeTitle"), t("settings.confirmRevokeMessage"), [
+      { text: t("settings.cancel"), style: "cancel" },
+      {
+        text: t("settings.revoke"),
+        style: "destructive",
+        onPress: () => void performRevokeSession(id),
+      },
+    ]);
+  }
+
+  async function performRevokeSession(id: string) {
     setRevokingId(id);
     try {
       await api.auth.sessions.revoke(id);
@@ -83,6 +94,17 @@ export default function SettingsScreen() {
   }
 
   async function logoutEverywhere() {
+    Alert.alert(t("settings.confirmLogoutAllTitle"), t("settings.confirmLogoutAllMessage"), [
+      { text: t("settings.cancel"), style: "cancel" },
+      {
+        text: t("settings.logoutEverywhere"),
+        style: "destructive",
+        onPress: () => void performLogoutEverywhere(),
+      },
+    ]);
+  }
+
+  async function performLogoutEverywhere() {
     setLoggingOutAll(true);
     try {
       await api.auth.logoutAll();

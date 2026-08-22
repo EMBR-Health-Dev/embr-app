@@ -27,7 +27,9 @@ export default function SettingsPage() {
   const [sessions, setSessions] = useState<DeviceSessionDto[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmingRevokeId, setConfirmingRevokeId] = useState<string | null>(null);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
+  const [confirmingLogoutAll, setConfirmingLogoutAll] = useState(false);
 
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteConfirming, setDeleteConfirming] = useState(false);
@@ -74,6 +76,7 @@ export default function SettingsPage() {
   }
 
   async function revokeSession(id: string) {
+    setConfirmingRevokeId(null);
     setRevokingId(id);
     try {
       await api.auth.sessions.revoke(id);
@@ -84,6 +87,7 @@ export default function SettingsPage() {
   }
 
   async function logoutEverywhere() {
+    setConfirmingLogoutAll(false);
     setLoggingOutAll(true);
     try {
       await api.auth.logoutAll();
@@ -160,13 +164,32 @@ export default function SettingsPage() {
       <section className="mt-10">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg text-navy">{t("devices")}</h2>
-          <button
-            onClick={logoutEverywhere}
-            disabled={loggingOutAll}
-            className="text-sm font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
-          >
-            {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
-          </button>
+          {!confirmingLogoutAll ? (
+            <button
+              onClick={() => setConfirmingLogoutAll(true)}
+              className="text-sm font-medium text-red-600 underline underline-offset-2"
+            >
+              {t("logoutEverywhere")}
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-navy/60">{t("confirmLogoutAllMessage")}</span>
+              <button
+                onClick={logoutEverywhere}
+                disabled={loggingOutAll}
+                className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+              >
+                {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
+              </button>
+              <button
+                onClick={() => setConfirmingLogoutAll(false)}
+                disabled={loggingOutAll}
+                className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          )}
         </div>
 
         {sessionsLoading ? (
@@ -191,15 +214,31 @@ export default function SettingsPage() {
                     {new Date(s.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                {!s.current && (
-                  <button
-                    onClick={() => revokeSession(s.id)}
-                    disabled={revokingId === s.id}
-                    className="text-red-600 underline underline-offset-2 disabled:opacity-50"
-                  >
-                    {revokingId === s.id ? t("revoking") : t("revoke")}
-                  </button>
-                )}
+                {!s.current &&
+                  (confirmingRevokeId === s.id ? (
+                    <span className="flex items-center gap-3">
+                      <button
+                        onClick={() => revokeSession(s.id)}
+                        disabled={revokingId === s.id}
+                        className="text-red-600 underline underline-offset-2 disabled:opacity-50"
+                      >
+                        {revokingId === s.id ? t("revoking") : t("revoke")}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingRevokeId(null)}
+                        className="text-navy/60 underline underline-offset-2"
+                      >
+                        {t("cancel")}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmingRevokeId(s.id)}
+                      className="text-red-600 underline underline-offset-2"
+                    >
+                      {t("revoke")}
+                    </button>
+                  ))}
               </li>
             ))}
           </ul>

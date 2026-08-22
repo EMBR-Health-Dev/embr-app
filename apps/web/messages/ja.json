@@ -132,6 +132,7 @@
   },
   "Dashboard": {
     "trends": "Trends",
+    "treatments": "治療",
     "brief": "BRIEF",
     "export": "エクスポート",
     "organization": "組織",
@@ -149,6 +150,7 @@
     "notesLabel": "メモ(任意)",
     "save": "保存",
     "saving": "保存中…",
+    "logConfirmation": "記録しました。",
     "todaysCycleEntry": "今日の周期記録",
     "flowLabel": "経血量",
     "flowNone": "なし",
@@ -236,6 +238,7 @@
     "changing": "変更中…",
     "devices": "デバイス",
     "logoutEverywhere": "すべての端末からログアウト",
+    "confirmLogoutAllMessage": "この端末を含む、すべての端末がログアウトされます。",
     "loggingOut": "ログアウト中…",
     "noActiveSessions": "有効なセッションはありません。",
     "unknownDevice": "不明なデバイス",
@@ -314,5 +317,25 @@
     "symptomLogsDescription": "指定した期間のすべての症状記録を1行ずつまとめたものです。ご自身の記録や他のツールでの利用にご活用ください。",
     "cycleEntriesLabel": "周期の記録(CSV)",
     "cycleEntriesDescription": "指定した期間のすべての周期記録を1行ずつまとめたものです。"
+  },
+  "Treatments": {
+    "title": "治療",
+    "backToDashboard": "← ダッシュボード",
+    "hint": "HRT、サプリメント、薬など、あなたが行っていること。診断や治療の提案ではなく、あなた自身の記録です。",
+    "namePlaceholder": "名前(例:エストラジオール パッチ)",
+    "category": "カテゴリー",
+    "startDate": "開始日",
+    "ongoing": "継続中",
+    "endDate": "終了日",
+    "notesPlaceholder": "メモ(任意)",
+    "fillRequiredFields": "名前と開始日を入力してください。",
+    "pickEndDate": "終了日を選択するか、継続中のままにしてください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "saving": "保存中…",
+    "addTreatment": "治療を追加",
+    "currentAndPast": "現在と過去の記録",
+    "endToday": "今日で終了",
+    "delete": "削除",
+    "noneYet": "まだ治療が記録されていません。"
   }
 }
