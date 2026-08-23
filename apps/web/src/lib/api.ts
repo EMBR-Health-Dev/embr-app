@@ -36,6 +36,12 @@ export const api = {
 
     me: () => apiFetch<UserDto>("/auth/me"),
 
+    verifyEmail: (token: string) =>
+      apiFetch<void>("/auth/verify-email", { method: "POST", body: { token } }),
+
+    resendVerification: (email: string) =>
+      apiFetch<void>("/auth/resend-verification", { method: "POST", body: { email } }),
+
     forgotPassword: (email: string) =>
       apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
 

@@ -59,6 +59,24 @@
     "successBody": "Your password has been changed. Log in with your new password.",
     "goToLogin": "Go to login"
   },
+  "verifyEmail": {
+    "title": "Verify your email",
+    "subtitle": "Paste the verification link or code from your email, then confirm.",
+    "tokenLabel": "Verification link or code",
+    "tokenRequired": "Paste the verification link or code from your email.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Verify email",
+    "submitting": "Verifying…",
+    "successTitle": "Email verified",
+    "successBody": "Your email address is confirmed. You can log in now.",
+    "goToLogin": "Go to login",
+    "backToLogin": "Back to login",
+    "resendPrompt": "Didn't get the email, or need a new link?",
+    "emailLabel": "Email",
+    "resendButton": "Resend verification email",
+    "resendSubmitting": "Sending…",
+    "resendCheckEmail": "If that account exists and isn't already verified, a new verification link is on its way."
+  },
   "onboarding": {
     "skipToDashboard": "Skip to dashboard",
     "welcome": {
@@ -271,6 +289,12 @@
   },
   "settings": {
     "title": "Settings",
+    "accountTitle": "Account",
+    "emailVerified": "Your email is verified.",
+    "emailNotVerified": "Your email address isn't verified yet.",
+    "resendVerification": "Resend verification email",
+    "resendVerificationSubmitting": "Sending…",
+    "resendVerificationSuccess": "If your email isn't already verified, a new verification link is on its way.",
     "changePasswordTitle": "Change password",
     "changePasswordHint": "Changing your password signs you out everywhere, including this device.",
     "currentPasswordPlaceholder": "Current password",

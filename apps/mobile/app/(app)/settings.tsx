@@ -22,6 +22,10 @@ export default function SettingsScreen() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
 
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+
   const [sessions, setSessions] = useState<DeviceSessionDto[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -44,6 +48,20 @@ export default function SettingsScreen() {
   useEffect(() => {
     void loadSessions();
   }, [loadSessions]);
+
+  async function handleResendVerification() {
+    if (!user) return;
+    setResendError(null);
+    setResending(true);
+    try {
+      await api.auth.resendVerification(user.email);
+      setResendDone(true);
+    } catch (err) {
+      setResendError(err instanceof ApiError ? err.message : t("settings.genericError"));
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function handleChangePassword() {
     setPasswordError(null);
@@ -149,6 +167,38 @@ export default function SettingsScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>{t("settings.title")}</Text>
             {user && <Text style={styles.email}>{user.email}</Text>}
+
+            {user && (
+              <View style={styles.accountSection}>
+                <Text style={[styles.sectionTitle, { marginTop: 0 }]}>
+                  {t("settings.accountTitle")}
+                </Text>
+                {user.emailVerified ? (
+                  <Text style={styles.successText}>{t("settings.emailVerified")}</Text>
+                ) : (
+                  <>
+                    <Text style={styles.sectionHint}>{t("settings.emailNotVerified")}</Text>
+                    {resendDone ? (
+                      <Text style={styles.successText}>
+                        {t("settings.resendVerificationSuccess")}
+                      </Text>
+                    ) : (
+                      <Pressable
+                        onPress={() => void handleResendVerification()}
+                        disabled={resending}
+                      >
+                        <Text style={styles.linkText}>
+                          {resending
+                            ? t("settings.resendVerificationSubmitting")
+                            : t("settings.resendVerification")}
+                        </Text>
+                      </Pressable>
+                    )}
+                    {resendError && <Text style={styles.error}>{resendError}</Text>}
+                  </>
+                )}
+              </View>
+            )}
 
             <Text style={styles.sectionTitle}>{t("settings.changePasswordTitle")}</Text>
             <Text style={styles.sectionHint}>{t("settings.changePasswordHint")}</Text>
@@ -316,6 +366,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   sectionHint: { fontSize: 13, color: theme.colors.textMuted, marginBottom: 8 },
+  accountSection: { marginBottom: 8 },
+  successText: { fontSize: 13, color: theme.colors.success, marginBottom: 8 },
   forgotPasswordRow: { marginTop: 8 },
   linkText: { color: theme.colors.success, fontWeight: "500" },
   input: {

@@ -71,6 +71,21 @@
     "invalidLinkBody": "This password reset link is invalid or has expired. Request a new one to continue.",
     "requestNewLink": "Request a new link"
   },
+  "VerifyEmail": {
+    "verifying": "Verifying your email…",
+    "successTitle": "Email verified",
+    "successBody": "Your email address is confirmed. You can log in now.",
+    "goToLogin": "Go to login",
+    "invalidLinkTitle": "Link invalid or expired",
+    "invalidLinkBody": "This verification link is invalid or has expired.",
+    "backToLogin": "Back to login",
+    "resendPrompt": "Enter your email to get a new verification link.",
+    "emailLabel": "Email",
+    "resendButton": "Resend verification email",
+    "resendSubmitting": "Sending…",
+    "resendCheckEmail": "If that account exists and isn't already verified, a new verification link is on its way.",
+    "genericError": "Something went wrong. Try again in a moment."
+  },
   "Onboarding": {
     "skipToDashboard": "Skip to dashboard",
     "welcome": {
@@ -260,6 +275,12 @@
   "Settings": {
     "title": "Settings",
     "backToDashboard": "← Dashboard",
+    "accountTitle": "Account",
+    "emailVerified": "Your email is verified.",
+    "emailNotVerified": "Your email address isn't verified yet.",
+    "resendVerification": "Resend verification email",
+    "resendVerificationSubmitting": "Sending…",
+    "resendVerificationSuccess": "If your email isn't already verified, a new verification link is on its way.",
     "changePasswordTitle": "Change password",
     "changePasswordDescription": "Changing your password signs you out everywhere, including this device — you'll need to log back in.",
     "currentPasswordLabel": "Current password",

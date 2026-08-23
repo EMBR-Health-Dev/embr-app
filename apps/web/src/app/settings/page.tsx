@@ -24,6 +24,10 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
 
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+
   const [sessions, setSessions] = useState<DeviceSessionDto[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -47,6 +51,20 @@ export default function SettingsPage() {
       .then(setSessions)
       .finally(() => setSessionsLoading(false));
   }, [user]);
+
+  async function handleResendVerification() {
+    if (!user) return;
+    setResendError(null);
+    setResending(true);
+    try {
+      await api.auth.resendVerification(user.email);
+      setResendDone(true);
+    } catch (err) {
+      setResendError(err instanceof ApiError ? err.message : t("genericError"));
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function handleChangePassword(e: FormEvent) {
     e.preventDefault();
@@ -133,6 +151,30 @@ export default function SettingsPage() {
           {t("backToDashboard")}
         </Link>
       </header>
+
+      <section className="mt-10">
+        <h2 className="font-display text-lg text-navy">{t("accountTitle")}</h2>
+        <p className="mt-1 text-sm text-navy/60">{user.email}</p>
+        {user.emailVerified ? (
+          <p className="mt-2 text-sm text-teal">{t("emailVerified")}</p>
+        ) : (
+          <div className="mt-2">
+            <p className="text-sm text-navy/60">{t("emailNotVerified")}</p>
+            {resendDone ? (
+              <p className="mt-2 text-sm text-teal">{t("resendVerificationSuccess")}</p>
+            ) : (
+              <button
+                onClick={() => void handleResendVerification()}
+                disabled={resending}
+                className="mt-2 text-sm font-medium text-teal underline underline-offset-2 disabled:opacity-50"
+              >
+                {resending ? t("resendVerificationSubmitting") : t("resendVerification")}
+              </button>
+            )}
+            {resendError && <p className="mt-2 text-sm text-red-600">{resendError}</p>}
+          </div>
+        )}
+      </section>
 
       <section className="mt-10">
         <h2 className="font-display text-lg text-navy">{t("changePasswordTitle")}</h2>

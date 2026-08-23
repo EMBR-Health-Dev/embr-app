@@ -59,6 +59,24 @@
     "successBody": "パスワードを変更しました。新しいパスワードでログインしてください。",
     "goToLogin": "ログインへ進む"
   },
+  "verifyEmail": {
+    "title": "メールアドレスを確認",
+    "subtitle": "メールに記載の確認用リンクまたはコードを貼り付けて、確認を完了してください。",
+    "tokenLabel": "確認用リンクまたはコード",
+    "tokenRequired": "メールに記載の確認用リンクまたはコードを貼り付けてください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "submit": "メールアドレスを確認",
+    "submitting": "確認中…",
+    "successTitle": "メールアドレスを確認しました",
+    "successBody": "メールアドレスの確認が完了しました。ログインできます。",
+    "goToLogin": "ログインへ進む",
+    "backToLogin": "ログインに戻る",
+    "resendPrompt": "メールが届いていない、または新しいリンクが必要ですか?",
+    "emailLabel": "メールアドレス",
+    "resendButton": "確認メールを再送信",
+    "resendSubmitting": "送信中…",
+    "resendCheckEmail": "該当するアカウントが存在し、まだ確認が完了していない場合、新しい確認リンクをお送りしています。"
+  },
   "onboarding": {
     "skipToDashboard": "ダッシュボードへスキップ",
     "welcome": {
@@ -267,6 +285,12 @@
   },
   "settings": {
     "title": "設定",
+    "accountTitle": "アカウント",
+    "emailVerified": "メールアドレスは確認済みです。",
+    "emailNotVerified": "メールアドレスがまだ確認されていません。",
+    "resendVerification": "確認メールを再送信",
+    "resendVerificationSubmitting": "送信中…",
+    "resendVerificationSuccess": "メールアドレスが未確認の場合、新しい確認リンクをお送りしています。",
     "changePasswordTitle": "パスワードの変更",
     "changePasswordHint": "パスワードを変更すると、この端末を含むすべての端末からログアウトされます。",
     "currentPasswordPlaceholder": "現在のパスワード",
