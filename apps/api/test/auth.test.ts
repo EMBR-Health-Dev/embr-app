@@ -472,9 +472,21 @@ describe("CSRF protection", () => {
   it("rejects /auth/logout without a matching csrf header", async () => {
     const app = createApp();
     const agent = request.agent(app);
-    await registerAndLogin(agent, "csrf@embr.health");
+    const loginRes = await registerAndLogin(agent, "csrf@embr.health");
+    // Manually attach the refresh cookie rather than relying on the
+    // agent's own jar: it's scoped to /api/auth (the path a real
+    // browser proxies through — see cookies.ts's doc comment on
+    // setRefreshTokenCookie), which the agent correctly won't
+    // auto-attach to a bare /auth/logout request made directly against
+    // this API. This deliberately tests the server's own CSRF
+    // enforcement in isolation from the proxy, the same way the token
+    // reuse test further down in this file already manages cookies
+    // manually for the same reason.
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_rt="))!
+      .split(";")[0];
 
-    const res = await agent.post("/auth/logout");
+    const res = await request(app).post("/auth/logout").set("Cookie", rtCookie);
     expect(res.status).toBe(403);
   });
 
@@ -486,8 +498,14 @@ describe("CSRF protection", () => {
       .find((c) => c.startsWith("embr_csrf="))!
       .split(";")[0]
       .split("=")[1];
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_rt="))!
+      .split(";")[0];
 
-    const res = await agent.post("/auth/logout").set("x-csrf-token", csrfCookie);
+    const res = await request(app)
+      .post("/auth/logout")
+      .set("Cookie", [rtCookie, `embr_csrf=${csrfCookie}`])
+      .set("x-csrf-token", csrfCookie);
     expect(res.status).toBe(204);
   });
 });
@@ -523,23 +541,45 @@ describe("POST /auth/refresh", () => {
       .find((c) => c.startsWith("embr_csrf="))!
       .split(";")[0]
       .split("=")[1];
-
-    const firstRefresh = await agent.post("/auth/refresh").set("x-csrf-token", csrfCookie);
-    expect(firstRefresh.status).toBe(200);
-
-    // The agent's cookie jar now holds the *rotated* refresh token, so to
-    // replay the original one we snapshot it before rotating and send it
-    // again manually.
+    // Manually attached, same reasoning as the CSRF describe block
+    // above: /api/auth-scoped, so the agent's own jar won't send it to
+    // a bare /auth/refresh request against this API directly.
     const originalRt = (loginRes.headers["set-cookie"] as unknown as string[])
       .find((c) => c.startsWith("embr_rt="))!
       .split(";")[0];
 
+    const firstRefresh = await request(app)
+      .post("/auth/refresh")
+      .set("Cookie", [originalRt, `embr_csrf=${csrfCookie}`])
+      .set("x-csrf-token", csrfCookie);
+    expect(firstRefresh.status).toBe(200);
+
+    // Replay the same (now-rotated-away) original token — must fail.
     const replay = await request(app)
       .post("/auth/refresh")
       .set("Cookie", [originalRt, `embr_csrf=${csrfCookie}`])
       .set("x-csrf-token", csrfCookie);
 
     expect(replay.status).toBe(401);
+  });
+
+  it("scopes the refresh cookie to /api/auth, not /auth — the path apps/web and apps/admin actually request through their Next.js proxy, not this API's own internal route path", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "refreshcookiepath@embr.health");
+
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[]).find((c) =>
+      c.startsWith("embr_rt="),
+    )!;
+    // A cookie scoped to Path=/auth would never be attached by a real
+    // browser to a request the browser itself sends to /api/auth/refresh
+    // (see cookies.ts's doc comment on setRefreshTokenCookie for the
+    // full reasoning) — silently breaking refresh for every
+    // cookie-authenticated web session the moment the 15-minute access
+    // token expires. This asserts the actual header value a real
+    // browser would evaluate, not just that *some* cookie was set.
+    expect(rtCookie).toContain("Path=/api/auth");
+    expect(rtCookie).not.toContain("Path=/auth;");
   });
 });
 
@@ -641,13 +681,20 @@ describe("Mobile auth (Bearer access token, body-presented refresh token)", () =
   it("does not relax CSRF for a genuinely cookie-authenticated refresh request", async () => {
     const app = createApp();
     const agent = request.agent(app);
-    await registerAndLogin(agent, "still-protected@embr.health");
+    const loginRes = await registerAndLogin(agent, "still-protected@embr.health");
+    // Manually attached — /api/auth-scoped, so the agent's own jar
+    // won't send it to a bare /auth/refresh request against this API
+    // directly (see the POST /auth/refresh describe block above for
+    // the full reasoning).
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_rt="))!
+      .split(";")[0];
 
-    // Cookie is present (the agent has it from login) but no CSRF header
-    // is sent — this must still be rejected exactly as before. The
-    // exemption is for requests with no relevant cookie at all, not a
-    // general weakening of the check.
-    const res = await agent.post("/auth/refresh");
+    // Cookie is present but no CSRF header is sent — this must still
+    // be rejected exactly as before. The exemption is for requests
+    // with no relevant cookie at all, not a general weakening of the
+    // check.
+    const res = await request(app).post("/auth/refresh").set("Cookie", rtCookie);
     expect(res.status).toBe(403);
   });
 });

@@ -33,7 +33,25 @@ export function setAccessTokenCookie(res: Response, token: string) {
 export function setRefreshTokenCookie(res: Response, token: string) {
   res.cookie(REFRESH_TOKEN_COOKIE, token, {
     ...baseCookieOptions(),
-    path: "/auth", // only sent to auth endpoints — narrows the CSRF/leak surface
+    // Scoped to /api/auth, not /auth — deliberately matching the path
+    // apps/web (and apps/admin) actually request at, not this API's
+    // own internal route path. Both of those apps talk to the API
+    // exclusively through their own Next.js server's rewrite proxy
+    // (see apps/web/next.config.ts: `/api/:path* -> API_URL/:path*`),
+    // which is transparent to the *browser* — the browser only ever
+    // sees requests going to `/api/auth/refresh`, never `/auth/refresh`
+    // directly, and a cookie's Path is matched against the request URL
+    // the browser itself sends, not whatever path the proxy forwards
+    // to server-side. A cookie scoped to `/auth` here would never be
+    // attached to any request either of those apps actually makes,
+    // silently breaking refresh for every cookie-authenticated web
+    // client the moment their access token expires (15 minutes) —
+    // exactly the failure mode this scoping exists to prevent, just
+    // aimed at the wrong path. Mobile is unaffected either way: it
+    // never reads this cookie at all, presenting its refresh token in
+    // the request body instead (see auth.routes.ts's /auth/refresh
+    // handler).
+    path: "/api/auth",
     maxAge: env.REFRESH_TOKEN_TTL_SECONDS * 1000,
   });
 }
@@ -54,6 +72,11 @@ export function setCsrfCookie(res: Response, token: string) {
 export function clearAuthCookies(res: Response) {
   const opts = baseCookieOptions();
   res.clearCookie(ACCESS_TOKEN_COOKIE, opts);
-  res.clearCookie(REFRESH_TOKEN_COOKIE, { ...opts, path: "/auth" });
+  // Must match setRefreshTokenCookie's path exactly — clearCookie only
+  // actually clears a cookie the browser holds if the Path attribute
+  // matches what it was originally set with; a mismatch here would
+  // silently leave the real refresh-token cookie behind after
+  // logout/account-deletion.
+  res.clearCookie(REFRESH_TOKEN_COOKIE, { ...opts, path: "/api/auth" });
   res.clearCookie(CSRF_COOKIE, { ...opts, httpOnly: false });
 }
