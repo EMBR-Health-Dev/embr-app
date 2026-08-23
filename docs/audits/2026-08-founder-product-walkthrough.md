@@ -10,7 +10,7 @@
 
 The onboarding is genuinely good — it explains what EMBR is in plain language on the first real screen ("A place to keep track of what's actually happening to you... helps you turn what you're experiencing into something you can look back on, understand, and eventually bring into a conversation with your doctor. It doesn't diagnose you..."), personalizes based on an upcoming appointment and what the user's noticed, and ends with an explicit "here's how EMBR works" screen walking through Track → Reflect → Prepare with real example output. It's wired into the actual login flow correctly — `login.tsx` checks `user.onboardingCompletedAt` and routes new users there, and both "finish" paths (log a first entry, or skip to dashboard) correctly mark it complete before navigating. This is not vaporware; it works.
 
-One real, narrow gap I did find in the integration: the *other* redirect path — `app/index.tsx`, which handles an app relaunch with an already-valid stored session, not a fresh login — does **not** check `onboardingCompletedAt` at all, only whether a user exists. A user who closes the app partway through onboarding (before reaching the final "mark complete" screen) and reopens it later would land directly on the tab bar, silently skipping the rest of onboarding rather than resuming or being asked to finish it. Narrow, but real — worth a one-line fix (check the same field in both places).
+One real, narrow gap I did find in the integration: the _other_ redirect path — `app/index.tsx`, which handles an app relaunch with an already-valid stored session, not a fresh login — does **not** check `onboardingCompletedAt` at all, only whether a user exists. A user who closes the app partway through onboarding (before reaching the final "mark complete" screen) and reopens it later would land directly on the tab bar, silently skipping the rest of onboarding rather than resuming or being asked to finish it. Narrow, but real — worth a one-line fix (check the same field in both places).
 
 ## Executive verdict
 
@@ -22,13 +22,13 @@ Not the verdict I was about to write before the onboarding merge changed the pic
 
 ## Critical journey table
 
-| Journey | Status | Key issue |
-|---|---|---|
-| 1. First-time user | **PASS** (one narrow edge case) | Onboarding (merged after my first pass) genuinely explains what EMBR is, personalizes to the user, and walks through the value loop with real examples before the first log. The only integration gap: closing the app mid-onboarding and reopening skips the rest, since the relaunch-redirect path doesn't check completion status the way the login-redirect path does. |
-| 2. Returning user | **NEEDS FIX** | No reflection of any kind exists between sessions — the app looks identical on day 1 and day 10. Nothing tells the user why to keep going. |
-| 3. Clinical use case (BRIEF) | **NEEDS FIX** | Genuinely good once you're in it (clear non-diagnostic framing, real PDF, sensible history) — but date entry is a raw `YYYY-MM-DD` text field with no picker, which is real friction on the one flow you most want to feel trustworthy and easy. |
-| 4. Account management | **NEEDS FIX** (verges on BLOCKED for App Store) | Password change and session management work and are clearly labeled. Account deletion doesn't exist anywhere — not blocked for a small invite-only web/TestFlight-internal beta, but a real gap against your own stated flow, and a hard App Store submission blocker later. |
-| 5. Error recovery | **PASS** | This is the strongest journey. Error messages are calm and specific ("Invalid email or password," "Session expired or already used" — never a raw stack trace or technical string). Access-token expiry is handled transparently via silent refresh in the common case. Optimistic UI (e.g. deleting a symptom log) rolls back correctly on failure instead of silently drifting from server state. |
+| Journey                      | Status                                          | Key issue                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. First-time user           | **PASS** (one narrow edge case)                 | Onboarding (merged after my first pass) genuinely explains what EMBR is, personalizes to the user, and walks through the value loop with real examples before the first log. The only integration gap: closing the app mid-onboarding and reopening skips the rest, since the relaunch-redirect path doesn't check completion status the way the login-redirect path does.                          |
+| 2. Returning user            | **NEEDS FIX**                                   | No reflection of any kind exists between sessions — the app looks identical on day 1 and day 10. Nothing tells the user why to keep going.                                                                                                                                                                                                                                                          |
+| 3. Clinical use case (BRIEF) | **NEEDS FIX**                                   | Genuinely good once you're in it (clear non-diagnostic framing, real PDF, sensible history) — but date entry is a raw `YYYY-MM-DD` text field with no picker, which is real friction on the one flow you most want to feel trustworthy and easy.                                                                                                                                                    |
+| 4. Account management        | **NEEDS FIX** (verges on BLOCKED for App Store) | Password change and session management work and are clearly labeled. Account deletion doesn't exist anywhere — not blocked for a small invite-only web/TestFlight-internal beta, but a real gap against your own stated flow, and a hard App Store submission blocker later.                                                                                                                        |
+| 5. Error recovery            | **PASS**                                        | This is the strongest journey. Error messages are calm and specific ("Invalid email or password," "Session expired or already used" — never a raw stack trace or technical string). Access-token expiry is handled transparently via silent refresh in the common case. Optimistic UI (e.g. deleting a symptom log) rolls back correctly on failure instead of silently drifting from server state. |
 
 No journey is BLOCKED in the strict sense you defined (a normal user can technically get through all five), and none are NEEDS-FIX-severe-enough-to-block-beta on their own either. Journey 2 (returning user) is the one I'd watch most closely once real users are in — it's where the Reflect gap actually shows up in practice.
 
@@ -43,26 +43,26 @@ No journey is BLOCKED in the strict sense you defined (a normal user can technic
 ## P1 issues
 
 **1. Onboarding sets an expectation the ongoing product doesn't yet deliver on.**
-The loop-explainer screen shows a concrete example of what "Reflect" looks like: *"Your sleep disruption appeared alongside lower energy on 6 days."* That's a specific, compelling promise. But nothing after onboarding — not the home screen, not anywhere in day-to-day use — actually produces anything like it. The closest real feature is Trends, which requires accumulated data and isn't framed as a "here's what we noticed" moment. A user who read onboarding carefully and then logs for a few days with nothing coming back may feel more let down than a user who was never shown that example at all.
-*Damages: trust, specifically the gap between promise and delivery — arguably worse than under-promising.*
+The loop-explainer screen shows a concrete example of what "Reflect" looks like: _"Your sleep disruption appeared alongside lower energy on 6 days."_ That's a specific, compelling promise. But nothing after onboarding — not the home screen, not anywhere in day-to-day use — actually produces anything like it. The closest real feature is Trends, which requires accumulated data and isn't framed as a "here's what we noticed" moment. A user who read onboarding carefully and then logs for a few days with nothing coming back may feel more let down than a user who was never shown that example at all.
+_Damages: trust, specifically the gap between promise and delivery — arguably worse than under-promising._
 
 **1b. Narrow onboarding-resume gap.** Covered above — the app-relaunch redirect doesn't check `onboardingCompletedAt`, only the fresh-login redirect does. One-line fix once someone's looking at it, not urgent enough to block beta on its own.
 
 **2. No feedback after logging a symptom.**
 `handleLogSymptom` in the mobile home screen does exactly this on success: clears the form, silently refreshes the list. No confirmation message, no "logged," no visual acknowledgment beyond the entry appearing in a list below the fold. A user has to notice a change in a scrolling list to know their tap worked.
-*Damages: activation — the single most important first action in the product gives no signal it succeeded.*
+_Damages: activation — the single most important first action in the product gives no signal it succeeded._
 
 **3. Nothing reflects logging back to the user.**
 Confirmed directly: there is no dashboard summary, streak, "you've logged 3 times this week," or any synthesized reflection anywhere in the mobile or web app. The home screen is purely a log-entry form plus a raw list. This is also the "home reflection system" flagged as missing in the infrastructure audit — confirmed here from the product-experience side too. The TRACK step works; the REFLECT step genuinely does not exist yet.
-*Damages: retention — nothing in the day-to-day experience gives a reason to open the app again beyond habit alone.*
+_Damages: retention — nothing in the day-to-day experience gives a reason to open the app again beyond habit alone._
 
 **4. BRIEF date entry is a raw text field.**
 `fromDate`/`toDate` are plain `TextInput`s requiring exact `YYYY-MM-DD` input, validated client-side with a regex (`isValidDate`). No date picker, no "last 30 days" shortcut, nothing. This is the flow you most want to feel effortless and trustworthy (it's what a user shows their doctor), and it's currently the most manual-entry-heavy screen in the app.
-*Damages: clinical-use trust — a fiddly date field undercuts confidence in a feature meant to feel clinically credible.*
+_Damages: clinical-use trust — a fiddly date field undercuts confidence in a feature meant to feel clinically credible._
 
 **5. Destructive actions have no confirmation step.**
 "Revoke" (a session) and "Log out everywhere" both execute immediately on tap — no "are you sure?" There's no account deletion to check this against yet, but the pattern is already present for two lower-stakes destructive actions and is worth deciding on before adding a higher-stakes third.
-*Damages: trust in a smaller way — not a beta-blocker on its own, worth fixing alongside #4 since it's a small, similar-shaped change.*
+_Damages: trust in a smaller way — not a beta-blocker on its own, worth fixing alongside #4 since it's a small, similar-shaped change._
 
 ---
 
@@ -70,13 +70,13 @@ Confirmed directly: there is no dashboard summary, streak, "you've logged 3 time
 
 **TRACK → REFLECT → UNDERSTAND → PREPARE → ACT**
 
-| Step | Verdict | Evidence |
-|---|---|---|
-| **Track** | Works well | 2 taps (category, severity) + optional notes + submit. Genuinely lightweight, no friction found here. |
-| **Reflect** | **Missing** (but well-explained) | Onboarding describes this step clearly and sets a real expectation for it (see P1 #1) — but no actual reflection content exists anywhere post-onboarding. This is the loop's actual break point: the product explains this step better than it currently delivers it. |
-| **Understand** | Works, but needs volume | Trends is real (server-computed, not client-side), with good empty-state copy. But with realistic early-beta usage (a handful of logs over a few days), the symptom-frequency bars will look sparse — the mechanism is sound, the "meaningful pattern" moment needs more data than a new user will have in week one. |
-| **Prepare** | Works well | BRIEF turns real data into a real narrative + GP questions + PDF. This step is the most complete part of the loop. |
-| **Act** | Plausible, unverified | The output is genuinely something you could hand to a doctor — clear non-diagnostic framing, structured questions. Whether it actually changes a real conversation is something only real beta users can tell you; nothing in the code undermines it. |
+| Step           | Verdict                          | Evidence                                                                                                                                                                                                                                                                                                             |
+| -------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Track**      | Works well                       | 2 taps (category, severity) + optional notes + submit. Genuinely lightweight, no friction found here.                                                                                                                                                                                                                |
+| **Reflect**    | **Missing** (but well-explained) | Onboarding describes this step clearly and sets a real expectation for it (see P1 #1) — but no actual reflection content exists anywhere post-onboarding. This is the loop's actual break point: the product explains this step better than it currently delivers it.                                                |
+| **Understand** | Works, but needs volume          | Trends is real (server-computed, not client-side), with good empty-state copy. But with realistic early-beta usage (a handful of logs over a few days), the symptom-frequency bars will look sparse — the mechanism is sound, the "meaningful pattern" moment needs more data than a new user will have in week one. |
+| **Prepare**    | Works well                       | BRIEF turns real data into a real narrative + GP questions + PDF. This step is the most complete part of the loop.                                                                                                                                                                                                   |
+| **Act**        | Plausible, unverified            | The output is genuinely something you could hand to a doctor — clear non-diagnostic framing, structured questions. Whether it actually changes a real conversation is something only real beta users can tell you; nothing in the code undermines it.                                                                |
 
 **Weakest link: Reflect.** Not Track (that's fine), not Prepare (that's your strongest feature) — the gap is specifically between logging something and getting anything back for it. Right now the loop is TRACK → (nothing) → UNDERSTAND (eventually, with enough data) → PREPARE → ACT. A user has no reason to believe logging matters until they've accumulated enough for Trends or BRIEF to say something back — and nothing in the interim reassures them it's working.
 
@@ -87,19 +87,19 @@ Confirmed directly: there is no dashboard summary, streak, "you've logged 3 time
 Answering as someone who has genuinely never seen EMBR, based only on what's actually on screen at each step:
 
 **After the first screen ("Welcome back" / "Create your account"):**
-*"What is this?"* — Still genuinely unanswerable from login/register alone; those two screens carry no framing. But this question gets answered a step later than I first assessed, and answered well: the welcome onboarding screen immediately after first login states plainly what EMBR is, isn't, and is for.
+_"What is this?"_ — Still genuinely unanswerable from login/register alone; those two screens carry no framing. But this question gets answered a step later than I first assessed, and answered well: the welcome onboarding screen immediately after first login states plainly what EMBR is, isn't, and is for.
 
 **After onboarding:**
-*"What am I supposed to do now?"* — Clearly answered. The final onboarding screen explains the Track/Reflect/Prepare loop with a real example, then offers exactly one obvious next action ("Log your first entry") plus an honest opt-out ("Go to dashboard instead"). This is a well-designed close to the flow.
+_"What am I supposed to do now?"_ — Clearly answered. The final onboarding screen explains the Track/Reflect/Prepare loop with a real example, then offers exactly one obvious next action ("Log your first entry") plus an honest opt-out ("Go to dashboard instead"). This is a well-designed close to the flow.
 
 **After logging:**
-*"What did EMBR give me?"* — Nothing, visibly. The form clears and the entry appears in a list. No acknowledgment, no "thanks," no hint at what happens with this data next.
+_"What did EMBR give me?"_ — Nothing, visibly. The form clears and the entry appears in a list. No acknowledgment, no "thanks," no hint at what happens with this data next.
 
 **After viewing Trends:**
-*"Why should I come back?"* — Weak with little data ("nothing logged in this window yet" is honest but not motivating), stronger once real data exists (real bars, real cycle-length averages) — but nothing bridges those two states. A user checking Trends on day 2 sees mostly emptiness and no explanation that it gets more useful with time.
+_"Why should I come back?"_ — Weak with little data ("nothing logged in this window yet" is honest but not motivating), stronger once real data exists (real bars, real cycle-length averages) — but nothing bridges those two states. A user checking Trends on day 2 sees mostly emptiness and no explanation that it gets more useful with time.
 
 **After seeing BRIEF:**
-*"Why would I use this with my doctor?"* — This is the one place the product answers its own question clearly. The screen states outright what it is and isn't, generates a real document, and the framing throughout ("Questions to bring to your GP," not assertions) is exactly the kind of thing that would make sense to hand someone in a waiting room.
+_"Why would I use this with my doctor?"_ — This is the one place the product answers its own question clearly. The screen states outright what it is and isn't, generates a real document, and the framing throughout ("Questions to bring to your GP," not assertions) is exactly the kind of thing that would make sense to hand someone in a waiting room.
 
 ---
 
@@ -109,7 +109,7 @@ Answering as someone who has genuinely never seen EMBR, based only on what's act
 BRIEF. Structured GP-visit prep with explicit non-diagnostic framing is a real, specific thing a generic tracker doesn't do. Everything before BRIEF (logging, trends) is competent but not differentiated — plenty of trackers do category/severity logging and frequency charts.
 
 **2. What becomes more valuable after 7 days of use?**
-Trends, mechanically — more data points make the frequency view and cycle-length calculation genuinely more informative. But nothing in the product *tells* the user this is happening; the value accrues silently.
+Trends, mechanically — more data points make the frequency view and cycle-length calculation genuinely more informative. But nothing in the product _tells_ the user this is happening; the value accrues silently.
 
 **3. What becomes more valuable after 30 days?**
 BRIEF, meaningfully — a month of data gives it something substantial to summarize instead of a sparse one. This is arguably the product's real "aha" moment, and it's gated behind a month of unprompted, unrewarded logging with nothing in between to sustain it.
