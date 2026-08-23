@@ -50,6 +50,11 @@ export default function ExportPage() {
       description: t("cycleEntriesDescription"),
       path: buildExportUrl("cycle-entries.csv", from, to),
     },
+    {
+      label: t("treatmentsLabel"),
+      description: t("treatmentsDescription"),
+      path: buildExportUrl("treatments.csv", from, to),
+    },
   ];
 
   return (

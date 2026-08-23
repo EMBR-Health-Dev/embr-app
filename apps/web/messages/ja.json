@@ -345,11 +345,13 @@
     "fromLabel": "開始日",
     "toLabel": "終了日",
     "clinicianSummaryLabel": "診察用サマリー(PDF)",
-    "clinicianSummaryDescription": "診察の際に使える簡潔なサマリーです。症状の頻度、周期の長さ、記録そのものを含みます。",
+    "clinicianSummaryDescription": "診察の際に使える簡潔なサマリーです。症状の頻度、周期の長さ、治療の記録、記録そのものを含みます。",
     "symptomLogsLabel": "症状の記録(CSV)",
     "symptomLogsDescription": "指定した期間のすべての症状記録を1行ずつまとめたものです。ご自身の記録や他のツールでの利用にご活用ください。",
     "cycleEntriesLabel": "周期の記録(CSV)",
-    "cycleEntriesDescription": "指定した期間のすべての周期記録を1行ずつまとめたものです。"
+    "cycleEntriesDescription": "指定した期間のすべての周期記録を1行ずつまとめたものです。",
+    "treatmentsLabel": "治療の記録(CSV)",
+    "treatmentsDescription": "指定した期間のすべての治療記録を1行ずつまとめたものです。"
   },
   "Treatments": {
     "title": "治療",

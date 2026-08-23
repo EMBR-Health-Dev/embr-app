@@ -345,11 +345,13 @@
     "fromLabel": "From",
     "toLabel": "To",
     "clinicianSummaryLabel": "Clinician summary (PDF)",
-    "clinicianSummaryDescription": "A short summary formatted for a doctor's visit — symptom frequency, cycle length, and the log itself.",
+    "clinicianSummaryDescription": "A short summary formatted for a doctor's visit — symptom frequency, cycle length, treatment history, and the log itself.",
     "symptomLogsLabel": "Symptom logs (CSV)",
     "symptomLogsDescription": "Every symptom entry in the range, one row each — for your own records or another tool.",
     "cycleEntriesLabel": "Cycle entries (CSV)",
-    "cycleEntriesDescription": "Every cycle entry in the range, one row each."
+    "cycleEntriesDescription": "Every cycle entry in the range, one row each.",
+    "treatmentsLabel": "Treatments (CSV)",
+    "treatmentsDescription": "Every treatment logged in the range, one row each."
   },
   "Treatments": {
     "title": "Treatments",
