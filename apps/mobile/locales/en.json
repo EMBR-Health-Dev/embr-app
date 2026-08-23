@@ -114,6 +114,7 @@
     "theLoop": {
       "headline": "Here's how EMBR works.",
       "trackFallback": "Sleep · Energy · Mood",
+      "trackTreatmentsHint": "Treatments you try — HRT, supplements, medication, anything else — can be tracked here too.",
       "patternsLabel": "Patterns",
       "patternsTitle": "Once you've logged for a couple of weeks, you might see something like:",
       "patternsExample": "\"Your sleep disruption appeared alongside lower energy on 6 days.\"",

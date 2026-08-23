@@ -123,6 +123,7 @@
     "theLoop": {
       "headline": "EMBRの仕組みをご紹介します。",
       "trackFallback": "睡眠 · エネルギー · 気分",
+      "trackTreatmentsHint": "HRT、サプリメント、薬など、試している治療もここで記録できます。",
       "patternsLabel": "パターン",
       "patternsTitle": "数週間記録を続けると、例えばこのように見えてくることがあります:",
       "patternsExample": "「睡眠の乱れは、エネルギー低下とともに6日間見られました。」",
