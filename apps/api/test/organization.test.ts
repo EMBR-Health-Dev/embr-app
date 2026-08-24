@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { organizationService } from "../src/modules/organizations/organization.service.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -76,8 +77,16 @@ function inRange(date: Date, range?: OccurredAtRange): boolean {
   return true;
 }
 
-vi.mock("../src/lib/prisma.js", () => ({
-  prisma: {
+vi.mock("../src/lib/prisma.js", () => {
+  const mockPrisma = {
+    // Test-double transactions run the callback against this same mock
+    // object rather than a real isolated Prisma.TransactionClient — good
+    // enough to exercise the read-then-write invariant logic in
+    // organizationRepository.revokeMembership, but it doesn't model real
+    // Postgres transaction isolation/rollback semantics.
+    $transaction: vi.fn((callback: (tx: typeof mockPrisma) => Promise<unknown>) =>
+      callback(mockPrisma),
+    ),
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
         const found = state.users.find((u) => u.email === where.email || u.id === where.id);
@@ -290,10 +299,15 @@ vi.mock("../src/lib/prisma.js", () => ({
           return Promise.resolve(items);
         },
       ),
-      count: vi.fn(({ where }: { where: { organizationId: string } }) =>
-        Promise.resolve(
-          state.memberships.filter((m) => m.organizationId === where.organizationId).length,
-        ),
+      count: vi.fn(
+        ({ where }: { where: { organizationId: string; role?: "ORG_ADMIN" | "ORG_MEMBER" } }) =>
+          Promise.resolve(
+            state.memberships.filter(
+              (m) =>
+                m.organizationId === where.organizationId &&
+                (where.role === undefined || m.role === where.role),
+            ).length,
+          ),
       ),
       deleteMany: vi.fn(({ where }: { where: { organizationId: string; userId: string } }) => {
         const before = state.memberships.length;
@@ -302,6 +316,24 @@ vi.mock("../src/lib/prisma.js", () => ({
         );
         return Promise.resolve({ count: before - state.memberships.length });
       }),
+      // Singular, unique-key delete used inside revokeMembership's
+      // transaction — distinct from deleteMany above (still used
+      // elsewhere) since the transaction already confirms the row exists
+      // via findUnique before calling this.
+      delete: vi.fn(
+        ({
+          where,
+        }: {
+          where: { organizationId_userId: { organizationId: string; userId: string } };
+        }) => {
+          const { organizationId, userId } = where.organizationId_userId;
+          const idx = state.memberships.findIndex(
+            (m) => m.organizationId === organizationId && m.userId === userId,
+          );
+          const [removed] = state.memberships.splice(idx, 1);
+          return Promise.resolve(removed);
+        },
+      ),
     },
     organizationInvite: {
       create: vi.fn(
@@ -346,8 +378,9 @@ vi.mock("../src/lib/prisma.js", () => ({
         return Promise.resolve(invite);
       }),
     },
-  },
-}));
+  };
+  return { prisma: mockPrisma };
+});
 
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
@@ -679,6 +712,91 @@ describe("DELETE /organizations/:organizationId/members/:userId", () => {
       `/organizations/${organizationId}/members/${memberId}`,
     );
     expect(again.status).toBe(404);
+  });
+
+  it("lets an ORG_ADMIN revoke another admin when an admin remains", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops7@embr.health");
+    promoteToAdmin("ops7@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops7@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-7" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const adminAAgent = request.agent(app);
+    const adminAId = await registerAndLogin(adminAAgent, "admin7a@embr.health");
+    addMembership(organizationId, adminAId, "ORG_ADMIN");
+    const adminBId = await registerAndLogin(request.agent(app), "admin7b@embr.health");
+    addMembership(organizationId, adminBId, "ORG_ADMIN");
+
+    const res = await adminAAgent.delete(`/organizations/${organizationId}/members/${adminBId}`);
+    expect(res.status).toBe(204);
+
+    const remaining = state.memberships.filter((m) => m.organizationId === organizationId);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.userId).toBe(adminAId);
+  });
+
+  /**
+   * Not reachable via HTTP: a test that had a second admin caller remove
+   * the last remaining admin *after that caller's own membership had
+   * already been revoked* is unreachable, because requireOrgRole
+   * ("ORG_ADMIN") correctly rejects that caller's request before the
+   * service is ever called — they're no longer a member at all, let
+   * alone an admin. So this verifies the last-admin invariant directly
+   * at the service layer instead of simulating an HTTP request that
+   * could never legitimately reach it.
+   */
+  it("rejects removing the last remaining ORG_ADMIN", async () => {
+    const organizationId = nextId();
+    const adminAId = nextId();
+    const adminBId = nextId();
+    addMembership(organizationId, adminAId, "ORG_ADMIN");
+    addMembership(organizationId, adminBId, "ORG_ADMIN");
+
+    await organizationService.revokeMember(organizationId, adminBId);
+    expect(
+      state.memberships.some((m) => m.organizationId === organizationId && m.userId === adminBId),
+    ).toBe(false);
+
+    await expect(organizationService.revokeMember(organizationId, adminAId)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(
+      state.memberships.some((m) => m.organizationId === organizationId && m.userId === adminAId),
+    ).toBe(true);
+  });
+
+  it("rejects an ORG_ADMIN removing themselves when they are the only admin", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops8@embr.health");
+    promoteToAdmin("ops8@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops8@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-8" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const soleAdminAgent = request.agent(app);
+    const soleAdminId = await registerAndLogin(soleAdminAgent, "admin8@embr.health");
+    addMembership(organizationId, soleAdminId, "ORG_ADMIN");
+
+    const res = await soleAdminAgent.delete(
+      `/organizations/${organizationId}/members/${soleAdminId}`,
+    );
+    expect(res.status).toBe(409);
+    expect(
+      state.memberships.some(
+        (m) => m.organizationId === organizationId && m.userId === soleAdminId,
+      ),
+    ).toBe(true);
   });
 });
 
