@@ -82,8 +82,13 @@ vi.mock("../src/lib/prisma.js", () => {
     // Test-double transactions run the callback against this same mock
     // object rather than a real isolated Prisma.TransactionClient — good
     // enough to exercise the read-then-write invariant logic in
-    // organizationRepository.revokeMembership, but it doesn't model real
-    // Postgres transaction isolation/rollback semantics.
+    // organizationRepository.revokeMembership (sequential behavior only:
+    // NOT_FOUND, LAST_ADMIN, REVOKED, admin-removes-admin-when-one-
+    // remains), but it doesn't model real Postgres transaction
+    // isolation, row locking, or blocking/retry semantics — it can't
+    // prove the concurrent-double-revoke race is actually closed. See
+    // test/integration/organization-revoke-concurrency.test.ts for that,
+    // run against a real Postgres.
     $transaction: vi.fn((callback: (tx: typeof mockPrisma) => Promise<unknown>) =>
       callback(mockPrisma),
     ),

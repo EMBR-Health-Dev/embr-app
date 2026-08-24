@@ -72,12 +72,32 @@ export const organizationRepository = {
    *
    * Enforces the "an organization always retains at least one
    * ORG_ADMIN" invariant server-side — this is the actual security
-   * boundary; any frontend confirmation dialog is UX only. Runs the
-   * read-then-write as a single transaction so a concurrent revoke of
-   * a different admin can't race past the count check: two admins
-   * removing each other "simultaneously" can't both read a count of 2
-   * and both proceed, since Postgres serializes the two transactions
-   * against the same rows. */
+   * boundary; any frontend confirmation dialog is UX only.
+   *
+   * The transaction alone does NOT make the read-then-write safe: it
+   * runs under Postgres's default READ COMMITTED isolation, and an
+   * unlocked `count()` is just a plain SELECT. Two concurrent revokes
+   * of two *different* admins can both read a count of 2, both decide
+   * "an admin remains," and both delete — leaving zero ORG_ADMINs.
+   * READ COMMITTED does not serialize transactions against each other
+   * by itself; only an actual lock (or SERIALIZABLE + retry) does.
+   *
+   * The fix: before counting, take `SELECT ... FOR UPDATE` on every
+   * ORG_ADMIN membership row for this organization. This blocks a
+   * second concurrent revoke of another admin in the same org until
+   * the first transaction commits or rolls back — at which point the
+   * second transaction's own FOR UPDATE re-reads the *post-commit*
+   * row set (READ COMMITTED re-evaluates a blocked row's visibility
+   * once the blocking transaction ends), so it sees the real,
+   * up-to-date admin count rather than a stale snapshot. `ORDER BY id`
+   * makes every transaction acquire these row locks in the same
+   * global order, which rules out a lock-ordering deadlock between two
+   * transactions racing to lock the same two rows in opposite order.
+   *
+   * Locking the admin rows (rather than the parent Organization row)
+   * keeps this scoped to exactly the invariant being protected:
+   * concurrent revokes of *non-admin* members in the same org are
+   * unaffected and don't block on each other. */
   async revokeMembership(
     organizationId: string,
     userId: string,
@@ -89,10 +109,19 @@ export const organizationRepository = {
       if (!target) return "NOT_FOUND";
 
       if (target.role === "ORG_ADMIN") {
-        const adminCount = await tx.organizationMembership.count({
-          where: { organizationId, role: "ORG_ADMIN" },
-        });
-        if (adminCount <= 1) return "LAST_ADMIN";
+        // Row-locks every ORG_ADMIN membership for this org before
+        // counting — see the doc comment above for why the count alone
+        // (even inside a transaction) isn't safe against a concurrent
+        // revoke of a different admin. Parameterized via Prisma's
+        // tagged-template $queryRaw; never string-interpolate values
+        // into raw SQL.
+        const lockedAdmins = await tx.$queryRaw<Array<{ id: string }>>`
+          SELECT id FROM organization_memberships
+          WHERE "organizationId" = ${organizationId} AND role = 'ORG_ADMIN'
+          ORDER BY id
+          FOR UPDATE
+        `;
+        if (lockedAdmins.length <= 1) return "LAST_ADMIN";
       }
 
       await tx.organizationMembership.delete({
