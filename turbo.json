@@ -21,7 +21,19 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      // turbo's default envMode is "strict": a task only sees env vars
+      // listed here (plus a small always-allowed set), everything else
+      // is stripped from the child process before vitest ever runs.
+      // Without this, DATABASE_URL/REDIS_URL/JWT_* from CI's job-level
+      // `env:` block (see .github/workflows/ci.yml) never reach vitest,
+      // and test/setup.ts's `??=` local-dev fallbacks silently take
+      // over instead — including a DATABASE_URL with the wrong
+      // password for the real CI Postgres service. Mocked test files
+      // never touch the real DB so this was invisible until a test
+      // that actually connects to Postgres existed (see
+      // test/integration/organization-revoke-concurrency.test.ts).
+      "env": ["DATABASE_URL", "REDIS_URL", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"]
     },
     "test:e2e": {
       "dependsOn": ["build"],
