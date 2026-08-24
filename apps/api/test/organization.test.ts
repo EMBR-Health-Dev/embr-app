@@ -827,6 +827,183 @@ describe("DELETE /organizations/:organizationId/members/:userId", () => {
   });
 });
 
+describe("POST /organizations/:organizationId/leave", () => {
+  it("lets a plain ORG_MEMBER leave, and the membership is actually revoked", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops9@embr.health");
+    promoteToAdmin("ops9@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops9@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-9" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const memberAgent = request.agent(app);
+    const memberId = await registerAndLogin(memberAgent, "member9@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER");
+
+    const res = await memberAgent.post(`/organizations/${organizationId}/leave`);
+    expect(res.status).toBe(204);
+    // Actually revoked, not just a 204 with the row still present.
+    expect(
+      state.memberships.some((m) => m.organizationId === organizationId && m.userId === memberId),
+    ).toBe(false);
+  });
+
+  it("404s for a caller who isn't a member of the organization", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops10@embr.health");
+    promoteToAdmin("ops10@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops10@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-10" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const outsiderAgent = request.agent(app);
+    await registerAndLogin(outsiderAgent, "outsider-leave@embr.health");
+
+    const res = await outsiderAgent.post(`/organizations/${organizationId}/leave`);
+    // Same "wrong owner/non-member → 404, never 403" convention as
+    // every other org route — never confirms the org exists to a
+    // non-member.
+    expect(res.status).toBe(404);
+  });
+
+  it("lets an ORG_ADMIN leave when another admin remains", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops11@embr.health");
+    promoteToAdmin("ops11@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops11@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-11" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const adminAAgent = request.agent(app);
+    const adminAId = await registerAndLogin(adminAAgent, "admin11a@embr.health");
+    addMembership(organizationId, adminAId, "ORG_ADMIN");
+    const adminBId = await registerAndLogin(request.agent(app), "admin11b@embr.health");
+    addMembership(organizationId, adminBId, "ORG_ADMIN");
+
+    const res = await adminAAgent.post(`/organizations/${organizationId}/leave`);
+    expect(res.status).toBe(204);
+
+    const remaining = state.memberships.filter((m) => m.organizationId === organizationId);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.userId).toBe(adminBId);
+  });
+
+  it("rejects the last remaining ORG_ADMIN leaving, with the same LAST_ADMIN 409 as the admin-revoke path", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops12@embr.health");
+    promoteToAdmin("ops12@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops12@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-12" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const soleAdminAgent = request.agent(app);
+    const soleAdminId = await registerAndLogin(soleAdminAgent, "admin12@embr.health");
+    addMembership(organizationId, soleAdminId, "ORG_ADMIN");
+
+    const res = await soleAdminAgent.post(`/organizations/${organizationId}/leave`);
+    expect(res.status).toBe(409);
+    expect(
+      state.memberships.some(
+        (m) => m.organizationId === organizationId && m.userId === soleAdminId,
+      ),
+    ).toBe(true);
+  });
+
+  /**
+   * The route has no `:userId` param and no request body at all — the
+   * only identity it ever acts on is `req.user!.sub` from the verified
+   * access token. This proves that structurally: even if a caller
+   * tries to smuggle another user's id into the request body, it's
+   * simply never read, so only the caller's own membership is ever
+   * touched.
+   */
+  it("cannot be used to remove another user's membership, even if a userId is smuggled into the body", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops13@embr.health");
+    promoteToAdmin("ops13@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops13@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-13" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const memberAgent = request.agent(app);
+    const memberId = await registerAndLogin(memberAgent, "member13@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER");
+    const otherMemberId = await registerAndLogin(request.agent(app), "other13@embr.health");
+    addMembership(organizationId, otherMemberId, "ORG_MEMBER");
+
+    const res = await memberAgent
+      .post(`/organizations/${organizationId}/leave`)
+      .send({ userId: otherMemberId });
+    expect(res.status).toBe(204);
+
+    // The caller's own membership is gone...
+    expect(
+      state.memberships.some((m) => m.organizationId === organizationId && m.userId === memberId),
+    ).toBe(false);
+    // ...but the other member, named in the (ignored) request body,
+    // is completely untouched.
+    expect(
+      state.memberships.some(
+        (m) => m.organizationId === organizationId && m.userId === otherMemberId,
+      ),
+    ).toBe(true);
+  });
+
+  it("handles a repeated leave correctly: first succeeds, second 404s rather than double-revoking", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops14@embr.health");
+    promoteToAdmin("ops14@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops14@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-14" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const memberAgent = request.agent(app);
+    const memberId = await registerAndLogin(memberAgent, "member14@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER");
+
+    const first = await memberAgent.post(`/organizations/${organizationId}/leave`);
+    expect(first.status).toBe(204);
+
+    // Second call: requireOrgRole's own membership check now correctly
+    // 404s before the handler even runs, since the membership row is
+    // already gone — same "not a member" outcome as the dedicated
+    // non-member test above, reached via a different path (was a
+    // member, isn't anymore) rather than never having been one.
+    const second = await memberAgent.post(`/organizations/${organizationId}/leave`);
+    expect(second.status).toBe(404);
+  });
+});
+
 describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
   async function setupOrgWithLoggingMembers(memberCount: number) {
     const app = createApp();

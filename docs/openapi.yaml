@@ -659,6 +659,18 @@ paths:
           {
             description: "Org doesn't exist, caller isn't a member, or the target user wasn't a member",
           }
+  /organizations/{organizationId}/leave:
+    post:
+      summary: Leave an organization (any member — not ORG_ADMIN-gated)
+      description: Self-service departure. Always acts on the caller's own membership (from the authenticated token), never a path param or body field, so a member can never affect another user's membership through this route. Reuses the same revoke logic and last-admin invariant as DELETE /organizations/{organizationId}/members/{userId}.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Membership left }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+        "409": { description: "Caller is the organization's last remaining ORG_ADMIN" }
   /organizations/{organizationId}/invites:
     post:
       summary: Invite someone to join the organization (ORG_ADMIN only)

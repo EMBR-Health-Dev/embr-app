@@ -167,6 +167,34 @@ router.delete(
 );
 
 /**
+ * Self-service departure — any member (ORG_ADMIN or ORG_MEMBER) can
+ * leave their own organization, no ORG_ADMIN gate. Deliberately not
+ * `/members/:userId` with a DELETE: that route is the *admin* action
+ * (acting on someone else's membership); this one always acts on the
+ * caller's own, taken from the verified token (`req.user!.sub`), never
+ * from a path param or request body — there is no way to pass another
+ * user's id here even if a client tried.
+ *
+ * Reuses organizationService.revokeMember unchanged — leaving is
+ * exactly a self-targeted revoke, including the same last-admin
+ * invariant: NOT_FOUND (not a member) is impossible in the normal
+ * case since requireOrgRole below already confirms membership before
+ * this handler runs, but revokeMember still maps it correctly if a
+ * concurrent revoke/leave won the race first. LAST_ADMIN still maps
+ * to 409, same as the admin-initiated path.
+ */
+router.post(
+  "/organizations/:organizationId/leave",
+  requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),
+  asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
+    await organizationService.revokeMember(organizationId, req.user!.sub);
+    await writeAuditLog(req, "ORG_MEMBER_LEFT", req.user!.sub, { organizationId });
+    res.status(204).send();
+  }),
+);
+
+/**
  * Anonymized, cohort-level only — see organization.service.ts for the
  * k-anonymity floor this applies before returning any category counts.
  * ORG_ADMIN-gated like the roster: this is the one place org-level

@@ -47,7 +47,7 @@ function DashboardContent() {
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [confirmation, setConfirmation] = useState<string | null>(null);
-  const [managesOrg, setManagesOrg] = useState(false);
+  const [belongsToOrg, setBelongsToOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
 
@@ -131,15 +131,19 @@ function DashboardContent() {
     }
   }, [user]);
 
-  // Most people aren't an ORG_ADMIN of anything — only show the link
-  // if this one extra call actually finds one, rather than always
-  // linking to a page that'll just say "not applicable" for everyone.
+  // Most people aren't part of any organization at all — only show
+  // the link if this one extra call actually finds a membership,
+  // rather than always linking to a page that'll just say "not
+  // applicable" for everyone. Any membership qualifies, not just
+  // ORG_ADMIN: a plain ORG_MEMBER still needs a way to reach the
+  // organization page to leave it, even though the admin-only
+  // management sections there won't show for them.
   useEffect(() => {
     if (!user) return;
     api.organizations
       .mine()
-      .then((rows) => setManagesOrg(rows.some((m) => m.role === "ORG_ADMIN")))
-      .catch(() => setManagesOrg(false));
+      .then((rows) => setBelongsToOrg(rows.length > 0))
+      .catch(() => setBelongsToOrg(false));
   }, [user]);
 
   async function logHotFlashNow() {
@@ -218,7 +222,7 @@ function DashboardContent() {
           <Link href="/export" className="underline underline-offset-2 hover:text-navy">
             {t("export")}
           </Link>
-          {managesOrg && (
+          {belongsToOrg && (
             <Link href="/organization" className="underline underline-offset-2 hover:text-navy">
               {t("organization")}
             </Link>

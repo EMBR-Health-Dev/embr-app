@@ -157,6 +157,13 @@ export const api = {
         }),
     },
 
+    // Self-service departure — always acts on the caller's own
+    // membership server-side (see the API route's doc comment), so
+    // this never takes a userId. A 409 means the caller is the
+    // organization's last remaining ORG_ADMIN.
+    leave: (organizationId: string) =>
+      apiFetch<void>(`/organizations/${organizationId}/leave`, { method: "POST" }),
+
     invites: {
       create: (
         organizationId: string,
