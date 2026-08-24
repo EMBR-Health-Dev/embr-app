@@ -7,6 +7,7 @@ import type {
   DeviceSessionDto,
   MyOrganizationMembershipDto,
   OnboardingProfileDto,
+  OrgBillingStatusDto,
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationMemberDto,
@@ -198,6 +199,27 @@ export const api = {
         apiFetch<SsoConnectionDto>(`/organizations/${organizationId}/sso`, {
           method: "PUT",
           body: input,
+        }),
+    },
+
+    billing: {
+      get: (organizationId: string) =>
+        apiFetch<OrgBillingStatusDto>(`/organizations/${organizationId}/billing`),
+
+      // Returns a Stripe-hosted URL, not same-origin — the caller does
+      // a full-page `window.location.href = url` navigation, same
+      // reasoning as api.sso.startUrl above, just POST-first since
+      // this one needs a body (seat count) and a fresh Checkout
+      // Session per request rather than a deterministic redirect URL.
+      createCheckoutSession: (organizationId: string, input: { seats: number }) =>
+        apiFetch<{ url: string }>(`/organizations/${organizationId}/billing/checkout-session`, {
+          method: "POST",
+          body: input,
+        }),
+
+      createPortalSession: (organizationId: string) =>
+        apiFetch<{ url: string }>(`/organizations/${organizationId}/billing/portal-session`, {
+          method: "POST",
         }),
     },
   },

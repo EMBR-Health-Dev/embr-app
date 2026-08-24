@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type {
   MyOrganizationMembershipDto,
+  OrgBillingStatusDto,
   OrganizationDto,
   OrganizationMemberDto,
   OrgSymptomFrequencyDto,
   SsoConnectionDto,
+  StripeSubscriptionStatus,
 } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -18,6 +20,28 @@ import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 
 const TRENDS_WINDOW_DAYS = 90;
+// Mirrors createCheckoutSessionSchema's own z.number().int().positive().max(100000)
+// in @embr/validation — the frontend clamp exists to avoid a pointless
+// round-trip 400 for an obviously out-of-range value, not to replace
+// that server-side check, which remains authoritative either way.
+const MAX_CHECKOUT_SEATS = 100000;
+
+// A subscription in one of these two states has genuinely ended —
+// nothing left to manage seat-quantity-wise through the Portal, so
+// this is the one signal that decides whether the "start a
+// subscription" checkout flow shows. Every other status (including
+// PAST_DUE, INCOMPLETE, UNPAID) still represents a live Stripe
+// subscription object, and starting a second one via Checkout would
+// just create a duplicate — the Portal, not Checkout, is where those
+// get resolved.
+const TERMINAL_SUBSCRIPTION_STATUSES = new Set<StripeSubscriptionStatus>([
+  "CANCELED",
+  "INCOMPLETE_EXPIRED",
+]);
+
+function hasLiveSubscription(status: StripeSubscriptionStatus | null): boolean {
+  return status !== null && !TERMINAL_SUBSCRIPTION_STATUSES.has(status);
+}
 
 function daysAgoIso(days: number): string {
   const d = new Date();
@@ -59,6 +83,15 @@ export default function OrganizationPage() {
   const [ssoError, setSsoError] = useState<string | null>(null);
   const [ssoSuccess, setSsoSuccess] = useState<string | null>(null);
   const [ssoSaving, setSsoSaving] = useState(false);
+
+  const [billing, setBilling] = useState<OrgBillingStatusDto | null>(null);
+  const [billingLoading, setBillingLoading] = useState(true);
+  const [billingLoadError, setBillingLoadError] = useState<string | null>(null);
+  const [checkoutSeats, setCheckoutSeats] = useState<number | "">(1);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
+  const [openingPortal, setOpeningPortal] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -117,7 +150,26 @@ export default function OrganizationPage() {
       })
       .catch(() => setSsoConnection(null))
       .finally(() => setSsoLoading(false));
-  }, [selectedOrgId]);
+
+    setBillingLoading(true);
+    setBillingLoadError(null);
+    api.organizations.billing
+      .get(selectedOrgId)
+      .then((status) => {
+        setBilling(status);
+        setCheckoutSeats(status.seatLimit ?? status.seatsUsed ?? 1);
+      })
+      .catch((err) => {
+        setBilling(null);
+        setBillingLoadError(err instanceof ApiError ? err.message : t("billing.loadError"));
+      })
+      .finally(() => setBillingLoading(false));
+    // `t` is included because this effect now calls it (billing load-
+    // error fallback) — next-intl's useTranslations returns a stable
+    // reference per locale, so this doesn't introduce a re-fetch loop,
+    // it just satisfies exhaustive-deps honestly rather than
+    // suppressing it.
+  }, [selectedOrgId, t]);
 
   async function revokeMember(userId: string) {
     if (!selectedOrgId) return;
@@ -176,6 +228,55 @@ export default function OrganizationPage() {
       setSsoError(err instanceof ApiError ? err.message : t("ssoSaveError"));
     } finally {
       setSsoSaving(false);
+    }
+  }
+
+  async function startCheckout() {
+    if (!selectedOrgId) return;
+    setCheckoutError(null);
+    setCheckingOut(true);
+    try {
+      // Clamped here, not on every keystroke — an onChange that forces
+      // a minimum immediately fights a user trying to clear the field
+      // and type a fresh number (the field would snap back to 1 mid-
+      // edit and the new digits would land next to it instead of
+      // replacing it). checkoutSeats is allowed to sit at "" or a
+      // fractional/out-of-range value while someone's actively
+      // editing; only the actual submission needs a real, valid,
+      // in-range integer — floored (a number input's decimal point
+      // isn't blocked by typing, only by step-mismatch validity,
+      // which nothing here enforces) and clamped to the same bounds
+      // the backend's own schema enforces.
+      const seats: number =
+        checkoutSeats === ""
+          ? 1
+          : Math.min(MAX_CHECKOUT_SEATS, Math.max(1, Math.floor(checkoutSeats)));
+      const { url } = await api.organizations.billing.createCheckoutSession(selectedOrgId, {
+        seats,
+      });
+      // Full-page navigation to a Stripe-hosted URL — never processed
+      // in-app, same reasoning as the doc comment on api.ts's
+      // createCheckoutSession. Deliberately not resetting
+      // checkingOut on success: the page is navigating away, so the
+      // disabled/pending button state staying put until that happens
+      // is correct, not a bug.
+      window.location.href = url;
+    } catch (err) {
+      setCheckoutError(err instanceof ApiError ? err.message : t("billing.genericError"));
+      setCheckingOut(false);
+    }
+  }
+
+  async function openPortal() {
+    if (!selectedOrgId) return;
+    setPortalError(null);
+    setOpeningPortal(true);
+    try {
+      const { url } = await api.organizations.billing.createPortalSession(selectedOrgId);
+      window.location.href = url;
+    } catch (err) {
+      setPortalError(err instanceof ApiError ? err.message : t("billing.genericError"));
+      setOpeningPortal(false);
     }
   }
 
@@ -245,6 +346,90 @@ export default function OrganizationPage() {
             {org.seatLimit !== null && t("ofSeats", { count: org.seatLimit })} ·{" "}
             <code>{org.slug}</code>
           </p>
+        )}
+      </section>
+
+      {/* Billing. */}
+      <section className="mt-8 rounded border border-navy/10 p-5">
+        <h2 className="font-display text-lg text-navy">{t("billing.title")}</h2>
+
+        {billingLoading ? (
+          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+        ) : !billing ? (
+          <p className="mt-3 text-sm text-red-600">{billingLoadError ?? t("billing.loadError")}</p>
+        ) : !billing.billingEnabled ? (
+          <p className="mt-3 text-sm text-navy/60">{t("billing.notConfigured")}</p>
+        ) : (
+          <>
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-navy/50">{t("billing.statusLabel")}</dt>
+                <dd className="font-medium text-navy">
+                  {billing.subscriptionStatus
+                    ? tEnum(`subscriptionStatus.${billing.subscriptionStatus}`)
+                    : t("billing.noSubscription")}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-navy/50">{t("billing.seatsLabel")}</dt>
+                <dd className="font-medium text-navy">
+                  {billing.seatsUsed}
+                  {billing.seatLimit !== null && ` / ${billing.seatLimit}`}
+                </dd>
+              </div>
+              {billing.currentPeriodEnd && (
+                <div>
+                  <dt className="text-navy/50">{t("billing.renewsLabel")}</dt>
+                  <dd className="font-medium text-navy">
+                    {new Date(billing.currentPeriodEnd).toLocaleDateString()}
+                  </dd>
+                </div>
+              )}
+            </dl>
+
+            {billing.subscriptionStatus === "PAST_DUE" && (
+              <p className="mt-3 text-sm text-red-600">{t("billing.pastDueWarning")}</p>
+            )}
+
+            {!hasLiveSubscription(billing.subscriptionStatus) && (
+              <div className="mt-5">
+                <p className="text-sm text-navy/60">{t("billing.startDescription")}</p>
+                <div className="mt-3 flex flex-wrap items-end gap-3">
+                  <Field
+                    label={t("billing.seatsInputLabel")}
+                    type="number"
+                    min={1}
+                    max={MAX_CHECKOUT_SEATS}
+                    step={1}
+                    value={checkoutSeats}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setCheckoutSeats(raw === "" ? "" : Number(raw));
+                    }}
+                  />
+                  <Button onClick={startCheckout} disabled={checkingOut}>
+                    {checkingOut ? t("billing.startingCheckout") : t("billing.startSubscription")}
+                  </Button>
+                </div>
+                {checkoutError && <p className="mt-2 text-sm text-red-600">{checkoutError}</p>}
+              </div>
+            )}
+
+            {billing.hasStripeCustomer && (
+              <div className="mt-5">
+                <p className="text-sm text-navy/60">{t("billing.manageDescription")}</p>
+                <Button
+                  variant="ghost"
+                  onClick={openPortal}
+                  disabled={openingPortal}
+                  className="mt-3"
+                >
+                  {openingPortal ? t("billing.opening") : t("billing.manageBilling")}
+                </Button>
+                {portalError && <p className="mt-2 text-sm text-red-600">{portalError}</p>}
+              </div>
+            )}
+          </>
         )}
       </section>
 

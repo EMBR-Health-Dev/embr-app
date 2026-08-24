@@ -173,6 +173,16 @@
       "MEDICATION": "医薬品",
       "LIFESTYLE": "生活習慣",
       "OTHER": "その他"
+    },
+    "subscriptionStatus": {
+      "INCOMPLETE": "未完了",
+      "INCOMPLETE_EXPIRED": "未完了（期限切れ）",
+      "TRIALING": "トライアル中",
+      "ACTIVE": "有効",
+      "PAST_DUE": "支払い遅延",
+      "CANCELED": "解約済み",
+      "UNPAID": "未払い",
+      "PAUSED": "一時停止中"
     }
   },
   "Dashboard": {
@@ -271,7 +281,25 @@
     "trendsAnonymizedNote": "組織全体で匿名化された情報です。特定のメンバー個人の記録が表示されることはありません。",
     "trendsSuppressed": "この期間に記録したメンバーの数がまだ少ないため、個人が特定されるリスクを避けるために傾向を表示できません。組織全体の規模が小さいということではなく、最近実際に記録したメンバーの人数の問題です。",
     "trendsEmpty": "この期間、組織全体でまだ記録がありません。",
-    "basedOnCohort": "{count, plural, other {この期間に記録した#人のメンバー}}に基づいています。"
+    "basedOnCohort": "{count, plural, other {この期間に記録した#人のメンバー}}に基づいています。",
+    "billing": {
+      "title": "請求",
+      "loadError": "請求情報を読み込めませんでした。",
+      "notConfigured": "このデプロイメントではまだ請求機能が設定されていません。",
+      "statusLabel": "ステータス",
+      "seatsLabel": "席数",
+      "renewsLabel": "更新日",
+      "noSubscription": "サブスクリプション未登録",
+      "pastDueWarning": "直近のお支払いに失敗しました。アクセスが制限される前に、支払い方法を更新してください。",
+      "startDescription": "購入する席数を選択し、Stripeでチェックアウトを完了してください。",
+      "seatsInputLabel": "席数",
+      "startSubscription": "サブスクリプションを開始",
+      "startingCheckout": "Stripeにリダイレクト中…",
+      "manageDescription": "席数の変更、支払い方法の更新、請求書の確認ができます。",
+      "manageBilling": "請求を管理",
+      "opening": "開いています…",
+      "genericError": "問題が発生しました。もう一度お試しください。"
+    }
   },
   "Settings": {
     "title": "設定",

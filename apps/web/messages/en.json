@@ -173,6 +173,16 @@
       "MEDICATION": "Medication",
       "LIFESTYLE": "Lifestyle",
       "OTHER": "Other"
+    },
+    "subscriptionStatus": {
+      "INCOMPLETE": "Incomplete",
+      "INCOMPLETE_EXPIRED": "Incomplete (expired)",
+      "TRIALING": "Trialing",
+      "ACTIVE": "Active",
+      "PAST_DUE": "Past due",
+      "CANCELED": "Canceled",
+      "UNPAID": "Unpaid",
+      "PAUSED": "Paused"
     }
   },
   "Dashboard": {
@@ -271,7 +281,25 @@
     "trendsAnonymizedNote": "Anonymized across your organization — never any one member's individual record.",
     "trendsSuppressed": "Not enough people have logged symptoms in this window yet to show a trend without risking identifying any one person. This isn't about your organization being too small overall — it's about how many members have actually logged something recently.",
     "trendsEmpty": "Nothing logged across the organization in this window yet.",
-    "basedOnCohort": "{count, plural, one {Based on # member} other {Based on # members}} who logged something in this window."
+    "basedOnCohort": "{count, plural, one {Based on # member} other {Based on # members}} who logged something in this window.",
+    "billing": {
+      "title": "Billing",
+      "loadError": "Couldn't load billing information.",
+      "notConfigured": "Billing isn't set up on this deployment yet.",
+      "statusLabel": "Status",
+      "seatsLabel": "Seats",
+      "renewsLabel": "Renews",
+      "noSubscription": "No subscription yet",
+      "pastDueWarning": "Your last payment failed. Update your payment method to avoid losing access.",
+      "startDescription": "Choose how many seats to purchase, then complete checkout with Stripe.",
+      "seatsInputLabel": "Seats",
+      "startSubscription": "Start subscription",
+      "startingCheckout": "Redirecting to Stripe…",
+      "manageDescription": "Change your seat count, update your payment method, or view invoices.",
+      "manageBilling": "Manage billing",
+      "opening": "Opening…",
+      "genericError": "Something went wrong. Try again."
+    }
   },
   "Settings": {
     "title": "Settings",
