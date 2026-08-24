@@ -31,7 +31,20 @@ if (!token) {
 // Mirrors the job names in .github/workflows/ci.yml — if you rename a
 // job there, update this list too, or branch protection will silently
 // wait forever on a check that no longer reports.
-const requiredStatusChecks = ["Lint & Typecheck", "Unit & Integration Tests", "Security & Dependency Scan", "Build All Apps"];
+// Corrected 2026-08-24: the previous list ["Lint & Typecheck", ...]
+// contained a stale check name — the CI workflow was split into
+// separate "Format Check", "Lint", and "Typecheck" jobs at some point
+// and this constant was never updated. Verified against the actual
+// check-run names GitHub reports on the latest main commit before
+// making this change.
+const requiredStatusChecks = [
+  "Format Check",
+  "Lint",
+  "Typecheck",
+  "Unit & Integration Tests",
+  "Security & Dependency Scan",
+  "Build All Apps",
+];
 
 const body = {
   required_status_checks: {
