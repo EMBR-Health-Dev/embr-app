@@ -227,6 +227,52 @@ export default function OrganizationPage() {
     }
   }
 
+  // Shared by both places a member can leave an org (the non-admin
+  // view below and the admin "Your membership" section further down)
+  // — same confirm-then-act control either way, just for a different
+  // organizationId.
+  function renderLeaveControl(organizationId: string) {
+    if (leaveConfirmingOrgId !== organizationId) {
+      return (
+        <button
+          onClick={() => setLeaveConfirmingOrgId(organizationId)}
+          className="text-sm font-medium text-red-600 underline underline-offset-2"
+        >
+          {t("leaveOrganization")}
+        </button>
+      );
+    }
+
+    const leaving = leavingOrgId === organizationId;
+    return (
+      <span className="flex items-center gap-3 text-sm">
+        <span className="text-navy/60">{t("confirmLeaveMessage")}</span>
+        <button
+          onClick={() => void leaveOrganization(organizationId)}
+          disabled={leaving}
+          className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+        >
+          {leaving ? t("leaving") : t("leaveOrganization")}
+        </button>
+        <button
+          onClick={() => setLeaveConfirmingOrgId(null)}
+          disabled={leaving}
+          className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
+        >
+          {t("cancel")}
+        </button>
+      </span>
+    );
+  }
+
+  function renderLeaveError(organizationId: string) {
+    return (
+      leaveError?.organizationId === organizationId && (
+        <p className="mt-2 text-sm text-red-600">{leaveError.message}</p>
+      )
+    );
+  }
+
   async function sendInvite(e: FormEvent) {
     e.preventDefault();
     if (!selectedOrgId) return;
@@ -379,42 +425,21 @@ export default function OrganizationPage() {
                     {t("roleMember")} · {t("joined")} {new Date(m.joinedAt).toLocaleDateString()}
                   </p>
                 </div>
-                {leaveConfirmingOrgId === m.organizationId ? (
-                  <span className="flex items-center gap-3 text-sm">
-                    <span className="text-navy/60">{t("confirmLeaveMessage")}</span>
-                    <button
-                      onClick={() => void leaveOrganization(m.organizationId)}
-                      disabled={leavingOrgId === m.organizationId}
-                      className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
-                    >
-                      {leavingOrgId === m.organizationId ? t("leaving") : t("leaveOrganization")}
-                    </button>
-                    <button
-                      onClick={() => setLeaveConfirmingOrgId(null)}
-                      disabled={leavingOrgId === m.organizationId}
-                      className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
-                    >
-                      {t("cancel")}
-                    </button>
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => setLeaveConfirmingOrgId(m.organizationId)}
-                    className="text-sm font-medium text-red-600 underline underline-offset-2"
-                  >
-                    {t("leaveOrganization")}
-                  </button>
-                )}
+                {renderLeaveControl(m.organizationId)}
               </div>
-              {leaveError && leaveError.organizationId === m.organizationId && (
-                <p className="mt-2 text-sm text-red-600">{leaveError.message}</p>
-              )}
+              {renderLeaveError(m.organizationId)}
             </li>
           ))}
         </ul>
       </main>
     );
   }
+
+  // The caller's own membership in whichever org is currently
+  // selected — used by the "Your membership" section below. `find`
+  // over `selectedOrgId` (string | null) safely yields undefined when
+  // null, so this needs no extra guard.
+  const myMembership = memberships.find((m) => m.organizationId === selectedOrgId);
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
@@ -462,52 +487,18 @@ export default function OrganizationPage() {
           else's, and isn't an admin management capability (an
           ORG_ADMIN viewing this page can leave the org they
           administer the same way a plain member can). */}
-      {(() => {
-        const myMembership = memberships.find((m) => m.organizationId === selectedOrgId);
-        if (!myMembership || !selectedOrgId) return null;
-        const orgId = selectedOrgId;
-        return (
-          <section className="mt-8 rounded border border-red-200 p-5">
-            <h2 className="font-display text-lg text-navy">{t("yourMembership")}</h2>
-            <p className="mt-1 text-sm text-navy/60">
-              {myMembership.role === "ORG_ADMIN" ? t("roleAdmin") : t("roleMember")} · {t("joined")}{" "}
-              {new Date(myMembership.joinedAt).toLocaleDateString()}
-            </p>
-            <p className="mt-3 text-sm text-navy/60">{t("leaveDescription")}</p>
-
-            {leaveConfirmingOrgId === orgId ? (
-              <div className="mt-3 flex items-center gap-3 text-sm">
-                <span className="text-navy/60">{t("confirmLeaveMessage")}</span>
-                <button
-                  onClick={() => void leaveOrganization(orgId)}
-                  disabled={leavingOrgId === orgId}
-                  className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
-                >
-                  {leavingOrgId === orgId ? t("leaving") : t("leaveOrganization")}
-                </button>
-                <button
-                  onClick={() => setLeaveConfirmingOrgId(null)}
-                  disabled={leavingOrgId === orgId}
-                  className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
-                >
-                  {t("cancel")}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setLeaveConfirmingOrgId(orgId)}
-                className="mt-3 text-sm font-medium text-red-600 underline underline-offset-2"
-              >
-                {t("leaveOrganization")}
-              </button>
-            )}
-
-            {leaveError && leaveError.organizationId === orgId && (
-              <p className="mt-2 text-sm text-red-600">{leaveError.message}</p>
-            )}
-          </section>
-        );
-      })()}
+      {selectedOrgId && myMembership && (
+        <section className="mt-8 rounded border border-red-200 p-5">
+          <h2 className="font-display text-lg text-navy">{t("yourMembership")}</h2>
+          <p className="mt-1 text-sm text-navy/60">
+            {myMembership.role === "ORG_ADMIN" ? t("roleAdmin") : t("roleMember")} · {t("joined")}{" "}
+            {new Date(myMembership.joinedAt).toLocaleDateString()}
+          </p>
+          <p className="mt-3 text-sm text-navy/60">{t("leaveDescription")}</p>
+          <div className="mt-3">{renderLeaveControl(selectedOrgId)}</div>
+          {renderLeaveError(selectedOrgId)}
+        </section>
+      )}
 
       {/* Billing. */}
       <section className="mt-8 rounded border border-navy/10 p-5">
