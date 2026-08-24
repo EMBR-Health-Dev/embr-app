@@ -28,6 +28,8 @@ import { ssoRouter } from "./modules/sso/sso.routes.js";
 import { briefRouter } from "./modules/briefs/brief.routes.js";
 import { onboardingRouter } from "./modules/onboarding/onboarding.routes.js";
 import { publicAssessmentRouter } from "./modules/public-assessment/public-assessment.routes.js";
+import { billingRouter } from "./modules/billing/billing.routes.js";
+import { billingWebhookRouter } from "./modules/billing/billing.webhook.routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -95,9 +97,19 @@ export function createApp(): Express {
   );
   app.use(compression());
   app.use(cookieParser());
+  app.use(globalLimiter);
+  // The Stripe webhook route is mounted here — after the global rate
+  // limiter but before express.json() — and owns its own
+  // express.raw() body parser scoped to exactly that one path (see
+  // billing.webhook.routes.ts). Signature verification needs the
+  // exact raw bytes Stripe signed; if express.json() ran first, it
+  // would consume the request stream and hand the webhook route an
+  // already-parsed object with no way to recover the original bytes.
+  // Every other route is unaffected — this router matches only
+  // POST /billing/webhook.
+  app.use(billingWebhookRouter);
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
-  app.use(globalLimiter);
   app.use(httpLoggerMiddleware());
 
   // ---- API docs ----
@@ -119,6 +131,7 @@ export function createApp(): Express {
   app.use(adminRouter);
   app.use(trendsRouter);
   app.use(organizationRouter);
+  app.use(billingRouter);
   app.use(ssoRouter);
   app.use(briefRouter);
   app.use(onboardingRouter);

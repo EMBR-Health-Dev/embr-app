@@ -227,6 +227,35 @@ export interface OrganizationDto {
   createdAt: string;
 }
 
+export type StripeSubscriptionStatus =
+  | "INCOMPLETE"
+  | "INCOMPLETE_EXPIRED"
+  | "TRIALING"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "CANCELED"
+  | "UNPAID"
+  | "PAUSED";
+
+/**
+ * An organization's billing state — deliberately just status/dates/seat
+ * counts, never anything Stripe-account-identifying beyond whether a
+ * customer relationship exists (`hasStripeCustomer`), since the raw
+ * Stripe ids have no use on a settings screen and shouldn't be handed
+ * to the browser for no reason.
+ */
+export interface OrgBillingStatusDto {
+  hasStripeCustomer: boolean;
+  subscriptionStatus: StripeSubscriptionStatus | null;
+  seatLimit: number | null;
+  seatsUsed: number;
+  currentPeriodEnd: string | null;
+  /** False when STRIPE_SECRET_KEY isn't configured on this deployment
+   * — lets a settings screen show "billing isn't available yet" rather
+   * than a confusing empty state or a failed request. */
+  billingEnabled: boolean;
+}
+
 /** Roster entry — deliberately just account + org-role metadata, never
  * anything from that member's SymptomLog/CycleEntry records. */
 export interface OrganizationMemberDto {

@@ -258,8 +258,35 @@ model Organization {
   name      String
   slug      String   @unique
   /// Null = no seat limit enforced yet (pilot-stage default). Set once a
-  /// real contract has a seat count to enforce.
+  /// real contract has a seat count to enforce. As of the billing
+  /// module (see modules/billing), a Stripe subscription's seat
+  /// quantity is one way this gets set — see billing.service.ts's
+  /// applySubscriptionState — but it remains directly, manually
+  /// settable too (pilot/ops provisioning never required Stripe and
+  /// still doesn't).
   seatLimit Int?
+
+  // ---- Billing (Stripe) ----
+  //
+  // All nullable: an org with no billing relationship yet (every org
+  // provisioned before this module existed, and any pilot org that
+  // stays manually invoiced) simply has all four unset. Never treat
+  // "no Stripe customer yet" as an error state — see billing.service.ts.
+  /// Stripe Customer id (cus_...). Created lazily on first checkout-
+  /// session request, then reused — see billing.service.ts's
+  /// createCheckoutSession.
+  stripeCustomerId String? @unique
+  /// Stripe Subscription id (sub_...). Set from the subscription
+  /// lifecycle webhooks (created/updated), cleared never — a canceled
+  /// subscription keeps its id for history; subscriptionStatus is what
+  /// changes to CANCELED.
+  stripeSubscriptionId String?             @unique
+  subscriptionStatus   StripeSubscriptionStatus?
+  /// End of the current billing period for the active subscription, as
+  /// reported by Stripe on the same webhooks that set the two fields
+  /// above. Null whenever stripeSubscriptionId is.
+  currentPeriodEnd DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -268,6 +295,41 @@ model Organization {
   ssoConnection OrganizationSsoConnection?
 
   @@map("organizations")
+}
+
+// ---- Billing (Stripe) ----
+
+/// Mirrors Stripe's own Subscription.status values exactly (see
+/// https://docs.stripe.com/api/subscriptions/object#subscription_object-status)
+/// so mapping a webhook payload to this column is a straight uppercase,
+/// never a judgment call about what a given Stripe status "really
+/// means" — see billing.webhook.ts.
+enum StripeSubscriptionStatus {
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+/// Idempotency ledger for Stripe webhook delivery. Stripe's own docs
+/// guarantee at-least-once delivery, not exactly-once — a retried or
+/// duplicated event must not double-apply (e.g. reprocessing an already
+/// -handled subscription.updated is harmless here since every handler
+/// sets absolute values rather than incrementing, but recording this
+/// deliberately rather than relying on that happening to be true keeps
+/// the guarantee explicit and keeps a duplicate out of the audit trail
+/// twice). `id` is the Stripe event id (evt_...) itself, not a
+/// generated uuid — the natural key for "have we seen this one."
+model StripeWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@map("stripe_webhook_events")
 }
 
 /// Links a User to an Organization. Deliberately does NOT grant the org

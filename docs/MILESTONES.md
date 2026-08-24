@@ -568,3 +568,31 @@ Prompted by an outside strategic read on the repo that argued (among a lot of sp
 
 **Next milestone**
 To be scoped from here — most likely candidates: treatment tracking UI on `apps/mobile` (and/or `apps/web`), or wiring treatment data into EMBR BRIEF's context (with real care given that module's existing safety constraints).
+
+## Milestone 19 — Org billing (Stripe, seat-based subscriptions)
+
+The billing/seat-purchase gap flagged since Milestone 12: `seatLimit` existed and was enforced on invite, but nothing set it except manual ops provisioning. Closes that with a real Stripe integration.
+
+**What changed**
+
+- `Organization` gains four billing fields (`stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`, `currentPeriodEnd`) and a `StripeSubscriptionStatus` enum mirroring Stripe's own subscription statuses 1:1. New `StripeWebhookEvent` table is a pure idempotency ledger (Stripe's delivery guarantee is at-least-once, not exactly-once).
+- `modules/billing`: `POST /organizations/:organizationId/billing/checkout-session` (creates or reuses a Stripe Customer, then a Checkout Session for a seat-quantity subscription), `POST .../billing/portal-session` (Stripe Billing Portal — seat changes, payment method, invoices, all Stripe-hosted), `GET .../billing` (status: subscription state, seat usage, `billingEnabled`). All three ORG_ADMIN-gated, same visibility boundary as SSO config and the member roster.
+- **The integration point with Milestone 12's existing enforcement is deliberately minimal**: a subscription webhook sets `Organization.seatLimit` directly to the subscription's item quantity. `organizationService.inviteMember`'s seat-limit check (Milestone 12) needed zero changes — it was already written to treat `seatLimit` as "whatever the real number is," and billing is now just one more way that number gets set, alongside manual ops provisioning, which still works unchanged.
+- `POST /billing/webhook`: raw-body, signature-verified (`stripe.webhooks.constructEvent`), unauthenticated by design (the signature _is_ the auth). Mounted in `app.ts` with its own `express.raw()` parser positioned before the app-wide `express.json()` — the one place in this codebase two different body-parsing strategies coexist, and the ordering is load-bearing (see the comment at that mount point). Handles `customer.subscription.created/updated/deleted` only — deliberately not `checkout.session.completed`, since the subscription-lifecycle events are Stripe's own recommended source of truth and cover the full lifecycle on their own. Every other event type is acknowledged (200) and ignored.
+- Cancellation (`customer.subscription.deleted`) sets `subscriptionStatus: CANCELED` and **deliberately leaves `seatLimit` untouched** — a canceled subscription doesn't retroactively evict existing members; whether it should block new invites going forward is exactly what `subscriptionStatus` is for.
+- All three `STRIPE_*` env vars are optional (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_SEAT_PRICE_ID`) — every billing route checks `isBillingConfigured()` first and returns a clean 503 rather than the API failing to boot in every environment that hasn't set this up (matches `SENTRY_DSN`'s existing optional-feature precedent).
+- Rate-limited checkout-session creation (20/hour, user-keyed) — same cost-control reasoning as `brief-rate-limiter.ts`, not anti-brute-force, since every call is a real Stripe API round-trip.
+
+**Verification**
+
+Full monorepo `pnpm typecheck`: 12/13 clean — the one failure is the confirmed, pre-existing Prisma-generation sandbox gap (same root cause across every file it touches, including the new `billing.mappers.ts`/`billing.repository.ts`/`billing.webhook.ts`, plus the already-documented `admin.service.ts` implicit-`any`); no new error introduced by this milestone. `pnpm lint`: clean. New test file (`billing.test.ts`) covers ORG_ADMIN-only access (403 for a member, 404 cross-org), checkout-session customer create-then-reuse, portal-session's 409-without-a-customer guard, the not-configured 503 path, webhook signature rejection, and `processWebhookEvent`'s idempotency + all three subscription event types via a mocked `stripe` SDK (same precedent as `brief.ai.test.ts` mocking `@anthropic-ai/sdk`) — **could not be executed in this sandbox**: every test file, including pre-existing ones untouched by this change (confirmed against `organization.test.ts`), fails at import with an `@opentelemetry/core` ESM/CJS interop error coming from `@sentry/node`. Root cause: this sandbox runs Node v22.22.2 against a repo pinned to v20.11.0 (`.nvmrc`) — a sandbox/environment mismatch, not a regression from this change. Needs a real CI run (or a sandboxed Node 20) to confirm the new suite actually passes, the same caveat every Prisma-touching milestone in this document already carries for a different reason.
+
+**Remaining work**
+
+- No proration/upgrade-path decision beyond what Stripe's Billing Portal already handles by default — fine for a first cut, worth a deliberate look once a real customer actually changes seat count mid-cycle.
+- No `apps/web`/`apps/admin` billing settings screen yet — backend-only, matching the precedent Milestone 12 and Milestone 18 both set (ship the API, scope the frontend as its own follow-up).
+- `invoice.payment_failed` isn't handled separately — Stripe already reflects a failed-payment state through `customer.subscription.updated`'s `status` field (`past_due`), which this milestone does handle; a dedicated handler would only matter for something more specific (e.g. an email nudge) than state tracking.
+- The Node-version test-runner gap above should be fixed (or worked around) before this ships, not treated as permanently acceptable — recorded here because it blocked real verification in this sandbox, not because it's fine to leave.
+
+**Next milestone**
+To be scoped from here — candidates: the billing settings UI, the self-service "leave organization" gap (still open since Milestone 13), or the SSO dual-login-path decision (still open since Milestone 15).

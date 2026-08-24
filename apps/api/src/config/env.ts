@@ -141,6 +141,25 @@ const apiEnvSchema = z.object({
     .positive()
     .default(10 * 60),
 
+  // ---- Billing (Stripe) ----
+  // All optional, matching SENTRY_DSN's precedent: billing stays fully
+  // inert (routes respond 503 "not configured" — see billing.routes.ts)
+  // when unset, rather than the whole API failing to boot in every
+  // environment that hasn't set this up yet (local dev, CI, and any
+  // pilot deployment that isn't charging through Stripe yet).
+  STRIPE_SECRET_KEY: z.string().optional(),
+  // Required to verify the webhook's signature (see billing.webhook.ts)
+  // — without it, a real STRIPE_SECRET_KEY alone would let the webhook
+  // route accept unsigned/forged requests, so the route checks both are
+  // present before doing anything, not just the secret key.
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // The Stripe Price id (price_...) for the per-seat recurring price —
+  // a single price, not a price-per-plan-tier list, matching this
+  // milestone's scope (see docs/MILESTONES.md): one plan, quantity =
+  // seats. A real multi-tier pricing page is a later, deliberate
+  // decision, not assumed here.
+  STRIPE_SEAT_PRICE_ID: z.string().optional(),
+
   // ---- EMBR BRIEF (Milestone 17) ----
   ANTHROPIC_API_KEY: z.string().min(1),
   // Pinned to a specific model rather than left to whatever "latest"
