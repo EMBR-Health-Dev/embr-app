@@ -33,18 +33,20 @@ vi.mock("../../lib/auth-context", () => ({
 }));
 
 const symptomFrequency = vi.fn().mockResolvedValue([]);
+const organizationsMine = vi.fn().mockResolvedValue([]);
 
 vi.mock("../../lib/api", () => ({
   api: {
     symptomLogs: { list: vi.fn().mockResolvedValue({ items: [] }) },
     onboarding: { get: vi.fn().mockResolvedValue({ jobToBeDone: null }) },
-    organizations: { mine: vi.fn().mockResolvedValue([]) },
+    organizations: { mine: (...args: unknown[]) => organizationsMine(...args) },
     trends: { symptomFrequency },
   },
 }));
 
 beforeEach(() => {
   symptomFrequency.mockReset().mockResolvedValue([]);
+  organizationsMine.mockReset().mockResolvedValue([]);
 });
 
 function renderWithIntl(ui: React.ReactElement, locale: "en" | "ja" = "en") {
@@ -89,6 +91,58 @@ describe("Dashboard — translation", () => {
       expect(screen.getByRole("option", { name: "Hot Flash" })).toBeInTheDocument(),
     );
     expect(screen.getByRole("option", { name: "Brain Fog" })).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — organization navigation", () => {
+  it("shows the Organization link for a user with an organization membership", async () => {
+    organizationsMine.mockResolvedValue([
+      {
+        organizationId: "org-1",
+        organizationName: "Acme Co",
+        organizationSlug: "acme",
+        role: "ORG_MEMBER",
+        joinedAt: "2026-01-01T00:00:00Z",
+      },
+    ]);
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
+    expect(await screen.findByRole("link", { name: "Organization" })).toBeInTheDocument();
+  });
+
+  it("does not show the Organization link for a user with no organization membership", async () => {
+    organizationsMine.mockResolvedValue([]);
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
+    // organizations.mine() resolves asynchronously — wait for it to
+    // settle before asserting absence, so this isn't just catching the
+    // link mid-fetch rather than genuinely never appearing.
+    await waitFor(() => expect(organizationsMine).toHaveBeenCalled());
+    expect(screen.queryByRole("link", { name: "Organization" })).not.toBeInTheDocument();
+  });
+
+  it("shows the link for a plain ORG_MEMBER, not just ORG_ADMIN", async () => {
+    organizationsMine.mockResolvedValue([
+      {
+        organizationId: "org-1",
+        organizationName: "Acme Co",
+        organizationSlug: "acme",
+        role: "ORG_MEMBER",
+        joinedAt: "2026-01-01T00:00:00Z",
+      },
+    ]);
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
+    // The regression this guards against: the link used to be gated on
+    // role === "ORG_ADMIN" specifically. A membership list containing
+    // only an ORG_MEMBER row (no ORG_ADMIN at all) must still show it.
+    expect(await screen.findByRole("link", { name: "Organization" })).toBeInTheDocument();
   });
 });
 
