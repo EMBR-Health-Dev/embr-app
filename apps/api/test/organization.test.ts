@@ -92,6 +92,28 @@ vi.mock("../src/lib/prisma.js", () => {
     $transaction: vi.fn((callback: (tx: typeof mockPrisma) => Promise<unknown>) =>
       callback(mockPrisma),
     ),
+    // Models revokeMembership's `SELECT ... FOR UPDATE` lock query
+    // (see organization.repository.ts) against in-memory state, since
+    // this mock has no real Postgres to send raw SQL to. Only needs to
+    // reproduce the *result shape* the real query returns (the locked
+    // ORG_ADMIN rows for the org) — not real row locking, which is
+    // exactly what this mock can't model and why the real concurrency
+    // behavior is instead covered by
+    // test/integration/organization-revoke-concurrency.test.ts against
+    // a real Postgres. Falls back to a generic single-row result for
+    // any other raw query (e.g. health.ts's `SELECT 1`) so this mock
+    // stays usable if a future test in this file exercises that route.
+    $queryRaw: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => {
+      const sql = strings.join(" ");
+      if (sql.includes("organization_memberships")) {
+        const organizationId = values[0] as string;
+        const adminRows = state.memberships
+          .filter((m) => m.organizationId === organizationId && m.role === "ORG_ADMIN")
+          .map((m) => ({ id: m.id }));
+        return Promise.resolve(adminRows);
+      }
+      return Promise.resolve([{ "?column?": 1 }]);
+    }),
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
         const found = state.users.find((u) => u.email === where.email || u.id === where.id);

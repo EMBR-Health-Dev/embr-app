@@ -12,8 +12,13 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
  * mechanism it depends on, not a simulation of it.
  */
 const { isPostgresReachable } = await import("./postgres-reachable.js");
-const databaseUrl =
-  process.env.DATABASE_URL ?? "postgresql://embr:test@localhost:5432/embr_test?schema=public";
+// Pinned back into process.env (not just read locally) so the value
+// this reachability probe checks is guaranteed to be the exact same
+// value the real PrismaClient singleton (imported below, in beforeAll)
+// resolves at construction time — same fallback test/setup.ts already
+// applies, kept in sync rather than assumed.
+process.env.DATABASE_URL ??= "postgresql://embr:test@localhost:5432/embr_test?schema=public";
+const databaseUrl = process.env.DATABASE_URL;
 const postgresReachable = await isPostgresReachable(databaseUrl);
 
 describe.skipIf(!postgresReachable)("revokeMembership concurrency against a real Postgres", () => {
