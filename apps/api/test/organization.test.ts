@@ -3,6 +3,7 @@ import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { organizationService } from "../src/modules/organizations/organization.service.js";
+import { prisma } from "../src/lib/prisma.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -83,10 +84,29 @@ vi.mock("../src/lib/prisma.js", () => {
     // object rather than a real isolated Prisma.TransactionClient — good
     // enough to exercise the read-then-write invariant logic in
     // organizationRepository.revokeMembership, but it doesn't model real
-    // Postgres transaction isolation/rollback semantics.
+    // Postgres transaction isolation, row locking, or blocking/wait
+    // behavior. $queryRaw below is a plain synchronous in-memory filter,
+    // not a lock — it can't demonstrate that a concurrent SELECT ...
+    // FOR UPDATE actually blocks. These tests prove the sequential
+    // decision logic (target lookup, admin-count check, delete) is
+    // correct; they do NOT prove the Postgres concurrency guarantee.
+    // That guarantee rests on Postgres's own row-locking semantics for
+    // FOR UPDATE, not on anything this mock can exercise — see
+    // organization.repository.ts's revokeMembership doc comment.
     $transaction: vi.fn((callback: (tx: typeof mockPrisma) => Promise<unknown>) =>
       callback(mockPrisma),
     ),
+    // Mocks the single FOR UPDATE lock query in revokeMembership. Reads
+    // the interpolated organizationId out of the tagged-template call
+    // and returns the current ORG_ADMIN rows for that org from `state`
+    // — mirrors the real query's result shape, not its locking behavior.
+    $queryRaw: vi.fn((_strings: TemplateStringsArray, ...values: unknown[]) => {
+      const organizationId = values[0] as string;
+      const lockedAdmins = state.memberships.filter(
+        (m) => m.organizationId === organizationId && m.role === "ORG_ADMIN",
+      );
+      return Promise.resolve(lockedAdmins.map((m) => ({ id: m.id })));
+    }),
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
         const found = state.users.find((u) => u.email === where.email || u.id === where.id);
@@ -686,6 +706,64 @@ describe("GET /organizations", () => {
 });
 
 describe("DELETE /organizations/:organizationId/members/:userId", () => {
+  /**
+   * A note on what this describe block does and doesn't prove: every
+   * test below runs against the in-memory Prisma mock defined at the
+   * top of this file (see its own comment), not a real Postgres
+   * connection. That's true even in CI, where a real Postgres service
+   * container is provisioned for this job but is only used for the
+   * `prisma migrate deploy` verification step — no test file in this
+   * suite, including this one, ever imports the real, unmocked Prisma
+   * client to run queries against it. These tests are unit tests: they
+   * prove revokeMembership's sequential decision logic (lookup, admin
+   * count, delete-or-reject) is correct, and — via the
+   * "acquires a row lock" test below — that it goes through the
+   * FOR UPDATE code path at all rather than silently falling back to a
+   * plain count(). They do NOT and cannot prove Postgres actually
+   * blocks a second transaction on that lock; that guarantee is a
+   * property of Postgres's row-locking implementation, not of this
+   * mock, which has no concept of blocking or transaction isolation.
+   * A genuine test of the concurrency guarantee would need a real
+   * Prisma client against a live Postgres instance, firing two
+   * `revokeMembership` calls concurrently via `Promise.all` and
+   * asserting exactly one succeeds — a real integration test, of a
+   * kind this suite doesn't currently have any working pattern for
+   * (every DB-touching test elsewhere mocks prisma.js the same way).
+   * Adding one is a reasonable follow-up but is its own piece of work
+   * — new setup/teardown lifecycle, real connection handling, and
+   * validation against an actual Postgres instance this sandbox has no
+   * way to reach — not bundled into this change.
+   */
+  it("acquires a row lock on the org's ORG_ADMIN rows before revoking an admin, not a plain count", async () => {
+    const organizationId = nextId();
+    const adminAId = nextId();
+    const adminBId = nextId();
+    addMembership(organizationId, adminAId, "ORG_ADMIN");
+    addMembership(organizationId, adminBId, "ORG_ADMIN");
+
+    vi.mocked(prisma.$queryRaw).mockClear();
+    vi.mocked(prisma.organizationMembership.count).mockClear();
+
+    await organizationService.revokeMember(organizationId, adminBId);
+
+    expect(vi.mocked(prisma.$queryRaw)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(prisma.organizationMembership.count)).not.toHaveBeenCalled();
+  });
+
+  it("does not take the admin row lock when revoking a regular member", async () => {
+    const organizationId = nextId();
+    const adminId = nextId();
+    const memberId = nextId();
+    addMembership(organizationId, adminId, "ORG_ADMIN");
+    addMembership(organizationId, memberId, "ORG_MEMBER");
+
+    vi.mocked(prisma.$queryRaw).mockClear();
+
+    await organizationService.revokeMember(organizationId, memberId);
+
+    expect(vi.mocked(prisma.$queryRaw)).not.toHaveBeenCalled();
+  });
+
   it("lets an ORG_ADMIN revoke a member, and 404s revoking someone already removed", async () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
