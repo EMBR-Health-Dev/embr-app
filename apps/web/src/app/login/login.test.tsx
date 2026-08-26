@@ -140,6 +140,14 @@ describe("Login — translation", () => {
     expect(link.closest("a")).toHaveAttribute("href", "/forgot-password");
   });
 
+  it("has a link to the public self-assessment at /assessment", async () => {
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    const link = screen.getByText("Not sure yet? Take a quick self-assessment");
+    expect(link.closest("a")).toHaveAttribute("href", "/assessment");
+  });
+
   it("renders Japanese strings when the ja locale is active", async () => {
     const { default: LoginPage } = await import("./page");
     render(

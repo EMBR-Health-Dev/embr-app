@@ -158,6 +158,12 @@ function LoginForm() {
           {t("createAccount")}
         </Link>
       </p>
+
+      <p className="mt-2 text-center text-sm text-navy/60">
+        <Link href="/assessment" className="font-medium text-teal underline underline-offset-2">
+          {t("takeAssessment")}
+        </Link>
+      </p>
     </div>
   );
 }

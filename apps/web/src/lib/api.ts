@@ -13,6 +13,7 @@ import type {
   OrganizationMemberDto,
   OrgSymptomFrequencyDto,
   PaginatedResponse,
+  PerimenopauseAssessmentResultDto,
   SsoConnectionDto,
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
@@ -253,6 +254,19 @@ export const api = {
     // sets window.location.href to this rather than awaiting a
     // response. Exposed as a plain URL builder for that reason.
     startUrl: (email: string) => `/api/auth/sso/start?email=${encodeURIComponent(email)}`,
+  },
+
+  // The one endpoint in the whole API requiring no auth at all — see
+  // apps/api/src/modules/public-assessment/public-assessment.routes.ts.
+  // Uses the same apiFetch as every authenticated call (no session
+  // cookie is required or sent either way; CSRF is skipped when the
+  // corresponding cookie is genuinely absent, which it is here).
+  publicAssessment: {
+    submit: (input: { symptoms: string[]; hasIrregularPeriods: boolean }) =>
+      apiFetch<PerimenopauseAssessmentResultDto>("/public/perimenopause-assessment", {
+        method: "POST",
+        body: input,
+      }),
   },
 
   onboarding: {
