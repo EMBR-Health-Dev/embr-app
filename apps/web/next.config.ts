@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -18,4 +19,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+// withSentryConfig wraps the build (source map upload, tunneling
+// route) — a no-op wrapper when SENTRY_AUTH_TOKEN isn't set, which is
+// the case for every local/CI build (see .env.example). Runtime
+// error capture itself is controlled separately by
+// NEXT_PUBLIC_SENTRY_DSN in sentry.{client,server,edge}.config.ts.
+export default withSentryConfig(withNextIntl(nextConfig), {
+  silent: true,
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
+});

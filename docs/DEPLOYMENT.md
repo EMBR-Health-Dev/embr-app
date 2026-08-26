@@ -89,18 +89,37 @@ no-op until `SENTRY_DSN` is set, so:
    way. See the doc comment directly on `captureException` in both
    files.
 
-**Known gap, not addressed here**: `apps/web`, `apps/admin`, and
-`apps/mobile` have no error monitoring at all — no Sentry (or
-equivalent) dependency, no client-side crash/error capture. This means
-frontend-only failures (a React render error, a mobile crash before a
-request ever reaches the API) are currently invisible to anything but
-a person's own bug report. Setting this up is a real, separate piece
-of work — new dependencies and init code across three apps, plus its
-own PII-redaction pass (client-side error capture commonly includes
-breadcrumbs of user interactions, which is exactly the kind of thing
-that needs the same scrutiny given this product's data) — not
-something to fold into a backend-focused hardening pass. Worth
-prioritizing before a wider beta, not before a small closed one.
+**Frontend error monitoring**: `apps/web`, `apps/admin`, and `apps/mobile`
+all have client-side (and, for the two Next.js apps, server + edge)
+error capture via `@sentry/nextjs`/`@sentry/react-native`, matching the
+backend's no-op-unless-`*_SENTRY_DSN`-is-set precedent:
+
+- `apps/web`: `src/instrumentation-client.ts` (browser),
+  `sentry.server.config.ts`/`sentry.edge.config.ts` (SSR/route
+  handlers), `src/app/global-error.tsx` (root React error boundary).
+  `NEXT_PUBLIC_SENTRY_DSN`.
+- `apps/admin`: identical structure to `apps/web`.
+  `NEXT_PUBLIC_SENTRY_DSN` — use a different Sentry project's DSN than
+  `apps/web`'s, matching the backend's one-project-per-service
+  precedent.
+- `apps/mobile`: `lib/sentry.ts` (`initSentry()`, called from
+  `app/_layout.tsx` before the app renders; `Sentry.wrap(RootLayout)`
+  adds the React error boundary + native crash reporting).
+  `EXPO_PUBLIC_SENTRY_DSN`.
+
+Each app's own `beforeSend` (`redactSentryEvent` in each app's
+`sentry-redact.ts`/`lib/sentry.ts`) strips `request.cookies`,
+`request.headers`, `request.data`, `request.query_string`, the query
+portion of `request.url`, and every breadcrumb's `data`/`message`
+fields — browser/RN SDKs auto-record DOM click and HTTP breadcrumbs
+that can otherwise carry form values, bearer tokens, or API response
+bodies. Session Replay is deliberately not enabled anywhere — its
+DOM/screenshot capture is a much larger privacy surface than error
+events alone for a product handling health data; revisit only with its
+own dedicated redaction review.
+
+Set `NEXT_PUBLIC_SENTRY_DSN` (web, admin) and `EXPO_PUBLIC_SENTRY_DSN`
+(mobile) as platform secrets per service, same as `SENTRY_DSN` above.
 
 ## Email delivery
 
