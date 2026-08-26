@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Known test-fixture placeholders, not real credentials"
+  regexes = [
+    '''sk_test_placeholder''',
+    '''abc123def456''',
+  ]
