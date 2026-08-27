@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-na
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { severityLevelSchema, symptomCategorySchema } from "@embr/validation";
-import type { OnboardingProfileDto, SymptomFrequencyDto, SymptomLogDto } from "@embr/types";
+import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -12,6 +12,7 @@ import { AppointmentCard } from "../../components/appointment-card";
 import { Chip } from "../../components/chip";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
+import { ReflectionsSection } from "../../components/reflections-section";
 import { theme } from "../../lib/theme";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
@@ -38,7 +39,7 @@ export default function HomeScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
-  const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
+  const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
 
   const loadLogs = useCallback(async () => {
     try {
@@ -49,25 +50,9 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // The smallest possible ongoing reflection: how many logs this week
-  // and the most common category, reusing the same server-side
-  // aggregate the Trends tab already calls (Milestone 9) rather than
-  // adding a new endpoint for a single summary line.
-  const loadWeeklyFrequency = useCallback(async () => {
-    const from = new Date();
-    from.setDate(from.getDate() - 7);
-    try {
-      const frequency = await api.trends.symptomFrequency({ from: from.toISOString() });
-      return frequency;
-    } catch {
-      return [];
-    }
-  }, []);
-
   useEffect(() => {
     void loadLogs();
-    void loadWeeklyFrequency().then(setWeeklyFrequency);
-  }, [loadLogs, loadWeeklyFrequency]);
+  }, [loadLogs]);
 
   // Soft, not a block: /onboarding's skip link reaches this same
   // screen in one tap from any onboarding screen, and completing/
@@ -111,8 +96,8 @@ export default function HomeScreen() {
       setSeverity(null);
       setNotes("");
       setConfirmation(t("home.logConfirmation"));
-      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
-      setWeeklyFrequency(frequency);
+      await loadLogs();
+      setReflectionsRefreshKey((k) => k + 1);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : t("home.genericError"));
     } finally {
@@ -159,17 +144,7 @@ export default function HomeScreen() {
 
             {startingPointKey && <Text style={styles.startingPoint}>{t(startingPointKey)}</Text>}
 
-            {weeklyFrequency.length > 0 && (
-              <Text style={styles.reflection}>
-                {t("home.thisWeek", {
-                  count: weeklyFrequency.reduce((sum, f) => sum + f.count, 0),
-                })}
-                {" · "}
-                {t("home.mostCommon", {
-                  category: t(`enums.category.${weeklyFrequency[0].category}`),
-                })}
-              </Text>
-            )}
+            <ReflectionsSection refreshKey={reflectionsRefreshKey} />
 
             <AppointmentCard appointmentStatus={onboardingProfile?.appointmentStatus ?? null} />
 
@@ -266,12 +241,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontStyle: "italic",
     color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  reflection: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: theme.colors.success,
     marginBottom: 4,
   },
   confirmation: {

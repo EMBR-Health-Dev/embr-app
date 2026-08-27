@@ -199,7 +199,10 @@
       "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
-    }
+    },
+    "loggingStreak_one": "{{count}} day logging streak",
+    "loggingStreak_other": "{{count}} days logging streak",
+    "dismissReflection": "Dismiss"
   },
   "cycle": {
     "title": "Today's cycle entry",

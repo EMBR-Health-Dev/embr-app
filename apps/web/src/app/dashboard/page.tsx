@@ -4,11 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import type { OnboardingProfileDto, SymptomFrequencyDto, SymptomLogDto } from "@embr/types";
+import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
+import { ReflectionsSection } from "../../components/reflections-section";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
 
@@ -49,7 +50,7 @@ function DashboardContent() {
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const [belongsToOrg, setBelongsToOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
-  const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
+  const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
 
   const suggestedCategory = searchParams.get("logCategory");
   const wantsFirstLog = searchParams.get("firstLog") !== null || Boolean(suggestedCategory);
@@ -104,22 +105,10 @@ function DashboardContent() {
     }
   }
 
-  // The smallest possible ongoing reflection: how many logs this week
-  // and the most common category, reusing the same server-side
-  // aggregate the Trends page already calls (Milestone 9) rather than
-  // adding a new endpoint for a single summary line. Mirrors
-  // apps/mobile/app/(app)/index.tsx's identical reflection line.
-  async function loadWeeklyFrequency() {
-    const from = new Date();
-    from.setDate(from.getDate() - 7);
-    try {
-      const frequency = await api.trends.symptomFrequency({ from: from.toISOString() });
-      return frequency;
-    } catch {
-      return [];
-    }
-  }
-
+  // The reflections themselves (ReflectionsSection) fetch on mount and
+  // whenever reflectionsRefreshKey changes — bumping it after a
+  // symptom log is enough to trigger a refetch, without the dashboard
+  // needing to hold the reflection list itself.
   useEffect(() => {
     // Matches React's own documented fetch-on-mount pattern — see the
     // equivalent suppression in apps/admin/dashboard/page.tsx for the
@@ -127,7 +116,6 @@ function DashboardContent() {
     if (user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       void loadLogs();
-      void loadWeeklyFrequency().then(setWeeklyFrequency);
     }
   }, [user]);
 
@@ -154,8 +142,8 @@ function DashboardContent() {
         occurredAt: new Date().toISOString(),
       });
       setConfirmation(t("hotFlashConfirmation"));
-      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
-      setWeeklyFrequency(frequency);
+      await loadLogs();
+      setReflectionsRefreshKey((k) => k + 1);
     } catch (err) {
       setConfirmation(err instanceof ApiError ? err.message : t("hotFlashError"));
     }
@@ -173,8 +161,8 @@ function DashboardContent() {
       setNotes("");
       setFormOpen(false);
       setConfirmation(t("logConfirmation"));
-      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
-      setWeeklyFrequency(frequency);
+      await loadLogs();
+      setReflectionsRefreshKey((k) => k + 1);
     } finally {
       setSubmitting(false);
     }
@@ -244,13 +232,7 @@ function DashboardContent() {
         <p className="mt-6 font-display text-lg italic text-navy/80">{t(startingPointKey)}</p>
       )}
 
-      {weeklyFrequency.length > 0 && (
-        <p className="mt-3 text-sm font-medium text-teal">
-          {t("thisWeek", { count: weeklyFrequency.reduce((sum, f) => sum + f.count, 0) })}
-          {" · "}
-          {t("mostCommon", { category: tEnum(`category.${weeklyFrequency[0].category}`) })}
-        </p>
-      )}
+      <ReflectionsSection refreshKey={reflectionsRefreshKey} />
 
       {/* Signature interaction: one tap, no form, for the moment that
           actually needs it — mid-hot-flash is not when anyone wants to

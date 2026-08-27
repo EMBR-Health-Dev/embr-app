@@ -531,6 +531,31 @@ paths:
                         from: { type: string, format: date }
                         to: { type: string, format: date }
                         days: { type: integer }
+  /reflections:
+    get:
+      summary: Deterministic engagement/awareness reflections computed from the caller's own symptom logs
+      description: Stage 3 pattern-engine output only (see the embr-clinical-logic doctrine) — no AI involvement, no clinical claims. A discriminated union by `type`; the server ships facts only (counts, categories, streak lengths), never rendered copy, so the client owns all i18n.
+      security: [{ cookieAuth: [] }]
+      tags: [Reflections]
+      responses:
+        "200":
+          description: Zero or more reflections, in a fixed, deterministic order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      {
+                        type: string,
+                        description: "Stable key (type + period/anchor) used for client-side dismissal",
+                      }
+                    type: { type: string, enum: [weekly_frequency, logging_streak] }
+                    totalCount: { type: integer, description: "weekly_frequency only" }
+                    topCategory: { $ref: "#/components/schemas/SymptomCategory" }
+                    days: { type: integer, description: "logging_streak only" }
   /admin/users:
     get:
       summary: List user accounts (admin only)

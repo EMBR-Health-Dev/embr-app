@@ -14,6 +14,7 @@ import type {
   OrgSymptomFrequencyDto,
   PaginatedResponse,
   PerimenopauseAssessmentResultDto,
+  ReflectionDto,
   SsoConnectionDto,
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
@@ -99,6 +100,12 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+  },
+
+  // Stage 3 pattern-engine output only (see the embr-clinical-logic
+  // doctrine) — no query params, always "as of right now."
+  reflections: {
+    list: () => apiFetch<ReflectionDto[]>("/reflections"),
   },
 
   treatments: {

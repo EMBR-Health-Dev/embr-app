@@ -32,21 +32,25 @@ vi.mock("../../lib/auth-context", () => ({
   }),
 }));
 
-const symptomFrequency = vi.fn().mockResolvedValue([]);
+const reflectionsList = vi.fn().mockResolvedValue([]);
 const organizationsMine = vi.fn().mockResolvedValue([]);
 
 vi.mock("../../lib/api", () => ({
   api: {
-    symptomLogs: { list: vi.fn().mockResolvedValue({ items: [] }) },
+    symptomLogs: {
+      list: vi.fn().mockResolvedValue({ items: [] }),
+      create: vi.fn().mockResolvedValue({}),
+    },
     onboarding: { get: vi.fn().mockResolvedValue({ jobToBeDone: null }) },
     organizations: { mine: (...args: unknown[]) => organizationsMine(...args) },
-    trends: { symptomFrequency },
+    reflections: { list: (...args: unknown[]) => reflectionsList(...args) },
   },
 }));
 
 beforeEach(() => {
-  symptomFrequency.mockReset().mockResolvedValue([]);
+  reflectionsList.mockReset().mockResolvedValue([]);
   organizationsMine.mockReset().mockResolvedValue([]);
+  window.localStorage.clear();
 });
 
 function renderWithIntl(ui: React.ReactElement, locale: "en" | "ja" = "en") {
@@ -146,34 +150,54 @@ describe("Dashboard — organization navigation", () => {
   });
 });
 
-describe("Dashboard — weekly reflection", () => {
-  it("shows nothing when there's no data logged this week", async () => {
+describe("Dashboard — reflections", () => {
+  it("shows nothing when there are no reflections", async () => {
     const { default: DashboardPage } = await import("./page");
     renderWithIntl(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
     expect(screen.queryByText(/logs? this week/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/logging streak/)).not.toBeInTheDocument();
   });
 
-  it("shows the log count and most common category once weekly data exists", async () => {
-    symptomFrequency.mockResolvedValueOnce([
-      { category: "HOT_FLASH", count: 3 },
-      { category: "BRAIN_FOG", count: 1 },
+  it("shows a weekly_frequency reflection card", async () => {
+    reflectionsList.mockResolvedValue([
+      {
+        id: "weekly_frequency:2026-01-01",
+        type: "weekly_frequency",
+        totalCount: 4,
+        topCategory: "HOT_FLASH",
+      },
     ]);
 
     const { default: DashboardPage } = await import("./page");
     renderWithIntl(<DashboardPage />);
 
-    // Rendered as three sibling text nodes inside one <p> ("4 logs this
-    // week", " · ", "Most common: Hot Flash"), so the element's own
-    // matchable text is the full concatenation, not each piece alone.
     await waitFor(() =>
       expect(screen.getByText("4 logs this week · Most common: Hot Flash")).toBeInTheDocument(),
     );
   });
 
+  it("shows a logging_streak reflection card", async () => {
+    reflectionsList.mockResolvedValue([
+      { id: "logging_streak:2026-01-01", type: "logging_streak", days: 3 },
+    ]);
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("3 days logging streak")).toBeInTheDocument());
+  });
+
   it("shows the Japanese reflection copy when that locale is active", async () => {
-    symptomFrequency.mockResolvedValueOnce([{ category: "HOT_FLASH", count: 1 }]);
+    reflectionsList.mockResolvedValue([
+      {
+        id: "weekly_frequency:2026-01-01",
+        type: "weekly_frequency",
+        totalCount: 1,
+        topCategory: "HOT_FLASH",
+      },
+    ]);
 
     const { default: DashboardPage } = await import("./page");
     renderWithIntl(<DashboardPage />, "ja");
@@ -183,5 +207,41 @@ describe("Dashboard — weekly reflection", () => {
         screen.getByText("今週の記録: 1件 · 最も多い症状: ホットフラッシュ"),
       ).toBeInTheDocument(),
     );
+  });
+
+  it("dismissing a reflection removes it and persists across a remount", async () => {
+    reflectionsList.mockResolvedValue([
+      { id: "logging_streak:2026-01-01", type: "logging_streak", days: 3 },
+    ]);
+    const user = userEvent.setup();
+
+    const { default: DashboardPage } = await import("./page");
+    const { unmount } = renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("3 days logging streak")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByText("3 days logging streak")).not.toBeInTheDocument();
+    unmount();
+
+    // Remount — the same reflection id is still "returned" by the
+    // (mocked) API, but dismissal is a client-side preference that
+    // must survive independently of what the server sends back.
+    renderWithIntl(<DashboardPage />);
+    await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
+    expect(screen.queryByText("3 days logging streak")).not.toBeInTheDocument();
+  });
+
+  it("refetches reflections after logging a hot flash", async () => {
+    reflectionsList.mockResolvedValue([]);
+    const user = userEvent.setup();
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+    await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
+    await waitFor(() => expect(reflectionsList).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole("button", { name: "Log a hot flash happening right now" }));
+
+    await waitFor(() => expect(reflectionsList).toHaveBeenCalledTimes(2));
   });
 });

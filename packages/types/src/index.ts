@@ -191,6 +191,29 @@ export interface SymptomCoOccurrenceDto {
   days: number;
 }
 
+// ---- Reflections (Stage 3 pattern engine — see the
+// embr-clinical-logic skill doctrine: deterministic rules only, no AI
+// involvement anywhere in generating these) ----
+
+/**
+ * A discriminated union, not a free-text message — same "counts only,
+ * client renders the copy" convention as SymptomFrequencyDto and
+ * SymptomCoOccurrenceDto above. The server never ships prose; it
+ * ships the facts a reflection is about, so i18n/pluralization stay
+ * entirely client-side and no reflection copy is ever hardcoded to
+ * English in the API.
+ *
+ * `id` is a stable, deterministic key (type + the period or anchor the
+ * reflection is about — see reflection-generator.ts) — not a random
+ * UUID. It's what client-side dismissal state keys off: a dismissed
+ * reflection stays dismissed only for as long as the same id keeps
+ * being generated, and a genuinely new instance of the same type (a
+ * new week, a new streak) gets a new id and is shown again.
+ */
+export type ReflectionDto =
+  | { id: string; type: "weekly_frequency"; totalCount: number; topCategory: SymptomCategory }
+  | { id: string; type: "logging_streak"; days: number };
+
 // ---- Public perimenopause assessment (unauthenticated) ----
 
 /** score is a plain count, never weighted or modeled — deliberately

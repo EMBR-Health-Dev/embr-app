@@ -198,7 +198,9 @@
       "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
       "keepRecord": "長期的な記録を始めましょう。",
       "notSure": "記録を続けると見えてくるものがあります。"
-    }
+    },
+    "loggingStreak_other": "{{count}}日連続で記録中",
+    "dismissReflection": "閉じる"
   },
   "cycle": {
     "title": "今日の周期記録",

@@ -218,6 +218,8 @@
     "noLogsYet": "Nothing logged yet — use the button above whenever something happens.",
     "thisWeek": "{count, plural, one {# log this week} other {# logs this week}}",
     "mostCommon": "Most common: {category}",
+    "loggingStreak": "{days, plural, one {# day logging streak} other {# days logging streak}}",
+    "dismissReflection": "Dismiss",
     "startingPoint": {
       "understandExperience": "Let's start building your record.",
       "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
