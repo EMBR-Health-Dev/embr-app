@@ -7,6 +7,7 @@ import type {
   DeviceSessionDto,
   OnboardingProfileDto,
   PaginatedResponse,
+  PerimenopauseAssessmentResultDto,
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
@@ -163,5 +164,16 @@ export const api = {
       appointmentStatus?: string;
       status?: "completed" | "skipped";
     }) => apiFetch<OnboardingProfileDto>("/onboarding", { method: "PATCH", body: input }),
+  },
+
+  // The one endpoint in the whole API requiring no auth at all — see
+  // apps/api/src/modules/public-assessment/public-assessment.routes.ts.
+  // Same shape as apps/web/src/lib/api.ts's api.publicAssessment.
+  publicAssessment: {
+    submit: (input: { symptoms: string[]; hasIrregularPeriods: boolean }) =>
+      apiFetch<PerimenopauseAssessmentResultDto>("/public/perimenopause-assessment", {
+        method: "POST",
+        body: input,
+      }),
   },
 };

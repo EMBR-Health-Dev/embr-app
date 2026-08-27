@@ -12,7 +12,8 @@
     "submit": "Log in",
     "submitting": "Logging in…",
     "newToEmbr": "New to EMBR?",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "takeAssessment": "Not sure yet? Take a quick self-assessment"
   },
   "languageSwitcher": {
     "label": "Language",
@@ -339,5 +340,21 @@
     "message_one": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} day.",
     "message_other": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} days.",
     "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
+  },
+  "assessment": {
+    "title": "Perimenopause self-assessment",
+    "subtitle": "A quick, free checklist — not a diagnosis, and not medical advice. Just a starting point for whether it's worth talking to someone.",
+    "symptomsLabel": "Which of these have you noticed recently?",
+    "irregularPeriodsLabel": "My periods have become irregular",
+    "submit": "See my result",
+    "submitting": "Checking…",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "highTierTitle": "This may be worth a conversation with a specialist",
+    "highTierBody": "What you've described is common in perimenopause. EMBR can help you track it over time and prepare for that conversation.",
+    "lowTierTitle": "Nothing urgent stands out here",
+    "lowTierBody": "Based on what you selected, there's nothing that clearly points to perimenopause right now. If anything changes, or you just want to keep an eye on things, EMBR can help you track it.",
+    "disclaimer": "This is a simple count of selected symptoms, not a clinical scoring tool, a diagnosis, or medical advice.",
+    "createAccount": "Create a free account",
+    "alreadyHaveAccount": "Already have an account? Log in"
   }
 }

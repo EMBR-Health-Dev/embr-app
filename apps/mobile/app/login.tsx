@@ -95,6 +95,10 @@ export default function LoginScreen() {
             {t("login.newToEmbr")} <Text style={styles.linkText}>{t("login.createAccount")}</Text>
           </Text>
         </Link>
+
+        <Link href="/assessment" style={styles.link}>
+          <Text style={styles.linkText}>{t("login.takeAssessment")}</Text>
+        </Link>
       </View>
     </SafeAreaView>
   );
