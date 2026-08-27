@@ -9,5 +9,5 @@ module.exports = {
   preset: "jest-expo",
   testMatch: ["<rootDir>/**/*.test.tsx"],
   testPathIgnorePatterns: ["/node_modules/", "/.expo/", "/dist/"],
-  setupFiles: ["<rootDir>/jest.setup.ts"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
 };

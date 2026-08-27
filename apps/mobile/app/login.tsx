@@ -56,6 +56,7 @@ export default function LoginScreen() {
             autoComplete="email"
             keyboardType="email-address"
             textContentType="emailAddress"
+            testID="login-email-input"
           />
         </View>
 
@@ -68,6 +69,7 @@ export default function LoginScreen() {
             secureTextEntry
             autoComplete="current-password"
             textContentType="password"
+            testID="login-password-input"
           />
         </View>
 
