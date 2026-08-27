@@ -68,6 +68,7 @@ export default function RegisterScreen() {
             autoComplete="email"
             keyboardType="email-address"
             textContentType="emailAddress"
+            testID="register-email-input"
           />
         </View>
 
@@ -80,6 +81,7 @@ export default function RegisterScreen() {
             secureTextEntry
             autoComplete="new-password"
             textContentType="newPassword"
+            testID="register-password-input"
           />
         </View>
 
