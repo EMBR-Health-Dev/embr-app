@@ -1,5 +1,13 @@
 import type { ApiErrorResponse, HealthCheckResponse } from "@embr/types";
 
+export { ApiError } from "./api-error.js";
+export {
+  createApiClient,
+  type ApiClient,
+  type ApiClientTransport,
+  type ApiRequestOptions,
+} from "./create-api-client.js";
+
 export interface EmbrSdkConfig {
   baseUrl: string;
   getAccessToken?: () => string | undefined;
