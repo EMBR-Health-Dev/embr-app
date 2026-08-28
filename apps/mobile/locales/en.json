@@ -286,7 +286,11 @@
     "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
     "noTreatmentsInRange": "No treatments logged in this range.",
     "ongoing": "Ongoing",
-    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations."
+    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
+    "frequencyComparisonTitle": "Compared with the previous period",
+    "frequencyComparisonDayCount_one": "{{count}} day",
+    "frequencyComparisonDayCount_other": "{{count}} days",
+    "frequencyComparisonEntry": "Reported on {{current}}, compared with {{previous}} in the previous period."
   },
   "settings": {
     "title": "Settings",

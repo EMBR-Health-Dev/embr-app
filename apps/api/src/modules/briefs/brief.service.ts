@@ -10,6 +10,7 @@ import { treatmentRepository } from "../treatments/treatment.repository.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
+import { compareSymptomFrequency, computePreviousPeriod } from "./period-comparison.js";
 import { computeTreatmentSummary } from "./treatment-summary.js";
 
 function computeSymptomSummary(logs: SymptomLog[]) {
@@ -41,16 +42,32 @@ export const briefService = {
       from: fromDate,
       to: toDate,
     };
+    // See period-comparison.ts's own doc comment for why this window
+    // is exactly this long and starts exactly here — same fair-window
+    // reasoning treatment-impact.ts already established, not a
+    // second, independent definition of "comparison period."
+    const previousPeriod = computePreviousPeriod(fromDate, toDate);
+    const previousQuery = { from: previousPeriod.from, to: previousPeriod.to };
 
-    const [symptomLogs, cycleEntries, treatments] = await Promise.all([
+    const [symptomLogs, cycleEntries, treatments, previousSymptomLogs] = await Promise.all([
       exportRepository.listSymptomLogsForExport(userId, query),
       exportRepository.listCycleEntriesForExport(userId, query),
       treatmentRepository.listOverlappingRange(userId, fromDate, toDate),
+      exportRepository.listSymptomLogsForExport(userId, previousQuery),
     ]);
 
     const symptomSummary = computeSymptomSummary(symptomLogs);
     const cycleSummary = computeCycleSummary(cycleEntries);
     const treatmentSummary = computeTreatmentSummary(treatments);
+    // The comparison only needs {category, count} — computeSymptomSummary's
+    // richer {severityBreakdown} output is structurally compatible and
+    // simply unused here, same "extra field is inert" precedent
+    // symptom-frequency.ts's own doc comment already establishes; this
+    // reuses the exact same aggregation this brief already computes
+    // for the current period rather than a second, parallel counting
+    // implementation for the previous one.
+    const previousSymptomSummary = computeSymptomSummary(previousSymptomLogs);
+    const frequencyComparison = compareSymptomFrequency(symptomSummary, previousSymptomSummary);
 
     const aiInput: BriefInput = {
       fromDate: fromDate.toISOString().slice(0, 10),
@@ -68,6 +85,7 @@ export const briefService = {
       symptomSummary: JSON.parse(JSON.stringify(symptomSummary)),
       cycleSummary: JSON.parse(JSON.stringify(cycleSummary)),
       treatmentSummary: JSON.parse(JSON.stringify(treatmentSummary)),
+      frequencyComparison: JSON.parse(JSON.stringify(frequencyComparison)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });

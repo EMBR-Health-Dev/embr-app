@@ -242,6 +242,37 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         ))
       )}
 
+      {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.frequencyComparisonTitle")}</Text>
+          {brief.frequencyComparison.map((entry) => {
+            // i18next's automatic _one/_other plural suffix selection
+            // works off a single `count` option per t() call — this
+            // sentence needs two independently-pluralized counts
+            // (currentCount and previousCount), so each is formatted
+            // on its own via frequencyComparisonDayCount first, then
+            // composed into the full sentence. The web equivalent
+            // (page.tsx) uses next-intl's ICU {count, plural, ...},
+            // which supports multiple independent plural clauses in
+            // one message natively — this two-step composition is
+            // i18next's own established way to get the same result,
+            // not a workaround invented for this feature specifically.
+            const current = t("brief.frequencyComparisonDayCount", {
+              count: entry.currentCount,
+            });
+            const previous = t("brief.frequencyComparisonDayCount", {
+              count: entry.previousCount,
+            });
+            return (
+              <Text key={entry.category} style={styles.summaryLine}>
+                {t(`enums.category.${entry.category}`)}:{" "}
+                {t("brief.frequencyComparisonEntry", { current, previous })}
+              </Text>
+            );
+          })}
+        </>
+      )}
+
       <Text style={styles.contentSectionTitle}>{t("brief.cycleSummary")}</Text>
       <Text style={styles.summaryLine}>
         {brief.cycleSummary.averageCycleLengthDays === null

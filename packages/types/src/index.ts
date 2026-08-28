@@ -386,6 +386,22 @@ export interface BriefTreatmentSummaryEntryDto {
   endDate: string | null;
 }
 
+/** Deterministic period-over-period comparison for one symptom
+ * category — see period-comparison.ts for the exact "immediately
+ * preceding period of equal length" definition and the reasoning for
+ * each field. Not sent to the AI as of this milestone (see
+ * BriefInput in brief.ai.ts, unchanged). */
+export interface BriefFrequencyComparisonEntryDto {
+  category: SymptomCategory;
+  currentCount: number;
+  previousCount: number;
+  absoluteChange: number;
+  /** Null when previousCount is 0 — see period-comparison.ts for why
+   * this is never a manufactured percentage. */
+  percentageChange: number | null;
+  direction: "increased" | "decreased" | "unchanged";
+}
+
 /** The list view — no AI content, keeps history/pagination responses
  * small. Fetch the full ClinicalBriefDto to read the narrative. */
 export interface ClinicalBriefListItemDto {
@@ -405,6 +421,14 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   symptomSummary: BriefSymptomSummaryEntryDto[];
   cycleSummary: BriefCycleSummaryDto;
   treatmentSummary: BriefTreatmentSummaryEntryDto[];
+  /** Null for a brief generated before this field existed — never
+   * backfilled or recomputed for an old snapshot (see ClinicalBrief's
+   * "point-in-time snapshot, not a live view" invariant in
+   * schema.prisma). An empty array means the comparison genuinely ran
+   * and found no categories logged in either period; null means the
+   * comparison was never computed for this brief at all — the two are
+   * not the same fact and must not be conflated in the UI. */
+  frequencyComparison: BriefFrequencyComparisonEntryDto[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

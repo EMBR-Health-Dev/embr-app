@@ -241,6 +241,23 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </ul>
       </div>
 
+      {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
+        <div>
+          <h3 className="font-medium text-navy">{t("frequencyComparisonTitle")}</h3>
+          <ul className="mt-1 text-navy/70">
+            {brief.frequencyComparison.map((entry) => (
+              <li key={entry.category}>
+                {tEnum(`category.${entry.category}`)}:{" "}
+                {t("frequencyComparisonEntry", {
+                  currentCount: entry.currentCount,
+                  previousCount: entry.previousCount,
+                })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div>
         <h3 className="font-medium text-navy">{t("cycleSummary")}</h3>
         <p className="mt-1 text-navy/70">

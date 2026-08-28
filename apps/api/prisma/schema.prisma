@@ -462,6 +462,18 @@ model ClinicalBrief {
   /// deliberately excluded — see treatment-summary.ts's doc comment.
   treatmentSummary Json
 
+  /// Array<{ category, currentCount, previousCount, absoluteChange, percentageChange: number | null, direction }>
+  /// See period-comparison.ts for the exact comparison-window
+  /// definition. Nullable, unlike the three summaries above — added
+  /// after those, so a brief generated before this field existed has
+  /// no value to backfill (recomputing it would violate this model's
+  /// own point-in-time-snapshot invariant against data that may no
+  /// longer reflect what generation time saw). Null means "never
+  /// computed for this brief"; an empty array means the comparison
+  /// ran and found no categories logged in either period — the two
+  /// are different facts. Never sent to the AI as of this milestone.
+  frequencyComparison Json?
+
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing
   /// constraint (questions to ask, never assertions or suggestions).

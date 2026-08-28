@@ -365,7 +365,9 @@
     "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
     "noTreatmentsInRange": "No treatments logged in this range.",
     "ongoing": "Ongoing",
-    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations."
+    "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
+    "frequencyComparisonTitle": "Compared with the previous period",
+    "frequencyComparisonEntry": "Reported on {currentCount, plural, one {# day} other {# days}}, compared with {previousCount, plural, one {# day} other {# days}} in the previous period."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",
