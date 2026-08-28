@@ -53,6 +53,9 @@ importers:
       '@embr/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@embr/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@embr/validation':
         specifier: workspace:*
         version: link:../../packages/validation
@@ -317,6 +320,9 @@ importers:
       '@embr/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@embr/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@embr/validation':
         specifier: workspace:*
         version: link:../../packages/validation
