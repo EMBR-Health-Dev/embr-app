@@ -20,6 +20,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "types": ["@testing-library/jest-dom"],
     "allowJs": false
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
