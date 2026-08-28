@@ -287,7 +287,11 @@
     "frequencyComparisonDayCount_other": "{{count}}日",
     "frequencyComparisonEntry": "今回の期間に{{current}}報告され、前回の期間は{{previous}}でした。",
     "patternsNoticedTitle": "気づいたパターン",
-    "coOccurrenceEntry_other": "{{categoryA}}と{{categoryB}}は同じ日に{{count}}日報告されました。"
+    "coOccurrenceEntry_other": "{{categoryA}}と{{categoryB}}は同じ日に{{count}}日報告されました。",
+    "treatmentImpactTitle": "治療開始後の変化",
+    "treatmentImpactLogCount_other": "{{count}}件の記録",
+    "treatmentImpactEntry": "開始前{{beforeDays}}日間で{{before}}、開始後{{afterDays}}日間で{{after}}がありました。",
+    "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。"
   },
   "settings": {
     "title": "設定",

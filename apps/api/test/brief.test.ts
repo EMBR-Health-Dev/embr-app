@@ -54,6 +54,7 @@ const { state, nextId } = vi.hoisted(() => {
         treatmentSummary: unknown;
         frequencyComparison: unknown;
         coOccurrence: unknown;
+        treatmentImpact: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
         createdAt: Date;
@@ -180,6 +181,22 @@ vi.mock("../src/lib/prisma.js", () => ({
             return true;
           });
           return Promise.resolve(results);
+        },
+      ),
+      // Matches treatmentRepository.countSymptomLogsInWindows exactly:
+      // occurredAt: { gte, lt } — an exclusive upper bound, unlike
+      // findMany's gte/lte above. Two separate calls (one per window)
+      // rather than a single query with both windows, matching that
+      // function's own Promise.all shape.
+      count: vi.fn(
+        ({ where }: { where: { userId: string; occurredAt: { gte: Date; lt: Date } } }) => {
+          const count = state.symptomLogs.filter((log) => {
+            if (log.userId !== where.userId) return false;
+            if (log.occurredAt < where.occurredAt.gte) return false;
+            if (log.occurredAt >= where.occurredAt.lt) return false;
+            return true;
+          }).length;
+          return Promise.resolve(count);
         },
       ),
     },
@@ -518,12 +535,13 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     // (never `undefined`), which is what this constructs directly,
     // matching schema.prisma's doc comment: null means "never
     // computed for this brief," a materially different fact from an
-    // empty array ("computed, found nothing") for frequencyComparison.
-    // coOccurrence shares the same "old snapshot" null case, even
-    // though its own null is overloaded for a different reason (see
-    // schema.prisma's doc comment on that column) — covered in the
-    // same test rather than a near-duplicate one, since both are
-    // proving the identical "old row, new column" scenario.
+    // empty array ("computed, found nothing") for frequencyComparison
+    // and treatmentImpact. coOccurrence shares the same "old snapshot"
+    // null case, even though its own null is overloaded for a
+    // different reason (see schema.prisma's doc comment on that
+    // column) — all three covered in the same test rather than
+    // near-duplicate ones, since all three are proving the identical
+    // "old row, new column" scenario.
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "freqcomp5@embr.health");
@@ -538,6 +556,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
       treatmentSummary: [],
       frequencyComparison: null,
       coOccurrence: null,
+      treatmentImpact: null,
       aiNarrative: "A brief from before this field existed.",
       aiDiscussionTopics: ["n/a"],
       createdAt: now(),
@@ -547,6 +566,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
 
     expect(res.body.data.frequencyComparison).toBeNull();
     expect(res.body.data.coOccurrence).toBeNull();
+    expect(res.body.data.treatmentImpact).toBeNull();
   });
 });
 
@@ -673,6 +693,159 @@ describe("POST /briefs — symptom co-occurrence (deterministic, no AI involveme
 
     expect(fetched.body.data.coOccurrence).toEqual(created.body.data.coOccurrence);
     expect(fetched.body.data.coOccurrence).not.toBeNull();
+  });
+});
+
+// Integration coverage only — computeTreatmentImpactWindows'/
+// buildTreatmentImpact's own window-math and insufficientData-flag
+// logic is already exhaustively covered in treatment-impact.test.ts.
+// These tests exist to prove the brief wires those already-tested
+// functions in correctly: only for treatments that started inside
+// the brief's own requested period, name/category embedded alongside
+// the computed windows, reaching the persisted brief and the read
+// path unchanged.
+describe("POST /briefs — treatment impact (deterministic, no AI involvement)", () => {
+  it("computes before/after impact for a treatment that started inside the requested period", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tximpact1@embr.health");
+
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+    });
+    // 2 logs in the 14 days before 2026-01-10, 3 in the 14 days after.
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-02") });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-11") });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-15") });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-20") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.treatmentImpact).toHaveLength(1);
+    expect(res.body.data.treatmentImpact[0]).toMatchObject({
+      name: "Estradiol patch",
+      category: "HRT",
+      windowDays: 14,
+      before: { logCount: 2, days: 14 },
+      after: { logCount: 3, days: 14 },
+      insufficientData: false,
+    });
+  });
+
+  it("excludes a treatment that merely overlaps the period without starting inside it", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tximpact2@embr.health");
+
+    // Started well before RANGE (2026-01-01 to 2026-02-01), still
+    // ongoing — appears in treatmentSummary, but its before/after
+    // windows would be computed around a start date unrelated to
+    // this brief's period, so it must not appear in treatmentImpact.
+    addTreatment(userId, {
+      name: "Long-running supplement",
+      category: "SUPPLEMENT",
+      startDate: new Date("2025-06-01"),
+      endDate: null,
+    });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentSummary).toHaveLength(1); // still summarized
+    expect(res.body.data.treatmentImpact).toEqual([]); // but no impact entry
+  });
+
+  it("returns an empty array, not null, when no treatment started inside the period", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "tximpact3@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact).toEqual([]);
+  });
+
+  it("flags insufficientData for a treatment whose 'after' window is genuinely short", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tximpact4@embr.health");
+
+    // Ended just 1 day after it started — the "after" window is
+    // capped at the treatment's own endDate regardless of how far in
+    // the future "today" is, so this is short no matter when the
+    // test actually runs, unlike an ongoing treatment near the end of
+    // the requested period (whose "after" window is unaffected by the
+    // brief's own toDate — see computeTreatmentImpactWindows's doc
+    // comment: only the treatment's own endDate/today and windowDays
+    // bound it).
+    addTreatment(userId, {
+      name: "Short trial",
+      category: "MEDICATION",
+      startDate: new Date("2026-01-10"),
+      endDate: new Date("2026-01-11"),
+    });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0]).toMatchObject({
+      after: { days: 1 },
+      insufficientData: true,
+    });
+  });
+
+  it("preserves multiple treatments that each started inside the period independently", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tximpact5@embr.health");
+
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-05"),
+      endDate: null,
+    });
+    addTreatment(userId, {
+      name: "Magnesium",
+      category: "SUPPLEMENT",
+      startDate: new Date("2026-01-15"),
+      endDate: null,
+    });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact).toHaveLength(2);
+    expect(res.body.data.treatmentImpact.map((t: { name: string }) => t.name).sort()).toEqual([
+      "Estradiol patch",
+      "Magnesium",
+    ]);
+  });
+
+  it("GET /briefs/:id returns the same treatmentImpact the POST response returned", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tximpact6@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+    });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const created = await agent.post("/briefs").send(RANGE);
+    const fetched = await agent.get(`/briefs/${created.body.data.id}`);
+
+    expect(fetched.body.data.treatmentImpact).toEqual(created.body.data.treatmentImpact);
+    expect(fetched.body.data.treatmentImpact).not.toEqual([]);
   });
 });
 
@@ -921,6 +1094,16 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     // it's proving the exact same "generate, re-read, PDF all agree"
     // property for a second field.
     expect(generateRes.body.data.frequencyComparison).toEqual([]);
+    const expectedTreatmentImpact = {
+      name: "Estradiol patch",
+      category: "HRT",
+      windowDays: 14,
+      before: { logCount: 0, days: 14 },
+      after: { logCount: 0, days: 10 },
+      insufficientData: false,
+    };
+    expect(generateRes.body.data.treatmentImpact).toHaveLength(1);
+    expect(generateRes.body.data.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
     const briefId = generateRes.body.data.id as string;
 
     // 2. GET /briefs/:id returns the same treatmentSummary — read back
@@ -929,6 +1112,7 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.treatmentSummary).toEqual(expectedTreatmentSummary);
     expect(getRes.body.data.frequencyComparison).toEqual([]);
+    expect(getRes.body.data.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
 
     // 3. GET /briefs/:id/pdf is built from that same persisted brief
     // (via briefService.get(), a separate request from generation) and
@@ -948,6 +1132,7 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     // No symptom logs added anywhere in this test — no pair to
     // qualify, so null, not an empty object.
     expect(lastPdfCallArg.coOccurrence).toBeNull();
+    expect(lastPdfCallArg.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
   });
 });
 

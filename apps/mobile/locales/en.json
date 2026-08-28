@@ -293,7 +293,12 @@
     "frequencyComparisonEntry": "Reported on {{current}}, compared with {{previous}} in the previous period.",
     "patternsNoticedTitle": "Patterns noticed",
     "coOccurrenceEntry_one": "{{categoryA}} and {{categoryB}} were both reported on {{count}} day.",
-    "coOccurrenceEntry_other": "{{categoryA}} and {{categoryB}} were both reported on {{count}} days."
+    "coOccurrenceEntry_other": "{{categoryA}} and {{categoryB}} were both reported on {{count}} days.",
+    "treatmentImpactTitle": "Observed changes after starting treatment",
+    "treatmentImpactLogCount_one": "{{count}} symptom log",
+    "treatmentImpactLogCount_other": "{{count}} symptom logs",
+    "treatmentImpactEntry": "{{before}} in the {{beforeDays}} days before starting, compared with {{after}} in the {{afterDays}} days after.",
+    "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet."
   },
   "settings": {
     "title": "Settings",

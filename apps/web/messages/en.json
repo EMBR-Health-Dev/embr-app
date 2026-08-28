@@ -369,7 +369,10 @@
     "frequencyComparisonTitle": "Compared with the previous period",
     "frequencyComparisonEntry": "Reported on {currentCount, plural, one {# day} other {# days}}, compared with {previousCount, plural, one {# day} other {# days}} in the previous period.",
     "patternsNoticedTitle": "Patterns noticed",
-    "coOccurrenceEntry": "{categoryA} and {categoryB} were both reported on {days, plural, one {# day} other {# days}}."
+    "coOccurrenceEntry": "{categoryA} and {categoryB} were both reported on {days, plural, one {# day} other {# days}}.",
+    "treatmentImpactTitle": "Observed changes after starting treatment",
+    "treatmentImpactEntry": "{beforeCount, plural, one {# symptom log} other {# symptom logs}} in the {beforeDays} days before starting, compared with {afterCount, plural, one {# symptom log} other {# symptom logs}} in the {afterDays} days after.",
+    "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",

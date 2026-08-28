@@ -411,6 +411,19 @@ export interface ClinicalBriefListItemDto {
   createdAt: string;
 }
 
+/** Reuses TreatmentImpactDto's shape exactly (windowDays, before/after
+ * log counts and day-spans, insufficientData) — see
+ * treatment-impact.ts for what each field means and why the windows
+ * are sized the way they are. name/category are embedded directly
+ * (not just treatmentId) for the same reason
+ * BriefTreatmentSummaryEntryDto already does: a historical brief must
+ * render without a live join back to a Treatment record that may
+ * since have been edited or deleted. */
+export interface BriefTreatmentImpactEntryDto extends TreatmentImpactDto {
+  name: string;
+  category: TreatmentCategory;
+}
+
 /** aiNarrative and aiDiscussionTopics are AI-generated from the
  * structured summary alone — see brief.ai.ts's system prompt for the
  * exact scope constraints (data-grounded only, never diagnostic,
@@ -445,6 +458,19 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * introduce a JSON-null-vs-SQL-null distinction with no consumer
    * that needs it yet. */
   coOccurrence: SymptomCoOccurrenceDto | null;
+  /** One entry per treatment that *started* inside the brief's own
+   * requested period — not every treatment in treatmentSummary, which
+   * also includes treatments merely ongoing through the period. A
+   * treatment that started long before this period would have its
+   * before/after windows computed around a start date unrelated to
+   * what this brief is actually about, which is misleading rather
+   * than useful. Null/empty-array distinction matches
+   * frequencyComparison's reasoning, not coOccurrence's: an empty
+   * array here is a real fact ("no treatments started this period"),
+   * so it must stay distinguishable from "never computed." Never sent
+   * to the AI as of this milestone — see treatment-impact.ts's own
+   * doc comment on why that's a deliberate, separate conversation. */
+  treatmentImpact: BriefTreatmentImpactEntryDto[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

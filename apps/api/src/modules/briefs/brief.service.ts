@@ -6,12 +6,16 @@ import type {
   SymptomCategory,
 } from "@embr/types";
 import type { PaginationQuery } from "@embr/validation";
-import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
+import type { CycleEntry, SymptomLog, Treatment } from "../../generated/prisma/index.js";
 import { paginate } from "../../lib/pagination.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 import { exportRepository } from "../export/export.repository.js";
 import { cycleLengths } from "../export/pdf.js";
 import { treatmentRepository } from "../treatments/treatment.repository.js";
+import {
+  buildTreatmentImpact,
+  computeTreatmentImpactWindows,
+} from "../treatments/treatment-impact.js";
 import { detectSymptomCoOccurrence } from "../trends/co-occurrence.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
@@ -89,6 +93,42 @@ export const briefService = {
       })),
     );
 
+    // One entry per treatment that *started* inside [fromDate, toDate]
+    // — not every treatment in `treatments` (which also includes ones
+    // merely ongoing through the period, already covered by
+    // treatmentSummary above). A treatment that started long before
+    // this period would have its before/after windows computed around
+    // a start date unrelated to what this brief is actually about.
+    // Each window genuinely needs its own query — unlike
+    // symptomLogs/coOccurrence above, the "before" window commonly
+    // extends outside [fromDate, toDate] entirely (14 days before the
+    // treatment's own start), so the already-fetched current-period
+    // data can't be reused here the way it could for co-occurrence.
+    const today = new Date(new Date().toISOString().slice(0, 10));
+    const treatmentsStartedInPeriod = treatments.filter(
+      (t: Treatment) => t.startDate >= fromDate && t.startDate <= toDate,
+    );
+    const treatmentImpact = await Promise.all(
+      treatmentsStartedInPeriod.map(async (treatment: Treatment) => {
+        const windows = computeTreatmentImpactWindows({
+          startDate: treatment.startDate,
+          endDate: treatment.endDate,
+          today,
+        });
+        const { beforeLogCount, afterLogCount } =
+          await treatmentRepository.countSymptomLogsInWindows(userId, windows);
+        const impact = buildTreatmentImpact({
+          treatmentId: treatment.id,
+          startDate: treatment.startDate,
+          endDate: treatment.endDate,
+          today,
+          beforeLogCount,
+          afterLogCount,
+        });
+        return { ...impact, name: treatment.name, category: treatment.category };
+      }),
+    );
+
     const aiInput: BriefInput = {
       fromDate: fromDate.toISOString().slice(0, 10),
       toDate: toDate.toISOString().slice(0, 10),
@@ -107,6 +147,7 @@ export const briefService = {
       treatmentSummary: JSON.parse(JSON.stringify(treatmentSummary)),
       frequencyComparison: JSON.parse(JSON.stringify(frequencyComparison)),
       coOccurrence: coOccurrence === null ? null : JSON.parse(JSON.stringify(coOccurrence)),
+      treatmentImpact: JSON.parse(JSON.stringify(treatmentImpact)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });
