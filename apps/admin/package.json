@@ -12,6 +12,7 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
+    "@embr/sdk": "workspace:*",
     "@embr/types": "workspace:*",
     "@embr/validation": "workspace:*",
     "next": "^15.1.0",
