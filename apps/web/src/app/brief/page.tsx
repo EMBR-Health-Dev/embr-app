@@ -299,6 +299,28 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         )}
         <p className="mt-1 text-xs text-navy/50">{t("treatmentSafetyNote")}</p>
       </div>
+
+      {brief.treatmentImpact && brief.treatmentImpact.length > 0 && (
+        <div>
+          <h3 className="font-medium text-navy">{t("treatmentImpactTitle")}</h3>
+          <ul className="mt-1 text-navy/70">
+            {brief.treatmentImpact.map((entry) => (
+              <li key={entry.treatmentId}>
+                {entry.name}:{" "}
+                {entry.insufficientData
+                  ? t("treatmentImpactInsufficientData")
+                  : t("treatmentImpactEntry", {
+                      beforeCount: entry.before.logCount,
+                      beforeDays: entry.before.days,
+                      afterCount: entry.after.logCount,
+                      afterDays: entry.after.days,
+                    })}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-navy/50">{t("treatmentSafetyNote")}</p>
+        </div>
+      )}
     </div>
   );
 }

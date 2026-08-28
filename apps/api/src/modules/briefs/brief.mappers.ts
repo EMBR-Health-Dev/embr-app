@@ -3,6 +3,7 @@ import type {
   BriefCycleSummaryDto,
   BriefFrequencyComparisonEntryDto,
   BriefSymptomSummaryEntryDto,
+  BriefTreatmentImpactEntryDto,
   BriefTreatmentSummaryEntryDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
@@ -34,6 +35,9 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // field for why "never computed" and "computed, no qualifying
     // pair" are not distinguished for this field specifically.
     coOccurrence: brief.coOccurrence as unknown as SymptomCoOccurrenceDto | null,
+    // Same null/empty-array distinction as frequencyComparison, not
+    // coOccurrence — see ClinicalBriefDto's own doc comment.
+    treatmentImpact: brief.treatmentImpact as unknown as BriefTreatmentImpactEntryDto[] | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
   };

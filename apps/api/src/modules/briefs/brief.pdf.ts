@@ -192,5 +192,50 @@ export function buildClinicalBriefPdf(
         " make treatment recommendations.",
     );
 
+  // ---- Observed changes after starting treatment (deterministic, no AI involvement) ----
+  // Only rendered when non-null and non-empty — unlike coOccurrence,
+  // an empty array here is a real fact ("no treatments started this
+  // period"), so it's distinguished from null the same way
+  // frequencyComparison already is; see ClinicalBriefDto's own doc
+  // comment. Observational only: "X logs before, Y after," never
+  // "the treatment reduced symptoms" — see treatment-impact.ts's own
+  // doc comment on why any efficacy-claim language is explicitly out
+  // of scope here.
+  if (brief.treatmentImpact && brief.treatmentImpact.length > 0) {
+    doc.moveDown(1);
+    doc
+      .fillColor(navy)
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("Observed changes after starting treatment");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica");
+    for (const { name, before, after, insufficientData } of brief.treatmentImpact) {
+      doc.fillColor(navy).text(name);
+      if (insufficientData) {
+        doc
+          .fillColor("#555555")
+          .text("  Not enough time has passed since starting to compare yet.");
+      } else {
+        doc
+          .fillColor("#555555")
+          .text(
+            `  ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} in the` +
+              ` ${before.days} days before starting, compared with ${after.logCount} symptom` +
+              ` log${after.logCount === 1 ? "" : "s"} in the ${after.days} days after.`,
+          );
+      }
+    }
+    doc.moveDown(0.4);
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor("#888888")
+      .text(
+        "This reflects what you've logged. It does not assess whether a treatment is working or" +
+          " make treatment recommendations.",
+      );
+  }
+
   return doc;
 }

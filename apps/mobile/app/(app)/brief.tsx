@@ -308,6 +308,34 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         ))
       )}
       <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>
+
+      {brief.treatmentImpact && brief.treatmentImpact.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.treatmentImpactTitle")}</Text>
+          {brief.treatmentImpact.map((entry) => {
+            // Same two-step composition as frequencyComparison above —
+            // beforeCount and afterCount each need independent
+            // pluralization, which i18next's single-count-per-call
+            // mechanism doesn't support directly.
+            const before = t("brief.treatmentImpactLogCount", { count: entry.before.logCount });
+            const after = t("brief.treatmentImpactLogCount", { count: entry.after.logCount });
+            return (
+              <Text key={entry.treatmentId} style={styles.summaryLine}>
+                {entry.name}:{" "}
+                {entry.insufficientData
+                  ? t("brief.treatmentImpactInsufficientData")
+                  : t("brief.treatmentImpactEntry", {
+                      before,
+                      after,
+                      beforeDays: entry.before.days,
+                      afterDays: entry.after.days,
+                    })}
+              </Text>
+            );
+          })}
+          <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>
+        </>
+      )}
     </View>
   );
 }

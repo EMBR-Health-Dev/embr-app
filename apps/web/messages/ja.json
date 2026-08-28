@@ -369,7 +369,10 @@
     "frequencyComparisonTitle": "前回の期間との比較",
     "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#日}}報告され、前回の期間は{previousCount, plural, other {#日}}でした。",
     "patternsNoticedTitle": "気づいたパターン",
-    "coOccurrenceEntry": "{categoryA}と{categoryB}は同じ日に{days, plural, other {#日}}報告されました。"
+    "coOccurrenceEntry": "{categoryA}と{categoryB}は同じ日に{days, plural, other {#日}}報告されました。",
+    "treatmentImpactTitle": "治療開始後の変化",
+    "treatmentImpactEntry": "開始前{beforeDays}日間で{beforeCount, plural, other {#件}}の記録、開始後{afterDays}日間で{afterCount, plural, other {#件}}の記録がありました。",
+    "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",
