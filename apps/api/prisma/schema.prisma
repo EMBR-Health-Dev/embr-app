@@ -474,6 +474,18 @@ model ClinicalBrief {
   /// are different facts. Never sent to the AI as of this milestone.
   frequencyComparison Json?
 
+  /// { categoryA: SymptomCategory, categoryB: SymptomCategory, days: number } | null
+  /// Computed over the brief's own requested period only, via the
+  /// existing apps/api/src/modules/trends/co-occurrence.ts pattern
+  /// engine — never a second implementation. That function returns at
+  /// most one pair (or null below its own threshold), so unlike
+  /// frequencyComparison above, null here is deliberately overloaded:
+  /// "never computed for this brief" and "computed, no qualifying
+  /// pair" are not distinguished — see BriefFrequencyComparisonEntryDto's
+  /// sibling doc comment in @embr/types for why that's fine here
+  /// specifically. Never sent to the AI as of this milestone.
+  coOccurrence Json?
+
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing
   /// constraint (questions to ask, never assertions or suggestions).

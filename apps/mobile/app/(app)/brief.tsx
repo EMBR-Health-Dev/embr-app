@@ -273,6 +273,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </>
       )}
 
+      {brief.coOccurrence && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.patternsNoticedTitle")}</Text>
+          <Text style={styles.summaryLine}>
+            {t("brief.coOccurrenceEntry", {
+              count: brief.coOccurrence.days,
+              categoryA: t(`enums.category.${brief.coOccurrence.categoryA}`),
+              categoryB: t(`enums.category.${brief.coOccurrence.categoryB}`),
+            })}
+          </Text>
+        </>
+      )}
+
       <Text style={styles.contentSectionTitle}>{t("brief.cycleSummary")}</Text>
       <Text style={styles.summaryLine}>
         {brief.cycleSummary.averageCycleLengthDays === null

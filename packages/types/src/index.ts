@@ -429,6 +429,22 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * comparison was never computed for this brief at all — the two are
    * not the same fact and must not be conflated in the UI. */
   frequencyComparison: BriefFrequencyComparisonEntryDto[] | null;
+  /** Computed over the brief's own requested period only — never the
+   * previous comparison period. detectSymptomCoOccurrence itself
+   * returns at most one pair (the strongest qualifying overlap, or
+   * null if none reaches its threshold) — see
+   * apps/api/src/modules/trends/co-occurrence.ts — so, unlike the
+   * array fields above, null here is deliberately overloaded: it
+   * means either "never computed for this brief" (an old snapshot) or
+   * "computed, no pair reached the co-occurrence threshold." Those
+   * two are kept distinct for frequencyComparison because an empty
+   * array there still carries meaning (the comparison ran and found
+   * nothing); a null co-occurrence carries no comparable meaning to
+   * lose by not distinguishing why it's null — both cases render
+   * identically ("nothing to show"), so this deliberately does not
+   * introduce a JSON-null-vs-SQL-null distinction with no consumer
+   * that needs it yet. */
+  coOccurrence: SymptomCoOccurrenceDto | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

@@ -367,7 +367,9 @@
     "ongoing": "継続中",
     "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
     "frequencyComparisonTitle": "前回の期間との比較",
-    "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#日}}報告され、前回の期間は{previousCount, plural, other {#日}}でした。"
+    "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#日}}報告され、前回の期間は{previousCount, plural, other {#日}}でした。",
+    "patternsNoticedTitle": "気づいたパターン",
+    "coOccurrenceEntry": "{categoryA}と{categoryB}は同じ日に{days, plural, other {#日}}報告されました。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

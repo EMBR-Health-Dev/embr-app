@@ -15,6 +15,7 @@ export const briefRepository = {
     cycleSummary: Prisma.InputJsonValue;
     treatmentSummary: Prisma.InputJsonValue;
     frequencyComparison: Prisma.InputJsonValue;
+    coOccurrence: Prisma.InputJsonValue | null;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {

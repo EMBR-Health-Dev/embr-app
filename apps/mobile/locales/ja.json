@@ -285,7 +285,9 @@
     "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
     "frequencyComparisonTitle": "前回の期間との比較",
     "frequencyComparisonDayCount_other": "{{count}}日",
-    "frequencyComparisonEntry": "今回の期間に{{current}}報告され、前回の期間は{{previous}}でした。"
+    "frequencyComparisonEntry": "今回の期間に{{current}}報告され、前回の期間は{{previous}}でした。",
+    "patternsNoticedTitle": "気づいたパターン",
+    "coOccurrenceEntry_other": "{{categoryA}}と{{categoryB}}は同じ日に{{count}}日報告されました。"
   },
   "settings": {
     "title": "設定",
