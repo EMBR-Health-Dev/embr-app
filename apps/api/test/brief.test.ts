@@ -53,6 +53,7 @@ const { state, nextId } = vi.hoisted(() => {
         cycleSummary: unknown;
         treatmentSummary: unknown;
         frequencyComparison: unknown;
+        coOccurrence: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
         createdAt: Date;
@@ -511,13 +512,18 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(fetched.body.data.frequencyComparison).toEqual(created.body.data.frequencyComparison);
   });
 
-  it("a brief generated before this field existed reads back frequencyComparison: null, not an empty array", async () => {
+  it("a brief generated before this field existed reads back frequencyComparison and coOccurrence as null, not an empty array", async () => {
     // Simulates a pre-existing row rather than exercising POST — a
     // real NULL JSONB column comes back from Prisma as JS `null`
     // (never `undefined`), which is what this constructs directly,
     // matching schema.prisma's doc comment: null means "never
     // computed for this brief," a materially different fact from an
-    // empty array ("computed, found nothing").
+    // empty array ("computed, found nothing") for frequencyComparison.
+    // coOccurrence shares the same "old snapshot" null case, even
+    // though its own null is overloaded for a different reason (see
+    // schema.prisma's doc comment on that column) — covered in the
+    // same test rather than a near-duplicate one, since both are
+    // proving the identical "old row, new column" scenario.
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "freqcomp5@embr.health");
@@ -531,6 +537,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
       cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 0 },
       treatmentSummary: [],
       frequencyComparison: null,
+      coOccurrence: null,
       aiNarrative: "A brief from before this field existed.",
       aiDiscussionTopics: ["n/a"],
       createdAt: now(),
@@ -539,6 +546,133 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     const res = await agent.get(`/briefs/${state.briefs[0]!.id}`);
 
     expect(res.body.data.frequencyComparison).toBeNull();
+    expect(res.body.data.coOccurrence).toBeNull();
+  });
+});
+
+// Integration coverage only — detectSymptomCoOccurrence's own
+// detection logic (threshold, tie-breaking, UTC day boundaries, same-
+// category exclusion) is already exhaustively covered in
+// trends-co-occurrence.test.ts. These tests exist to prove the brief
+// wires that already-tested function in correctly: computed over the
+// brief's own requested period (not the comparison period), reaching
+// the persisted brief and the read path unchanged.
+describe("POST /briefs — symptom co-occurrence (deterministic, no AI involvement)", () => {
+  it("persists the qualifying pair when co-occurrence meets the existing threshold", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "cooccur1@embr.health");
+
+    // BRAIN_FOG and HOT_FLASH share 3 calendar days — exactly
+    // MIN_CO_OCCURRENCE_DAYS, the existing threshold reused as-is.
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "BRAIN_FOG", occurredAt: new Date(date) });
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.coOccurrence).toEqual({
+      categoryA: "BRAIN_FOG",
+      categoryB: "HOT_FLASH",
+      days: 3,
+    });
+
+    // Same structural proof style as the treatment-persistence test —
+    // the PDF is built from the persisted brief, so a non-null
+    // coOccurrence must reach it too, not just the null case already
+    // covered elsewhere.
+    const pdfRes = await agent.get(`/briefs/${res.body.data.id}/pdf`);
+    expect(pdfRes.status).toBe(200);
+    const pdfCalls = vi.mocked(buildClinicalBriefPdf).mock.calls;
+    const lastPdfCallArg = pdfCalls[pdfCalls.length - 1]![0];
+    expect(lastPdfCallArg.coOccurrence).toEqual({
+      categoryA: "BRAIN_FOG",
+      categoryB: "HOT_FLASH",
+      days: 3,
+    });
+  });
+
+  it("represents the absence of a qualifying relationship as null, not an empty object", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "cooccur2@embr.health");
+
+    // Only 2 shared days — one below the threshold.
+    addSymptomLog(userId, { category: "BRAIN_FOG", occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { category: "BRAIN_FOG", occurredAt: new Date("2026-01-10") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-10") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.coOccurrence).toBeNull();
+  });
+
+  it("only considers dates inside the requested brief period, not the comparison period or logs outside it", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "cooccur3@embr.health");
+
+    // 3 shared days, but in December — entirely before RANGE
+    // (2026-01-01 to 2026-02-01) starts. Even though this range is
+    // exactly the comparison period computePreviousPeriod() would
+    // compute for RANGE, co-occurrence must never consider it — only
+    // frequencyComparison does.
+    for (const date of ["2025-12-05", "2025-12-10", "2025-12-15"]) {
+      addSymptomLog(userId, { category: "BRAIN_FOG", occurredAt: new Date(date) });
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.coOccurrence).toBeNull();
+  });
+
+  it("when multiple pairs qualify, persists the same single strongest pair detectSymptomCoOccurrence would select on its own", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "cooccur4@embr.health");
+
+    // ANXIETY/BRAIN_FOG share 3 days; BRAIN_FOG/HOT_FLASH share 4 —
+    // the stronger pair, and the one that must win.
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "ANXIETY", occurredAt: new Date(date) });
+    }
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15", "2026-01-20"]) {
+      addSymptomLog(userId, { category: "BRAIN_FOG", occurredAt: new Date(date) });
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.coOccurrence).toEqual({
+      categoryA: "BRAIN_FOG",
+      categoryB: "HOT_FLASH",
+      days: 4,
+    });
+  });
+
+  it("GET /briefs/:id returns the same coOccurrence the POST response returned", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "cooccur5@embr.health");
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "BRAIN_FOG", occurredAt: new Date(date) });
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const created = await agent.post("/briefs").send(RANGE);
+    const fetched = await agent.get(`/briefs/${created.body.data.id}`);
+
+    expect(fetched.body.data.coOccurrence).toEqual(created.body.data.coOccurrence);
+    expect(fetched.body.data.coOccurrence).not.toBeNull();
   });
 });
 
@@ -811,6 +945,9 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     const lastPdfCallArg = pdfCalls[pdfCalls.length - 1]![0];
     expect(lastPdfCallArg.treatmentSummary).toEqual(expectedTreatmentSummary);
     expect(lastPdfCallArg.frequencyComparison).toEqual([]);
+    // No symptom logs added anywhere in this test — no pair to
+    // qualify, so null, not an empty object.
+    expect(lastPdfCallArg.coOccurrence).toBeNull();
   });
 });
 

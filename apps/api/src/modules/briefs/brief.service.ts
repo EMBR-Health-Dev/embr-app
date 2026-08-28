@@ -1,5 +1,10 @@
 import { AppError } from "@embr/shared";
-import type { ClinicalBriefDto, ClinicalBriefListItemDto, PaginatedResponse } from "@embr/types";
+import type {
+  ClinicalBriefDto,
+  ClinicalBriefListItemDto,
+  PaginatedResponse,
+  SymptomCategory,
+} from "@embr/types";
 import type { PaginationQuery } from "@embr/validation";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
 import { paginate } from "../../lib/pagination.js";
@@ -7,6 +12,7 @@ import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 import { exportRepository } from "../export/export.repository.js";
 import { cycleLengths } from "../export/pdf.js";
 import { treatmentRepository } from "../treatments/treatment.repository.js";
+import { detectSymptomCoOccurrence } from "../trends/co-occurrence.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -69,6 +75,20 @@ export const briefService = {
     const previousSymptomSummary = computeSymptomSummary(previousSymptomLogs);
     const frequencyComparison = compareSymptomFrequency(symptomSummary, previousSymptomSummary);
 
+    // Against the brief's own requested period only — never the
+    // previous comparison period, and never a combination of the two
+    // (see period-comparison.ts's separate, independent window for
+    // that). Reuses the already-fetched current-period symptomLogs
+    // rather than a second query — same {category, occurredAt} cast
+    // trends.service.ts's own coOccurrence() already establishes for
+    // this exact function, not a new pattern invented here.
+    const coOccurrence = detectSymptomCoOccurrence(
+      symptomLogs.map((log: SymptomLog) => ({
+        category: log.category as SymptomCategory,
+        occurredAt: log.occurredAt,
+      })),
+    );
+
     const aiInput: BriefInput = {
       fromDate: fromDate.toISOString().slice(0, 10),
       toDate: toDate.toISOString().slice(0, 10),
@@ -86,6 +106,7 @@ export const briefService = {
       cycleSummary: JSON.parse(JSON.stringify(cycleSummary)),
       treatmentSummary: JSON.parse(JSON.stringify(treatmentSummary)),
       frequencyComparison: JSON.parse(JSON.stringify(frequencyComparison)),
+      coOccurrence: coOccurrence === null ? null : JSON.parse(JSON.stringify(coOccurrence)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });

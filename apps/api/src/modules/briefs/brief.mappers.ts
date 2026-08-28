@@ -6,6 +6,7 @@ import type {
   BriefTreatmentSummaryEntryDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  SymptomCoOccurrenceDto,
 } from "@embr/types";
 
 export function toClinicalBriefListItemDto(brief: ClinicalBrief): ClinicalBriefListItemDto {
@@ -28,6 +29,11 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // field" case the DTO's own doc comment describes.
     frequencyComparison: brief.frequencyComparison as unknown as
       BriefFrequencyComparisonEntryDto[] | null,
+    // Unlike frequencyComparison, null here is intentionally
+    // overloaded — see ClinicalBriefDto's own doc comment on this
+    // field for why "never computed" and "computed, no qualifying
+    // pair" are not distinguished for this field specifically.
+    coOccurrence: brief.coOccurrence as unknown as SymptomCoOccurrenceDto | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
   };

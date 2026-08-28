@@ -121,6 +121,28 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Patterns noticed (symptom co-occurrence, descriptive only) ----
+  // Only rendered when present — coOccurrence is null both for a
+  // brief predating this field and for one where no pair reached the
+  // existing threshold; see ClinicalBriefDto's own doc comment for
+  // why those two cases aren't distinguished here. Descriptive only:
+  // "reported on the same day," never "triggers" or "causes" — the
+  // same observation-not-causation framing web and mobile use.
+  if (brief.coOccurrence) {
+    const { categoryA, categoryB, days } = brief.coOccurrence;
+    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Patterns noticed");
+    doc.moveDown(0.4);
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .fillColor("#333333")
+      .text(
+        `${categoryLabel(categoryA)} and ${categoryLabel(categoryB)} were both reported on the` +
+          ` same day on ${days} occasion${days === 1 ? "" : "s"}.`,
+      );
+    doc.moveDown(1);
+  }
+
   // ---- Cycle summary ----
   doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Cycle summary");
   doc.moveDown(0.4);

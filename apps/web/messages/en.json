@@ -367,7 +367,9 @@
     "ongoing": "Ongoing",
     "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
     "frequencyComparisonTitle": "Compared with the previous period",
-    "frequencyComparisonEntry": "Reported on {currentCount, plural, one {# day} other {# days}}, compared with {previousCount, plural, one {# day} other {# days}} in the previous period."
+    "frequencyComparisonEntry": "Reported on {currentCount, plural, one {# day} other {# days}}, compared with {previousCount, plural, one {# day} other {# days}} in the previous period.",
+    "patternsNoticedTitle": "Patterns noticed",
+    "coOccurrenceEntry": "{categoryA} and {categoryB} were both reported on {days, plural, one {# day} other {# days}}."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",

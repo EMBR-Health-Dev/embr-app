@@ -290,7 +290,10 @@
     "frequencyComparisonTitle": "Compared with the previous period",
     "frequencyComparisonDayCount_one": "{{count}} day",
     "frequencyComparisonDayCount_other": "{{count}} days",
-    "frequencyComparisonEntry": "Reported on {{current}}, compared with {{previous}} in the previous period."
+    "frequencyComparisonEntry": "Reported on {{current}}, compared with {{previous}} in the previous period.",
+    "patternsNoticedTitle": "Patterns noticed",
+    "coOccurrenceEntry_one": "{{categoryA}} and {{categoryB}} were both reported on {{count}} day.",
+    "coOccurrenceEntry_other": "{{categoryA}} and {{categoryB}} were both reported on {{count}} days."
   },
   "settings": {
     "title": "Settings",

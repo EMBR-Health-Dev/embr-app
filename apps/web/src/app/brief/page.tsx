@@ -258,6 +258,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
+      {brief.coOccurrence && (
+        <div>
+          <h3 className="font-medium text-navy">{t("patternsNoticedTitle")}</h3>
+          <p className="mt-1 text-navy/70">
+            {t("coOccurrenceEntry", {
+              categoryA: tEnum(`category.${brief.coOccurrence.categoryA}`),
+              categoryB: tEnum(`category.${brief.coOccurrence.categoryB}`),
+              days: brief.coOccurrence.days,
+            })}
+          </p>
+        </div>
+      )}
+
       <div>
         <h3 className="font-medium text-navy">{t("cycleSummary")}</h3>
         <p className="mt-1 text-navy/70">
