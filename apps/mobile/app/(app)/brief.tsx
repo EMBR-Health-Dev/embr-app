@@ -198,8 +198,26 @@ export default function BriefScreen() {
   );
 }
 
+function formatSeverityBreakdown(
+  severityBreakdown: Record<string, number>,
+  t: (key: string) => string,
+  locale: string,
+): string {
+  // Same {severity: count} shape brief.pdf.ts has always rendered — no
+  // new data, this just brings the in-app view to parity with what the
+  // PDF already shows. Intl.ListFormat (not a hardcoded ", " join)
+  // handles locale-appropriate separators — Japanese conventionally
+  // uses "、" rather than a Latin comma-space, so a hardcoded English
+  // separator would have been a real, if small, localization
+  // regression for ja specifically.
+  const parts = Object.entries(severityBreakdown).map(
+    ([severity, count]) => `${count} ${t(`enums.severity.${severity}`)}`,
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(parts);
+}
+
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <View style={styles.briefContent}>
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
@@ -218,7 +236,8 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         brief.symptomSummary.map((entry) => (
           <Text key={entry.category} style={styles.summaryLine}>
             {t(`enums.category.${entry.category}`)} —{" "}
-            {t("brief.occurrenceCount", { count: entry.count })}
+            {t("brief.occurrenceCount", { count: entry.count })} (
+            {formatSeverityBreakdown(entry.severityBreakdown, t, i18n.language)})
           </Text>
         ))
       )}

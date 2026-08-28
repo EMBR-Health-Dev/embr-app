@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -193,9 +193,28 @@ export default function BriefPage() {
   );
 }
 
+function formatSeverityBreakdown(
+  severityBreakdown: Record<string, number>,
+  tEnum: (key: string) => string,
+  locale: string,
+): string {
+  // Same {severity: count} shape brief.pdf.ts has always rendered — no
+  // new data, this just brings the in-app view to parity with what the
+  // PDF already shows. Intl.ListFormat (not a hardcoded ", " join)
+  // handles locale-appropriate separators — Japanese conventionally
+  // uses "、" rather than a Latin comma-space, so a hardcoded English
+  // separator would have been a real, if small, localization
+  // regression for ja specifically.
+  const parts = Object.entries(severityBreakdown).map(
+    ([severity, count]) => `${count} ${tEnum(`severity.${severity}`)}`,
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(parts);
+}
+
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
   const t = useTranslations("Brief");
   const tEnum = useTranslations("Enums");
+  const locale = useLocale();
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
@@ -215,7 +234,8 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         <ul className="mt-1 text-navy/70">
           {brief.symptomSummary.map((entry) => (
             <li key={entry.category}>
-              {tEnum(`category.${entry.category}`)} — {t("occurrenceCount", { count: entry.count })}
+              {tEnum(`category.${entry.category}`)} — {t("occurrenceCount", { count: entry.count })}{" "}
+              ({formatSeverityBreakdown(entry.severityBreakdown, tEnum, locale)})
             </li>
           ))}
         </ul>
