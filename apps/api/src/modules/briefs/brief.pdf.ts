@@ -95,6 +95,32 @@ export function buildClinicalBriefPdf(
 
   doc.moveDown(1);
 
+  // ---- Frequency comparison vs. the immediately preceding period ----
+  // Only rendered when present — see ClinicalBriefDto's own doc
+  // comment: null (a brief generated before this field existed) is
+  // deliberately different from an empty array (the comparison ran
+  // and found nothing to report), and neither older briefs nor a
+  // genuinely-empty comparison need a PDF section for it.
+  if (brief.frequencyComparison && brief.frequencyComparison.length > 0) {
+    doc
+      .fillColor(navy)
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("Compared with the previous period");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica");
+    for (const { category, currentCount, previousCount } of brief.frequencyComparison) {
+      doc.fillColor(navy).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
+      doc
+        .fillColor("#555555")
+        .text(
+          `  Reported on ${currentCount} day${currentCount === 1 ? "" : "s"}, compared with` +
+            ` ${previousCount} day${previousCount === 1 ? "" : "s"} in the previous period.`,
+        );
+    }
+    doc.moveDown(1);
+  }
+
   // ---- Cycle summary ----
   doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Cycle summary");
   doc.moveDown(0.4);

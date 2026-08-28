@@ -68,4 +68,27 @@ describe("computeSymptomFrequency", () => {
     ]);
     expect(result[0]!.severityBreakdown).toEqual({ MILD: 1, MODERATE: 1, SEVERE: 2 });
   });
+
+  it("orders severityBreakdown keys as MILD, MODERATE, SEVERE regardless of the order logs arrived in", () => {
+    // Deliberately logged SEVERE, then MILD, then MODERATE — the
+    // opposite of canonical order — to prove the result doesn't just
+    // happen to match canonical order by coincidence of input order.
+    // toEqual alone wouldn't catch a key-order regression (it's a
+    // deep-equality check, not an order-sensitive one), so this
+    // asserts Object.keys directly.
+    const result = computeSymptomFrequency([
+      { category: "HOT_FLASH", severity: "SEVERE" },
+      { category: "HOT_FLASH", severity: "MILD" },
+      { category: "HOT_FLASH", severity: "MODERATE" },
+    ]);
+    expect(Object.keys(result[0]!.severityBreakdown)).toEqual(["MILD", "MODERATE", "SEVERE"]);
+  });
+
+  it("omits absent severities from the ordering rather than inserting a zero", () => {
+    const result = computeSymptomFrequency([
+      { category: "HOT_FLASH", severity: "SEVERE" },
+      { category: "HOT_FLASH", severity: "MILD" },
+    ]);
+    expect(Object.keys(result[0]!.severityBreakdown)).toEqual(["MILD", "SEVERE"]);
+  });
 });

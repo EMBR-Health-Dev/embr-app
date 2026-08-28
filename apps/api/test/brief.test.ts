@@ -52,6 +52,7 @@ const { state, nextId } = vi.hoisted(() => {
         symptomSummary: unknown;
         cycleSummary: unknown;
         treatmentSummary: unknown;
+        frequencyComparison: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
         createdAt: Date;
@@ -416,6 +417,131 @@ describe("POST /briefs", () => {
   });
 });
 
+// Integration coverage only — the comparison arithmetic itself
+// (increase/decrease/zero-denominator/etc.) is already exhaustively
+// covered in period-comparison.test.ts. These tests exist to prove
+// the brief wires that already-tested function in correctly: the
+// right previous-period window gets queried, and the result reaches
+// the persisted brief and the read path unchanged.
+describe("POST /briefs — frequency comparison (deterministic, no AI involvement)", () => {
+  it("compares the requested period against the immediately preceding period of equal length", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "freqcomp1@embr.health");
+
+    // Current period (RANGE: 2026-01-01 to 2026-02-01): 2 HOT_FLASH.
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-20") });
+    // Previous period (2025-11-30 to 2025-12-31): 1 HOT_FLASH, 1 FATIGUE.
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2025-12-15") });
+    addSymptomLog(userId, { category: "FATIGUE", occurredAt: new Date("2025-12-20") });
+    // Outside both periods entirely — must not be counted as either.
+    addSymptomLog(userId, { category: "ANXIETY", occurredAt: new Date("2025-01-01") });
+
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.frequencyComparison).toEqual(
+      expect.arrayContaining([
+        {
+          category: "FATIGUE",
+          currentCount: 0,
+          previousCount: 1,
+          absoluteChange: -1,
+          percentageChange: -100,
+          direction: "decreased",
+        },
+        {
+          category: "HOT_FLASH",
+          currentCount: 2,
+          previousCount: 1,
+          absoluteChange: 1,
+          percentageChange: 100,
+          direction: "increased",
+        },
+      ]),
+    );
+    expect(res.body.data.frequencyComparison).toHaveLength(2); // not 3 — ANXIETY is in neither period
+  });
+
+  it("does not fabricate a percentage change when the previous period has no observations for a category", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "freqcomp2@embr.health");
+
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.frequencyComparison).toEqual([
+      {
+        category: "HOT_FLASH",
+        currentCount: 1,
+        previousCount: 0,
+        absoluteChange: 1,
+        percentageChange: null,
+        direction: "increased",
+      },
+    ]);
+  });
+
+  it("returns an empty array, not null, when both periods genuinely have no symptom logs", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "freqcomp3@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.frequencyComparison).toEqual([]);
+  });
+
+  it("GET /briefs/:id returns the same frequencyComparison the POST response returned", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "freqcomp4@embr.health");
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const created = await agent.post("/briefs").send(RANGE);
+    const fetched = await agent.get(`/briefs/${created.body.data.id}`);
+
+    expect(fetched.body.data.frequencyComparison).toEqual(created.body.data.frequencyComparison);
+  });
+
+  it("a brief generated before this field existed reads back frequencyComparison: null, not an empty array", async () => {
+    // Simulates a pre-existing row rather than exercising POST — a
+    // real NULL JSONB column comes back from Prisma as JS `null`
+    // (never `undefined`), which is what this constructs directly,
+    // matching schema.prisma's doc comment: null means "never
+    // computed for this brief," a materially different fact from an
+    // empty array ("computed, found nothing").
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "freqcomp5@embr.health");
+
+    state.briefs.push({
+      id: nextId(),
+      userId,
+      fromDate: new Date("2026-01-01"),
+      toDate: new Date("2026-02-01"),
+      symptomSummary: [],
+      cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 0 },
+      treatmentSummary: [],
+      frequencyComparison: null,
+      aiNarrative: "A brief from before this field existed.",
+      aiDiscussionTopics: ["n/a"],
+      createdAt: now(),
+    });
+
+    const res = await agent.get(`/briefs/${state.briefs[0]!.id}`);
+
+    expect(res.body.data.frequencyComparison).toBeNull();
+  });
+});
+
 describe("POST /briefs — treatment summary (deterministic, no AI involvement)", () => {
   beforeEach(() => {
     aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
@@ -654,6 +780,13 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
       { name: "Estradiol patch", category: "HRT", startDate: "2026-01-10", endDate: "2026-01-20" },
     ];
     expect(generateRes.body.data.treatmentSummary).toEqual(expectedTreatmentSummary);
+    // No symptom logs added anywhere in this test, in either period —
+    // frequencyComparison is [] (computed, found nothing), not null
+    // (never computed). Piggybacking this assertion on the existing
+    // treatment-persistence test rather than a parallel one, since
+    // it's proving the exact same "generate, re-read, PDF all agree"
+    // property for a second field.
+    expect(generateRes.body.data.frequencyComparison).toEqual([]);
     const briefId = generateRes.body.data.id as string;
 
     // 2. GET /briefs/:id returns the same treatmentSummary — read back
@@ -661,6 +794,7 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     const getRes = await agent.get(`/briefs/${briefId}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.treatmentSummary).toEqual(expectedTreatmentSummary);
+    expect(getRes.body.data.frequencyComparison).toEqual([]);
 
     // 3. GET /briefs/:id/pdf is built from that same persisted brief
     // (via briefService.get(), a separate request from generation) and
@@ -676,6 +810,7 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     const pdfCalls = vi.mocked(buildClinicalBriefPdf).mock.calls;
     const lastPdfCallArg = pdfCalls[pdfCalls.length - 1]![0];
     expect(lastPdfCallArg.treatmentSummary).toEqual(expectedTreatmentSummary);
+    expect(lastPdfCallArg.frequencyComparison).toEqual([]);
   });
 });
 
