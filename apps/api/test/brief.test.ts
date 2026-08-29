@@ -69,7 +69,11 @@ const now = () => new Date();
 
 const { aiState } = vi.hoisted(() => ({
   aiState: {
-    nextResponse: null as null | { narrative: string; discussionTopics: string[] },
+    nextResponse: null as null | {
+      narrative: string;
+      discussionTopics: string[];
+      patterns?: unknown[];
+    },
     shouldThrow: false,
   },
 }));
@@ -81,7 +85,13 @@ vi.mock("../src/modules/briefs/brief.ai.js", () => ({
       if (!aiState.nextResponse) {
         throw new Error("test didn't configure an AI response");
       }
-      return aiState.nextResponse;
+      // Most tests in this file predate Stage 4 and don't care about
+      // patterns at all — default to an empty array (a real, valid
+      // response shape per brief.ai.ts's own system prompt) rather
+      // than requiring every one of this file's aiState.nextResponse
+      // assignments to specify it explicitly. Spread after the
+      // default so a test that does set patterns overrides it.
+      return { patterns: [], ...aiState.nextResponse };
     }),
   },
 }));
@@ -1105,7 +1115,7 @@ describe("POST /briefs — treatment summary (deterministic, no AI involvement)"
     expect(JSON.stringify(res.body)).not.toContain("Seems to be");
   });
 
-  it("CRITICAL: treatment data is never included in the object passed to briefAi.generate()", async () => {
+  it("CRITICAL: the AI receives interpretation, but never the treatment name, notes, or a raw treatment object", async () => {
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "tx-ai-boundary@embr.health");
@@ -1126,17 +1136,204 @@ describe("POST /briefs — treatment summary (deterministic, no AI involvement)"
     const calls = vi.mocked(briefAi.generate).mock.calls;
     const lastCallArg = calls[calls.length - 1]![0];
 
+    // 1. briefAi.generate() receives interpretation, alongside the
+    // same four fields as before — nothing else, still an exact list.
     expect(Object.keys(lastCallArg).sort()).toEqual([
       "cycleSummary",
       "fromDate",
+      "interpretation",
       "symptomSummary",
       "toDate",
     ]);
     expect(lastCallArg).not.toHaveProperty("treatmentSummary");
     expect(lastCallArg).not.toHaveProperty("treatments");
-    expect(JSON.stringify(lastCallArg)).not.toContain("Estradiol");
-    expect(JSON.stringify(lastCallArg)).not.toContain("HRT");
-    expect(JSON.stringify(lastCallArg)).not.toContain("never reach the model");
+
+    // 5. The interpretation still contains the deterministic Stage 4
+    // information the AI needs — this treatment started inside RANGE
+    // with a symptom log in its after-window, so it produces a real
+    // treatment_window_changed pattern (alongside a frequency_increased
+    // pattern for the same symptom log, since it has no counterpart in
+    // the previous period — not zero patterns, and not just the one
+    // this test is specifically about).
+    const treatmentPattern = lastCallArg.interpretation.patterns.find(
+      (p: { type: string }) => p.type === "treatment_window_changed",
+    );
+    expect(treatmentPattern).toBeDefined();
+
+    // 2, 3, 4. The interpretation sent to the AI contains none of the
+    // treatment's identifying data — name, notes, or category (which
+    // would only be reachable via a raw treatment object, since no
+    // Stage4Pattern field carries it).
+    const sentJson = JSON.stringify(lastCallArg);
+    expect(sentJson).not.toContain("Estradiol");
+    expect(sentJson).not.toContain("never reach the model");
+    expect(sentJson).not.toContain("HRT");
+
+    // 6. The canonical, server-side Stage4Result (never sent to the
+    // AI) can still contain the treatment name — brief.service.ts
+    // never exposes that object externally by design, so there's
+    // nothing for a black-box integration test to inspect here beyond
+    // what's already verified directly in
+    // stage4-ai-projection.test.ts's "does not mutate the original
+    // canonical Stage4Result" and in stage4-interpretation.test.ts.
+
+    // 7. Provenance validation still operates against the canonical
+    // result, not the AI-safe projection — verified end to end by the
+    // dedicated "Stage 4 interpretation wiring" tests below, which
+    // control exactly what the mocked AI echoes back.
+  });
+});
+
+describe("POST /briefs — Stage 4 interpretation wiring and provenance validation", () => {
+  // A single, predictable pattern with a fully known id — HOT_FLASH
+  // logged twice in the current period, never in the previous one, so
+  // frequencyComparison produces exactly one "increased" entry and
+  // nothing else (no treatment, no co-occurrence pair, no second
+  // category) — the deterministic id is exactly
+  // "frequency_increased:HOT_FLASH", per stage4-interpretation.ts's
+  // own id construction rule, computed here rather than inspected
+  // from a prior response.
+  function setUpOneKnownPattern(userId: string) {
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-10") });
+  }
+  const KNOWN_PATTERN = {
+    id: "frequency_increased:HOT_FLASH",
+    type: "frequency_increased",
+    observation: "HOT_FLASH was reported on 2 days during the current period, compared with 0.",
+    interpretation: "This represents an increase in how often HOT_FLASH was reported.",
+    caveat: "This reflects self-reported logging frequency only.",
+    confidence: "descriptive",
+    evidenceRef: { category: "HOT_FLASH" },
+  };
+
+  it("generates a deterministic Stage 4 pattern from the structured input and sends it to the AI", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire1@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
+
+    await agent.post("/briefs").send(RANGE);
+
+    const lastCallArg = vi.mocked(briefAi.generate).mock.calls.at(-1)![0];
+    expect(lastCallArg.interpretation.patterns).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: KNOWN_PATTERN.id })]),
+    );
+  });
+
+  it("never gives the AI the raw evidence (frequencyComparison, coOccurrence, treatmentImpact) it could use to construct a pattern itself", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire2@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
+
+    await agent.post("/briefs").send(RANGE);
+
+    const lastCallArg = vi.mocked(briefAi.generate).mock.calls.at(-1)![0];
+    expect(lastCallArg).not.toHaveProperty("frequencyComparison");
+    expect(lastCallArg).not.toHaveProperty("coOccurrence");
+    expect(lastCallArg).not.toHaveProperty("treatmentImpact");
+  });
+
+  it("accepts a valid echoed pattern that matches a supplied one exactly", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire3@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [KNOWN_PATTERN],
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+  });
+
+  it("rejects an echoed pattern whose id was never supplied", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire4@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [{ ...KNOWN_PATTERN, id: "frequency_increased:BRAIN_FOG" }],
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+  });
+
+  it("rejects a duplicate echoed pattern id", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire5@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [KNOWN_PATTERN, KNOWN_PATTERN],
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+  });
+
+  it("rejects an echoed pattern whose type was changed while keeping the same id", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire6@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [{ ...KNOWN_PATTERN, type: "frequency_decreased" }],
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+  });
+
+  it("rejects an echoed pattern whose evidenceRef was changed while keeping the same id", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire7@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [{ ...KNOWN_PATTERN, evidenceRef: { category: "FATIGUE" } }],
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+  });
+
+  it("accepts a response that echoes back none of the supplied patterns — a subset (including empty) is a valid, intentional response, not a contract violation", async () => {
+    // Per brief.ai.ts's own system prompt (rules 6-7): the model only
+    // includes a pattern it actually referenced in the narrative or
+    // discussion topics, and returns an empty array if none are
+    // relevant. A supplied-but-unechoed pattern is not an error —
+    // validateStage4Patterns's own doc comment explains why this
+    // deliberately does not require the returned set to equal the
+    // supplied set.
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4wire8@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"], patterns: [] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
   });
 });
 
