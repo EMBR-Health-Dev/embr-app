@@ -22,6 +22,9 @@ import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
 import { compareSymptomFrequency, computePreviousPeriod } from "./period-comparison.js";
 import { detectPersistentSymptoms } from "./persistent-symptoms.js";
+import { buildAiSafeStage4Interpretation } from "./stage4-ai-projection.js";
+import { buildStage4Interpretation } from "./stage4-interpretation.js";
+import { validateStage4Patterns } from "./stage4-validation.js";
 import { computeTreatmentSummary } from "./treatment-summary.js";
 
 function computeSymptomSummary(logs: SymptomLog[]) {
@@ -135,14 +138,59 @@ export const briefService = {
       }),
     );
 
+    // The canonical Stage 4 result — retained server-side for
+    // persistence (next step) and as the source of truth for
+    // provenance validation below. Never sent to the AI directly; see
+    // aiInput's own comment for the AI-safe projection built from it.
+    const interpretation = buildStage4Interpretation({
+      frequencyComparison,
+      coOccurrence,
+      treatmentImpact,
+    });
+
     const aiInput: BriefInput = {
       fromDate: fromDate.toISOString().slice(0, 10),
       toDate: toDate.toISOString().slice(0, 10),
       symptomSummary,
       cycleSummary,
+      // The deterministic Stage 4 layer, built from the same three
+      // evidence pieces already computed above — not a fourth
+      // computation, just composed into the shape brief.ai.ts expects.
+      // See stage4-interpretation.ts's own doc comment for why this is
+      // the only thing that can ever tell the AI two facts are
+      // related: it never sees frequencyComparison, coOccurrence, or
+      // treatmentImpact directly, only whatever patterns this step
+      // already decided qualify.
+      //
+      // NOT the canonical `interpretation` below — the AI-safe
+      // projection specifically, with treatment names stripped. See
+      // stage4-ai-projection.ts's own doc comment for why: the
+      // canonical Stage4Pattern for treatment_window_changed embeds
+      // the treatment's name in its observation text (a reasonable
+      // choice for UI/PDF rendering), but that was never an approved
+      // exception to the existing "treatment data and free-text notes
+      // are not sent to the AI" invariant.
+      interpretation: buildAiSafeStage4Interpretation(interpretation, treatmentImpact),
     };
 
-    const { narrative, discussionTopics } = await briefAi.generate(aiInput);
+    const { narrative, discussionTopics, patterns } = await briefAi.generate(aiInput);
+
+    // Citation integrity: every pattern the AI echoed back must
+    // resolve to one this step actually supplied, unaltered. Validated
+    // against the *canonical* interpretation, not the AI-safe
+    // projection sent above — they're expected to agree exactly for
+    // id/type/evidenceRef (only observation text differs for treatment
+    // patterns, and stage4-validation.ts deliberately never compares
+    // that field — see its own doc comment), so this remains a
+    // faithful check of what the model actually received. Fails
+    // closed — brief.service.ts awaits this before ever persisting
+    // anything, so a provenance failure means no ClinicalBrief is
+    // created at all, matching the AI's own content-safety failure
+    // path immediately below.
+    const provenanceFailure = validateStage4Patterns(interpretation.patterns, patterns);
+    if (provenanceFailure) {
+      throw AppError.internal(`Brief generation failed: ${provenanceFailure}`);
+    }
 
     const brief = await briefRepository.create({
       userId,
@@ -157,6 +205,11 @@ export const briefService = {
       persistentSymptoms: JSON.parse(JSON.stringify(persistentSymptoms)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
+      // Deliberately not persisted yet — ClinicalBrief has no column
+      // for it. The provenance-validated `patterns` value is computed
+      // and checked in this step but discarded after; adding
+      // persistence is explicitly the next step's concern, not
+      // silently smuggled in here.
     });
 
     return {

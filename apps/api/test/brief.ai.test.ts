@@ -34,6 +34,7 @@ const VALID_INPUT = {
   toDate: "2026-02-01",
   symptomSummary: [{ category: "HOT_FLASH", count: 3, severityBreakdown: { MODERATE: 3 } }],
   cycleSummary: { averageCycleLengthDays: 28, cycleCount: 2, periodDaysLogged: 6 },
+  interpretation: { interpretationVersion: "1.0", patterns: [] },
 };
 
 function textResponse(text: string) {
@@ -49,12 +50,20 @@ describe("brief.ai", () => {
   it("parses a well-formed model response", async () => {
     mockCreate.mockResolvedValue(
       textResponse(
-        JSON.stringify({ narrative: "Some narrative.", discussionTopics: ["A question?"] }),
+        JSON.stringify({
+          narrative: "Some narrative.",
+          discussionTopics: ["A question?"],
+          patterns: [],
+        }),
       ),
     );
 
     const result = await briefAi.generate(VALID_INPUT);
-    expect(result).toEqual({ narrative: "Some narrative.", discussionTopics: ["A question?"] });
+    expect(result).toEqual({
+      narrative: "Some narrative.",
+      discussionTopics: ["A question?"],
+      patterns: [],
+    });
   });
 
   it("rejects a response that isn't valid JSON", async () => {
@@ -72,7 +81,7 @@ describe("brief.ai", () => {
 
   it("rejects an empty discussionTopics array", async () => {
     mockCreate.mockResolvedValue(
-      textResponse(JSON.stringify({ narrative: "n", discussionTopics: [] })),
+      textResponse(JSON.stringify({ narrative: "n", discussionTopics: [], patterns: [] })),
     );
     await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow();
   });
@@ -85,7 +94,11 @@ describe("brief.ai", () => {
   it("sends only the structured summary, never raw notes, in the user message", async () => {
     mockCreate.mockResolvedValue(
       textResponse(
-        JSON.stringify({ narrative: "n", discussionTopics: ["Ask your GP about this?"] }),
+        JSON.stringify({
+          narrative: "n",
+          discussionTopics: ["Ask your GP about this?"],
+          patterns: [],
+        }),
       ),
     );
 
@@ -97,6 +110,7 @@ describe("brief.ai", () => {
       dateRange: { from: VALID_INPUT.fromDate, to: VALID_INPUT.toDate },
       symptomSummary: VALID_INPUT.symptomSummary,
       cycleSummary: VALID_INPUT.cycleSummary,
+      interpretation: VALID_INPUT.interpretation,
     });
     // No "notes" key anywhere, at any depth, in what actually gets sent.
     expect(JSON.stringify(sentContent)).not.toContain("notes");
@@ -105,7 +119,11 @@ describe("brief.ai", () => {
   it("system prompt forbids diagnosis/treatment suggestions and requires question-framed topics", async () => {
     mockCreate.mockResolvedValue(
       textResponse(
-        JSON.stringify({ narrative: "n", discussionTopics: ["Ask your GP about this?"] }),
+        JSON.stringify({
+          narrative: "n",
+          discussionTopics: ["Ask your GP about this?"],
+          patterns: [],
+        }),
       ),
     );
 
@@ -120,7 +138,9 @@ describe("brief.ai", () => {
   describe("operational hardening", () => {
     it("sets an explicit timeout and retry count, not the SDK's own defaults", async () => {
       mockCreate.mockResolvedValue(
-        textResponse(JSON.stringify({ narrative: "n", discussionTopics: ["Question?"] })),
+        textResponse(
+          JSON.stringify({ narrative: "n", discussionTopics: ["Question?"], patterns: [] }),
+        ),
       );
 
       await briefAi.generate(VALID_INPUT);
@@ -168,7 +188,11 @@ describe("brief.ai", () => {
     it("rejects a discussion topic not phrased as a question", async () => {
       mockCreate.mockResolvedValue(
         textResponse(
-          JSON.stringify({ narrative: "n", discussionTopics: ["This is an assertion."] }),
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: ["This is an assertion."],
+            patterns: [],
+          }),
         ),
       );
       await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("not phrased as a question");
@@ -180,6 +204,7 @@ describe("brief.ai", () => {
           JSON.stringify({
             narrative: "This pattern may indicate a diagnosis of something.",
             discussionTopics: ["Question?"],
+            patterns: [],
           }),
         ),
       );
@@ -192,6 +217,7 @@ describe("brief.ai", () => {
           JSON.stringify({
             narrative: "n",
             discussionTopics: ["You should try magnesium supplements?"],
+            patterns: [],
           }),
         ),
       );
@@ -204,6 +230,7 @@ describe("brief.ai", () => {
           JSON.stringify({
             narrative: "I recommend seeing a specialist.",
             discussionTopics: ["Q?"],
+            patterns: [],
           }),
         ),
       );
@@ -216,6 +243,7 @@ describe("brief.ai", () => {
           JSON.stringify({
             narrative: "The pattern involved 50mg of something.",
             discussionTopics: ["Question?"],
+            patterns: [],
           }),
         ),
       );
@@ -230,6 +258,7 @@ describe("brief.ai", () => {
             discussionTopics: [
               "Ask whether the frequency of hot flashes is typical at this stage?",
             ],
+            patterns: [],
           }),
         ),
       );
@@ -238,9 +267,115 @@ describe("brief.ai", () => {
 
     it("no ClinicalBrief-relevant data escapes when the safety check fails — the promise rejects, nothing is returned", async () => {
       mockCreate.mockResolvedValue(
-        textResponse(JSON.stringify({ narrative: "I recommend rest.", discussionTopics: ["Q?"] })),
+        textResponse(
+          JSON.stringify({
+            narrative: "I recommend rest.",
+            discussionTopics: ["Q?"],
+            patterns: [],
+          }),
+        ),
       );
       await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow();
+    });
+  });
+
+  // Structural validation only — this establishes that a well-formed
+  // Stage 4 pattern can pass through the response contract at all.
+  // Whether a given pattern actually corresponds to real supplied
+  // evidence (as opposed to one the model invented) is a separate,
+  // later concern (structural citation validation) — not tested here.
+  describe("Stage 4 pattern contract", () => {
+    const VALID_PATTERN = {
+      id: "frequency_increased:HOT_FLASH",
+      type: "frequency_increased",
+      observation: "Hot flash frequency increased during the selected period.",
+      interpretation: "The available symptom data shows an increase in logged hot flashes.",
+      caveat: "This is a descriptive pattern in the logged data and does not establish a cause.",
+      confidence: "descriptive",
+      evidenceRef: { category: "HOT_FLASH" },
+    };
+
+    it("accepts a structurally valid Stage 4 pattern", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: ["Question?"],
+            patterns: [VALID_PATTERN],
+          }),
+        ),
+      );
+
+      const result = await briefAi.generate(VALID_INPUT);
+      expect(result.patterns).toEqual([VALID_PATTERN]);
+    });
+
+    it("accepts an empty patterns array", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({ narrative: "n", discussionTopics: ["Question?"], patterns: [] }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({ patterns: [] });
+    });
+
+    it("rejects a pattern with an invalid confidence value", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: ["Question?"],
+            patterns: [{ ...VALID_PATTERN, confidence: "high" }],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    });
+
+    it("rejects a pattern whose evidenceRef doesn't match any of the three known shapes", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: ["Question?"],
+            patterns: [{ ...VALID_PATTERN, evidenceRef: { somethingElse: "x" } }],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    });
+
+    it("rejects a pattern whose evidenceRef category isn't a real SymptomCategory", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: ["Question?"],
+            patterns: [{ ...VALID_PATTERN, evidenceRef: { category: "NOT_A_REAL_CATEGORY" } }],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    });
+
+    it("rejects pattern text containing an existing prohibited safety pattern — exercised through generate(), not by exporting failsContentSafety", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: ["Question?"],
+            patterns: [
+              { ...VALID_PATTERN, interpretation: "This may indicate a diagnosis of something." },
+            ],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
     });
   });
 });

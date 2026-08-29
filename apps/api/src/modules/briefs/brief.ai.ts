@@ -1,8 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { AppError } from "@embr/shared";
+import { symptomCategorySchema } from "@embr/validation";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
+import type { Stage4Pattern, Stage4Result } from "./stage4-interpretation.js";
 
 export interface BriefInput {
   fromDate: string;
@@ -17,16 +19,71 @@ export interface BriefInput {
     cycleCount: number;
     periodDaysLogged: number;
   };
+  /** The deterministic Stage 4 findings this brief's evidence actually
+   * produced — the AI is expected to select from and echo these back
+   * (see BriefContent.patterns' own doc comment), never to construct
+   * new ones from symptomSummary/cycleSummary itself. This is the
+   * entire mechanism that keeps "the LLM must not independently
+   * discover Stage 4 patterns" true: the model is never given the raw
+   * material to compute a pattern on its own, only the ones that
+   * already exist. */
+  interpretation: Stage4Result;
 }
 
 export interface BriefContent {
   narrative: string;
   discussionTopics: string[];
+  /** Stage4Pattern[] from stage4-interpretation.ts — the single source
+   * of truth for this shape, not redefined here. The model does not
+   * author these fields; it selects from and echoes back the patterns
+   * it was given (id, evidenceRef, and all template text included) for
+   * whichever ones it actually narrated. Cross-checking that what's
+   * echoed here genuinely matches what was supplied is a separate,
+   * later concern (structural citation validation) — this step only
+   * validates that the shape returned is well-formed. */
+  patterns: Stage4Pattern[];
 }
+
+/** Mirrors Stage4EvidenceRef from stage4-interpretation.ts exactly — a
+ * union of three closed object shapes, not "any object with some
+ * keys." .strict() on each branch rejects extra/misplaced keys rather
+ * than silently accepting them, matching "preserve the existing
+ * discriminated shapes... rather than accepting arbitrary objects." */
+const evidenceRefSchema = z.union([
+  z.object({ category: symptomCategorySchema }).strict(),
+  z.object({ categoryA: symptomCategorySchema, categoryB: symptomCategorySchema }).strict(),
+  z.object({ treatmentId: z.string().min(1) }).strict(),
+]);
+
+const stage4PatternTypeSchema = z.enum([
+  "frequency_increased",
+  "frequency_decreased",
+  "co_occurrence_detected",
+  "treatment_window_changed",
+]);
+
+/** Structural validation of Stage4Pattern's shape — every field name
+ * and type here must stay in lockstep with stage4-interpretation.ts's
+ * own Stage4Pattern interface, which remains the source of truth (see
+ * BriefContent's doc comment above). This does not verify that a
+ * given pattern actually came from the interpretation this brief was
+ * built from — only that whatever the model returned is shaped like a
+ * real pattern, not an arbitrary object. */
+const stage4PatternSchema = z.object({
+  id: z.string().min(1),
+  type: stage4PatternTypeSchema,
+  observation: z.string().min(1),
+  association: z.string().min(1).optional(),
+  interpretation: z.string().min(1),
+  caveat: z.string().min(1),
+  confidence: z.literal("descriptive"),
+  evidenceRef: evidenceRefSchema,
+});
 
 const briefResponseSchema = z.object({
   narrative: z.string().min(1),
   discussionTopics: z.array(z.string().min(1)).min(1).max(8),
+  patterns: z.array(stage4PatternSchema),
 });
 
 /**
@@ -50,6 +107,15 @@ const briefResponseSchema = z.object({
  * - Rule 4 (say so if sparse) exists because a model asked to find
  *   patterns in three data points will, if not told otherwise, find
  *   them anyway.
+ * - Rules 6-9 (patterns) exist because Stage 4 interpretation gives the
+ *   model, for the first time, evidence that two facts are genuinely
+ *   related (a co-occurrence pair, a treatment tied to a before/after
+ *   window) sitting alongside evidence that isn't related to anything.
+ *   Without an explicit instruction to only echo supplied patterns
+ *   verbatim, a model asked to "narrate the interesting findings" will
+ *   readily connect two things that were never actually linked by any
+ *   deterministic evidence — see stage4-interpretation.ts's own doc
+ *   comment on why that composition, not narration, is Stage 4's job.
  *
  * Deliberately given only the structured, aggregated summary — never
  * raw free-text symptom-log notes. Notes can contain anything a person
@@ -63,13 +129,17 @@ const SYSTEM_PROMPT = `You are helping structure a person's self-tracked menopau
 
 Follow these rules strictly:
 1. Describe only patterns directly supported by the structured data provided. Never infer, speculate, or add information not present in the data — including general medical knowledge about menopause that isn't reflected in this specific data.
-2. Never diagnose, name a medical condition, suggest a cause, or recommend any treatment, medication, dosage, or lifestyle change.
+2. Never diagnose, name a medical condition, suggest a cause, or recommend any treatment, medication, dosage, or lifestyle change — including when discussing a pattern from the structured interpretation data.
 3. Every discussion topic must be phrased as an open question the person could ask their GP — never as an assertion, conclusion, or piece of advice. Write "Ask whether the increase in hot flash frequency since [date] is a typical pattern at this stage" — not "Your hot flashes are worsening, which may indicate X."
 4. If the data is too sparse to support a meaningful summary, say so plainly rather than inventing a pattern.
 5. Keep the narrative factual and neutral — this is a data summary, not medical commentary.
+6. If you reference a finding from the structured interpretation data in your narrative or discussion topics, include it in "patterns" exactly as supplied — the same id, type, observation, association (if present), interpretation, caveat, confidence, and evidenceRef. Never modify that text, never invent a new id, and never invent an evidenceRef that wasn't given to you.
+7. Only include a pattern in "patterns" if you actually referenced it in the narrative or discussion topics. If none of the supplied patterns are relevant, or none were supplied, "patterns" must be an empty array.
+8. Never assert a relationship between two symptoms, or between a symptom and a treatment, unless a pattern explicitly covering exactly that pairing was supplied to you. Having two related facts each appear elsewhere in the data does not authorize you to connect them yourself.
+9. "confidence" on every pattern is always exactly "descriptive" — never change it.
 
 Respond with JSON only, no other text, in exactly this shape:
-{"narrative": "...", "discussionTopics": ["...", "..."]}`;
+{"narrative": "...", "discussionTopics": ["...", "..."], "patterns": [{"id": "...", "type": "...", "observation": "...", "association": "...", "interpretation": "...", "caveat": "...", "confidence": "descriptive", "evidenceRef": {}}]}`;
 
 /**
  * Defense-in-depth, not the primary safety mechanism — the system
@@ -92,6 +162,19 @@ Respond with JSON only, no other text, in exactly this shape:
  *    broad classifier — narrow enough to have very few false
  *    positives, which matters because failing here means throwing
  *    away a real generation attempt.
+ *
+ * The deny-list is scanned across the narrative, discussion topics,
+ * AND every pattern's observation/association/interpretation/caveat —
+ * a pattern is only supposed to echo Stage 4's own fixed template
+ * text verbatim (see BriefContent's doc comment), but this check
+ * doesn't assume that held; it treats pattern text as untrusted model
+ * output like everything else here, not as pre-cleared just because
+ * it's *supposed* to be a verbatim copy. Cross-checking that a
+ * returned pattern's text genuinely matches the supplied evidence
+ * word-for-word is a separate, later concern (structural citation
+ * validation) — this is only the same deny-list scan already applied
+ * to the rest of the response, applied consistently to the new field
+ * too.
  */
 const PROHIBITED_PATTERNS = [
   /\bdiagnos(is|ed|e|es|ing)?\b/i,
@@ -107,7 +190,12 @@ function failsContentSafety(content: BriefContent): string | null {
     }
   }
 
-  const combinedText = [content.narrative, ...content.discussionTopics].join(" ");
+  const patternText = content.patterns.flatMap((pattern) =>
+    [pattern.observation, pattern.association, pattern.interpretation, pattern.caveat].filter(
+      (value): value is string => value !== undefined,
+    ),
+  );
+  const combinedText = [content.narrative, ...content.discussionTopics, ...patternText].join(" ");
   for (const pattern of PROHIBITED_PATTERNS) {
     if (pattern.test(combinedText)) {
       return `Output matched a prohibited pattern: ${pattern}`;
@@ -152,6 +240,7 @@ export const briefAi = {
               dateRange: { from: input.fromDate, to: input.toDate },
               symptomSummary: input.symptomSummary,
               cycleSummary: input.cycleSummary,
+              interpretation: input.interpretation,
             }),
           },
         ],
