@@ -121,6 +121,24 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Ongoing symptoms (persistent across both periods, descriptive only) ----
+  // Derived purely from frequencyComparison above — no new counting.
+  // Only rendered when non-empty; see ClinicalBriefDto's own doc
+  // comment for why null/empty-array are distinguished here.
+  // Descriptive only: "remained present," never "your X problem is
+  // persistent and requires treatment" — the same observation-not-
+  // interpretation framing every other deterministic section here
+  // uses.
+  if (brief.persistentSymptoms && brief.persistentSymptoms.length > 0) {
+    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Ongoing symptoms");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica").fillColor("#333333");
+    for (const category of brief.persistentSymptoms) {
+      doc.text(`${categoryLabel(category)} remained present across both periods.`);
+    }
+    doc.moveDown(1);
+  }
+
   // ---- Patterns noticed (symptom co-occurrence, descriptive only) ----
   // Only rendered when present — coOccurrence is null both for a
   // brief predating this field and for one where no pair reached the

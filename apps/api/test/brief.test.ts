@@ -55,6 +55,7 @@ const { state, nextId } = vi.hoisted(() => {
         frequencyComparison: unknown;
         coOccurrence: unknown;
         treatmentImpact: unknown;
+        persistentSymptoms: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
         createdAt: Date;
@@ -529,19 +530,19 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(fetched.body.data.frequencyComparison).toEqual(created.body.data.frequencyComparison);
   });
 
-  it("a brief generated before this field existed reads back frequencyComparison and coOccurrence as null, not an empty array", async () => {
+  it("a brief generated before this field existed reads back frequencyComparison, coOccurrence, treatmentImpact, and persistentSymptoms as null, not an empty array", async () => {
     // Simulates a pre-existing row rather than exercising POST — a
     // real NULL JSONB column comes back from Prisma as JS `null`
     // (never `undefined`), which is what this constructs directly,
     // matching schema.prisma's doc comment: null means "never
     // computed for this brief," a materially different fact from an
-    // empty array ("computed, found nothing") for frequencyComparison
-    // and treatmentImpact. coOccurrence shares the same "old snapshot"
-    // null case, even though its own null is overloaded for a
-    // different reason (see schema.prisma's doc comment on that
-    // column) — all three covered in the same test rather than
-    // near-duplicate ones, since all three are proving the identical
-    // "old row, new column" scenario.
+    // empty array ("computed, found nothing") for frequencyComparison,
+    // treatmentImpact, and persistentSymptoms. coOccurrence shares the
+    // same "old snapshot" null case, even though its own null is
+    // overloaded for a different reason (see schema.prisma's doc
+    // comment on that column) — all four covered in the same test
+    // rather than near-duplicate ones, since all four are proving the
+    // identical "old row, new column" scenario.
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "freqcomp5@embr.health");
@@ -557,6 +558,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
       frequencyComparison: null,
       coOccurrence: null,
       treatmentImpact: null,
+      persistentSymptoms: null,
       aiNarrative: "A brief from before this field existed.",
       aiDiscussionTopics: ["n/a"],
       createdAt: now(),
@@ -567,6 +569,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(res.body.data.frequencyComparison).toBeNull();
     expect(res.body.data.coOccurrence).toBeNull();
     expect(res.body.data.treatmentImpact).toBeNull();
+    expect(res.body.data.persistentSymptoms).toBeNull();
   });
 });
 
@@ -849,6 +852,114 @@ describe("POST /briefs — treatment impact (deterministic, no AI involvement)",
   });
 });
 
+// Integration coverage only — detectPersistentSymptoms' own filtering
+// logic (the floor, the both-periods requirement) is already
+// exhaustively covered in persistent-symptoms.test.ts. These tests
+// exist to prove the brief wires that already-tested function in
+// correctly against its own real frequencyComparison output — no new
+// counting happens here, so most of what's worth proving is that the
+// two stay in agreement.
+describe("POST /briefs — persistent symptoms (deterministic, no AI involvement)", () => {
+  it("flags a category present in both periods at or above the floor, derived from frequencyComparison alone", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "persist1@embr.health");
+
+    // Current period (RANGE): 3 HOT_FLASH. Previous period
+    // (2025-11-30 to 2025-12-31): 1 HOT_FLASH — present, no floor
+    // required there.
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2025-12-15") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.persistentSymptoms).toEqual(["HOT_FLASH"]);
+  });
+
+  it("does not flag a category below the floor in the current period, even if present in both", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "persist2@embr.health");
+
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") }); // only 1
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2025-12-15") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.persistentSymptoms).toEqual([]);
+  });
+
+  it("does not flag a category newly reported this period only, no matter how frequent", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "persist3@embr.health");
+
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    // No HOT_FLASH logs in the previous period at all.
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.persistentSymptoms).toEqual([]);
+  });
+
+  it("returns an empty array, not null, when nothing qualifies", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "persist4@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.persistentSymptoms).toEqual([]);
+  });
+
+  it("stays in agreement with frequencyComparison for the same generated brief", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "persist5@embr.health");
+
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2025-12-15") });
+    addSymptomLog(userId, { category: "FATIGUE", occurredAt: new Date("2026-01-20") }); // new, 1x
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    const hotFlashEntry = res.body.data.frequencyComparison.find(
+      (e: { category: string }) => e.category === "HOT_FLASH",
+    );
+    expect(hotFlashEntry).toMatchObject({ currentCount: 3, previousCount: 1 });
+    expect(res.body.data.persistentSymptoms).toEqual(["HOT_FLASH"]);
+  });
+
+  it("GET /briefs/:id returns the same persistentSymptoms the POST response returned", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "persist6@embr.health");
+    for (const date of ["2026-01-05", "2026-01-10", "2026-01-15"]) {
+      addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date(date) });
+    }
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2025-12-15") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const created = await agent.post("/briefs").send(RANGE);
+    const fetched = await agent.get(`/briefs/${created.body.data.id}`);
+
+    expect(fetched.body.data.persistentSymptoms).toEqual(created.body.data.persistentSymptoms);
+    expect(fetched.body.data.persistentSymptoms).not.toEqual([]);
+  });
+});
+
 describe("POST /briefs — treatment summary (deterministic, no AI involvement)", () => {
   beforeEach(() => {
     aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"] };
@@ -1113,6 +1224,7 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(getRes.body.data.treatmentSummary).toEqual(expectedTreatmentSummary);
     expect(getRes.body.data.frequencyComparison).toEqual([]);
     expect(getRes.body.data.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
+    expect(getRes.body.data.persistentSymptoms).toEqual([]);
 
     // 3. GET /briefs/:id/pdf is built from that same persisted brief
     // (via briefService.get(), a separate request from generation) and
@@ -1133,6 +1245,7 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     // qualify, so null, not an empty object.
     expect(lastPdfCallArg.coOccurrence).toBeNull();
     expect(lastPdfCallArg.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
+    expect(lastPdfCallArg.persistentSymptoms).toEqual([]);
   });
 });
 
