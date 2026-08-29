@@ -258,6 +258,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
+      {brief.persistentSymptoms && brief.persistentSymptoms.length > 0 && (
+        <div>
+          <h3 className="font-medium text-navy">{t("persistentSymptomsTitle")}</h3>
+          <ul className="mt-1 text-navy/70">
+            {brief.persistentSymptoms.map((category) => (
+              <li key={category}>
+                {t("persistentSymptomsEntry", { category: tEnum(`category.${category}`) })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {brief.coOccurrence && (
         <div>
           <h3 className="font-medium text-navy">{t("patternsNoticedTitle")}</h3>

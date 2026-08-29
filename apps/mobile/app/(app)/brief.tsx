@@ -273,6 +273,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </>
       )}
 
+      {brief.persistentSymptoms && brief.persistentSymptoms.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.persistentSymptomsTitle")}</Text>
+          {brief.persistentSymptoms.map((category) => (
+            <Text key={category} style={styles.summaryLine}>
+              {t("brief.persistentSymptomsEntry", {
+                category: t(`enums.category.${category}`),
+              })}
+            </Text>
+          ))}
+        </>
+      )}
+
       {brief.coOccurrence && (
         <>
           <Text style={styles.contentSectionTitle}>{t("brief.patternsNoticedTitle")}</Text>

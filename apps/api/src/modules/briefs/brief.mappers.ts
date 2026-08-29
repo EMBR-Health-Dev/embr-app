@@ -7,6 +7,7 @@ import type {
   BriefTreatmentSummaryEntryDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  SymptomCategory,
   SymptomCoOccurrenceDto,
 } from "@embr/types";
 
@@ -38,6 +39,7 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // Same null/empty-array distinction as frequencyComparison, not
     // coOccurrence — see ClinicalBriefDto's own doc comment.
     treatmentImpact: brief.treatmentImpact as unknown as BriefTreatmentImpactEntryDto[] | null,
+    persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
   };

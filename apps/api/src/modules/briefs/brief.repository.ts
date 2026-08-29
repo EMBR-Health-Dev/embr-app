@@ -17,6 +17,7 @@ export const briefRepository = {
     frequencyComparison: Prisma.InputJsonValue;
     coOccurrence: Prisma.InputJsonValue | null;
     treatmentImpact: Prisma.InputJsonValue;
+    persistentSymptoms: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {

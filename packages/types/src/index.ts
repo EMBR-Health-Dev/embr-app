@@ -471,6 +471,16 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * to the AI as of this milestone — see treatment-impact.ts's own
    * doc comment on why that's a deliberate, separate conversation. */
   treatmentImpact: BriefTreatmentImpactEntryDto[] | null;
+  /** Derived purely from frequencyComparison — no new counting, no new
+   * query. A category qualifies when it was reported at all in the
+   * previous period and remains at or above a floor in the current
+   * one — see persistent-symptoms.ts for the exact rule and why it's
+   * a floor, not a target. Null/empty-array distinction matches
+   * frequencyComparison's own reasoning: an empty array is a real
+   * fact ("nothing qualified as persistent"), so it must stay
+   * distinguishable from "never computed for this brief." Never sent
+   * to the AI as of this milestone. */
+  persistentSymptoms: SymptomCategory[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

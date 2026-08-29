@@ -21,6 +21,7 @@ import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
 import { compareSymptomFrequency, computePreviousPeriod } from "./period-comparison.js";
+import { detectPersistentSymptoms } from "./persistent-symptoms.js";
 import { computeTreatmentSummary } from "./treatment-summary.js";
 
 function computeSymptomSummary(logs: SymptomLog[]) {
@@ -78,6 +79,11 @@ export const briefService = {
     // implementation for the previous one.
     const previousSymptomSummary = computeSymptomSummary(previousSymptomLogs);
     const frequencyComparison = compareSymptomFrequency(symptomSummary, previousSymptomSummary);
+
+    // Zero new data: a pure filter over frequencyComparison, which is
+    // already computed above — no new counting, no new query. See
+    // persistent-symptoms.ts for the exact rule.
+    const persistentSymptoms = detectPersistentSymptoms(frequencyComparison);
 
     // Against the brief's own requested period only — never the
     // previous comparison period, and never a combination of the two
@@ -148,6 +154,7 @@ export const briefService = {
       frequencyComparison: JSON.parse(JSON.stringify(frequencyComparison)),
       coOccurrence: coOccurrence === null ? null : JSON.parse(JSON.stringify(coOccurrence)),
       treatmentImpact: JSON.parse(JSON.stringify(treatmentImpact)),
+      persistentSymptoms: JSON.parse(JSON.stringify(persistentSymptoms)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });

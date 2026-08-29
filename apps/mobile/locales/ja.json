@@ -291,7 +291,9 @@
     "treatmentImpactTitle": "治療開始後の変化",
     "treatmentImpactLogCount_other": "{{count}}件の記録",
     "treatmentImpactEntry": "開始前{{beforeDays}}日間で{{before}}、開始後{{afterDays}}日間で{{after}}がありました。",
-    "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。"
+    "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。",
+    "persistentSymptomsTitle": "継続している症状",
+    "persistentSymptomsEntry": "{{category}}は両方の期間で継続して報告されました。"
   },
   "settings": {
     "title": "設定",

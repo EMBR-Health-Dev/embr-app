@@ -372,7 +372,9 @@
     "coOccurrenceEntry": "{categoryA} and {categoryB} were both reported on {days, plural, one {# day} other {# days}}.",
     "treatmentImpactTitle": "Observed changes after starting treatment",
     "treatmentImpactEntry": "{beforeCount, plural, one {# symptom log} other {# symptom logs}} in the {beforeDays} days before starting, compared with {afterCount, plural, one {# symptom log} other {# symptom logs}} in the {afterDays} days after.",
-    "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet."
+    "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet.",
+    "persistentSymptomsTitle": "Ongoing symptoms",
+    "persistentSymptomsEntry": "{category} remained present across both periods."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",
