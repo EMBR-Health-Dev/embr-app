@@ -210,6 +210,13 @@ export const briefService = {
       // is no second call to buildStage4Interpretation anywhere in
       // this flow.
       interpretation: JSON.parse(JSON.stringify(interpretation)),
+      // The AI's own validated response, not re-derived from
+      // `interpretation` — this is specifically what the model chose
+      // to cite for *this* narrative, which is a strict subset (see
+      // validateStage4Patterns's own doc comment on why a subset is
+      // expected and valid), not "every pattern that happened to
+      // qualify."
+      citedPatternIds: patterns.map((pattern) => pattern.id),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });

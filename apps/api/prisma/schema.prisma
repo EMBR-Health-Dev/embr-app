@@ -526,6 +526,16 @@ model ClinicalBrief {
   /// reasoning as every other additive field on this model.
   interpretation Json?
 
+  /// Array<string> — the subset of interpretation.patterns' ids the AI
+  /// actually referenced for this generation, already validated by
+  /// stage4-validation.ts before persistence. Empty array is a real,
+  /// meaningful fact (the AI cited nothing) — see brief.ai.ts's system
+  /// prompt rules 6-7 for why that's a valid, intentional response, not
+  /// a defect — so it stays distinguishable from null ("never computed
+  /// for this brief"). Never recomputed after generation, same
+  /// point-in-time-snapshot reasoning as every other field here.
+  citedPatternIds Json?
+
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing
   /// constraint (questions to ask, never assertions or suggestions).

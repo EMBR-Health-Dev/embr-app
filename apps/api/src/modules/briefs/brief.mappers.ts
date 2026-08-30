@@ -48,6 +48,10 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // stage4-ai-projection.ts for that separate, name-stripped copy,
     // which is never itself persisted or returned via this mapper).
     interpretation: brief.interpretation as unknown as Stage4Result | null,
+    // Same null/empty-array distinction as frequencyComparison, not
+    // coOccurrence — an empty array means the AI genuinely cited
+    // nothing, a real fact distinct from "never computed."
+    citedPatternIds: brief.citedPatternIds as unknown as string[] | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
   };

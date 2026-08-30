@@ -19,6 +19,7 @@ export const briefRepository = {
     treatmentImpact: Prisma.InputJsonValue;
     persistentSymptoms: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
+    citedPatternIds: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {

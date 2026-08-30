@@ -220,6 +220,30 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
     <div className="mt-4 flex flex-col gap-4 text-sm">
       <p className="text-navy/80">{brief.aiNarrative}</p>
 
+      {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
+        <div>
+          <h3 className="font-medium text-navy">{t("groundedInTitle")}</h3>
+          <ul className="mt-1 list-disc pl-5 text-navy/70">
+            {brief.citedPatternIds.flatMap((id) => {
+              const pattern = brief.interpretation!.patterns.find((entry) => entry.id === id);
+              // Should always resolve — citedPatternIds is only ever
+              // populated from ids validateStage4Patterns already
+              // confirmed exist in this same interpretation (see
+              // brief.service.ts). Skips rather than throws if it
+              // somehow doesn't, so a single unexpected id can't take
+              // down the whole page.
+              if (!pattern) return [];
+              return (
+                <li key={id}>
+                  {pattern.observation}
+                  {pattern.association ? ` ${pattern.association}` : ""}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <div>
         <h3 className="font-medium text-navy">{t("questionsForGp")}</h3>
         <ul className="mt-1 list-disc pl-5 text-navy/80">

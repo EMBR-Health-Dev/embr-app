@@ -57,6 +57,7 @@ const { state, nextId } = vi.hoisted(() => {
         treatmentImpact: unknown;
         persistentSymptoms: unknown;
         interpretation: unknown;
+        citedPatternIds: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
         createdAt: Date;
@@ -541,19 +542,19 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(fetched.body.data.frequencyComparison).toEqual(created.body.data.frequencyComparison);
   });
 
-  it("a brief generated before this field existed reads back frequencyComparison, coOccurrence, treatmentImpact, persistentSymptoms, and interpretation as null, not an empty array", async () => {
+  it("a brief generated before this field existed reads back frequencyComparison, coOccurrence, treatmentImpact, persistentSymptoms, interpretation, and citedPatternIds as null, not an empty array", async () => {
     // Simulates a pre-existing row rather than exercising POST — a
     // real NULL JSONB column comes back from Prisma as JS `null`
     // (never `undefined`), which is what this constructs directly,
     // matching schema.prisma's doc comment: null means "never
     // computed for this brief," a materially different fact from an
     // empty array ("computed, found nothing") for frequencyComparison,
-    // treatmentImpact, and persistentSymptoms. coOccurrence shares the
-    // same "old snapshot" null case, even though its own null is
-    // overloaded for a different reason (see schema.prisma's doc
-    // comment on that column) — all five covered in the same test
-    // rather than near-duplicate ones, since all five are proving the
-    // identical "old row, new column" scenario.
+    // treatmentImpact, persistentSymptoms, and citedPatternIds.
+    // coOccurrence shares the same "old snapshot" null case, even
+    // though its own null is overloaded for a different reason (see
+    // schema.prisma's doc comment on that column) — all six covered
+    // in the same test rather than near-duplicate ones, since all six
+    // are proving the identical "old row, new column" scenario.
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "freqcomp5@embr.health");
@@ -571,6 +572,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
       treatmentImpact: null,
       persistentSymptoms: null,
       interpretation: null,
+      citedPatternIds: null,
       aiNarrative: "A brief from before this field existed.",
       aiDiscussionTopics: ["n/a"],
       createdAt: now(),
@@ -583,6 +585,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(res.body.data.treatmentImpact).toBeNull();
     expect(res.body.data.persistentSymptoms).toBeNull();
     expect(res.body.data.interpretation).toBeNull();
+    expect(res.body.data.citedPatternIds).toBeNull();
   });
 });
 
@@ -1360,12 +1363,17 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
       interpretationVersion: "1.0",
       patterns: [KNOWN_PATTERN],
     });
+    // The mocked AI echoed back patterns: [] for this generation — a
+    // real, distinct fact from "never computed," not the default
+    // absence of the field.
+    expect(generateRes.body.data.citedPatternIds).toEqual([]);
 
     // 7. Retrieval returns the same stored interpretation — read back
     // from the persisted record, not the in-memory generate() result.
     const getRes = await agent.get(`/briefs/${generateRes.body.data.id}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.interpretation).toEqual(generateRes.body.data.interpretation);
+    expect(getRes.body.data.citedPatternIds).toEqual([]);
   });
 
   it("the persisted, UI-facing interpretation may contain a treatment name, even though the AI never received it", async () => {
@@ -1422,6 +1430,31 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
     expect(res.body.data.interpretation.patterns).toEqual(buildSpy.mock.results[0]!.value.patterns);
 
     buildSpy.mockRestore();
+  });
+
+  it("persists the AI's actually-cited pattern ids, not every pattern that happened to qualify", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4persist4@embr.health");
+    setUpOneKnownPattern(userId);
+    // The AI echoes back the one supplied pattern — a genuine citation,
+    // not the "cites nothing" case the other persistence test covers.
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [KNOWN_PATTERN],
+    };
+
+    const generateRes = await agent.post("/briefs").send(RANGE);
+
+    expect(generateRes.status).toBe(201);
+    expect(generateRes.body.data.citedPatternIds).toEqual([KNOWN_PATTERN.id]);
+    // interpretation itself is unaffected by what was cited — it still
+    // contains everything that qualified, per its own contract.
+    expect(generateRes.body.data.interpretation.patterns).toEqual([KNOWN_PATTERN]);
+
+    const getRes = await agent.get(`/briefs/${generateRes.body.data.id}`);
+    expect(getRes.body.data.citedPatternIds).toEqual([KNOWN_PATTERN.id]);
   });
 });
 
@@ -1540,6 +1573,10 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(lastPdfCallArg.interpretation.patterns).toEqual(
       expect.arrayContaining([expect.objectContaining({ type: "treatment_window_changed" })]),
     );
+    // The mocked AI response for this test never set patterns, so the
+    // mock factory's default (patterns: []) applies — the AI cited
+    // nothing, a real fact distinct from null.
+    expect(lastPdfCallArg.citedPatternIds).toEqual([]);
   });
 });
 

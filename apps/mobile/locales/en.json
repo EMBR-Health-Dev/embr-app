@@ -300,7 +300,8 @@
     "treatmentImpactEntry": "{{before}} in the {{beforeDays}} days before starting, compared with {{after}} in the {{afterDays}} days after.",
     "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet.",
     "persistentSymptomsTitle": "Ongoing symptoms",
-    "persistentSymptomsEntry": "{{category}} remained present across both periods."
+    "persistentSymptomsEntry": "{{category}} remained present across both periods.",
+    "groundedInTitle": "Grounded in your data"
   },
   "settings": {
     "title": "Settings",
