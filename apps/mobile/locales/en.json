@@ -301,7 +301,13 @@
     "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet.",
     "persistentSymptomsTitle": "Ongoing symptoms",
     "persistentSymptomsEntry": "{{category}} remained present across both periods.",
-    "groundedInTitle": "Grounded in your data"
+    "groundedInTitle": "Grounded in your data",
+    "trendsTitle": "Your recent trends",
+    "briefCountPhrase_one": "{{count}} brief",
+    "briefCountPhrase_other": "{{count}} briefs",
+    "trendsAcrossBriefs_one": "Across your last {{count}} brief",
+    "trendsAcrossBriefs_other": "Across your last {{count}} briefs",
+    "trendsCategoryLine": "{{category}} — reported in {{present}} of {{totalPhrase}}, marked persistent in {{persistent}}."
   },
   "settings": {
     "title": "Settings",

@@ -573,6 +573,35 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   aiDiscussionTopics: string[];
 }
 
+/** Cross-brief evidence aggregation, not a new clinical inference —
+ * every field here is reshaped from data that already existed on
+ * ClinicalBrief rows before this endpoint existed (symptomSummary,
+ * persistentSymptoms). See apps/api/src/modules/briefs/brief-trends.ts
+ * for the exact aggregation semantics, including why "reported" and
+ * "persistent" are always kept as two separate counts rather than one
+ * inferred from the other. */
+export interface BriefTrendCategoryDto {
+  category: SymptomCategory;
+  briefsPresent: number;
+  briefsPersistent: number;
+  totalBriefs: number;
+  mostRecentBriefFromDate: string;
+  mostRecentBriefToDate: string;
+}
+
+export interface BriefTrendsDto {
+  /** How many of the user's briefs this response actually represents
+   * — always <= the requested limit, and can be fewer for a user who
+   * hasn't generated that many yet. This is what lets the UI say
+   * "across your last N briefs" truthfully. */
+  briefCount: number;
+  /** The actual min(fromDate)/max(toDate) across the represented
+   * briefs — null only when briefCount is 0. */
+  earliestBriefFromDate: string | null;
+  latestBriefToDate: string | null;
+  categories: BriefTrendCategoryDto[];
+}
+
 // ---- Onboarding (Milestone 18) ----
 
 /** Same shape whether a row exists yet or not — a user who's never

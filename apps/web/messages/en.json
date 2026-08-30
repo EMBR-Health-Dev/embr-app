@@ -375,7 +375,10 @@
     "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet.",
     "persistentSymptomsTitle": "Ongoing symptoms",
     "persistentSymptomsEntry": "{category} remained present across both periods.",
-    "groundedInTitle": "Grounded in your data"
+    "groundedInTitle": "Grounded in your data",
+    "trendsTitle": "Your recent trends",
+    "trendsAcrossBriefs": "Across your last {count, plural, one {# brief} other {# briefs}}",
+    "trendsCategoryLine": "{category} — reported in {present} of {total, plural, one {# brief} other {# briefs}}, marked persistent in {persistent}."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",
