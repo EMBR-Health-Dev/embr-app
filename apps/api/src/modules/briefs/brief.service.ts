@@ -203,13 +203,15 @@ export const briefService = {
       coOccurrence: coOccurrence === null ? null : JSON.parse(JSON.stringify(coOccurrence)),
       treatmentImpact: JSON.parse(JSON.stringify(treatmentImpact)),
       persistentSymptoms: JSON.parse(JSON.stringify(persistentSymptoms)),
+      // The exact same canonical object computed once above — used to
+      // build the AI-safe projection and to validate the AI's
+      // response — persisted here unchanged, never recomputed. This
+      // is the one canonical Stage4Result for this generation; there
+      // is no second call to buildStage4Interpretation anywhere in
+      // this flow.
+      interpretation: JSON.parse(JSON.stringify(interpretation)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
-      // Deliberately not persisted yet — ClinicalBrief has no column
-      // for it. The provenance-validated `patterns` value is computed
-      // and checked in this step but discarded after; adding
-      // persistence is explicitly the next step's concern, not
-      // silently smuggled in here.
     });
 
     return {
