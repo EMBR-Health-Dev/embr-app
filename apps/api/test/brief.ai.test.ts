@@ -41,6 +41,14 @@ function textResponse(text: string) {
   return { content: [{ type: "text", text }] };
 }
 
+// Discussion topics are now wire objects, {text, patternIds} — this
+// builds one with no citation, the common case for every fixture in
+// this file that isn't specifically testing citation behavior itself
+// (that gets its own dedicated describe block below).
+function dt(text: string, patternIds: string[] = []) {
+  return { text, patternIds };
+}
+
 beforeEach(() => {
   mockCreate.mockReset();
   constructorCalls.length = 0;
@@ -52,7 +60,7 @@ describe("brief.ai", () => {
       textResponse(
         JSON.stringify({
           narrative: "Some narrative.",
-          discussionTopics: ["A question?"],
+          discussionTopics: [dt("A question?")],
           patterns: [],
         }),
       ),
@@ -96,7 +104,7 @@ describe("brief.ai", () => {
       textResponse(
         JSON.stringify({
           narrative: "n",
-          discussionTopics: ["Ask your GP about this?"],
+          discussionTopics: [dt("Ask your GP about this?")],
           patterns: [],
         }),
       ),
@@ -121,7 +129,7 @@ describe("brief.ai", () => {
       textResponse(
         JSON.stringify({
           narrative: "n",
-          discussionTopics: ["Ask your GP about this?"],
+          discussionTopics: [dt("Ask your GP about this?")],
           patterns: [],
         }),
       ),
@@ -139,7 +147,7 @@ describe("brief.ai", () => {
     it("sets an explicit timeout and retry count, not the SDK's own defaults", async () => {
       mockCreate.mockResolvedValue(
         textResponse(
-          JSON.stringify({ narrative: "n", discussionTopics: ["Question?"], patterns: [] }),
+          JSON.stringify({ narrative: "n", discussionTopics: [dt("Question?")], patterns: [] }),
         ),
       );
 
@@ -190,7 +198,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["This is an assertion."],
+            discussionTopics: [dt("This is an assertion.")],
             patterns: [],
           }),
         ),
@@ -203,7 +211,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "This pattern may indicate a diagnosis of something.",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [],
           }),
         ),
@@ -216,7 +224,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["You should try magnesium supplements?"],
+            discussionTopics: [dt("You should try magnesium supplements?")],
             patterns: [],
           }),
         ),
@@ -229,7 +237,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "I recommend seeing a specialist.",
-            discussionTopics: ["Q?"],
+            discussionTopics: [dt("Q?")],
             patterns: [],
           }),
         ),
@@ -242,7 +250,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "The pattern involved 50mg of something.",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [],
           }),
         ),
@@ -256,7 +264,7 @@ describe("brief.ai", () => {
           JSON.stringify({
             narrative: "Hot flashes were logged on 3 of the 30 days in this range.",
             discussionTopics: [
-              "Ask whether the frequency of hot flashes is typical at this stage?",
+              dt("Ask whether the frequency of hot flashes is typical at this stage?"),
             ],
             patterns: [],
           }),
@@ -270,7 +278,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "I recommend rest.",
-            discussionTopics: ["Q?"],
+            discussionTopics: [dt("Q?")],
             patterns: [],
           }),
         ),
@@ -300,7 +308,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [VALID_PATTERN],
           }),
         ),
@@ -313,7 +321,7 @@ describe("brief.ai", () => {
     it("accepts an empty patterns array", async () => {
       mockCreate.mockResolvedValue(
         textResponse(
-          JSON.stringify({ narrative: "n", discussionTopics: ["Question?"], patterns: [] }),
+          JSON.stringify({ narrative: "n", discussionTopics: [dt("Question?")], patterns: [] }),
         ),
       );
 
@@ -325,7 +333,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [{ ...VALID_PATTERN, confidence: "high" }],
           }),
         ),
@@ -339,7 +347,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [{ ...VALID_PATTERN, evidenceRef: { somethingElse: "x" } }],
           }),
         ),
@@ -353,7 +361,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [{ ...VALID_PATTERN, evidenceRef: { category: "NOT_A_REAL_CATEGORY" } }],
           }),
         ),
@@ -367,7 +375,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: ["Question?"],
+            discussionTopics: [dt("Question?")],
             patterns: [
               { ...VALID_PATTERN, interpretation: "This may indicate a diagnosis of something." },
             ],
@@ -376,6 +384,145 @@ describe("brief.ai", () => {
       );
 
       await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+    });
+  });
+
+  // The core invariant this milestone adds: a discussion topic that
+  // cites a specific finding must cite one the model also echoed in
+  // `patterns` for the same response — closing the one gap the
+  // `patterns` array's own provenance validation didn't cover on its
+  // own (see discussionTopicSchema's doc comment in brief.ai.ts for
+  // the full reasoning). Whether a *cited* id also traces back to real
+  // canonical Stage 4 evidence is stage4-validation.ts's job,
+  // downstream in brief.service.ts — not tested here; this only
+  // proves the response-level self-consistency check this file itself
+  // is responsible for.
+  describe("discussion topic citations", () => {
+    it("accepts a topic with no citation — patternIds may be empty", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [dt("A general question with no specific finding?", [])],
+            patterns: [],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
+        discussionTopics: ["A general question with no specific finding?"],
+      });
+    });
+
+    it("accepts a topic citing a pattern id present in this same response's patterns array", async () => {
+      const pattern = {
+        id: "frequency_increased:HOT_FLASH",
+        type: "frequency_increased",
+        observation: "Hot flash frequency increased during the selected period.",
+        interpretation: "The available symptom data shows an increase in logged hot flashes.",
+        caveat: "This is a descriptive pattern in the logged data and does not establish a cause.",
+        confidence: "descriptive",
+        evidenceRef: { category: "HOT_FLASH" },
+      };
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [
+              dt("Ask whether the increase in hot flashes is typical?", [
+                "frequency_increased:HOT_FLASH",
+              ]),
+            ],
+            patterns: [pattern],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
+        discussionTopics: ["Ask whether the increase in hot flashes is typical?"],
+        patterns: [pattern],
+      });
+    });
+
+    it("fails closed when a topic cites a pattern id absent from this response's own patterns array", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            // Cites an id but never includes the corresponding pattern
+            // in `patterns` — exactly the gap this milestone closes:
+            // previously nothing would have caught this at all.
+            discussionTopics: [
+              dt("Ask whether X and Y are related?", ["co_occurrence_detected:X:Y"]),
+            ],
+            patterns: [],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow(
+        "discussion topic cited a pattern id not present in patterns",
+      );
+    });
+
+    it("fails closed for the whole response when only one of several topics has an invalid citation", async () => {
+      const pattern = {
+        id: "frequency_increased:HOT_FLASH",
+        type: "frequency_increased",
+        observation: "Hot flash frequency increased during the selected period.",
+        interpretation: "The available symptom data shows an increase in logged hot flashes.",
+        caveat: "This is a descriptive pattern in the logged data and does not establish a cause.",
+        confidence: "descriptive",
+        evidenceRef: { category: "HOT_FLASH" },
+      };
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [
+              dt("Ask about the hot flash increase?", ["frequency_increased:HOT_FLASH"]),
+              dt("Ask whether X and Y are related?", ["co_occurrence_detected:X:Y"]),
+            ],
+            patterns: [pattern],
+          }),
+        ),
+      );
+
+      // Not a partial success dropping only the bad topic — the entire
+      // generation attempt fails, same as every other validation
+      // failure in this file.
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow(
+        "discussion topic cited a pattern id not present in patterns",
+      );
+    });
+
+    it("strips patternIds before returning — BriefContent.discussionTopics is plain string[]", async () => {
+      const pattern = {
+        id: "frequency_increased:HOT_FLASH",
+        type: "frequency_increased",
+        observation: "Hot flash frequency increased during the selected period.",
+        interpretation: "The available symptom data shows an increase in logged hot flashes.",
+        caveat: "This is a descriptive pattern in the logged data and does not establish a cause.",
+        confidence: "descriptive",
+        evidenceRef: { category: "HOT_FLASH" },
+      };
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [
+              dt("Ask about the hot flash increase?", ["frequency_increased:HOT_FLASH"]),
+            ],
+            patterns: [pattern],
+          }),
+        ),
+      );
+
+      const result = await briefAi.generate(VALID_INPUT);
+      expect(result.discussionTopics).toEqual(["Ask about the hot flash increase?"]);
+      // Not an array of objects — a real string, not something that
+      // merely looks like one when logged.
+      expect(typeof result.discussionTopics[0]).toBe("string");
     });
   });
 });
