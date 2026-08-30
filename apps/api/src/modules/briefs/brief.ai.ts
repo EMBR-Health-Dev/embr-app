@@ -80,9 +80,30 @@ const stage4PatternSchema = z.object({
   evidenceRef: evidenceRefSchema,
 });
 
-const briefResponseSchema = z.object({
+/** Wire-format-only shape for a discussion topic — never exposed
+ * outside this file. `patternIds` is how a topic proves the same
+ * citation-based provenance the `patterns` array already proves for
+ * the narrative: not every topic needs to reference a specific
+ * finding (an empty array is fine — a broad, open question doesn't
+ * assert anything about the data at all), but any id a topic does
+ * cite must resolve to a pattern the model also echoed in `patterns`
+ * for the same response, which is itself validated against canonical
+ * evidence downstream in brief.service.ts. This closes the one gap
+ * `patterns` alone didn't cover: before this, a discussion topic could
+ * assert a relationship between two symptoms or a symptom and a
+ * treatment with zero structural check that the relationship was ever
+ * actually established by Stage 4 — only the system prompt (rule 8)
+ * asked the model not to, which is an instruction, not a guarantee,
+ * exactly like every other place in this file that needed a
+ * deterministic backstop instead of trusting the prompt alone. */
+const discussionTopicSchema = z.object({
+  text: z.string().min(1),
+  patternIds: z.array(z.string()),
+});
+
+const rawResponseSchema = z.object({
   narrative: z.string().min(1),
-  discussionTopics: z.array(z.string().min(1)).min(1).max(8),
+  discussionTopics: z.array(discussionTopicSchema).min(1).max(8),
   patterns: z.array(stage4PatternSchema),
 });
 
@@ -116,6 +137,14 @@ const briefResponseSchema = z.object({
  *   readily connect two things that were never actually linked by any
  *   deterministic evidence — see stage4-interpretation.ts's own doc
  *   comment on why that composition, not narration, is Stage 4's job.
+ * - Rule 10 (discussion topic citations) closes the same gap for
+ *   discussion topics specifically. "patterns" is checked
+ *   deterministically (see stage4-validation.ts), but a discussion
+ *   topic could otherwise assert a relationship in question form
+ *   ("Ask whether X is connected to Y") with nothing structurally
+ *   requiring that relationship to be real — this makes citation
+ *   required wherever a topic does reference specific evidence, then
+ *   validates it the same deterministic way "patterns" already is.
  *
  * Deliberately given only the structured, aggregated summary — never
  * raw free-text symptom-log notes. Notes can contain anything a person
@@ -137,9 +166,10 @@ Follow these rules strictly:
 7. Only include a pattern in "patterns" if you actually referenced it in the narrative or discussion topics. If none of the supplied patterns are relevant, or none were supplied, "patterns" must be an empty array.
 8. Never assert a relationship between two symptoms, or between a symptom and a treatment, unless a pattern explicitly covering exactly that pairing was supplied to you. Having two related facts each appear elsewhere in the data does not authorize you to connect them yourself.
 9. "confidence" on every pattern is always exactly "descriptive" — never change it.
+10. Each discussion topic is an object: {"text": "...", "patternIds": [...]}. If a topic references a specific finding (asks about a frequency change, a co-occurrence, or a treatment window), its "patternIds" must list the id(s) of the pattern(s) it's about, and those ids must also appear in "patterns". If a topic is a general question that doesn't reference any specific finding, "patternIds" must be an empty array — never a fabricated id.
 
 Respond with JSON only, no other text, in exactly this shape:
-{"narrative": "...", "discussionTopics": ["...", "..."], "patterns": [{"id": "...", "type": "...", "observation": "...", "association": "...", "interpretation": "...", "caveat": "...", "confidence": "descriptive", "evidenceRef": {}}]}`;
+{"narrative": "...", "discussionTopics": [{"text": "...", "patternIds": ["..."]}], "patterns": [{"id": "...", "type": "...", "observation": "...", "association": "...", "interpretation": "...", "caveat": "...", "confidence": "descriptive", "evidenceRef": {}}]}`;
 
 /**
  * Defense-in-depth, not the primary safety mechanism — the system
@@ -276,7 +306,7 @@ export const briefAi = {
       throw AppError.internal("Brief generation failed: model response was not valid JSON");
     }
 
-    const result = briefResponseSchema.safeParse(parsed);
+    const result = rawResponseSchema.safeParse(parsed);
     if (!result.success) {
       logger.error(
         { zodError: result.error.message },
@@ -285,7 +315,37 @@ export const briefAi = {
       throw AppError.internal("Brief generation failed: unexpected response shape");
     }
 
-    const safetyFailure = failsContentSafety(result.data);
+    // Discussion-topic citation provenance: any patternIds a topic
+    // cites must resolve to a pattern the model also echoed in this
+    // same response's `patterns` array — the same array
+    // stage4-validation.ts checks against canonical evidence
+    // downstream. An empty patternIds is always fine (see
+    // discussionTopicSchema's own doc comment); only a citation to
+    // something that doesn't exist in `patterns` fails.
+    const returnedPatternIds = new Set(result.data.patterns.map((pattern) => pattern.id));
+    for (const topic of result.data.discussionTopics) {
+      for (const patternId of topic.patternIds) {
+        if (!returnedPatternIds.has(patternId)) {
+          throw AppError.internal(
+            `Brief generation failed: discussion topic cited a pattern id not present in ` +
+              `patterns: "${patternId}"`,
+          );
+        }
+      }
+    }
+
+    // patternIds only ever needed to exist for the validation above —
+    // BriefContent's public shape stays discussionTopics: string[],
+    // exactly as it was before this citation requirement existed, so
+    // nothing downstream (brief.service.ts, the DTO, persistence, any
+    // UI surface) needs to change.
+    const content: BriefContent = {
+      narrative: result.data.narrative,
+      discussionTopics: result.data.discussionTopics.map((topic) => topic.text),
+      patterns: result.data.patterns,
+    };
+
+    const safetyFailure = failsContentSafety(content);
     if (safetyFailure) {
       // Fail closed, same as every other validation failure above --
       // brief.service.ts awaits this call before ever persisting
@@ -294,7 +354,7 @@ export const briefAi = {
       throw new Error(`Brief output failed content safety check: ${safetyFailure}`);
     }
 
-    return result.data;
+    return content;
   },
 };
 
