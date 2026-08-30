@@ -375,7 +375,10 @@
     "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。",
     "persistentSymptomsTitle": "継続している症状",
     "persistentSymptomsEntry": "{category}は両方の期間で継続して報告されました。",
-    "groundedInTitle": "データに基づく根拠"
+    "groundedInTitle": "データに基づく根拠",
+    "trendsTitle": "最近の傾向",
+    "trendsAcrossBriefs": "直近{count}件のブリーフについて",
+    "trendsCategoryLine": "{category} — {total}件中{present}件で報告され、{persistent}件で継続として記録されました。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

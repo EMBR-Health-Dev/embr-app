@@ -1654,3 +1654,159 @@ describe("GET/DELETE /briefs — access control", () => {
     expect(state.briefs.find((b) => b.id === briefId)).toBeDefined();
   });
 });
+
+// Route/service-level coverage for GET /briefs/trends — the pure
+// aggregation logic itself (thresholds, ordering, dedup, the
+// presence-vs-persistence distinction) is already exhaustively
+// covered in brief-trends.test.ts. These tests exist to prove the
+// wiring: authenticated, user-scoped, the right response shape, and
+// the N-most-recent-briefs limit actually applied end to end.
+describe("GET /briefs/trends", () => {
+  // Seeds a fully-formed synthetic brief directly into the mocked
+  // Prisma state, matching the exact pattern the "brief generated
+  // before this field existed" test already uses — far more direct
+  // than driving N full generate() calls through the AI mock and
+  // Stage 4 pipeline just to get controlled symptomSummary/
+  // persistentSymptoms data persisted for a read-path test.
+  function pushBrief(
+    userId: string,
+    overrides: {
+      fromDate?: string;
+      toDate?: string;
+      symptomSummary?: unknown;
+      persistentSymptoms?: unknown;
+      createdAt?: Date;
+    } = {},
+  ) {
+    state.briefs.push({
+      id: nextId(),
+      userId,
+      fromDate: new Date(overrides.fromDate ?? "2026-01-01"),
+      toDate: new Date(overrides.toDate ?? "2026-02-01"),
+      symptomSummary: overrides.symptomSummary ?? [],
+      cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 0 },
+      treatmentSummary: [],
+      frequencyComparison: [],
+      coOccurrence: null,
+      treatmentImpact: [],
+      persistentSymptoms: overrides.persistentSymptoms ?? [],
+      interpretation: { interpretationVersion: "1.0", patterns: [] },
+      citedPatternIds: [],
+      aiNarrative: "n",
+      aiDiscussionTopics: ["n/a"],
+      createdAt: overrides.createdAt ?? now(),
+    });
+  }
+
+  it("requires authentication, same as every other /briefs route", async () => {
+    const app = createApp();
+    const res = await request(app).get("/briefs/trends");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns briefCount: 0 and no categories for a user with no briefs yet", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "notrends@embr.health");
+
+    const res = await agent.get("/briefs/trends");
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      briefCount: 0,
+      earliestBriefFromDate: null,
+      latestBriefToDate: null,
+      categories: [],
+    });
+  });
+
+  it("aggregates across the user's briefs with the correct response shape", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "trends1@embr.health");
+
+    pushBrief(userId, {
+      fromDate: "2026-02-01",
+      toDate: "2026-03-01",
+      symptomSummary: [{ category: "HOT_FLASH", count: 5, severityBreakdown: {} }],
+      persistentSymptoms: ["HOT_FLASH"],
+      createdAt: new Date("2026-03-02"),
+    });
+    pushBrief(userId, {
+      fromDate: "2026-01-01",
+      toDate: "2026-02-01",
+      symptomSummary: [{ category: "HOT_FLASH", count: 2, severityBreakdown: {} }],
+      persistentSymptoms: [],
+      createdAt: new Date("2026-02-02"),
+    });
+
+    const res = await agent.get("/briefs/trends");
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      briefCount: 2,
+      earliestBriefFromDate: "2026-01-01",
+      latestBriefToDate: "2026-03-01",
+      categories: [
+        {
+          category: "HOT_FLASH",
+          briefsPresent: 2,
+          briefsPersistent: 1,
+          totalBriefs: 2,
+          mostRecentBriefFromDate: "2026-02-01",
+          mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+    });
+  });
+
+  it("never includes another user's brief evidence", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const userIdA = await registerAndLogin(agentA, "trendsA@embr.health");
+    pushBrief(userIdA, {
+      symptomSummary: [{ category: "HOT_FLASH", count: 5, severityBreakdown: {} }],
+    });
+
+    const agentB = request.agent(app);
+    const userIdB = await registerAndLogin(agentB, "trendsB@embr.health");
+    pushBrief(userIdB, {
+      symptomSummary: [{ category: "FATIGUE", count: 5, severityBreakdown: {} }],
+    });
+
+    const res = await agentA.get("/briefs/trends");
+
+    expect(res.body.data.briefCount).toBe(1);
+    expect(res.body.data.categories.map((c: { category: string }) => c.category)).toEqual([
+      "HOT_FLASH",
+    ]);
+  });
+
+  it("only aggregates over the N most recent briefs, even when the user has more", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "trendslimit@embr.health");
+
+    // 6 recent briefs reporting HOT_FLASH, 2 older ones (outside the
+    // default limit) reporting a category that should never surface.
+    for (let i = 0; i < 6; i++) {
+      pushBrief(userId, {
+        symptomSummary: [{ category: "HOT_FLASH", count: 3, severityBreakdown: {} }],
+        createdAt: new Date(`2026-06-${10 + i}`),
+      });
+    }
+    for (let i = 0; i < 2; i++) {
+      pushBrief(userId, {
+        symptomSummary: [{ category: "FATIGUE", count: 3, severityBreakdown: {} }],
+        createdAt: new Date(`2026-01-0${i + 1}`),
+      });
+    }
+
+    const res = await agent.get("/briefs/trends");
+
+    expect(res.body.data.briefCount).toBe(6);
+    expect(res.body.data.categories.map((c: { category: string }) => c.category)).toEqual([
+      "HOT_FLASH",
+    ]);
+  });
+});

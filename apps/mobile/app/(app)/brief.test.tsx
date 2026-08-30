@@ -9,11 +9,18 @@ import en from "../../locales/en.json";
 
 const listMock = vi.fn();
 const getMock = vi.fn();
+const trendsMock = vi.fn().mockResolvedValue({
+  briefCount: 0,
+  earliestBriefFromDate: null,
+  latestBriefToDate: null,
+  categories: [],
+});
 vi.mock("../../lib/api", () => ({
   api: {
     briefs: {
       generate: vi.fn(),
       list: (...args: unknown[]) => listMock(...args),
+      trends: (...args: unknown[]) => trendsMock(...args),
       get: (...args: unknown[]) => getMock(...args),
       delete: vi.fn(),
     },
@@ -67,6 +74,13 @@ beforeAll(async () => {
 beforeEach(() => {
   listMock.mockReset();
   getMock.mockReset();
+  trendsMock.mockClear();
+  trendsMock.mockResolvedValue({
+    briefCount: 0,
+    earliestBriefFromDate: null,
+    latestBriefToDate: null,
+    categories: [],
+  });
 });
 
 // Same lightweight, local-to-this-file pattern web's own
@@ -277,6 +291,58 @@ describe("Brief screen — Grounded in your data (Stage 4 citations)", () => {
 
     await waitFor(() => expect(screen.getByText("FATIGUE observation text.")).toBeInTheDocument());
     expect(screen.queryByText("HOT_FLASH observation text.")).not.toBeInTheDocument();
+  });
+});
+
+describe("Brief screen — Your recent trends", () => {
+  it("shows the trends section with a per-category line when the API returns data", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    trendsMock.mockResolvedValue({
+      briefCount: 3,
+      earliestBriefFromDate: "2026-01-01",
+      latestBriefToDate: "2026-03-01",
+      categories: [
+        {
+          category: "HOT_FLASH",
+          briefsPresent: 3,
+          briefsPersistent: 2,
+          totalBriefs: 3,
+          mostRecentBriefFromDate: "2026-02-01",
+          mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+    });
+    const { default: BriefScreen } = await import("./brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
+    expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
+    expect(
+      screen.getByText("Hot Flash — reported in 3 of 3 briefs, marked persistent in 2."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the trends section when briefCount is 0", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    trendsMock.mockResolvedValue({
+      briefCount: 0,
+      earliestBriefFromDate: null,
+      latestBriefToDate: null,
+      categories: [],
+    });
+    const { default: BriefScreen } = await import("./brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+
+    await screen.findByText("No briefs generated yet.");
+    expect(screen.queryByText("Your recent trends")).not.toBeInTheDocument();
   });
 });
 

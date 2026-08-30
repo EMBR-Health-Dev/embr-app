@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
+import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -14,6 +14,7 @@ import { Field } from "../../components/field";
 export default function BriefPage() {
   const t = useTranslations("Brief");
   const tCommon = useTranslations("Common");
+  const tEnum = useTranslations("Enums");
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -27,6 +28,7 @@ export default function BriefPage() {
   const [openBriefId, setOpenBriefId] = useState<string | null>(null);
   const [openBrief, setOpenBrief] = useState<ClinicalBriefDto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [trends, setTrends] = useState<BriefTrendsDto | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -38,6 +40,13 @@ export default function BriefPage() {
 
   useEffect(() => {
     if (user) loadHistory();
+  }, [user]);
+
+  useEffect(() => {
+    // Independent of loadHistory — evidence aggregation over the
+    // user's own recent briefs, not tied to the paginated history
+    // list's own loading state or page size.
+    if (user) api.briefs.trends().then(setTrends);
   }, [user]);
 
   async function handleGenerate(e: React.FormEvent) {
@@ -54,6 +63,7 @@ export default function BriefPage() {
       const brief = await api.briefs.generate({ fromDate, toDate });
       setJustGenerated(brief);
       loadHistory();
+      api.briefs.trends().then(setTrends);
     } catch (err) {
       setGenerateError(err instanceof ApiError ? err.message : t("generateError"));
     } finally {
@@ -139,6 +149,27 @@ export default function BriefPage() {
           >
             {t("downloadPdf")}
           </a>
+        </section>
+      )}
+
+      {trends && trends.briefCount > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-lg text-navy">{t("trendsTitle")}</h2>
+          <p className="mt-1 text-sm text-navy/60">
+            {t("trendsAcrossBriefs", { count: trends.briefCount })}
+          </p>
+          <ul className="mt-3 flex flex-col gap-1">
+            {trends.categories.map((row) => (
+              <li key={row.category} className="text-sm text-navy/70">
+                {t("trendsCategoryLine", {
+                  category: tEnum(`category.${row.category}`),
+                  present: row.briefsPresent,
+                  total: row.totalBriefs,
+                  persistent: row.briefsPersistent,
+                })}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

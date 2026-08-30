@@ -1,5 +1,6 @@
 import type {
   AuthSessionResponse,
+  BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
   CycleEntryDto,
@@ -230,6 +231,8 @@ export const api = {
 
     list: (query?: { page?: number; pageSize?: number }) =>
       apiFetch<PaginatedResponse<ClinicalBriefListItemDto>>("/briefs", { query }),
+
+    trends: () => apiFetch<BriefTrendsDto>("/briefs/trends"),
 
     get: (id: string) => apiFetch<ClinicalBriefDto>(`/briefs/${id}`),
 

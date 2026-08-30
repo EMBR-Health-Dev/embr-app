@@ -1,12 +1,18 @@
 import { AppError } from "@embr/shared";
 import type {
+  BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
   PaginatedResponse,
   SymptomCategory,
 } from "@embr/types";
 import type { PaginationQuery } from "@embr/validation";
-import type { CycleEntry, SymptomLog, Treatment } from "../../generated/prisma/index.js";
+import type {
+  CycleEntry,
+  SymptomLog,
+  Treatment,
+  ClinicalBrief,
+} from "../../generated/prisma/index.js";
 import { paginate } from "../../lib/pagination.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 import { exportRepository } from "../export/export.repository.js";
@@ -17,6 +23,11 @@ import {
   computeTreatmentImpactWindows,
 } from "../treatments/treatment-impact.js";
 import { detectSymptomCoOccurrence } from "../trends/co-occurrence.js";
+import {
+  aggregateBriefTrends,
+  DEFAULT_TREND_BRIEF_LIMIT,
+  type BriefTrendSourceBrief,
+} from "./brief-trends.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -234,6 +245,30 @@ export const briefService = {
     const [briefs, total] = await briefRepository.listForUser(userId, query);
 
     return paginate(briefs.map(toClinicalBriefListItemDto), total, query);
+  },
+
+  /** Cross-brief evidence aggregation over the user's own N most
+   * recent briefs — not a new detector, not AI-involved. Reuses
+   * listForUser exactly as the existing paginated history list does
+   * (page 1, a small pageSize), rather than a new repository method,
+   * since a plain findMany ordered by createdAt desc with a take is
+   * already exactly "the N most recent briefs." See
+   * brief-trends.ts's own doc comment for the aggregation semantics
+   * themselves. */
+  async trends(userId: string): Promise<BriefTrendsDto> {
+    const [briefs] = await briefRepository.listForUser(userId, {
+      page: 1,
+      pageSize: DEFAULT_TREND_BRIEF_LIMIT,
+    });
+
+    const sourceBriefs: BriefTrendSourceBrief[] = briefs.map((brief: ClinicalBrief) => ({
+      fromDate: brief.fromDate.toISOString().slice(0, 10),
+      toDate: brief.toDate.toISOString().slice(0, 10),
+      symptomSummary: brief.symptomSummary as unknown as BriefTrendSourceBrief["symptomSummary"],
+      persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
+    }));
+
+    return aggregateBriefTrends(sourceBriefs, DEFAULT_TREND_BRIEF_LIMIT);
   },
 
   async get(id: string, userId: string): Promise<ClinicalBriefDto> {

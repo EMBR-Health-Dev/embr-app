@@ -28,11 +28,18 @@ const listMock = vi
   .mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
 const getMock = vi.fn();
 const deleteMock = vi.fn();
+const trendsMock = vi.fn().mockResolvedValue({
+  briefCount: 0,
+  earliestBriefFromDate: null,
+  latestBriefToDate: null,
+  categories: [],
+});
 vi.mock("../../lib/api", () => ({
   api: {
     briefs: {
       generate: (...args: unknown[]) => generateMock(...args),
       list: (...args: unknown[]) => listMock(...args),
+      trends: (...args: unknown[]) => trendsMock(...args),
       get: (...args: unknown[]) => getMock(...args),
       delete: (...args: unknown[]) => deleteMock(...args),
       pdfUrl: (id: string) => `/api/briefs/${id}/pdf`,
@@ -92,6 +99,13 @@ beforeEach(() => {
   listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
   getMock.mockReset();
   deleteMock.mockReset();
+  trendsMock.mockClear();
+  trendsMock.mockResolvedValue({
+    briefCount: 0,
+    earliestBriefFromDate: null,
+    latestBriefToDate: null,
+    categories: [],
+  });
 });
 
 describe("Brief page — generation", () => {
@@ -248,6 +262,48 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
         "HOT_FLASH was reported on 6 days during the current period, compared with 4.",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Brief page — Your recent trends", () => {
+  it("shows the trends section with a per-category line when the API returns data", async () => {
+    trendsMock.mockResolvedValue({
+      briefCount: 3,
+      earliestBriefFromDate: "2026-01-01",
+      latestBriefToDate: "2026-03-01",
+      categories: [
+        {
+          category: "HOT_FLASH",
+          briefsPresent: 3,
+          briefsPersistent: 2,
+          totalBriefs: 3,
+          mostRecentBriefFromDate: "2026-02-01",
+          mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+    });
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
+    expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
+    expect(
+      screen.getByText("Hot Flash — reported in 3 of 3 briefs, marked persistent in 2."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the trends section when briefCount is 0", async () => {
+    trendsMock.mockResolvedValue({
+      briefCount: 0,
+      earliestBriefFromDate: null,
+      latestBriefToDate: null,
+      categories: [],
+    });
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    await screen.findByText("No briefs generated yet.");
+    expect(screen.queryByText("Your recent trends")).not.toBeInTheDocument();
   });
 });
 
