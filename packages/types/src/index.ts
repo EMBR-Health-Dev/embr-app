@@ -141,6 +141,69 @@ export interface TreatmentImpactDto {
   insufficientData: boolean;
 }
 
+/**
+ * Stage 4 of EMBR's clinical logic pipeline (see the
+ * embr-clinical-logic skill doctrine) — the canonical, deterministic
+ * interpretation layer between Stage 3 evidence and AI narration. The
+ * logic that produces these lives in
+ * apps/api/src/modules/briefs/stage4-interpretation.ts, which imports
+ * these type definitions from here rather than defining them itself —
+ * this package is the single source of truth for the shape, since
+ * ClinicalBriefDto (below) needs to expose it and this is the one
+ * place both the API and every client can import from without a
+ * circular or one-directional-only dependency.
+ */
+export type Stage4PatternType =
+  | "frequency_increased"
+  | "frequency_decreased"
+  | "co_occurrence_detected"
+  | "treatment_window_changed";
+
+export type Stage4EvidenceRef =
+  | { category: SymptomCategory }
+  | { categoryA: SymptomCategory; categoryB: SymptomCategory }
+  | { treatmentId: string };
+
+export interface Stage4Pattern {
+  /** Deterministic — built only from `type` and `evidenceRef`, never
+   * random. The same Stage 3 evidence always produces the same id,
+   * which is what makes citation validation and historical/test
+   * comparison possible: a random UUID would make "did the AI cite a
+   * pattern that genuinely existed" unverifiable across two
+   * independent computations of the same evidence. */
+  id: string;
+  type: Stage4PatternType;
+  /** What the deterministic evidence directly establishes — counts,
+   * dates, categories. Never a claim about why, only what. */
+  observation: string;
+  /** Present only for co_occurrence_detected. Describes temporal
+   * co-occurrence specifically — "reported on the same days" — never
+   * a claim that one symptom causes or influences the other. */
+  association?: string;
+  /** A bounded, deterministic explanation of what the observation (and
+   * association, where present) means at the most literal level —
+   * never a medical or causal inference. Fixed per pattern type, not
+   * authored per instance. */
+  interpretation: string;
+  /** Fixed per pattern type — explicitly guards against
+   * overinterpretation of exactly this pattern type. */
+  caveat: string;
+  /** The only value that exists in this milestone — communicates the
+   * epistemic level of the output (a plain description of the data,
+   * not a statistical or clinical confidence score) rather than
+   * grading how "sure" the finding is. */
+  confidence: "descriptive";
+  /** Points back to the exact Stage 3 evidence entry this pattern was
+   * derived from — never a duplicate copy of that evidence, just
+   * enough to identify it. */
+  evidenceRef: Stage4EvidenceRef;
+}
+
+export interface Stage4Result {
+  interpretationVersion: string;
+  patterns: Stage4Pattern[];
+}
+
 export type FlowIntensity = "SPOTTING" | "LIGHT" | "MEDIUM" | "HEAVY";
 
 export interface CycleEntryDto {
@@ -467,9 +530,10 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * than useful. Null/empty-array distinction matches
    * frequencyComparison's reasoning, not coOccurrence's: an empty
    * array here is a real fact ("no treatments started this period"),
-   * so it must stay distinguishable from "never computed." Never sent
-   * to the AI as of this milestone — see treatment-impact.ts's own
-   * doc comment on why that's a deliberate, separate conversation. */
+   * so it must stay distinguishable from "never computed." This raw
+   * array itself is never sent to the AI — only a derived,
+   * treatment-name-stripped projection is, via `interpretation` below
+   * (see stage4-ai-projection.ts). */
   treatmentImpact: BriefTreatmentImpactEntryDto[] | null;
   /** Derived purely from frequencyComparison — no new counting, no new
    * query. A category qualifies when it was reported at all in the
@@ -478,9 +542,21 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * a floor, not a target. Null/empty-array distinction matches
    * frequencyComparison's own reasoning: an empty array is a real
    * fact ("nothing qualified as persistent"), so it must stay
-   * distinguishable from "never computed for this brief." Never sent
-   * to the AI as of this milestone. */
+   * distinguishable from "never computed for this brief." No Stage 4
+   * pattern type maps to this, so it is never sent to the AI in any
+   * form. */
   persistentSymptoms: SymptomCategory[] | null;
+  /** The canonical Stage 4 result — the same object computed once
+   * during generation, used to validate the AI's response, and
+   * persisted here, never recomputed. Safe to render in full,
+   * including treatment names inside treatment_window_changed
+   * patterns' observation text: that's fine for UI/PDF display, and
+   * is a *different* concern from what's safe to send to the AI —
+   * see stage4-ai-projection.ts for the treatment-name-stripped copy
+   * that's used for that instead. Null for a brief generated before
+   * this field existed; never backfilled, matching every other
+   * additive field on this DTO. */
+  interpretation: Stage4Result | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

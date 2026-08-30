@@ -56,6 +56,7 @@ const { state, nextId } = vi.hoisted(() => {
         coOccurrence: unknown;
         treatmentImpact: unknown;
         persistentSymptoms: unknown;
+        interpretation: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
         createdAt: Date;
@@ -540,7 +541,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(fetched.body.data.frequencyComparison).toEqual(created.body.data.frequencyComparison);
   });
 
-  it("a brief generated before this field existed reads back frequencyComparison, coOccurrence, treatmentImpact, and persistentSymptoms as null, not an empty array", async () => {
+  it("a brief generated before this field existed reads back frequencyComparison, coOccurrence, treatmentImpact, persistentSymptoms, and interpretation as null, not an empty array", async () => {
     // Simulates a pre-existing row rather than exercising POST — a
     // real NULL JSONB column comes back from Prisma as JS `null`
     // (never `undefined`), which is what this constructs directly,
@@ -550,8 +551,8 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     // treatmentImpact, and persistentSymptoms. coOccurrence shares the
     // same "old snapshot" null case, even though its own null is
     // overloaded for a different reason (see schema.prisma's doc
-    // comment on that column) — all four covered in the same test
-    // rather than near-duplicate ones, since all four are proving the
+    // comment on that column) — all five covered in the same test
+    // rather than near-duplicate ones, since all five are proving the
     // identical "old row, new column" scenario.
     const app = createApp();
     const agent = request.agent(app);
@@ -569,6 +570,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
       coOccurrence: null,
       treatmentImpact: null,
       persistentSymptoms: null,
+      interpretation: null,
       aiNarrative: "A brief from before this field existed.",
       aiDiscussionTopics: ["n/a"],
       createdAt: now(),
@@ -580,6 +582,7 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(res.body.data.coOccurrence).toBeNull();
     expect(res.body.data.treatmentImpact).toBeNull();
     expect(res.body.data.persistentSymptoms).toBeNull();
+    expect(res.body.data.interpretation).toBeNull();
   });
 });
 
@@ -1200,9 +1203,12 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
   const KNOWN_PATTERN = {
     id: "frequency_increased:HOT_FLASH",
     type: "frequency_increased",
-    observation: "HOT_FLASH was reported on 2 days during the current period, compared with 0.",
-    interpretation: "This represents an increase in how often HOT_FLASH was reported.",
-    caveat: "This reflects self-reported logging frequency only.",
+    observation:
+      "HOT_FLASH was reported on 2 days during the current period, compared with 0 during the previous period.",
+    interpretation:
+      "This represents an increase in how often HOT_FLASH was reported, relative to the previous period.",
+    caveat:
+      "This reflects self-reported logging frequency only. It does not indicate severity, cause, or clinical significance.",
     confidence: "descriptive",
     evidenceRef: { category: "HOT_FLASH" },
   };
@@ -1335,6 +1341,88 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
 
     expect(res.status).toBe(201);
   });
+
+  it("persists the canonical Stage 4 interpretation, with deterministic ids and evidenceRef retained exactly, readable via GET", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4persist1@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"], patterns: [] };
+
+    const generateRes = await agent.post("/briefs").send(RANGE);
+    expect(generateRes.status).toBe(201);
+
+    // 1, 2, 3: the persisted interpretation (in the POST response,
+    // read directly from the created record) retains the deterministic
+    // id and the exact evidenceRef — not just some pattern with the
+    // right narrative text.
+    expect(generateRes.body.data.interpretation).toEqual({
+      interpretationVersion: "1.0",
+      patterns: [KNOWN_PATTERN],
+    });
+
+    // 7. Retrieval returns the same stored interpretation — read back
+    // from the persisted record, not the in-memory generate() result.
+    const getRes = await agent.get(`/briefs/${generateRes.body.data.id}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.data.interpretation).toEqual(generateRes.body.data.interpretation);
+  });
+
+  it("the persisted, UI-facing interpretation may contain a treatment name, even though the AI never received it", async () => {
+    // 4, 5: proves both halves of the privacy boundary in one place —
+    // the canonical persisted copy is allowed to contain the name
+    // (this is the DTO real UI/PDF code reads), while
+    // stage4-ai-projection.test.ts and this file's own CRITICAL test
+    // separately prove the AI-facing copy never does.
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4persist2@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+    });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-12") });
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"], patterns: [] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    const treatmentPattern = res.body.data.interpretation.patterns.find(
+      (p: { type: string }) => p.type === "treatment_window_changed",
+    );
+    expect(treatmentPattern).toBeDefined();
+    expect(treatmentPattern.observation).toContain("Estradiol patch");
+
+    // The AI-facing payload for this same request still never saw it —
+    // same assertion style as the CRITICAL test above, checked again
+    // here specifically alongside the persisted-with-name proof, so
+    // the contrast is visible in one test rather than two files a
+    // reader has to cross-reference.
+    const lastCallArg = vi.mocked(briefAi.generate).mock.calls.at(-1)![0];
+    expect(JSON.stringify(lastCallArg)).not.toContain("Estradiol");
+  });
+
+  it("does not recompute Stage 4 during persistence — the object built once is the exact object persisted", async () => {
+    // 8. Structural proof, not an inference from matching output: spy
+    // on the real buildStage4Interpretation implementation and count
+    // calls for a single generate() request.
+    const buildStage4Module = await import("../src/modules/briefs/stage4-interpretation.js");
+    const buildSpy = vi.spyOn(buildStage4Module, "buildStage4Interpretation");
+
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4persist3@embr.health");
+    setUpOneKnownPattern(userId);
+    aiState.nextResponse = { narrative: "n", discussionTopics: ["Q?"], patterns: [] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(buildSpy).toHaveBeenCalledTimes(1);
+    expect(res.body.data.interpretation.patterns).toEqual(buildSpy.mock.results[0]!.value.patterns);
+
+    buildSpy.mockRestore();
+  });
 });
 
 describe("GET /briefs/:id — treatment snapshot invariant", () => {
@@ -1422,6 +1510,12 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(getRes.body.data.frequencyComparison).toEqual([]);
     expect(getRes.body.data.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
     expect(getRes.body.data.persistentSymptoms).toEqual([]);
+    // The canonical, persisted interpretation is allowed to contain the
+    // treatment name — see the dedicated Stage 4 persistence test
+    // above for the full proof that the AI-facing copy never does.
+    expect(getRes.body.data.interpretation.patterns).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: "treatment_window_changed" })]),
+    );
 
     // 3. GET /briefs/:id/pdf is built from that same persisted brief
     // (via briefService.get(), a separate request from generation) and
@@ -1443,6 +1537,9 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(lastPdfCallArg.coOccurrence).toBeNull();
     expect(lastPdfCallArg.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
     expect(lastPdfCallArg.persistentSymptoms).toEqual([]);
+    expect(lastPdfCallArg.interpretation.patterns).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: "treatment_window_changed" })]),
+    );
   });
 });
 

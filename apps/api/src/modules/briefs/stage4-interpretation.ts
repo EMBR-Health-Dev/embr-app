@@ -1,5 +1,9 @@
 import type {
   BriefTreatmentImpactEntryDto,
+  Stage4EvidenceRef,
+  Stage4Pattern,
+  Stage4PatternType,
+  Stage4Result,
   SymptomCategory,
   SymptomCoOccurrenceDto,
 } from "@embr/types";
@@ -27,65 +31,20 @@ import type { SymptomFrequencyComparisonEntry } from "./period-comparison.js";
  * produce too many low-value patterns in practice, that is an
  * explicit, independently justified decision for a later milestone —
  * not something to quietly invent here.
+ *
+ * The Stage4PatternType/Stage4EvidenceRef/Stage4Pattern/Stage4Result
+ * *type definitions* live in @embr/types, not here — ClinicalBriefDto
+ * needs to expose the canonical persisted interpretation to every
+ * client, and @embr/types is the one place both the API and every
+ * client already import shared shapes from (see TreatmentImpactDto
+ * for the exact same precedent). Re-exported below so every existing
+ * import of these types from this file keeps working unchanged; this
+ * file remains the one place the actual pattern-building *logic*
+ * lives.
  */
+export type { Stage4PatternType, Stage4EvidenceRef, Stage4Pattern, Stage4Result };
 
 export const INTERPRETATION_VERSION = "1.0";
-
-export type Stage4PatternType =
-  | "frequency_increased"
-  | "frequency_decreased"
-  | "co_occurrence_detected"
-  | "treatment_window_changed";
-
-export type Stage4EvidenceRef =
-  | { category: SymptomCategory }
-  | { categoryA: SymptomCategory; categoryB: SymptomCategory }
-  | { treatmentId: string };
-
-export interface Stage4Pattern {
-  /** Deterministic — built only from `type` and `evidenceRef`, never
-   * random (see buildPatternId below). The same Stage 3 evidence
-   * always produces the same id, which is what makes citation
-   * validation and historical/test comparison possible: a random
-   * UUID would make "did the AI cite a pattern that genuinely
-   * existed" unverifiable across two independent computations of the
-   * same evidence, and would make this module's own determinism test
-   * meaningless. */
-  id: string;
-  type: Stage4PatternType;
-  /** What the deterministic evidence directly establishes — counts,
-   * dates, categories. Never a claim about why, only what. */
-  observation: string;
-  /** Present only for co_occurrence_detected. Describes temporal
-   * co-occurrence specifically — "reported on the same days" — never
-   * a claim that one symptom causes or influences the other. */
-  association?: string;
-  /** A bounded, deterministic explanation of what the observation (and
-   * association, where present) means at the most literal level —
-   * never a medical or causal inference. Fixed per pattern type, not
-   * authored per instance. */
-  interpretation: string;
-  /** Fixed per pattern type — explicitly guards against
-   * overinterpretation of exactly this pattern type. */
-  caveat: string;
-  /** The only value that exists in this milestone — communicates the
-   * epistemic level of the output (a plain description of the data,
-   * not a statistical or clinical confidence score) rather than
-   * grading how "sure" the finding is. */
-  confidence: "descriptive";
-  /** Points back to the exact Stage 3 evidence entry this pattern was
-   * derived from — never a duplicate copy of that evidence, just
-   * enough to identify it. This is what lets a future safety check
-   * verify the AI narrated only relationships that were actually
-   * supplied, and lets a person trace any sentence in the brief back
-   * to its source. */
-  evidenceRef: Stage4EvidenceRef;
-}
-
-export interface Stage4Result {
-  interpretationVersion: string;
-  patterns: Stage4Pattern[];
-}
 
 /**
  * Deliberately only the three Stage 3 evidence shapes that map to one

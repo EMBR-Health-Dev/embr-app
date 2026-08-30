@@ -18,6 +18,7 @@ export const briefRepository = {
     coOccurrence: Prisma.InputJsonValue | null;
     treatmentImpact: Prisma.InputJsonValue;
     persistentSymptoms: Prisma.InputJsonValue;
+    interpretation: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {

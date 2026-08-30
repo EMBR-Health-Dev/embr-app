@@ -7,6 +7,7 @@ import type {
   BriefTreatmentSummaryEntryDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  Stage4Result,
   SymptomCategory,
   SymptomCoOccurrenceDto,
 } from "@embr/types";
@@ -40,6 +41,13 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // coOccurrence — see ClinicalBriefDto's own doc comment.
     treatmentImpact: brief.treatmentImpact as unknown as BriefTreatmentImpactEntryDto[] | null,
     persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
+    // The canonical Stage 4 result, exactly as generation computed and
+    // persisted it — including treatment names inside
+    // treatment_window_changed patterns, safe here since this is the
+    // UI/PDF-facing DTO, not what was sent to the AI (see
+    // stage4-ai-projection.ts for that separate, name-stripped copy,
+    // which is never itself persisted or returned via this mapper).
+    interpretation: brief.interpretation as unknown as Stage4Result | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
   };
