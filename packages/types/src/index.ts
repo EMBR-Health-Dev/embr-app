@@ -557,6 +557,18 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * this field existed; never backfilled, matching every other
    * additive field on this DTO. */
   interpretation: Stage4Result | null;
+  /** The subset of interpretation.patterns' ids the AI actually
+   * referenced in aiNarrative/aiDiscussionTopics for this generation —
+   * a real, meaningful subset per brief.ai.ts's own system prompt
+   * (rules 6-7: only cite what was actually used; an empty array is a
+   * valid, intentional response, not a defect). interpretation itself
+   * always contains every pattern that qualified, whether or not the
+   * AI narrated it — this field is what lets a UI distinguish "this is
+   * everything the data showed" from "this is specifically what the
+   * narrative above is grounded in." Null for a brief generated before
+   * this field existed; never backfilled, matching every other
+   * additive field on this DTO. */
+  citedPatternIds: string[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

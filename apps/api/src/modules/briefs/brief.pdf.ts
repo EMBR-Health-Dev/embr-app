@@ -61,6 +61,32 @@ export function buildClinicalBriefPdf(
     .text(brief.aiNarrative, { align: "left" });
   doc.moveDown(1);
 
+  // ---- Grounded in your data (the deterministic findings the AI actually cited) ----
+  // Only rendered when both fields are present and non-empty — see
+  // ClinicalBriefDto's own doc comment on citedPatternIds for why an
+  // empty array (the AI cited nothing) is a real, distinct fact from
+  // null (a brief predating this field). Renders the same
+  // observation/association text the web and mobile "Grounded in your
+  // data" section does — never re-derived or reworded here.
+  if (brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation) {
+    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Grounded in your data");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica").fillColor("#333333");
+    for (const id of brief.citedPatternIds) {
+      const pattern = brief.interpretation.patterns.find((entry) => entry.id === id);
+      // Should always resolve — see the same reasoning in page.tsx/
+      // brief.tsx. Skipped rather than throwing, so one unexpected id
+      // can't break PDF generation for the rest of the brief.
+      if (!pattern) continue;
+      const text = pattern.association
+        ? `${pattern.observation} ${pattern.association}`
+        : pattern.observation;
+      doc.text(`•  ${text}`, { indent: 0 });
+      doc.moveDown(0.2);
+    }
+    doc.moveDown(0.8);
+  }
+
   // ---- Discussion topics ----
   doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Questions to bring to your GP");
   doc.moveDown(0.4);

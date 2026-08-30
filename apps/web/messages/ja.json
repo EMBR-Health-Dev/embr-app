@@ -374,7 +374,8 @@
     "treatmentImpactEntry": "開始前{beforeDays}日間で{beforeCount, plural, other {#件}}の記録、開始後{afterDays}日間で{afterCount, plural, other {#件}}の記録がありました。",
     "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。",
     "persistentSymptomsTitle": "継続している症状",
-    "persistentSymptomsEntry": "{category}は両方の期間で継続して報告されました。"
+    "persistentSymptomsEntry": "{category}は両方の期間で継続して報告されました。",
+    "groundedInTitle": "データに基づく根拠"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

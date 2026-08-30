@@ -222,6 +222,28 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
     <View style={styles.briefContent}>
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
 
+      {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.groundedInTitle")}</Text>
+          {brief.citedPatternIds.map((id) => {
+            const pattern = brief.interpretation!.patterns.find((entry) => entry.id === id);
+            // Should always resolve — citedPatternIds is only ever
+            // populated from ids validateStage4Patterns already
+            // confirmed exist in this same interpretation (see
+            // brief.service.ts). Skips rather than throws if it
+            // somehow doesn't, so a single unexpected id can't take
+            // down the whole screen.
+            if (!pattern) return null;
+            return (
+              <Text key={id} style={styles.summaryLine}>
+                {pattern.observation}
+                {pattern.association ? ` ${pattern.association}` : ""}
+              </Text>
+            );
+          })}
+        </>
+      )}
+
       <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
       {brief.aiDiscussionTopics.map((topic, i) => (
         <Text key={i} style={styles.topic}>
