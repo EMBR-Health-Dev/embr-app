@@ -21,7 +21,7 @@ export const briefRepository = {
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;
     aiNarrative: string;
-    aiDiscussionTopics: string[];
+    aiDiscussionTopics: Prisma.InputJsonValue;
   }) {
     return prisma.clinicalBrief.create({ data });
   },
