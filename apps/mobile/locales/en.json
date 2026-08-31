@@ -275,6 +275,7 @@
     "pdf": "PDF",
     "delete": "Delete",
     "questionsForGp": "Questions to bring to your GP",
+    "dataCompleteness": "Logged {{daysLogged}} of {{totalDays}} days in this range ({{percent}}%)",
     "symptomFrequency": "Symptom frequency",
     "noSymptomsInRange": "No symptoms logged in this range.",
     "occurrenceCount_one": "{{count}} occurrence",

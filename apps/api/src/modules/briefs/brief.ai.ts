@@ -17,6 +17,17 @@ export interface BriefInput {
     cycleCount: number;
     periodDaysLogged: number;
   };
+  /** See lib/data-completeness.ts. Given to the model specifically so
+   * Rule 4 below has an actual number to ground "say so if sparse" in,
+   * rather than the model inferring sparsity from the shape of
+   * symptomSummary alone (which conflates "few symptoms happened" with
+   * "the person rarely opened the app" — two very different things
+   * that call for different framing). */
+  dataCompleteness: {
+    totalDays: number;
+    daysLogged: number;
+    completenessPercent: number;
+  };
 }
 
 export interface BriefContent {
@@ -49,7 +60,11 @@ const briefResponseSchema = z.object({
  *   indicate Y" does not.
  * - Rule 4 (say so if sparse) exists because a model asked to find
  *   patterns in three data points will, if not told otherwise, find
- *   them anyway.
+ *   them anyway. Grounded in an actual dataCompleteness figure (see
+ *   BriefInput) rather than left to the model's own impression of
+ *   sparsity, for the same reason Rule 1 is grounded in the structured
+ *   summary rather than the model's general knowledge: a number is
+ *   harder to rationalize past than a vibe.
  *
  * Deliberately given only the structured, aggregated summary — never
  * raw free-text symptom-log notes. Notes can contain anything a person
@@ -65,7 +80,7 @@ Follow these rules strictly:
 1. Describe only patterns directly supported by the structured data provided. Never infer, speculate, or add information not present in the data — including general medical knowledge about menopause that isn't reflected in this specific data.
 2. Never diagnose, name a medical condition, suggest a cause, or recommend any treatment, medication, dosage, or lifestyle change.
 3. Every discussion topic must be phrased as an open question the person could ask their GP — never as an assertion, conclusion, or piece of advice. Write "Ask whether the increase in hot flash frequency since [date] is a typical pattern at this stage" — not "Your hot flashes are worsening, which may indicate X."
-4. If the data is too sparse to support a meaningful summary, say so plainly rather than inventing a pattern.
+4. You will be given a dataCompleteness figure (the percentage of days in the range that have any logged data). If completenessPercent is below 50, you must explicitly say the summary reflects limited data before describing any pattern, rather than inventing one from a sparse record.
 5. Keep the narrative factual and neutral — this is a data summary, not medical commentary.
 
 Respond with JSON only, no other text, in exactly this shape:
@@ -152,6 +167,7 @@ export const briefAi = {
               dateRange: { from: input.fromDate, to: input.toDate },
               symptomSummary: input.symptomSummary,
               cycleSummary: input.cycleSummary,
+              dataCompleteness: input.dataCompleteness,
             }),
           },
         ],

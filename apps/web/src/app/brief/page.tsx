@@ -199,6 +199,14 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
+      <p className="text-xs text-navy/50">
+        {t("dataCompleteness", {
+          daysLogged: brief.dataCompleteness.daysLogged,
+          totalDays: brief.dataCompleteness.totalDays,
+          percent: brief.dataCompleteness.completenessPercent,
+        })}
+      </p>
+
       <p className="text-navy/80">{brief.aiNarrative}</p>
 
       <div>

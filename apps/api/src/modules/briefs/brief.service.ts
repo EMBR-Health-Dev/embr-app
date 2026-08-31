@@ -2,6 +2,7 @@ import { AppError } from "@embr/shared";
 import type { ClinicalBriefDto, ClinicalBriefListItemDto, PaginatedResponse } from "@embr/types";
 import type { PaginationQuery } from "@embr/validation";
 import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
+import { computeDataCompleteness } from "../../lib/data-completeness.js";
 import { paginate } from "../../lib/pagination.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 import { exportRepository } from "../export/export.repository.js";
@@ -51,12 +52,14 @@ export const briefService = {
     const symptomSummary = computeSymptomSummary(symptomLogs);
     const cycleSummary = computeCycleSummary(cycleEntries);
     const treatmentSummary = computeTreatmentSummary(treatments);
+    const dataCompleteness = computeDataCompleteness(symptomLogs, fromDate, toDate);
 
     const aiInput: BriefInput = {
       fromDate: fromDate.toISOString().slice(0, 10),
       toDate: toDate.toISOString().slice(0, 10),
       symptomSummary,
       cycleSummary,
+      dataCompleteness,
     };
 
     const { narrative, discussionTopics } = await briefAi.generate(aiInput);
@@ -68,6 +71,7 @@ export const briefService = {
       symptomSummary: JSON.parse(JSON.stringify(symptomSummary)),
       cycleSummary: JSON.parse(JSON.stringify(cycleSummary)),
       treatmentSummary: JSON.parse(JSON.stringify(treatmentSummary)),
+      dataCompleteness: JSON.parse(JSON.stringify(dataCompleteness)),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });
