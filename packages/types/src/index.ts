@@ -171,6 +171,70 @@ export interface SymptomCoOccurrenceDto {
   days: number;
 }
 
+// ---- Reflections (Milestone 19) ----
+//
+// Structured facts only, same "no preformatted sentence" contract as
+// SymptomCoOccurrenceDto above — wording and translation are a client
+// concern. `key` is a stable identifier derived from the reflection's
+// own content and period (see reflection.service.ts's buildKey), not a
+// database id — nothing behind these DTOs is stored until the user
+// dismisses one. The client echoes `type` + `key` back to
+// POST /reflections/dismissals to suppress that specific instance.
+
+export type ReflectionType =
+  "LOGGING_ACTIVITY" | "SYMPTOM_FREQUENCY" | "SYMPTOM_CO_OCCURRENCE" | "TREATMENT_CONTEXT";
+
+interface ReflectionBase {
+  key: string;
+  periodStart: string;
+  periodEnd: string;
+}
+
+/** How much was logged this period, with no claim about what it means
+ * — the "something is starting to build" acknowledgement, not an
+ * insight. */
+export interface LoggingActivityReflectionDto extends ReflectionBase {
+  type: "LOGGING_ACTIVITY";
+  logCount: number;
+  daysLogged: number;
+}
+
+export interface SymptomFrequencyReflectionDto extends ReflectionBase {
+  type: "SYMPTOM_FREQUENCY";
+  category: SymptomCategory;
+  count: number;
+}
+
+/** Same underlying detection as SymptomCoOccurrenceDto (trends'
+ * co-occurrence.ts) — reflections surfaces it as a home-screen
+ * acknowledgement rather than a trends-page query result, but the
+ * pattern-engine function and its threshold are shared, not
+ * reimplemented. */
+export interface SymptomCoOccurrenceReflectionDto extends ReflectionBase {
+  type: "SYMPTOM_CO_OCCURRENCE";
+  categoryA: SymptomCategory;
+  categoryB: SymptomCategory;
+  days: number;
+}
+
+/** Factual context only — a count of logs during a treatment's active
+ * window. Deliberately NOT an efficacy claim; see
+ * reflection-engine.ts's doc comment for why this must never be
+ * phrased as "your treatment is helping." */
+export interface TreatmentContextReflectionDto extends ReflectionBase {
+  type: "TREATMENT_CONTEXT";
+  treatmentId: string;
+  treatmentName: string;
+  treatmentCategory: TreatmentCategory;
+  logCount: number;
+}
+
+export type ReflectionDto =
+  | LoggingActivityReflectionDto
+  | SymptomFrequencyReflectionDto
+  | SymptomCoOccurrenceReflectionDto
+  | TreatmentContextReflectionDto;
+
 // ---- Public perimenopause assessment (unauthenticated) ----
 
 /** score is a plain count, never weighted or modeled — deliberately

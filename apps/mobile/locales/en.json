@@ -137,6 +137,7 @@
     "genericError": "Something went wrong. Try again in a moment.",
     "logSymptom": "Log symptom",
     "logging": "Logging…",
+    "yourWeek": "Your week",
     "recentLogs": "Recent logs",
     "delete": "Delete",
     "noSymptomsYet": "No symptoms logged yet.",
@@ -246,5 +247,30 @@
     "message_one": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} day.",
     "message_other": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} days.",
     "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
+  },
+  "reflections": {
+    "dismiss": "Dismiss",
+    "loggingActivity": {
+      "heading": "Your week so far",
+      "message_one": "You've logged {{count}} time, across {{days}} day.",
+      "message_other": "You've logged {{count}} times, across {{days}} days."
+    },
+    "symptomFrequency": {
+      "heading": "What stood out this week",
+      "message_one": "{{category}} was your most frequently logged symptom, on {{count}} day.",
+      "message_other": "{{category}} was your most frequently logged symptom, on {{count}} days."
+    },
+    "coOccurrence": {
+      "heading": "Something you may want to notice",
+      "message_one": "You logged {{categoryA}} and {{categoryB}} on the same {{count}} day.",
+      "message_other": "You logged {{categoryA}} and {{categoryB}} on the same {{count}} days.",
+      "caveat": "This is a record of what you logged, not a medical conclusion."
+    },
+    "treatmentContext": {
+      "heading": "Since starting {{name}}",
+      "message_one": "You've logged {{count}} symptom entry during this period.",
+      "message_other": "You've logged {{count}} symptom entries during this period.",
+      "caveat": "A count of what you've logged during this treatment — not a measure of how well it's working."
+    }
   }
 }

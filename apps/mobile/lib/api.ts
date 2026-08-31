@@ -7,6 +7,8 @@ import type {
   DeviceSessionDto,
   OnboardingProfileDto,
   PaginatedResponse,
+  ReflectionDto,
+  ReflectionType,
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
@@ -95,6 +97,17 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+  },
+
+  reflections: {
+    list: (query?: { from?: string; to?: string }) =>
+      apiFetch<ReflectionDto[]>("/reflections", { query }),
+
+    // 204 on success; the client just drops the dismissed reflection
+    // from its own state (see reflection-card.tsx) rather than
+    // re-fetching the list.
+    dismiss: (input: { type: ReflectionType; key: string }) =>
+      apiFetch<void>("/reflections/dismissals", { method: "POST", body: input }),
   },
 
   briefs: {

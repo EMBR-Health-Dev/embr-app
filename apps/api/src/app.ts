@@ -23,6 +23,7 @@ import { cycleRouter } from "./modules/cycle/cycle.routes.js";
 import { exportRouter } from "./modules/export/export.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { trendsRouter } from "./modules/trends/trends.routes.js";
+import { reflectionRouter } from "./modules/reflections/reflection.routes.js";
 import { organizationRouter } from "./modules/organizations/organization.routes.js";
 import { ssoRouter } from "./modules/sso/sso.routes.js";
 import { briefRouter } from "./modules/briefs/brief.routes.js";
@@ -118,6 +119,7 @@ export function createApp(): Express {
   app.use(exportRouter);
   app.use(adminRouter);
   app.use(trendsRouter);
+  app.use(reflectionRouter);
   app.use(organizationRouter);
   app.use(ssoRouter);
   app.use(briefRouter);

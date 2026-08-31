@@ -531,6 +531,50 @@ paths:
                         from: { type: string, format: date }
                         to: { type: string, format: date }
                         days: { type: integer }
+  /reflections:
+    get:
+      summary: List not-yet-dismissed reflections for the trailing period
+      description: Live-computed, not stored — Stage 3 deterministic pattern detection (logging activity, top symptom frequency, symptom co-occurrence, treatment context), the same "calculate facts, keep presentation outside the analytical primitive" contract /trends follows. Defaults to the trailing 7 days when from/to are omitted. Every item describes what was logged; none imply diagnosis, causality, or treatment efficacy.
+      security: [{ cookieAuth: [] }]
+      tags: [Reflections]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Qualifying, not-yet-dismissed reflections, in home-screen display order
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ReflectionDto" }
+        "401": { description: Not authenticated }
+  /reflections/dismissals:
+    post:
+      summary: Dismiss one specific reflection instance
+      description: Suppresses this exact (type, key) pair going forward — keyed by the reflection's own content and period, not a stored payload id, since nothing about a reflection is persisted except the fact that it was dismissed (see ReflectionDismissal in schema.prisma). Dismissing an already-dismissed key is a no-op, not an error.
+      security: [{ cookieAuth: [] }]
+      tags: [Reflections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, key]
+              properties:
+                type:
+                  type: string
+                  enum:
+                    [LOGGING_ACTIVITY, SYMPTOM_FREQUENCY, SYMPTOM_CO_OCCURRENCE, TREATMENT_CONTEXT]
+                key:
+                  {
+                    type: string,
+                    description: "Echoed back from the ReflectionDto's own `key` field",
+                  }
+      responses:
+        "204": { description: Dismissed (or already was) }
+        "401": { description: Not authenticated }
   /admin/users:
     get:
       summary: List user accounts (admin only)
@@ -849,6 +893,10 @@ components:
     SeverityLevel:
       type: string
       enum: [MILD, MODERATE, SEVERE]
+    TreatmentCategory:
+      type: string
+      description: "Pre-existing enum, not previously documented here — added alongside the Reflections schemas below, which are the first response bodies in this spec to reference it."
+      enum: [HRT, SUPPLEMENT, MEDICATION, LIFESTYLE, OTHER]
     FlowIntensity:
       type: string
       enum: [SPOTTING, LIGHT, MEDIUM, HEAVY]
@@ -870,6 +918,61 @@ components:
           { type: boolean, description: "Reserved — not read anywhere yet as of Milestone 15" }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    ReflectionDto:
+      description: "One of four Reflection MVP variants (discriminated by `type`) — always structured facts describing what was logged, never a diagnosis, causal claim, or efficacy claim. See each variant below. `key` identifies this specific instance for POST /reflections/dismissals; it is not a database id, since reflections are computed live on every request rather than stored (see ReflectionDismissal in schema.prisma)."
+      oneOf:
+        - $ref: "#/components/schemas/LoggingActivityReflectionDto"
+        - $ref: "#/components/schemas/SymptomFrequencyReflectionDto"
+        - $ref: "#/components/schemas/SymptomCoOccurrenceReflectionDto"
+        - $ref: "#/components/schemas/TreatmentContextReflectionDto"
+      discriminator:
+        propertyName: type
+        mapping:
+          LOGGING_ACTIVITY: "#/components/schemas/LoggingActivityReflectionDto"
+          SYMPTOM_FREQUENCY: "#/components/schemas/SymptomFrequencyReflectionDto"
+          SYMPTOM_CO_OCCURRENCE: "#/components/schemas/SymptomCoOccurrenceReflectionDto"
+          TREATMENT_CONTEXT: "#/components/schemas/TreatmentContextReflectionDto"
+    LoggingActivityReflectionDto:
+      type: object
+      properties:
+        type: { type: string, enum: [LOGGING_ACTIVITY] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        logCount: { type: integer }
+        daysLogged: { type: integer }
+    SymptomFrequencyReflectionDto:
+      type: object
+      properties:
+        type: { type: string, enum: [SYMPTOM_FREQUENCY] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        category: { $ref: "#/components/schemas/SymptomCategory" }
+        count: { type: integer }
+    SymptomCoOccurrenceReflectionDto:
+      type: object
+      description: "Same underlying detection as GET /trends/co-occurrence's response — surfaced here as a home-screen acknowledgement rather than a trends-page query result."
+      properties:
+        type: { type: string, enum: [SYMPTOM_CO_OCCURRENCE] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        categoryA: { $ref: "#/components/schemas/SymptomCategory" }
+        categoryB: { $ref: "#/components/schemas/SymptomCategory" }
+        days: { type: integer }
+    TreatmentContextReflectionDto:
+      type: object
+      description: "Deliberately just a count of logs during the treatment's active window — never an outcome or efficacy claim."
+      properties:
+        type: { type: string, enum: [TREATMENT_CONTEXT] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        treatmentId: { type: string, format: uuid }
+        treatmentName: { type: string }
+        treatmentCategory: { $ref: "#/components/schemas/TreatmentCategory" }
+        logCount: { type: integer }
     ClinicalBriefListItemDto:
       type: object
       description: The list-view shape — no AI content, keeps history/pagination responses small.

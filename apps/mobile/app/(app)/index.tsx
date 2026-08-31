@@ -12,6 +12,7 @@ import { AppointmentCard } from "../../components/appointment-card";
 import { Chip } from "../../components/chip";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
+import { ReflectionsSection } from "../../components/reflections-section";
 import { theme } from "../../lib/theme";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
@@ -37,6 +38,11 @@ export default function HomeScreen() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Bumped on every successful log — ReflectionsSection re-fetches
+  // whenever this changes, so a newly-qualifying reflection (e.g.
+  // crossing the 3-log threshold) can appear right after logging,
+  // not just on the next cold load of this screen.
+  const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
 
   const loadLogs = useCallback(async () => {
     try {
@@ -92,6 +98,7 @@ export default function HomeScreen() {
       setSeverity(null);
       setNotes("");
       await loadLogs();
+      setReflectionsRefreshKey((k) => k + 1);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : t("home.genericError"));
     } finally {
@@ -183,6 +190,8 @@ export default function HomeScreen() {
                 {submitting ? t("home.logging") : t("home.logSymptom")}
               </Text>
             </Pressable>
+
+            <ReflectionsSection refreshKey={reflectionsRefreshKey} />
 
             <Text style={[styles.sectionLabel, { marginTop: 28 }]}>{t("home.recentLogs")}</Text>
           </View>

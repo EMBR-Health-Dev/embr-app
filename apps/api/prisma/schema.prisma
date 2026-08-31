@@ -49,6 +49,7 @@ model User {
   sentOrganizationInvites OrganizationInvite[]
   clinicalBriefs          ClinicalBrief[]
   onboardingProfile       OnboardingProfile?
+  reflectionDismissals    ReflectionDismissal[]
 
   @@map("users")
 }
@@ -466,6 +467,48 @@ enum OnboardingStep {
   WHATS_GOING_ON
   APPOINTMENT_STATUS
   THE_LOOP
+}
+
+// ---- Reflections (Milestone 19) ----
+//
+// Deliberately the mirror image of ClinicalBrief: a BRIEF is a
+// point-in-time snapshot that must be reproducible on re-download, so
+// it stores its computed content. A reflection is a live widget, not a
+// document — the underlying facts (logging activity, co-occurrence,
+// frequency, treatment context) are recomputed on every request, the
+// same "calculate facts, keep presentation outside the analytical
+// primitive" way trends.service.ts already does. Storing the payload
+// here would let a stored reflection drift from what the data would
+// show if you looked today, which defeats the point.
+//
+// The only thing genuinely worth persisting is "did the user already
+// see and dismiss this specific instance" — hence a dismissal table,
+// not a reflection table.
+
+enum ReflectionType {
+  LOGGING_ACTIVITY
+  SYMPTOM_FREQUENCY
+  SYMPTOM_CO_OCCURRENCE
+  TREATMENT_CONTEXT
+}
+
+/// Records that a user dismissed one specific instance of a reflection
+/// so it doesn't reappear. `dismissalKey` identifies that instance
+/// (e.g. the pattern + the period it was computed over) — see
+/// reflection.service.ts's buildKey — NOT a foreign key to any stored
+/// payload, because nothing is stored; the facts are recomputed fresh
+/// every time and matched against this table by key.
+model ReflectionDismissal {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         ReflectionType
+  dismissalKey String
+  dismissedAt  DateTime       @default(now())
+
+  @@unique([userId, type, dismissalKey])
+  @@index([userId])
+  @@map("reflection_dismissals")
 }
 
 model OnboardingProfile {
