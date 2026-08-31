@@ -85,8 +85,8 @@ describe("buildTreatmentImpact", () => {
 
     expect(impact.treatmentId).toBe("t1");
     expect(impact.windowDays).toBe(TREATMENT_IMPACT_WINDOW_DAYS);
-    expect(impact.before).toEqual({ logCount: 5, days: 14 });
-    expect(impact.after).toEqual({ logCount: 2, days: 14 });
+    expect(impact.before).toMatchObject({ logCount: 5, days: 14 });
+    expect(impact.after).toMatchObject({ logCount: 2, days: 14 });
     expect(impact.insufficientData).toBe(false);
   });
 
@@ -132,5 +132,68 @@ describe("buildTreatmentImpact", () => {
     expect(impact.before.logCount).toBe(0);
     expect(impact.after.logCount).toBe(0);
     expect(impact.insufficientData).toBe(false);
+  });
+
+  it("defaults categoryCounts to an empty list and severityCounts to all-zero when no breakdown is given", () => {
+    const impact = buildTreatmentImpact({
+      treatmentId: "t1",
+      startDate: d("2026-06-15"),
+      endDate: null,
+      today: d("2026-07-01"),
+      beforeLogCount: 0,
+      afterLogCount: 0,
+    });
+
+    expect(impact.before.categoryCounts).toEqual([]);
+    expect(impact.before.severityCounts).toEqual([
+      { severity: "MILD", count: 0 },
+      { severity: "MODERATE", count: 0 },
+      { severity: "SEVERE", count: 0 },
+    ]);
+  });
+
+  it("sums a breakdown into category counts, sorted by count descending with an alphabetical tie-break", () => {
+    const impact = buildTreatmentImpact({
+      treatmentId: "t1",
+      startDate: d("2026-06-15"),
+      endDate: null,
+      today: d("2026-07-01"),
+      beforeLogCount: 4,
+      afterLogCount: 0,
+      beforeBreakdown: [
+        { category: "BRAIN_FOG", severity: "MILD", count: 1 },
+        { category: "ANXIETY", severity: "MILD", count: 1 },
+        { category: "HOT_FLASH", severity: "SEVERE", count: 1 },
+        { category: "HOT_FLASH", severity: "MODERATE", count: 1 }, // same category, different severity row
+      ],
+    });
+
+    // HOT_FLASH (2) first; ANXIETY before BRAIN_FOG on the alphabetical tie-break.
+    expect(impact.before.categoryCounts).toEqual([
+      { category: "HOT_FLASH", count: 2 },
+      { category: "ANXIETY", count: 1 },
+      { category: "BRAIN_FOG", count: 1 },
+    ]);
+  });
+
+  it("sums a breakdown into severity counts, always in fixed MILD/MODERATE/SEVERE order", () => {
+    const impact = buildTreatmentImpact({
+      treatmentId: "t1",
+      startDate: d("2026-06-15"),
+      endDate: null,
+      today: d("2026-07-01"),
+      beforeLogCount: 0,
+      afterLogCount: 3,
+      afterBreakdown: [
+        { category: "HOT_FLASH", severity: "SEVERE", count: 2 },
+        { category: "BRAIN_FOG", severity: "SEVERE", count: 1 },
+      ],
+    });
+
+    expect(impact.after.severityCounts).toEqual([
+      { severity: "MILD", count: 0 },
+      { severity: "MODERATE", count: 0 },
+      { severity: "SEVERE", count: 3 },
+    ]);
   });
 });

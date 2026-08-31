@@ -1,4 +1,4 @@
-import type { TreatmentImpactDto } from "@embr/types";
+import type { SeverityLevel, SymptomCategory, TreatmentImpactDto } from "@embr/types";
 
 /**
  * Stage 3 of EMBR's clinical logic pipeline (see the
@@ -86,6 +86,52 @@ export function computeTreatmentImpactWindows(params: {
   return { before, after };
 }
 
+export interface TreatmentImpactBreakdownRow {
+  category: string;
+  severity: string;
+  count: number;
+}
+
+/** Sums breakdown rows into one count per category, sorted by count
+ * descending with an alphabetical tie-break — same convention
+ * computeSymptomFrequency (trends) and bucketSymptomLogsByWeek
+ * (timeline) both already use, so a category ranking reads the same
+ * way everywhere in the app. Only categories that were actually
+ * logged appear; a full 14-entry table mostly showing zero would be
+ * noise, not signal, for a before/after comparison. */
+function summarizeCategoryCounts(
+  rows: TreatmentImpactBreakdownRow[],
+): Array<{ category: SymptomCategory; count: number }> {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    totals.set(row.category, (totals.get(row.category) ?? 0) + row.count);
+  }
+  return [...totals.entries()]
+    .map(([category, count]) => ({ category: category as SymptomCategory, count }))
+    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
+}
+
+/** Same sum-by-key idea as summarizeCategoryCounts, but fixed in
+ * MILD/MODERATE/SEVERE order rather than sorted by count, with every
+ * severity present even at 0. Severity has its own inherent order
+ * that matters more here than a frequency ranking: a before/after
+ * comparison is meant to be scanned as "did the SEVERE row shrink,"
+ * which only works if it's always in the same place, not jumping
+ * around (or disappearing entirely) depending on which window had
+ * more of it. */
+function summarizeSeverityCounts(
+  rows: TreatmentImpactBreakdownRow[],
+): Array<{ severity: SeverityLevel; count: number }> {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    totals.set(row.severity, (totals.get(row.severity) ?? 0) + row.count);
+  }
+  return (["MILD", "MODERATE", "SEVERE"] as const).map((severity) => ({
+    severity,
+    count: totals.get(severity) ?? 0,
+  }));
+}
+
 export function buildTreatmentImpact(params: {
   treatmentId: string;
   startDate: Date;
@@ -93,17 +139,31 @@ export function buildTreatmentImpact(params: {
   today: Date;
   beforeLogCount: number;
   afterLogCount: number;
+  beforeBreakdown?: TreatmentImpactBreakdownRow[];
+  afterBreakdown?: TreatmentImpactBreakdownRow[];
   windowDays?: number;
 }): TreatmentImpactDto {
   const windowDays = params.windowDays ?? TREATMENT_IMPACT_WINDOW_DAYS;
   const { before, after } = computeTreatmentImpactWindows({ ...params, windowDays });
   const afterDays = daysBetween(after.from, after.to);
+  const beforeBreakdown = params.beforeBreakdown ?? [];
+  const afterBreakdown = params.afterBreakdown ?? [];
 
   return {
     treatmentId: params.treatmentId,
     windowDays,
-    before: { logCount: params.beforeLogCount, days: daysBetween(before.from, before.to) },
-    after: { logCount: params.afterLogCount, days: afterDays },
+    before: {
+      logCount: params.beforeLogCount,
+      days: daysBetween(before.from, before.to),
+      categoryCounts: summarizeCategoryCounts(beforeBreakdown),
+      severityCounts: summarizeSeverityCounts(beforeBreakdown),
+    },
+    after: {
+      logCount: params.afterLogCount,
+      days: afterDays,
+      categoryCounts: summarizeCategoryCounts(afterBreakdown),
+      severityCounts: summarizeSeverityCounts(afterBreakdown),
+    },
     insufficientData: afterDays < MIN_TREATMENT_IMPACT_DAYS,
   };
 }

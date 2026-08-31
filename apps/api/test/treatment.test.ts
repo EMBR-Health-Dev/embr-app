@@ -27,7 +27,12 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
-      symptomLogs: [] as Array<{ userId: string; occurredAt: Date }>,
+      symptomLogs: [] as Array<{
+        userId: string;
+        occurredAt: Date;
+        category?: string;
+        severity?: string;
+      }>,
       auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
     },
     nextId: () => randomUUID(),
@@ -120,6 +125,27 @@ vi.mock("../src/lib/prisma.js", () => ({
                 l.occurredAt < where.occurredAt.lt,
             ).length,
           ),
+      ),
+      groupBy: vi.fn(
+        ({ where }: { where: { userId: string; occurredAt: { gte: Date; lt: Date } } }) => {
+          const matching = state.symptomLogs.filter(
+            (l) =>
+              l.userId === where.userId &&
+              l.occurredAt >= where.occurredAt.gte &&
+              l.occurredAt < where.occurredAt.lt,
+          );
+          const totals = new Map<string, number>();
+          for (const l of matching) {
+            const key = `${l.category ?? "OTHER"}::${l.severity ?? "MODERATE"}`;
+            totals.set(key, (totals.get(key) ?? 0) + 1);
+          }
+          return Promise.resolve(
+            [...totals.entries()].map(([key, count]) => {
+              const [category, severity] = key.split("::");
+              return { category, severity, _count: { _all: count } };
+            }),
+          );
+        },
       ),
     },
     treatment: {
@@ -367,6 +393,74 @@ describe("GET /treatments/:id/impact", () => {
     expect(res.status).toBe(404);
   });
 
+  it("breaks down before/after counts by symptom category and severity", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-06-20T12:00:00Z"));
+
+      const app = createApp();
+      const agent = request.agent(app);
+      const login = await registerAndLogin(agent, "impactBreakdown@embr.health");
+      const userId = login.body.data.user.id as string;
+
+      const created = await agent
+        .post("/treatments")
+        .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-15" });
+      const treatmentId = created.body.data.id as string;
+
+      // "before" window (2026-06-01 to 2026-06-15): 2 severe hot flashes, 1 mild brain fog.
+      state.symptomLogs.push(
+        {
+          userId,
+          occurredAt: new Date("2026-06-03T10:00:00Z"),
+          category: "HOT_FLASH",
+          severity: "SEVERE",
+        },
+        {
+          userId,
+          occurredAt: new Date("2026-06-10T10:00:00Z"),
+          category: "HOT_FLASH",
+          severity: "SEVERE",
+        },
+        {
+          userId,
+          occurredAt: new Date("2026-06-12T10:00:00Z"),
+          category: "BRAIN_FOG",
+          severity: "MILD",
+        },
+      );
+      // "after" window (2026-06-15 onward): 1 mild hot flash — down in both
+      // count and severity from "before".
+      state.symptomLogs.push({
+        userId,
+        occurredAt: new Date("2026-06-17T10:00:00Z"),
+        category: "HOT_FLASH",
+        severity: "MILD",
+      });
+
+      const res = await agent.get(`/treatments/${treatmentId}/impact`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.before.categoryCounts).toEqual([
+        { category: "HOT_FLASH", count: 2 },
+        { category: "BRAIN_FOG", count: 1 },
+      ]);
+      expect(res.body.data.before.severityCounts).toEqual([
+        { severity: "MILD", count: 1 },
+        { severity: "MODERATE", count: 0 },
+        { severity: "SEVERE", count: 2 },
+      ]);
+      expect(res.body.data.after.categoryCounts).toEqual([{ category: "HOT_FLASH", count: 1 }]);
+      expect(res.body.data.after.severityCounts).toEqual([
+        { severity: "MILD", count: 1 },
+        { severity: "MODERATE", count: 0 },
+        { severity: "SEVERE", count: 0 },
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("computes before/after symptom-log counts around the treatment's start date", async () => {
     vi.useFakeTimers();
     try {
@@ -397,7 +491,7 @@ describe("GET /treatments/:id/impact", () => {
 
       const res = await agent.get(`/treatments/${treatmentId}/impact`);
       expect(res.status).toBe(200);
-      expect(res.body.data).toEqual({
+      expect(res.body.data).toMatchObject({
         treatmentId,
         windowDays: 14,
         before: { logCount: 3, days: 14 },

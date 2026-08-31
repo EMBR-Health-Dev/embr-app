@@ -241,6 +241,8 @@
     "impactInsufficientData": "開始からまだ十分な期間が経っていないため、比較を表示できません。",
     "impactBeforeLabel": "治療開始前の症状記録",
     "impactAfterLabel": "治療開始後の症状記録",
+    "impactSeverityHeader": "重症度別",
+    "impactCategoryHeader": "症状別",
     "impactWindow_other": "{{count}}日間",
     "impactDisclaimer": "症状を記録した回数であり、治療の効果を示すものではありません。"
   },

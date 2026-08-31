@@ -131,11 +131,37 @@ export interface TreatmentDto {
  * render a fair "per day"/"per week" rate rather than comparing raw
  * counts across windows of different lengths.
  */
+export interface TreatmentImpactCategoryCount {
+  category: SymptomCategory;
+  count: number;
+}
+
+export interface TreatmentImpactSeverityCount {
+  severity: SeverityLevel;
+  count: number;
+}
+
+/** logCount/days are unchanged from the original (count-only) shape;
+ * categoryCounts/severityCounts are additive. severityCounts always
+ * has all three SeverityLevel entries present (count: 0 where a
+ * severity wasn't logged in that window) so a client can render a
+ * fixed MILD/MODERATE/SEVERE row order without conditional lookups —
+ * unlike categoryCounts, which only includes categories that were
+ * actually logged (a fixed 14-entry row for every possible category,
+ * mostly zero, would be noise rather than signal for a before/after
+ * comparison). */
+export interface TreatmentImpactWindowDto {
+  logCount: number;
+  days: number;
+  categoryCounts: TreatmentImpactCategoryCount[];
+  severityCounts: TreatmentImpactSeverityCount[];
+}
+
 export interface TreatmentImpactDto {
   treatmentId: string;
   windowDays: number;
-  before: { logCount: number; days: number };
-  after: { logCount: number; days: number };
+  before: TreatmentImpactWindowDto;
+  after: TreatmentImpactWindowDto;
   /** True when the "after" window hasn't run long enough yet for the
    * comparison to mean much — see MIN_TREATMENT_IMPACT_DAYS. */
   insufficientData: boolean;

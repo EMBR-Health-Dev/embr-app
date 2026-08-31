@@ -87,6 +87,50 @@ export const treatmentRepository = {
     return { beforeLogCount, afterLogCount };
   },
 
+  /** True DB-side aggregate (GROUP BY category, severity) per window —
+   * same "Postgres does the counting, not application code" preference
+   * as trendsRepository.symptomFrequency and countSymptomLogsInWindows
+   * above. One groupBy per window (not two) is enough since category
+   * and severity are independent dimensions of the same rows; the
+   * category-only and severity-only views buildTreatmentImpact needs
+   * are both derivable by summing this single result set, which is
+   * what treatment-impact.ts's reduction does. */
+  async symptomBreakdownInWindows(
+    userId: string,
+    windows: { before: { from: Date; to: Date }; after: { from: Date; to: Date } },
+  ): Promise<{
+    before: Array<{ category: string; severity: string; count: number }>;
+    after: Array<{ category: string; severity: string; count: number }>;
+  }> {
+    function toRows(
+      groups: Array<{ category: string; severity: string; _count: { _all: number } }>,
+    ): Array<{ category: string; severity: string; count: number }> {
+      return groups.map((g) => ({
+        category: g.category,
+        severity: g.severity,
+        count: g._count._all,
+      }));
+    }
+
+    const [before, after] = await Promise.all([
+      prisma.symptomLog.groupBy({
+        by: ["category", "severity"],
+        where: { userId, occurredAt: { gte: windows.before.from, lt: windows.before.to } },
+        _count: { _all: true },
+      }),
+      prisma.symptomLog.groupBy({
+        by: ["category", "severity"],
+        where: { userId, occurredAt: { gte: windows.after.from, lt: windows.after.to } },
+        _count: { _all: true },
+      }),
+    ]);
+
+    return {
+      before: toRows(before as never),
+      after: toRows(after as never),
+    };
+  },
+
   /** Every treatment that overlaps [fromDate, toDate] at all — not just
    * ones that started inside the range. An ongoing treatment (endDate
    * null) that started before fromDate must still appear, since it was
