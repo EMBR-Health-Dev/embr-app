@@ -158,6 +158,32 @@ export const organizationService = {
     }
   },
 
+  /** Self-service leave — the same removal path as revokeMember, just
+   * self-targeted with no ORG_ADMIN requirement on the caller (the
+   * route only requires the caller to already be a member at all; see
+   * requireOrgRole("ORG_ADMIN", "ORG_MEMBER") at the call site). The
+   * last-admin invariant still applies unchanged: revokeMembership
+   * doesn't know or care whether removal was requested by an admin
+   * acting on someone else or a member acting on themselves, so a
+   * solo admin can't leave without first promoting someone else,
+   * exactly as they couldn't revoke themselves either. NOT_FOUND
+   * shouldn't be reachable here in practice — requireOrgRole already
+   * confirmed the caller's own membership exists moments earlier —
+   * but is still handled rather than assumed impossible, matching
+   * revokeMember's own defensiveness for the same underlying
+   * repository call. */
+  async leaveOrganization(organizationId: string, userId: string): Promise<void> {
+    const result = await organizationRepository.revokeMembership(organizationId, userId);
+    if (result === "NOT_FOUND") {
+      throw AppError.notFound("Organization member");
+    }
+    if (result === "LAST_ADMIN") {
+      throw AppError.conflict(
+        "You're the only admin in this organization. Promote another member to admin before leaving.",
+      );
+    }
+  },
+
   /**
    * Applies the k-anonymity floor before returning anything
    * category-level: below ORG_TRENDS_MIN_COHORT_SIZE active loggers,

@@ -156,6 +156,9 @@ export const api = {
         apiFetch<void>(`/organizations/${organizationId}/members/${userId}`, {
           method: "DELETE",
         }),
+
+      leave: (organizationId: string) =>
+        apiFetch<void>(`/organizations/${organizationId}/leave`, { method: "POST" }),
     },
 
     invites: {

@@ -167,6 +167,30 @@ router.delete(
 );
 
 /**
+ * Self-service leave — deliberately a distinct route from the
+ * ORG_ADMIN-only revoke above, not a reuse of it with a special-cased
+ * userId. Any existing member may call this on themselves
+ * (requireOrgRole("ORG_ADMIN", "ORG_MEMBER") accepts either of the
+ * only two roles that exist — see packages/types' OrgRole — so this
+ * is really just "must already be a member of this org," with no
+ * further role requirement). Registered after the parameterized
+ * member-removal route above on purpose, matching this file's own
+ * existing route ordering; "leave" has no further path segments that
+ * could collide with :userId the way brief.routes.ts's /briefs/trends
+ * had to be ordered before /briefs/:id.
+ */
+router.post(
+  "/organizations/:organizationId/leave",
+  requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),
+  asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
+    await organizationService.leaveOrganization(organizationId, req.user!.sub);
+    await writeAuditLog(req, "ORG_MEMBER_LEFT", req.user!.sub, { organizationId });
+    res.status(204).send();
+  }),
+);
+
+/**
  * Anonymized, cohort-level only — see organization.service.ts for the
  * k-anonymity floor this applies before returning any category counts.
  * ORG_ADMIN-gated like the roster: this is the one place org-level

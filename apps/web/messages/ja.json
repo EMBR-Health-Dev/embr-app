@@ -299,7 +299,13 @@
       "manageBilling": "請求を管理",
       "opening": "開いています…",
       "genericError": "問題が発生しました。もう一度お試しください。"
-    }
+    },
+    "cancel": "キャンセル",
+    "leaveOrganization": "組織を退出する",
+    "leaveConfirmPrompt": "よろしいですか？",
+    "leaveConfirmYes": "はい、退出します",
+    "leaving": "退出中…",
+    "leaveError": "組織を退出できませんでした。もう一度お試しください。"
   },
   "Settings": {
     "title": "設定",
