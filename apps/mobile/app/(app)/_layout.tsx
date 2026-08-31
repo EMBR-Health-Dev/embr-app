@@ -54,6 +54,10 @@ export default function AppLayout() {
         options={{ title: t("tabs.trends"), tabBarIcon: tabIcon("trending-up-outline") }}
       />
       <Tabs.Screen
+        name="timeline"
+        options={{ title: t("tabs.timeline"), tabBarIcon: tabIcon("time-outline") }}
+      />
+      <Tabs.Screen
         name="brief"
         options={{ title: t("tabs.brief"), tabBarIcon: tabIcon("document-text-outline") }}
       />

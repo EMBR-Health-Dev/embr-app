@@ -172,7 +172,8 @@
     "treatments": "治療",
     "trends": "Trends",
     "brief": "BRIEF",
-    "settings": "設定"
+    "settings": "設定",
+    "timeline": "タイムライン"
   },
   "home": {
     "greeting": "こんにちは",
@@ -334,5 +335,20 @@
     "heading": "一緒に記録されたもの",
     "message_other": "{{categoryA}}は{{categoryB}}とともに、{{count}}日記録されています。",
     "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。"
+  },
+  "timeline": {
+    "title": "タイムライン",
+    "subtitle": "これまでの変化",
+    "windowLabel": "過去{{days}}日間",
+    "empty": "この期間に表示できる記録がまだありません。症状を記録する、治療を開始する、または臨床ブリーフを生成すると、ここに表示されます。",
+    "symptomWeekTitle": "{{weekStart}}の週",
+    "symptomWeekCount_other": "症状記録 {{count}}件",
+    "symptomWeekChangeUp": "前回記録があった週から+{{percent}}%",
+    "symptomWeekChangeDown": "前回記録があった週から{{percent}}%",
+    "treatmentStarted": "{{name}}を開始",
+    "treatmentEnded": "{{name}}を終了",
+    "briefGenerated": "臨床ブリーフを生成しました",
+    "briefGeneratedRange": "対象期間:{{fromDate}} 〜 {{toDate}}",
+    "viewBrief": "ブリーフを見る →"
   }
 }

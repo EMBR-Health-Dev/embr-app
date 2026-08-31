@@ -187,6 +187,7 @@
   },
   "Dashboard": {
     "trends": "Trends",
+    "timeline": "タイムライン",
     "treatments": "治療",
     "brief": "BRIEF",
     "export": "エクスポート",
@@ -430,5 +431,21 @@
     "impactAfterLabel": "治療開始後の症状記録",
     "impactWindow": "{count, plural, other {#日間}}",
     "impactDisclaimer": "症状を記録した回数であり、治療の効果を示すものではありません。"
+  },
+  "Timeline": {
+    "title": "タイムライン",
+    "subtitle": "これまでの変化",
+    "backToDashboard": "← ダッシュボード",
+    "windowLabel": "過去{days}日間",
+    "empty": "この期間に表示できる記録がまだありません。症状を記録する、治療を開始する、または臨床ブリーフを生成すると、ここに表示されます。",
+    "symptomWeekTitle": "{weekStart}の週",
+    "symptomWeekCount": "{count, plural, other {症状記録 #件}}",
+    "symptomWeekChangeUp": "前回記録があった週から+{percent}%",
+    "symptomWeekChangeDown": "前回記録があった週から{percent}%",
+    "treatmentStarted": "{name}を開始",
+    "treatmentEnded": "{name}を終了",
+    "briefGenerated": "臨床ブリーフを生成しました",
+    "briefGeneratedRange": "対象期間:{fromDate} 〜 {toDate}",
+    "viewBrief": "ブリーフを見る →"
   }
 }

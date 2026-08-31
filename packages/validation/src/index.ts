@@ -238,6 +238,14 @@ export const trendsQuerySchema = z.object({
 });
 export type TrendsQuery = z.infer<typeof trendsQuerySchema>;
 
+// ---- Timeline ----
+
+// Same unpaginated from/to shape as trendsQuerySchema, for the same
+// reason: a timeline is computed over "everything in range," not a
+// page of it.
+export const timelineQuerySchema = trendsQuerySchema;
+export type TimelineQuery = z.infer<typeof timelineQuerySchema>;
+
 // ---- Organizations (Milestone 12) ----
 //
 // Org provisioning is a platform-ADMIN action, not self-serve (see
