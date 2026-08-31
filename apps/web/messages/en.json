@@ -299,7 +299,13 @@
       "manageBilling": "Manage billing",
       "opening": "Opening…",
       "genericError": "Something went wrong. Try again."
-    }
+    },
+    "cancel": "Cancel",
+    "leaveOrganization": "Leave organization",
+    "leaveConfirmPrompt": "Are you sure?",
+    "leaveConfirmYes": "Yes, leave",
+    "leaving": "Leaving…",
+    "leaveError": "Couldn't leave the organization — try again."
   },
   "Settings": {
     "title": "Settings",

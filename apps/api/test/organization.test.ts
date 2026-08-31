@@ -800,6 +800,89 @@ describe("DELETE /organizations/:organizationId/members/:userId", () => {
   });
 });
 
+describe("POST /organizations/:organizationId/leave", () => {
+  it("lets a plain ORG_MEMBER leave, removing their own membership", async () => {
+    const app = createApp();
+    const organizationId = nextId();
+    const memberAgent = request.agent(app);
+    const memberId = await registerAndLogin(memberAgent, "leaver1@embr.health");
+    addMembership(organizationId, memberId, "ORG_MEMBER");
+    // An admin remains regardless — a plain member leaving was never
+    // going to be blocked by the last-admin invariant, but this keeps
+    // the fixture realistic rather than a single-member organization.
+    addMembership(organizationId, nextId(), "ORG_ADMIN");
+
+    const res = await memberAgent.post(`/organizations/${organizationId}/leave`);
+
+    expect(res.status).toBe(204);
+    expect(
+      state.memberships.some((m) => m.organizationId === organizationId && m.userId === memberId),
+    ).toBe(false);
+  });
+
+  it("lets an ORG_ADMIN leave when another admin remains", async () => {
+    const app = createApp();
+    const organizationId = nextId();
+    const adminAAgent = request.agent(app);
+    const adminAId = await registerAndLogin(adminAAgent, "leaver2a@embr.health");
+    addMembership(organizationId, adminAId, "ORG_ADMIN");
+    const adminBId = nextId();
+    addMembership(organizationId, adminBId, "ORG_ADMIN");
+
+    const res = await adminAAgent.post(`/organizations/${organizationId}/leave`);
+
+    expect(res.status).toBe(204);
+    const remaining = state.memberships.filter((m) => m.organizationId === organizationId);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.userId).toBe(adminBId);
+  });
+
+  // Unlike the equivalent revoke case, this one *is* reachable via a
+  // real HTTP request: requireOrgRole("ORG_ADMIN", "ORG_MEMBER") only
+  // confirms the caller is still a member of this org when leaving is
+  // self-targeted, which remains true right up until the moment they
+  // actually leave — there's no "caller must still be an admin to act
+  // on someone else" gate the way revoke has, so a sole admin genuinely
+  // reaches leaveOrganization's own LAST_ADMIN check through the route.
+  it("rejects the sole remaining ORG_ADMIN leaving, and does not remove their membership", async () => {
+    const app = createApp();
+    const organizationId = nextId();
+    const soleAdminAgent = request.agent(app);
+    const soleAdminId = await registerAndLogin(soleAdminAgent, "leaver3@embr.health");
+    addMembership(organizationId, soleAdminId, "ORG_ADMIN");
+
+    const res = await soleAdminAgent.post(`/organizations/${organizationId}/leave`);
+
+    expect(res.status).toBe(409);
+    expect(
+      state.memberships.some(
+        (m) => m.organizationId === organizationId && m.userId === soleAdminId,
+      ),
+    ).toBe(true);
+  });
+
+  it("404s for a non-member, rather than confirming the organization exists", async () => {
+    const app = createApp();
+    const organizationId = nextId();
+    addMembership(organizationId, nextId(), "ORG_ADMIN");
+    const outsiderAgent = request.agent(app);
+    await registerAndLogin(outsiderAgent, "outsider@embr.health");
+
+    const res = await outsiderAgent.post(`/organizations/${organizationId}/leave`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("requires authentication", async () => {
+    const app = createApp();
+    const organizationId = nextId();
+
+    const res = await request(app).post(`/organizations/${organizationId}/leave`);
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
   async function setupOrgWithLoggingMembers(memberCount: number) {
     const app = createApp();
