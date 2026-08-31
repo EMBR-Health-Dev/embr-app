@@ -209,6 +209,9 @@ function DashboardContent() {
           <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
             {t("trends")}
           </Link>
+          <Link href="/timeline" className="underline underline-offset-2 hover:text-navy">
+            {t("timeline")}
+          </Link>
           <Link href="/treatments" className="underline underline-offset-2 hover:text-navy">
             {t("treatments")}
           </Link>

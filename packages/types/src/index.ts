@@ -423,3 +423,45 @@ export interface OnboardingProfileDto {
   skipped: boolean;
   completedAt: string | null;
 }
+
+// ---- Timeline ----
+
+/** One week's worth of symptom logs, bucketed and counted
+ * deterministically (see symptom-buckets.ts — Stage 3 of EMBR's
+ * clinical logic pipeline, no AI/interpretation involved). A week with
+ * no logs still appears with totalCount: 0 rather than being omitted,
+ * so a gap reads as "nothing logged" rather than being indistinguishable
+ * from "outside the requested range." */
+export interface TimelineSymptomWeekDto {
+  weekStart: string;
+  weekEnd: string;
+  totalCount: number;
+  categoryCounts: Array<{ category: SymptomCategory; count: number }>;
+  percentChangeFromPreviousNonEmptyWeek: number | null;
+}
+
+/** A discriminated union rather than one flat shape with a lot of
+ * optional fields — each event type carries only the fields that
+ * actually apply to it, and a client can narrow on `type` the same way
+ * it already does for other enum-tagged unions in this codebase. All
+ * four are deterministic, database-derived facts; none involve AI
+ * narration (a brief's own aiNarrative lives behind its id, fetched
+ * separately if the person opens it — this event is just "a brief
+ * exists, generated on this day"). */
+export type TimelineEventDto =
+  | ({ type: "SYMPTOM_WEEK"; date: string } & TimelineSymptomWeekDto)
+  | {
+      type: "TREATMENT_STARTED";
+      date: string;
+      treatmentId: string;
+      name: string;
+      category: TreatmentCategory;
+    }
+  | {
+      type: "TREATMENT_ENDED";
+      date: string;
+      treatmentId: string;
+      name: string;
+      category: TreatmentCategory;
+    }
+  | { type: "BRIEF_GENERATED"; date: string; briefId: string; fromDate: string; toDate: string };

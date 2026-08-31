@@ -10,6 +10,7 @@ import type {
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
+  TimelineEventDto,
   TreatmentDto,
   TreatmentImpactDto,
   UserDto,
@@ -103,6 +104,11 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+  },
+
+  timeline: {
+    get: (query?: { from?: string; to?: string }) =>
+      apiFetch<TimelineEventDto[]>("/timeline", { query }),
   },
 
   treatments: {

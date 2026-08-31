@@ -172,7 +172,8 @@
     "treatments": "Treatments",
     "trends": "Trends",
     "brief": "BRIEF",
-    "settings": "Settings"
+    "settings": "Settings",
+    "timeline": "Timeline"
   },
   "home": {
     "greeting": "Hi",
@@ -339,5 +340,21 @@
     "message_one": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} day.",
     "message_other": "{{categoryA}} appeared alongside {{categoryB}} on {{count}} days.",
     "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
+  },
+  "timeline": {
+    "title": "Timeline",
+    "subtitle": "What has happened over time",
+    "windowLabel": "Last {{days}} days",
+    "empty": "Nothing to show yet for this window — log a symptom, start a treatment, or generate a brief and it will appear here.",
+    "symptomWeekTitle": "Week of {{weekStart}}",
+    "symptomWeekCount_one": "{{count}} symptom log",
+    "symptomWeekCount_other": "{{count}} symptom logs",
+    "symptomWeekChangeUp": "+{{percent}}% vs the previous logged week",
+    "symptomWeekChangeDown": "{{percent}}% vs the previous logged week",
+    "treatmentStarted": "Started {{name}}",
+    "treatmentEnded": "Ended {{name}}",
+    "briefGenerated": "Clinical Brief generated",
+    "briefGeneratedRange": "Covering {{fromDate}} – {{toDate}}",
+    "viewBrief": "View brief →"
   }
 }
