@@ -307,6 +307,210 @@ describe("Brief page — Your recent trends", () => {
   });
 });
 
+describe("Brief page — severity breakdown", () => {
+  it("renders the localized severity/count string for a symptom with multiple severity levels", async () => {
+    generateMock.mockResolvedValue(
+      brief({
+        symptomSummary: [
+          {
+            category: "HOT_FLASH",
+            count: 6,
+            severityBreakdown: { MILD: 3, MODERATE: 2, SEVERE: 1 },
+          },
+        ],
+      }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    // Intl.ListFormat("en", { style: "narrow", type: "conjunction" })
+    // over ["3 Mild", "2 Moderate", "1 Severe"] — computed directly
+    // via Node before writing this assertion, not assumed.
+    expect(
+      await screen.findByText("Hot Flash — 6 occurrences (3 Mild, 2 Moderate, 1 Severe)"),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Brief page — deterministic evidence sections", () => {
+  function realisticBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
+    return brief({
+      symptomSummary: [
+        { category: "HOT_FLASH", count: 6, severityBreakdown: { MODERATE: 4, SEVERE: 2 } },
+      ],
+      frequencyComparison: [
+        {
+          category: "HOT_FLASH",
+          currentCount: 6,
+          previousCount: 4,
+          absoluteChange: 2,
+          percentageChange: 50,
+          direction: "increased",
+        },
+      ],
+      persistentSymptoms: ["HOT_FLASH"],
+      coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 },
+      cycleSummary: { averageCycleLengthDays: 28, cycleCount: 3, periodDaysLogged: 15 },
+      treatmentSummary: [
+        { name: "Estradiol patch", category: "HRT", startDate: "2026-01-10", endDate: null },
+      ],
+      treatmentImpact: [
+        {
+          treatmentId: "t1",
+          name: "Estradiol patch",
+          category: "HRT",
+          windowDays: 14,
+          before: { logCount: 2, days: 14 },
+          after: { logCount: 5, days: 14 },
+          insufficientData: false,
+        },
+        {
+          treatmentId: "t2",
+          name: "New medication",
+          category: "MEDICATION",
+          windowDays: 14,
+          before: { logCount: 0, days: 14 },
+          after: { logCount: 1, days: 1 },
+          insufficientData: true,
+        },
+      ],
+      ...overrides,
+    });
+  }
+
+  it("renders real content for every deterministic section, including the insufficientData treatment-impact case", async () => {
+    generateMock.mockResolvedValue(realisticBrief());
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(
+      await screen.findByText("Hot Flash — 6 occurrences (4 Moderate, 2 Severe)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Hot Flash: Reported on 6 days, compared with 4 days in the previous period.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Hot Flash remained present across both periods.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Brain Fog and Hot Flash were both reported on 4 days."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Average cycle length: 28 days (3 cycles recorded)"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Estradiol patch — HRT, 2026-01-10 – Ongoing")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Estradiol patch: 2 symptom logs in the 14 days before starting, compared with 5 symptom logs in the 14 days after.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("New medication: Not enough time has passed since starting to compare yet."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the 'not enough cycle data' message when averageCycleLengthDays is null", async () => {
+    generateMock.mockResolvedValue(
+      realisticBrief({
+        cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 2 },
+      }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(
+      await screen.findByText(
+        "Not enough period-start entries in this range to compute cycle length.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Brief page — multiple items", () => {
+  it("renders every discussion topic when there is more than one", async () => {
+    generateMock.mockResolvedValue(
+      brief({ aiDiscussionTopics: ["First question?", "Second question?", "Third question?"] }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(await screen.findByText("First question?")).toBeInTheDocument();
+    expect(screen.getByText("Second question?")).toBeInTheDocument();
+    expect(screen.getByText("Third question?")).toBeInTheDocument();
+  });
+
+  it("renders every category row when trends contains more than one", async () => {
+    trendsMock.mockResolvedValue({
+      briefCount: 4,
+      earliestBriefFromDate: "2026-01-01",
+      latestBriefToDate: "2026-04-01",
+      categories: [
+        {
+          category: "HOT_FLASH",
+          briefsPresent: 4,
+          briefsPersistent: 3,
+          totalBriefs: 4,
+          mostRecentBriefFromDate: "2026-03-01",
+          mostRecentBriefToDate: "2026-04-01",
+        },
+        {
+          category: "FATIGUE",
+          briefsPresent: 2,
+          briefsPersistent: 0,
+          totalBriefs: 4,
+          mostRecentBriefFromDate: "2026-02-01",
+          mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+    });
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    expect(
+      await screen.findByText("Hot Flash — reported in 4 of 4 briefs, marked persistent in 3."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Fatigue — reported in 2 of 4 briefs, marked persistent in 0."),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Brief page — PDF download", () => {
+  it("points the download link at this brief's PDF URL", async () => {
+    generateMock.mockResolvedValue(brief({ id: "b-pdf-1" }));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    const link = await screen.findByText("Download PDF");
+    expect(link).toHaveAttribute("href", "/api/briefs/b-pdf-1/pdf");
+  });
+});
+
 describe("Brief page — history", () => {
   it("shows an empty state when there are no past briefs", async () => {
     const { default: BriefPage } = await import("./page");
@@ -369,5 +573,69 @@ describe("Brief page — history", () => {
     await waitFor(() =>
       expect(screen.queryByText("2026-01-01 to 2026-02-01")).not.toBeInTheDocument(),
     );
+  });
+
+  it("clears the expanded detail view when the currently-open brief is deleted", async () => {
+    listMock.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
+    getMock.mockResolvedValue(brief({ aiNarrative: "Open detail text." }));
+    deleteMock.mockResolvedValue(undefined);
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    const entry = await screen.findByText("2026-01-01 to 2026-02-01");
+    await user.click(entry);
+    expect(await screen.findByText("Open detail text.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(screen.queryByText("Open detail text.")).not.toBeInTheDocument());
+  });
+
+  it("clears the just-generated section when that same brief is deleted from history", async () => {
+    generateMock.mockResolvedValue(brief({ id: "b1", aiNarrative: "Fresh brief text." }));
+    listMock.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
+    deleteMock.mockResolvedValue(undefined);
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: "Generate brief" }));
+    expect(await screen.findByText("Fresh brief text.")).toBeInTheDocument();
+
+    // Deletes via the history row's own delete button, for the same
+    // id the just-generated section is showing — handleDelete's
+    // `if (justGenerated?.id === id) setJustGenerated(null)` branch.
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(screen.queryByText("Fresh brief text.")).not.toBeInTheDocument());
   });
 });
