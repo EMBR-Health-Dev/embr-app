@@ -273,6 +273,7 @@
     "pdf": "PDF",
     "delete": "削除",
     "questionsForGp": "担当医への質問",
+    "dataCompleteness": "この期間の{{totalDays}}日中{{daysLogged}}日を記録済み（{{percent}}%）",
     "symptomFrequency": "症状の頻度",
     "noSymptomsInRange": "この期間に記録された症状はありません。",
     "occurrenceCount_other": "{{count}}回",

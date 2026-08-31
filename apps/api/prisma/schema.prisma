@@ -461,6 +461,12 @@ model ClinicalBrief {
   /// see brief.ai.ts's BriefInput, which this is not part of. notes is
   /// deliberately excluded — see treatment-summary.ts's doc comment.
   treatmentSummary Json
+  /// { totalDays: number, daysLogged: number, completenessPercent: number }
+  /// See lib/data-completeness.ts. IS sent to the AI (unlike
+  /// treatmentSummary above) — see brief.ai.ts's Rule 4, which uses
+  /// this to ground "say so if the data is sparse" in an actual number
+  /// rather than the model's own impression of the summary's size.
+  dataCompleteness Json
 
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing

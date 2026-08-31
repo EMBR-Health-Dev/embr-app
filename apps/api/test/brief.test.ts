@@ -584,6 +584,7 @@ describe("POST /briefs — treatment summary (deterministic, no AI involvement)"
 
     expect(Object.keys(lastCallArg).sort()).toEqual([
       "cycleSummary",
+      "dataCompleteness",
       "fromDate",
       "symptomSummary",
       "toDate",

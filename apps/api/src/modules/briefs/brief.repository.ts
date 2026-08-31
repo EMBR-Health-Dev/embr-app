@@ -14,6 +14,7 @@ export const briefRepository = {
     symptomSummary: Prisma.InputJsonValue;
     cycleSummary: Prisma.InputJsonValue;
     treatmentSummary: Prisma.InputJsonValue;
+    dataCompleteness: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: string[];
   }) {

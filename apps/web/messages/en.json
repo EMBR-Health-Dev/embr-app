@@ -357,6 +357,7 @@
     "pdf": "PDF",
     "delete": "Delete",
     "questionsForGp": "Questions to bring to your GP",
+    "dataCompleteness": "Logged {daysLogged} of {totalDays} days in this range ({percent}%)",
     "symptomFrequency": "Symptom frequency",
     "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",
     "cycleSummary": "Cycle summary",

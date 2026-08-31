@@ -202,6 +202,14 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
   const { t } = useTranslation();
   return (
     <View style={styles.briefContent}>
+      <Text style={styles.dataCompleteness}>
+        {t("brief.dataCompleteness", {
+          daysLogged: brief.dataCompleteness.daysLogged,
+          totalDays: brief.dataCompleteness.totalDays,
+          percent: brief.dataCompleteness.completenessPercent,
+        })}
+      </Text>
+
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
 
       <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
@@ -288,6 +296,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   briefContent: { marginTop: 10, gap: 4 },
+  dataCompleteness: { fontSize: 11, color: theme.colors.textMuted, marginBottom: 4 },
   narrative: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
   contentSectionTitle: {
     fontSize: 13,

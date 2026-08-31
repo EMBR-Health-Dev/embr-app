@@ -395,6 +395,18 @@ export interface ClinicalBriefListItemDto {
   createdAt: string;
 }
 
+/** See lib/data-completeness.ts for the exact [fromDate, toDate)
+ * calendar-day-counting rule this is computed with. Purely
+ * informational — a low completenessPercent doesn't change how
+ * symptomSummary/cycleSummary were computed, it just tells the reader
+ * (and the AI narrative — see brief.ai.ts's Rule 4) how much of the
+ * window they actually cover. */
+export interface DataCompletenessDto {
+  totalDays: number;
+  daysLogged: number;
+  completenessPercent: number;
+}
+
 /** aiNarrative and aiDiscussionTopics are AI-generated from the
  * structured summary alone — see brief.ai.ts's system prompt for the
  * exact scope constraints (data-grounded only, never diagnostic,
@@ -405,6 +417,7 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   symptomSummary: BriefSymptomSummaryEntryDto[];
   cycleSummary: BriefCycleSummaryDto;
   treatmentSummary: BriefTreatmentSummaryEntryDto[];
+  dataCompleteness: DataCompletenessDto;
   aiNarrative: string;
   aiDiscussionTopics: string[];
 }

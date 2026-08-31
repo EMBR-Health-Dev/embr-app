@@ -5,6 +5,7 @@ import type {
   BriefTreatmentSummaryEntryDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  DataCompletenessDto,
 } from "@embr/types";
 
 export function toClinicalBriefListItemDto(brief: ClinicalBrief): ClinicalBriefListItemDto {
@@ -22,6 +23,7 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     symptomSummary: brief.symptomSummary as unknown as BriefSymptomSummaryEntryDto[],
     cycleSummary: brief.cycleSummary as unknown as BriefCycleSummaryDto,
     treatmentSummary: brief.treatmentSummary as unknown as BriefTreatmentSummaryEntryDto[],
+    dataCompleteness: brief.dataCompleteness as unknown as DataCompletenessDto,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
   };

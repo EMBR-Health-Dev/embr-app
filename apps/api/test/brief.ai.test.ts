@@ -34,6 +34,7 @@ const VALID_INPUT = {
   toDate: "2026-02-01",
   symptomSummary: [{ category: "HOT_FLASH", count: 3, severityBreakdown: { MODERATE: 3 } }],
   cycleSummary: { averageCycleLengthDays: 28, cycleCount: 2, periodDaysLogged: 6 },
+  dataCompleteness: { totalDays: 31, daysLogged: 20, completenessPercent: 65 },
 };
 
 function textResponse(text: string) {
@@ -97,6 +98,7 @@ describe("brief.ai", () => {
       dateRange: { from: VALID_INPUT.fromDate, to: VALID_INPUT.toDate },
       symptomSummary: VALID_INPUT.symptomSummary,
       cycleSummary: VALID_INPUT.cycleSummary,
+      dataCompleteness: VALID_INPUT.dataCompleteness,
     });
     // No "notes" key anywhere, at any depth, in what actually gets sent.
     expect(JSON.stringify(sentContent)).not.toContain("notes");

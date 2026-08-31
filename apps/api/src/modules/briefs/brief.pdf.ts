@@ -35,8 +35,9 @@ export function buildClinicalBriefPdf(
     .fillColor("#555555")
     .text(`Prepared for ${userEmail}`)
     .text(`Range: ${brief.fromDate} to ${brief.toDate}`)
+    .text(`Generated ${new Date(brief.createdAt).toISOString().slice(0, 16).replace("T", " ")} UTC`)
     .text(
-      `Generated ${new Date(brief.createdAt).toISOString().slice(0, 16).replace("T", " ")} UTC`,
+      `Data completeness: logged ${brief.dataCompleteness.daysLogged} of ${brief.dataCompleteness.totalDays} days (${brief.dataCompleteness.completenessPercent}%)`,
     );
   doc
     .moveDown(0.5)
