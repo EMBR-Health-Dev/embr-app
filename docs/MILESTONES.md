@@ -657,3 +657,35 @@ Typecheck: 25 pre-existing errors on `apps/api`, unchanged in count and file set
 ### Next milestone
 
 To be scoped from here — the SSO dual-login-path decision (still open since Milestone 15) remains the one carried-over item from prior milestones' "remaining work" that hasn't been addressed by anything in this range.
+
+## Milestone 21 — Clinical Brief frontend test hardening
+
+A single commit (`4ce7af4`), and deliberately a separate milestone from Milestone 20 rather than an amendment to it: Milestone 20 already records the Clinical Brief 2.0 _product_ as complete, and this is a subsequent verification step, not new product surface. No production code changed anywhere in this milestone — confirmed by `git status` showing only the two test files touched — and no defects were found. This is test hardening, not a bug-fixing release, and that distinction is worth keeping visible in the record rather than blurring the two together.
+
+**What prompted it**: an inspection of the existing web/mobile Clinical Brief test files against the full frontend behavioral surface (API contract, translations, loading/error/empty states, generation, history, detail rendering, deletion, PDF/share, severity breakdown, citations, GP discussion topics, cross-brief trends) found real, specific gaps — most notably that mobile's `handleGenerate` (the entire date-picker-to-success-or-failure flow) had zero test coverage at all, and that the deterministic evidence sections (frequency comparison, persistent symptoms, co-occurrence, cycle summary, treatment summary, treatment impact) were on both platforms only ever exercised with empty fixture defaults, never with real content.
+
+**What changed**
+
+- **Severity breakdown** — previously zero coverage on either platform despite real, locale-aware `Intl.ListFormat` logic. New tests on both platforms use a three-severity-level fixture and assert the exact computed narrow-conjunction string (verified directly via Node before writing the assertion, not assumed).
+- **Mobile generation flow** — the single largest gap closed: validation (no dates picked), success (asserting the generated brief renders _and_ that `list`/`trends` are each genuinely called a second time, not just that some success state exists), and API failure (asserting the error text, that no success text of any kind leaked through, and that no phantom retry or refresh occurred).
+- **Deletion** — mobile gained its first delete coverage entirely; both platforms gained the two branches neither covered before (deleting the currently-open brief clears the detail view; deleting the just-generated brief clears that section), asserted by checking the relevant content actually disappears, not merely that the delete call was made.
+- **PDF/share** — web's download anchor `href` asserted directly; mobile's share helper asserted for the correct brief id, plus a genuine in-flight assertion using a controlled, not-yet-resolved promise to observe the label change while sharing and its reversion afterward.
+- **Deterministic evidence sections with real content** — one realistic fixture per platform (verified field-for-field against the actual `BriefFrequencyComparisonEntryDto`/`BriefTreatmentImpactEntryDto`/`BriefTreatmentSummaryEntryDto` definitions in `@embr/types`, not assumed) covering frequency comparison, persistent symptoms, co-occurrence, a real cycle-length average, treatment summary, and treatment impact including the `insufficientData` case — every section's actual rendered text asserted.
+- **Multiple-item rendering** — more than one discussion topic and more than one trend category, to catch what a single-item fixture can't.
+
+**Test counts, before and after**
+
+- Web: 13 → 21 Clinical Brief tests; full `apps/web` suite 136 → 144.
+- Mobile: 11 → 24 Clinical Brief tests; full `apps/mobile` suite 49 → 62.
+
+**Infrastructure note**: one file-scoped `vi.mock` of the app's own `DatePickerField` component was added to mobile's test file — not a change to shared test infrastructure. The shared native-picker mock in `test/setup.ts` (established in the mobile screen-testing work recorded in Milestone 20) renders nothing, correctly, for every other screen; without a way to simulate an actual date selection, `handleGenerate`'s success/failure paths were entirely unreachable. `test/setup.ts` itself is untouched, confirmed by diff, and the new mock follows the exact same per-file convention this test file already used for `../../lib/api`, `../../lib/brief-pdf`, and `../../lib/api-client`.
+
+**Verification**: both modified files run clean independently (21/21, 24/24) and as part of their full suites (144/144, 62/62). `apps/web`/`apps/mobile` typecheck and lint both clean. `apps/api` typecheck re-run and confirmed unchanged at the established 25-pre-existing-error baseline — this milestone never touches `apps/api`. Format check clean.
+
+**Remaining work**: loading-state transitions (history-loading, detail-loading-while-fetching, mobile's own `trendsLoading` flag) and `ja.json` locale rendering were identified during the original inspection but deliberately left out of this pass as lower-priority than the items above — noted, not forgotten.
+
+**A second roadmap-documentation gap found in passing**: Milestone 18's own "remaining work" ("No frontend yet — neither `apps/web` nor `apps/mobile` have a treatments screen") is stale. Treatment tracking UI was actually built on both platforms in `75cd154` ("Punch-list fixes + treatment tracking UI (web + mobile)"), from an unrelated punch-list workstream that never updated this document — the same class of gap Milestone 20 closed for Clinical Brief, found again here rather than assumed away. Left as-written above rather than retroactively edited, matching this document's existing convention of preserving each milestone's text as it stood at the time (Milestone 17's own "Next" pointer is similarly left stale); recorded here instead so the next reader doesn't plan around a gap that no longer exists.
+
+### Next milestone
+
+To be scoped from here with that correction in mind — treatment tracking UI is not an open gap. The SSO dual-login-path decision (still open since Milestone 15) remains the one genuinely open carried-over item.
