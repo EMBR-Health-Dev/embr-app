@@ -126,6 +126,16 @@ vi.mock("../src/modules/auth/mailer.js", () => ({
 }));
 
 vi.mock("../src/lib/prisma.js", () => ({
+  // Mocked as literal null, not a distinct sentinel object — real
+  // Prisma's client also always returns plain JS null when *reading*
+  // a JSON column back, regardless of whether Prisma.JsonNull or
+  // Prisma.DbNull was written (the distinction is a write-time/SQL-
+  // level concern only). Every existing coOccurrence assertion in
+  // this file already expects plain null for the "no pair found"
+  // case, and continues to unchanged with this mock, since
+  // briefRepository.create's use of Prisma.JsonNull resolves to
+  // exactly the same value here that a real round-trip produces.
+  Prisma: { JsonNull: null },
   prisma: {
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
