@@ -17,6 +17,44 @@ export class ApiError extends Error {
   }
 }
 
+// A callback auth-context.tsx registers on mount, so this plain
+// module (no access to Next's router or React state) can hand off
+// "a real session just ended" to the one place that already owns both
+// concerns. Deliberately not wired up unconditionally — only set once
+// there's a real session to report losing, so this stays a no-op for
+// every path that doesn't need it (SSR, before AuthProvider mounts).
+let sessionExpiredHandler: (() => void) | null = null;
+export function setSessionExpiredHandler(handler: (() => void) | null): void {
+  sessionExpiredHandler = handler;
+}
+
+// The one signal that distinguishes "a real session just expired" from
+// "there was never a session to begin with" — both produce an
+// identical 401 from the API (see auth.service.ts's refresh()), and
+// embr_rt is httpOnly, so it can't be read directly to tell them apart
+// client-side either. Written to localStorage (not a module-level
+// variable) specifically so it survives a full page reload — a stale
+// access token discovered on first load after reopening the app days
+// later is exactly as real a "your session expired" event as one
+// discovered mid-session, and only a persisted signal catches both.
+const HAD_SESSION_KEY = "embr_had_session";
+
+function markHadSession(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(HAD_SESSION_KEY, "1");
+}
+
+function hadSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(HAD_SESSION_KEY) === "1";
+}
+
+function clearHadSession(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(HAD_SESSION_KEY);
+}
+export { clearHadSession };
+
 function readCookie(name: string): string | undefined {
   if (typeof document === "undefined") return undefined;
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -141,7 +179,17 @@ async function refreshAccessToken(): Promise<boolean> {
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   try {
-    return await rawFetch<T>(path, options);
+    const data = await rawFetch<T>(path, options);
+    // Marked on every successful authenticated-endpoint response, not
+    // just login — this is what lets a stale-token discovered on a
+    // *fresh* page load (reopening the app after the refresh token
+    // itself expired) be recognized as a real expiration too, not
+    // just a mid-session one. NO_REFRESH_PATHS is exactly "endpoints
+    // that don't require an existing session" already, so excluding
+    // them here for free is what makes this specifically mean "had a
+    // real session," not just "got any successful response."
+    if (!NO_REFRESH_PATHS.has(path)) markHadSession();
+    return data;
   } catch (err) {
     const shouldRetryAfterRefresh =
       err instanceof ApiError &&
@@ -152,7 +200,19 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (!shouldRetryAfterRefresh) throw err;
 
     const refreshed = await refreshAccessToken();
-    if (!refreshed) throw err;
+    if (!refreshed) {
+      // Only announced when this browser is known to have had a real
+      // session before — see markHadSession's own doc comment for why
+      // that check exists at all. A visitor who was never logged in
+      // hits this exact same branch (an unauthenticated request also
+      // 401s, also fails to refresh), and must not see "your session
+      // expired" for a session that never existed.
+      if (hadSession()) {
+        clearHadSession();
+        sessionExpiredHandler?.();
+      }
+      throw err;
+    }
 
     return rawFetch<T>(path, { ...options, _isRetry: true });
   }

@@ -170,4 +170,21 @@ describe("Login — translation", () => {
 
     expect(screen.getByText("SSO sign-in didn't work. Try again.")).toBeInTheDocument();
   });
+
+  it("shows the session-expired message when reason=session-expired", async () => {
+    searchParamsValue = new URLSearchParams({ reason: "session-expired" });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(screen.getByText("Your session expired. Log in again to continue.")).toBeInTheDocument();
+  });
+
+  it("does not show the session-expired message for an ordinary visit with no reason param", async () => {
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(
+      screen.queryByText("Your session expired. Log in again to continue."),
+    ).not.toBeInTheDocument();
+  });
 });

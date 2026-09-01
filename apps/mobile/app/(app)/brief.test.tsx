@@ -744,3 +744,24 @@ describe("Brief screen — history", () => {
     expect(await screen.findByText("No briefs generated yet.")).toBeInTheDocument();
   });
 });
+
+describe("Brief screen — medical disclaimer", () => {
+  it("renders the same safety framing web shows, near the top of the screen", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    const { default: BriefScreen } = await import("./brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+
+    // Exact wording match with apps/web's Brief.description — the
+    // point of this test is catching future wording drift between
+    // the two platforms, not just presence.
+    expect(
+      await screen.findByText(
+        "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
+      ),
+    ).toBeInTheDocument();
+  });
+});

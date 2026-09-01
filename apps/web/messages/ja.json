@@ -18,7 +18,8 @@
     "or": "または",
     "continueWithSso": "SSOでログイン",
     "newToEmbr": "EMBRは初めてですか?",
-    "createAccount": "アカウントを作成"
+    "createAccount": "アカウントを作成",
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
   },
   "LanguageSwitcher": {
     "label": "言語",
@@ -405,7 +406,8 @@
     "logOutAndRetry": "ログアウトしてやり直す",
     "loggingOut": "ログアウト中…",
     "stayAndGoToDashboard": "そのままダッシュボードへ進む",
-    "genericError": "招待の承認中に問題が発生しました。しばらくしてからもう一度お試しください。"
+    "genericError": "招待の承認中に問題が発生しました。しばらくしてからもう一度お試しください。",
+    "privacyNote": "個人の健康データは非公開のままです。勤務先があなたの個人の症状記録を見ることはできません。組織のインサイトは、個人のプライバシーを保護できるだけのデータが集まった場合にのみ、集計・匿名化された傾向としてのみ表示されます。"
   },
   "Export": {
     "title": "データをエクスポート",

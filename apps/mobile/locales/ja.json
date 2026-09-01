@@ -12,7 +12,8 @@
     "submit": "ログイン",
     "submitting": "ログイン中…",
     "newToEmbr": "EMBRは初めてですか?",
-    "createAccount": "アカウントを作成"
+    "createAccount": "アカウントを作成",
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
   },
   "languageSwitcher": {
     "label": "言語",

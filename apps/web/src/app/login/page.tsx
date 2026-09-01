@@ -104,6 +104,12 @@ function LoginForm() {
         </p>
       )}
 
+      {reason === "session-expired" && (
+        <p className="mb-6 mt-6 rounded-sm bg-teal/10 px-3 py-2 text-sm text-teal">
+          {t("sessionExpired")}
+        </p>
+      )}
+
       {ssoError && (
         <p className="mb-6 mt-6 rounded-sm bg-red-50 px-3 py-2 text-sm text-red-600">
           {t.has(`ssoError.${ssoError}`) ? t(`ssoError.${ssoError}`) : t("ssoError.default")}

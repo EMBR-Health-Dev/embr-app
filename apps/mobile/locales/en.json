@@ -12,7 +12,8 @@
     "submit": "Log in",
     "submitting": "Logging in…",
     "newToEmbr": "New to EMBR?",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "sessionExpired": "Your session expired. Log in again to continue."
   },
   "languageSwitcher": {
     "label": "Language",
@@ -259,7 +260,7 @@
   },
   "brief": {
     "title": "EMBR BRIEF",
-    "hint": "A summary of your tracked data, with questions to bring to your GP — not a diagnosis, and not medical advice.",
+    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
     "fromPlaceholder": "From",
     "toPlaceholder": "To",
     "invalidDates": "Pick a start and end date, with the start before the end.",
