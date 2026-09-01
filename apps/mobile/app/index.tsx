@@ -13,5 +13,9 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={user ? "/(app)" : "/login"} />;
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
+
+  return <Redirect href={user.onboardingCompletedAt ? "/(app)" : "/onboarding"} />;
 }

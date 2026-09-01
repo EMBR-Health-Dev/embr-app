@@ -27,6 +27,7 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      symptomLogs: [] as Array<{ userId: string; occurredAt: Date }>,
       auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
     },
     nextId: () => randomUUID(),
@@ -107,6 +108,19 @@ vi.mock("../src/lib/prisma.js", () => ({
     },
     onboardingProfile: {
       findUnique: vi.fn().mockResolvedValue(null),
+    },
+    symptomLog: {
+      count: vi.fn(
+        ({ where }: { where: { userId: string; occurredAt: { gte: Date; lt: Date } } }) =>
+          Promise.resolve(
+            state.symptomLogs.filter(
+              (l) =>
+                l.userId === where.userId &&
+                l.occurredAt >= where.occurredAt.gte &&
+                l.occurredAt < where.occurredAt.lt,
+            ).length,
+          ),
+      ),
     },
     treatment: {
       create: vi.fn(
@@ -202,6 +216,7 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 beforeEach(() => {
   state.users = [];
   state.treatments = [];
+  state.symptomLogs = [];
   state.auditLogEntries = [];
 });
 
@@ -324,6 +339,120 @@ describe("GET /treatments", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.items).toHaveLength(1);
     expect(res.body.data.items[0].name).toBe("Current HRT");
+  });
+});
+
+describe("GET /treatments/:id/impact", () => {
+  it("returns 404 for another user's treatment", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "impactOwner@embr.health");
+    await registerAndLogin(agentB, "impactAttacker@embr.health");
+
+    const created = await agentA
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01" });
+
+    const res = await agentB.get(`/treatments/${created.body.data.id}/impact`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for a nonexistent treatment id", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "impactMissing@embr.health");
+
+    const res = await agent.get(`/treatments/${randomUUID()}/impact`);
+    expect(res.status).toBe(404);
+  });
+
+  it("computes before/after symptom-log counts around the treatment's start date", async () => {
+    vi.useFakeTimers();
+    try {
+      // Fixed "now" so the before/after windows are deterministic
+      // regardless of when this test actually runs.
+      vi.setSystemTime(new Date("2026-06-20T12:00:00Z"));
+
+      const app = createApp();
+      const agent = request.agent(app);
+      const login = await registerAndLogin(agent, "impact@embr.health");
+      const userId = login.body.data.user.id as string;
+
+      const created = await agent
+        .post("/treatments")
+        .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-15" });
+      const treatmentId = created.body.data.id as string;
+
+      // 3 logs in the 14-day "before" window (2026-06-01 to 2026-06-15).
+      state.symptomLogs.push(
+        { userId, occurredAt: new Date("2026-06-03T10:00:00Z") },
+        { userId, occurredAt: new Date("2026-06-10T10:00:00Z") },
+        { userId, occurredAt: new Date("2026-06-14T23:59:00Z") },
+      );
+      // 1 log in the "after" window so far (2026-06-15 to "today", 2026-06-20).
+      state.symptomLogs.push({ userId, occurredAt: new Date("2026-06-17T10:00:00Z") });
+      // Outside both windows entirely — must not be counted either side.
+      state.symptomLogs.push({ userId, occurredAt: new Date("2026-05-01T10:00:00Z") });
+
+      const res = await agent.get(`/treatments/${treatmentId}/impact`);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        treatmentId,
+        windowDays: 14,
+        before: { logCount: 3, days: 14 },
+        after: { logCount: 1, days: 5 }, // 2026-06-15 to 2026-06-20
+        insufficientData: false, // 5 days already >= the 3-day floor
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("flags insufficientData for a treatment started only a day ago", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-06-16T08:00:00Z"));
+
+      const app = createApp();
+      const agent = request.agent(app);
+      await registerAndLogin(agent, "impactRecent@embr.health");
+
+      const created = await agent
+        .post("/treatments")
+        .send({ name: "Magnesium", category: "SUPPLEMENT", startDate: "2026-06-15" });
+      const treatmentId = created.body.data.id as string;
+
+      const res = await agent.get(`/treatments/${treatmentId}/impact`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.after.days).toBe(1);
+      expect(res.body.data.insufficientData).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not flag insufficientData once the after window has run long enough (capped at windowDays)", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-07-01T12:00:00Z"));
+
+      const app = createApp();
+      const agent = request.agent(app);
+      await registerAndLogin(agent, "impactSufficient@embr.health");
+
+      const created = await agent
+        .post("/treatments")
+        .send({ name: "Magnesium", category: "SUPPLEMENT", startDate: "2026-06-15" });
+      const treatmentId = created.body.data.id as string;
+
+      const res = await agent.get(`/treatments/${treatmentId}/impact`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.after.days).toBe(14); // capped at windowDays
+      expect(res.body.data.insufficientData).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

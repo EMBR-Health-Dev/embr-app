@@ -45,6 +45,23 @@ router.get(
 );
 
 router.get(
+  "/export/treatments.csv",
+  validate(exportQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const csv = await exportService.treatmentsCsv(
+      req.user!.sub,
+      req.query as unknown as ExportQuery,
+    );
+    await writeAuditLog(req, "DATA_EXPORTED", req.user!.sub, { type: "treatments-csv" });
+    res
+      .status(200)
+      .type("text/csv")
+      .set("Content-Disposition", 'attachment; filename="embr-treatments.csv"')
+      .send(csv);
+  }),
+);
+
+router.get(
   "/export/summary.pdf",
   validate(exportQuerySchema, "query"),
   asyncHandler(async (req, res) => {

@@ -1,9 +1,10 @@
 import type { CreateTreatmentInput, TreatmentQuery, UpdateTreatmentInput } from "@embr/validation";
-import type { PaginatedResponse, TreatmentDto } from "@embr/types";
+import type { PaginatedResponse, TreatmentDto, TreatmentImpactDto } from "@embr/types";
 import { AppError } from "@embr/shared";
 import { treatmentRepository } from "./treatment.repository.js";
 import { toTreatmentDto } from "./treatment.mappers.js";
 import { paginate } from "../../lib/pagination.js";
+import { buildTreatmentImpact, computeTreatmentImpactWindows } from "./treatment-impact.js";
 
 export const treatmentService = {
   async create(userId: string, input: CreateTreatmentInput): Promise<TreatmentDto> {
@@ -51,5 +52,39 @@ export const treatmentService = {
   async delete(userId: string, id: string): Promise<void> {
     const deleted = await treatmentRepository.delete(userId, id);
     if (!deleted) throw AppError.notFound("Treatment");
+  },
+
+  /** See treatment-impact.ts for the deterministic window/comparison
+   * logic itself — this just wires ownership-scoped data into it,
+   * same "fetch, then hand off to a pure function" shape
+   * trends.service.ts already uses for cycle length / co-occurrence. */
+  async getImpact(userId: string, id: string): Promise<TreatmentImpactDto> {
+    const treatment = await treatmentRepository.findById(userId, id);
+    if (!treatment) throw AppError.notFound("Treatment");
+
+    // Same UTC-midnight-truncated "today" convention as
+    // treatmentRepository.list()'s active filter — see that fix's own
+    // doc comment for why a bare `new Date()` is the wrong thing to
+    // compare @db.Date columns against.
+    const today = new Date(new Date().toISOString().slice(0, 10));
+    const windows = computeTreatmentImpactWindows({
+      startDate: treatment.startDate,
+      endDate: treatment.endDate,
+      today,
+    });
+
+    const { beforeLogCount, afterLogCount } = await treatmentRepository.countSymptomLogsInWindows(
+      userId,
+      windows,
+    );
+
+    return buildTreatmentImpact({
+      treatmentId: treatment.id,
+      startDate: treatment.startDate,
+      endDate: treatment.endDate,
+      today,
+      beforeLogCount,
+      afterLogCount,
+    });
   },
 };

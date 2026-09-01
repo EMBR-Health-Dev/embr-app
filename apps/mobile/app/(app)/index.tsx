@@ -43,6 +43,7 @@ export default function HomeScreen() {
   // crossing the 3-log threshold) can appear right after logging,
   // not just on the next cold load of this screen.
   const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
 
   const loadLogs = useCallback(async () => {
     try {
@@ -81,6 +82,7 @@ export default function HomeScreen() {
 
   async function handleLogSymptom() {
     setFormError(null);
+    setConfirmation(null);
     if (!category || !severity) {
       setFormError(t("home.pickCategoryAndSeverity"));
       return;
@@ -97,6 +99,7 @@ export default function HomeScreen() {
       setCategory(null);
       setSeverity(null);
       setNotes("");
+      setConfirmation(t("home.logConfirmation"));
       await loadLogs();
       setReflectionsRefreshKey((k) => k + 1);
     } catch (err) {
@@ -191,6 +194,7 @@ export default function HomeScreen() {
               </Text>
             </Pressable>
 
+            {confirmation && <Text style={styles.confirmation}>{confirmation}</Text>}
             <ReflectionsSection refreshKey={reflectionsRefreshKey} />
 
             <Text style={[styles.sectionLabel, { marginTop: 28 }]}>{t("home.recentLogs")}</Text>
@@ -241,6 +245,12 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     color: theme.colors.textSecondary,
     marginBottom: 4,
+  },
+  confirmation: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: theme.colors.success,
+    marginTop: 8,
   },
   sectionLabel: {
     fontSize: 14,

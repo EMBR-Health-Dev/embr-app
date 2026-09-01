@@ -128,6 +128,13 @@ function LoginForm() {
           error={fieldErrors.password}
         />
 
+        <Link
+          href="/forgot-password"
+          className="self-end text-xs font-medium text-teal underline underline-offset-2"
+        >
+          {t("forgotPassword")}
+        </Link>
+
         {formError && <p className="text-sm text-red-600">{formError}</p>}
 
         <Button type="submit" disabled={submitting} className="mt-2">

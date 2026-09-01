@@ -121,6 +121,26 @@ export interface TreatmentDto {
   updatedAt: string;
 }
 
+/**
+ * Deterministic before/after symptom-log-frequency comparison around
+ * a treatment's start date — no AI, no interpretation, matching
+ * SymptomCoOccurrenceDto's exact "counts only" precedent. `days` on
+ * each side is how many calendar days that window actually spans (the
+ * "after" window can be shorter than `windowDays` for a treatment
+ * that started recently or already ended) — a client needs this to
+ * render a fair "per day"/"per week" rate rather than comparing raw
+ * counts across windows of different lengths.
+ */
+export interface TreatmentImpactDto {
+  treatmentId: string;
+  windowDays: number;
+  before: { logCount: number; days: number };
+  after: { logCount: number; days: number };
+  /** True when the "after" window hasn't run long enough yet for the
+   * comparison to mean much — see MIN_TREATMENT_IMPACT_DAYS. */
+  insufficientData: boolean;
+}
+
 export type FlowIntensity = "SPOTTING" | "LIGHT" | "MEDIUM" | "HEAVY";
 
 export interface CycleEntryDto {
@@ -269,6 +289,35 @@ export interface OrganizationDto {
   seatLimit: number | null;
   memberCount: number;
   createdAt: string;
+}
+
+export type StripeSubscriptionStatus =
+  | "INCOMPLETE"
+  | "INCOMPLETE_EXPIRED"
+  | "TRIALING"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "CANCELED"
+  | "UNPAID"
+  | "PAUSED";
+
+/**
+ * An organization's billing state — deliberately just status/dates/seat
+ * counts, never anything Stripe-account-identifying beyond whether a
+ * customer relationship exists (`hasStripeCustomer`), since the raw
+ * Stripe ids have no use on a settings screen and shouldn't be handed
+ * to the browser for no reason.
+ */
+export interface OrgBillingStatusDto {
+  hasStripeCustomer: boolean;
+  subscriptionStatus: StripeSubscriptionStatus | null;
+  seatLimit: number | null;
+  seatsUsed: number;
+  currentPeriodEnd: string | null;
+  /** False when STRIPE_SECRET_KEY isn't configured on this deployment
+   * — lets a settings screen show "billing isn't available yet" rather
+   * than a confusing empty state or a failed request. */
+  billingEnabled: boolean;
 }
 
 /** Roster entry — deliberately just account + org-role metadata, never

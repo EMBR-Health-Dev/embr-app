@@ -56,7 +56,9 @@ export default function TheLoopScreen() {
       <div className="relative mt-10 flex flex-col">
         <div className="absolute bottom-4 left-[5px] top-4 w-px bg-navy/15" aria-hidden="true" />
 
-        <LoopStage label={t("trackLabel")} title={trackLabel} />
+        <LoopStage label={t("trackLabel")} title={trackLabel}>
+          <p className="mt-2 text-xs text-navy/50">{t("trackTreatmentsHint")}</p>
+        </LoopStage>
         <LoopStage label={t("patternsLabel")} title={t("patternsTitle")}>
           <p className="mt-2 font-display italic text-navy/90">{t("patternsExample")}</p>
           <p className="mt-2 text-xs text-navy/50">{t("patternsCaveat")}</p>

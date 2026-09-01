@@ -131,6 +131,15 @@ describe("Login — translation", () => {
     expect(screen.getByText("Continue with SSO")).toBeInTheDocument();
   });
 
+  it("has a Forgot password? link pointing at /forgot-password", async () => {
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    const link = screen.getByText("Forgot password?");
+    expect(link).toBeInTheDocument();
+    expect(link.closest("a")).toHaveAttribute("href", "/forgot-password");
+  });
+
   it("renders Japanese strings when the ja locale is active", async () => {
     const { default: LoginPage } = await import("./page");
     render(

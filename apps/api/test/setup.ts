@@ -12,5 +12,14 @@ process.env.SSO_ENCRYPTION_KEY ??= Buffer.alloc(32).toString("base64");
 // matters — this just satisfies env.ts's required-field validation at
 // boot.
 process.env.ANTHROPIC_API_KEY ??= "test-only-placeholder-not-a-real-key";
+// Same reasoning as ANTHROPIC_API_KEY above — the `stripe` package is
+// mocked wherever billing.test.ts exercises real behavior; this just
+// makes isBillingConfigured() true by default so route tests don't all
+// need to stub these individually. Tests of the "billing isn't
+// configured" 503 path mutate `env` directly and restore it afterward
+// — see billing.test.ts.
+process.env.STRIPE_SECRET_KEY ??= "sk_test_placeholder";
+process.env.STRIPE_WEBHOOK_SECRET ??= "whsec_test_placeholder";
+process.env.STRIPE_SEAT_PRICE_ID ??= "price_test_placeholder";
 process.env.NODE_ENV = "test";
 process.env.LOG_LEVEL = "fatal";

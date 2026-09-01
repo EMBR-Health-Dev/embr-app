@@ -1,6 +1,29 @@
 import { loadEnv } from "@embr/shared";
 import { z } from "zod";
 
+/**
+ * z.coerce.boolean() coerces via JavaScript's Boolean(value), which
+ * treats any non-empty string as truthy — meaning the literal string
+ * "false" (exactly what a .env file naturally contains) coerces to
+ * `true`. That's silently wrong for every boolean env var below:
+ * SMTP_SECURE=false, SMTP_REQUIRE_TLS=false, and COOKIE_SECURE=false
+ * have never actually meant false. This preprocesses the raw string
+ * first — "false"/"0" (case-insensitive, and empty/whitespace) parse
+ * to false, "true"/"1" parse to true — before Zod's own boolean check
+ * runs, so an explicit override in either direction actually works.
+ * Anything else is left as-is for z.boolean() to reject with a real
+ * validation error rather than silently guessing.
+ */
+function booleanEnvVar() {
+  return z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1") return true;
+    if (normalized === "false" || normalized === "0" || normalized === "") return false;
+    return value;
+  }, z.boolean());
+}
+
 const apiEnvSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   API_HOST: z.string().default("0.0.0.0"),
@@ -21,8 +44,8 @@ const apiEnvSchema = z.object({
   // deployment should set SMTP_REQUIRE_TLS=true explicitly — this is
   // never inferred from SMTP_USER/SMTP_PASS being present, since
   // that's a decision worth making deliberately, not guessing at.
-  SMTP_SECURE: z.coerce.boolean().default(false),
-  SMTP_REQUIRE_TLS: z.coerce.boolean().default(false),
+  SMTP_SECURE: booleanEnvVar().default(false),
+  SMTP_REQUIRE_TLS: booleanEnvVar().default(false),
 
   // ---- Retention (closed-beta minimum) ----
   // Applies only to already-dead rows (expired tokens, expired/revoked
@@ -64,7 +87,15 @@ const apiEnvSchema = z.object({
     .positive()
     .default(60 * 60),
   COOKIE_DOMAIN: z.string().optional(),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  // Defaults to true outside development/test rather than a blanket
+  // `false` — a security-relevant setting should fail toward the safe
+  // state (cookies marked Secure) if a production deployment forgets
+  // to configure it explicitly, not away from it. Matches the same
+  // NODE_ENV-based default technique packages/shared's logger already
+  // uses for its own dev/production split. Still fully overridable
+  // either direction via an explicit COOKIE_SECURE env var — this only
+  // changes what happens when it's left unset.
+  COOKIE_SECURE: booleanEnvVar().default(process.env.NODE_ENV === "production"),
 
   // ---- Observability (Milestone 11) ----
   // Optional by design: Sentry stays fully disabled (no-op init) when this
@@ -109,6 +140,25 @@ const apiEnvSchema = z.object({
     .int()
     .positive()
     .default(10 * 60),
+
+  // ---- Billing (Stripe) ----
+  // All optional, matching SENTRY_DSN's precedent: billing stays fully
+  // inert (routes respond 503 "not configured" — see billing.routes.ts)
+  // when unset, rather than the whole API failing to boot in every
+  // environment that hasn't set this up yet (local dev, CI, and any
+  // pilot deployment that isn't charging through Stripe yet).
+  STRIPE_SECRET_KEY: z.string().optional(),
+  // Required to verify the webhook's signature (see billing.webhook.ts)
+  // — without it, a real STRIPE_SECRET_KEY alone would let the webhook
+  // route accept unsigned/forged requests, so the route checks both are
+  // present before doing anything, not just the secret key.
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // The Stripe Price id (price_...) for the per-seat recurring price —
+  // a single price, not a price-per-plan-tier list, matching this
+  // milestone's scope (see docs/MILESTONES.md): one plan, quantity =
+  // seats. A real multi-tier pricing page is a later, deliberate
+  // decision, not assumed here.
+  STRIPE_SEAT_PRICE_ID: z.string().optional(),
 
   // ---- EMBR BRIEF (Milestone 17) ----
   ANTHROPIC_API_KEY: z.string().min(1),

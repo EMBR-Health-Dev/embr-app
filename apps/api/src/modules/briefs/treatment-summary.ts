@@ -2,41 +2,23 @@ import type { BriefTreatmentSummaryEntryDto } from "@embr/types";
 import type { Treatment } from "../../generated/prisma/index.js";
 
 /**
- * PRISMA-SCHEMA-BOUNDARY — exact field the eventual migration needs to add:
+ * ClinicalBrief.treatmentSummary — persistence status
  *
- *   model ClinicalBrief {
- *     ...
- *     /// Array<{ name: string, category: TreatmentCategory, startDate: string, endDate: string | null }>
- *     /// A snapshot of Treatment records overlapping [fromDate, toDate],
- *     /// taken at generation time — deliberately NOT a live query (see
- *     /// brief.pdf.ts's reproducibility invariant). Never sent to the
- *     /// AI — see brief.ai.ts's BriefInput, which this is not part of.
- *     /// notes is deliberately excluded — see this file's doc comment.
- *     treatmentSummary Json
- *     ...
- *   }
+ * This field exists on the Prisma schema (a plain, non-nullable Json
+ * column, matching symptomSummary/cycleSummary exactly) and is fully
+ * wired end to end: brief.service.ts's generate() computes it via
+ * computeTreatmentSummary() below and passes it to
+ * brief.repository.ts's create(), which persists it; brief.mappers.ts's
+ * toClinicalBriefDto() reads the persisted value back on every
+ * GET /briefs/:id and GET /briefs/:id/pdf request. Historically this
+ * was blocked on a missing migration (search git history for
+ * "PRISMA-SCHEMA-BOUNDARY" if curious about that period) — that's
+ * resolved and this note exists only so a future reader doesn't have
+ * to rediscover that themselves from the code alone.
  *
- * No @default, no nullability — matching symptomSummary/cycleSummary
- * exactly, since the service layer will always provide all three
- * explicitly at create() time, the same way it already does for those
- * two. Until this field exists and `prisma generate` has run against
- * it, brief.mappers.ts's toClinicalBriefDto() cannot read a persisted
- * value (there is nothing on the ClinicalBrief record to read), and
- * brief.repository.ts's create() cannot persist one (its data
- * parameter would need a field Prisma's generated
- * ClinicalBriefCreateInput type doesn't know about yet). Search this
- * codebase for "PRISMA-SCHEMA-BOUNDARY" to find every place that's
- * currently working around the absence of this field.
- *
- * What *is* fully built and tested despite that boundary: this pure
- * mapping function, the repository query that feeds it
- * (treatment.repository.ts's listOverlappingRange), and every
- * rendering surface (PDF, web, mobile) that consumes a
- * BriefTreatmentSummaryEntryDto[] — none of those depend on the
- * schema at all. Once the field lands, the only remaining wiring is
- * brief.repository.ts's create() call and brief.mappers.ts's read —
- * both already marked PRISMA-SCHEMA-BOUNDARY at the exact line to
- * change.
+ * notes is still deliberately excluded from this summary — see this
+ * file's next doc comment for why. That reasoning was never about the
+ * schema boundary and doesn't change now that the field is real.
  */
 
 /**

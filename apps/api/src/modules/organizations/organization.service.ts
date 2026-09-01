@@ -140,10 +140,21 @@ export const organizationService = {
     await organizationRepository.consumeInvite(invite.id);
   },
 
+  /**
+   * See organizationRepository.revokeMembership for where the last-admin
+   * invariant is actually enforced (server-side, inside a transaction).
+   * This only translates its outcome into the right HTTP-facing error —
+   * NOT_FOUND keeps the existing 404 behavior; LAST_ADMIN is a 409, since
+   * the request is well-formed but conflicts with organization state,
+   * not the caller's identity or authorization.
+   */
   async revokeMember(organizationId: string, targetUserId: string): Promise<void> {
     const result = await organizationRepository.revokeMembership(organizationId, targetUserId);
-    if (result.count === 0) {
+    if (result === "NOT_FOUND") {
       throw AppError.notFound("Organization member");
+    }
+    if (result === "LAST_ADMIN") {
+      throw AppError.conflict("An organization must have at least one admin");
     }
   },
 
