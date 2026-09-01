@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+const { TokenExpiredError, JsonWebTokenError } = jwt;
 import { AppError } from "@embr/shared";
 import type { OrgRole, Role } from "@embr/types";
 import { prisma } from "../../lib/prisma.js";
