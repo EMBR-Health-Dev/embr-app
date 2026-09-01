@@ -1,5 +1,7 @@
 import { PrismaClient } from "../generated/prisma/index.js";
 
+export { Prisma } from "../generated/prisma/index.js";
+
 /**
  * Singleton PrismaClient. In dev, `tsx watch` re-executes this module on
  * every reload; without caching on globalThis we'd exhaust Postgres
