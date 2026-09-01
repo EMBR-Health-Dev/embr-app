@@ -19,6 +19,21 @@ export class ApiError extends Error {
   }
 }
 
+// A callback auth-context.tsx registers on mount, so this plain
+// module (no access to expo-router or React state) can hand off "a
+// real session just ended" to the one place that already owns both
+// concerns. Mirrors apps/web/src/lib/api-client.ts's identical
+// registration pattern — unlike web, no extra "did this browser ever
+// have a session" tracking is needed here: refreshAccessToken()
+// already only runs when tokenStorage.get() returned a real stored
+// session (see shouldRetryAfterRefresh below), so a definitive
+// refresh failure is unambiguously "a real session just died," not
+// "there was never one."
+let sessionExpiredHandler: (() => void) | null = null;
+export function setSessionExpiredHandler(handler: (() => void) | null): void {
+  sessionExpiredHandler = handler;
+}
+
 // Unlike apps/web (same-origin, via next.config.ts's rewrite), a mobile
 // client has no origin to be "same" as — it talks to the API directly,
 // over whatever network the device is on, so the base URL has to be
@@ -138,7 +153,17 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (!shouldRetryAfterRefresh) throw err;
 
     const newAccessToken = await refreshAccessToken();
-    if (!newAccessToken) throw err;
+    if (!newAccessToken) {
+      // Reaching this branch already required stored !== null above —
+      // a real, persisted session existed and its refresh just
+      // definitively failed, so this is unambiguous, unlike apps/web
+      // where the same signal has to be reconstructed from a
+      // localStorage marker (embr_rt-equivalent, httpOnly, isn't
+      // readable here either, but tokenStorage's own presence already
+      // does the same job for free).
+      sessionExpiredHandler?.();
+      throw err;
+    }
 
     const { data } = await rawFetch<T>(path, { ...options, _isRetry: true }, newAccessToken);
     return data;

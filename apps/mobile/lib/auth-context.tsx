@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { router } from "expo-router";
 import type { UserDto } from "@embr/types";
 import { api } from "./api";
-import { ApiError } from "./api-client";
+import { ApiError, setSessionExpiredHandler } from "./api-client";
 import { tokenStorage } from "./token-storage";
 
 interface AuthContextValue {
@@ -51,6 +52,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadUser();
   }, [loadUser]);
+
+  useEffect(() => {
+    // api-client.ts is a plain module with no access to expo-router or
+    // this component's state — this registration is what lets it hand
+    // off "a real session just ended" (discovered from inside a failed
+    // apiFetch call, which could be triggered by any screen) to the
+    // one place that already owns both concerns. Reuses the existing
+    // reason= query-param convention settings.tsx already established
+    // for "password-changed" — same mechanism, new value.
+    setSessionExpiredHandler(() => {
+      setUser(null);
+      router.replace("/login?reason=session-expired");
+    });
+    return () => setSessionExpiredHandler(null);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const session = await api.auth.login({ email, password });

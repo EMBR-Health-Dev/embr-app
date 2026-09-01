@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch, ApiError } from "./api-client";
+import { apiFetch, ApiError, setSessionExpiredHandler } from "./api-client";
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -22,11 +22,15 @@ beforeEach(() => {
   // that fallback is exercised separately from what this file cares
   // about (the refresh-and-retry behavior).
   document.cookie = "embr_csrf=test-csrf-token";
+  window.localStorage.clear();
+  setSessionExpiredHandler(null);
 });
 
 afterEach(() => {
   document.cookie = "embr_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   vi.unstubAllGlobals();
+  window.localStorage.clear();
+  setSessionExpiredHandler(null);
 });
 
 describe("apiFetch — basic request/response handling", () => {
@@ -144,6 +148,96 @@ describe("apiFetch — refresh-and-retry on 401", () => {
     expect(b).toEqual({ id: "b" });
     const refreshCalls = fetchMock.mock.calls.filter((c) => c[0] === "/api/auth/refresh");
     expect(refreshCalls).toHaveLength(1);
+  });
+});
+
+describe("apiFetch — session-expired notification", () => {
+  it("does not notify when refresh fails and this browser never had a successful authenticated call", async () => {
+    const handler = vi.fn();
+    setSessionExpiredHandler(handler);
+
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "Access token expired" } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "No refresh token" } }),
+      );
+
+    await expect(apiFetch("/symptom-logs")).rejects.toMatchObject({ status: 401 });
+
+    // Matches the real "never logged in, hit a protected page
+    // directly" case — this must stay silent, exactly as before this
+    // feature existed.
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("notifies exactly once when refresh fails after a prior successful authenticated call", async () => {
+    const handler = vi.fn();
+    setSessionExpiredHandler(handler);
+
+    // A real authenticated call succeeding first is what's supposed to
+    // mark this browser as "had a session" — see markHadSession's own
+    // doc comment in api-client.ts.
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: { id: "1" } }));
+    await apiFetch("/symptom-logs");
+    expect(handler).not.toHaveBeenCalled();
+
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "Access token expired" } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "Session expired" } }),
+      );
+
+    await expect(apiFetch("/symptom-logs")).rejects.toMatchObject({ status: 401 });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not notify a successful login endpoint call on its own — only a subsequent authenticated call's refresh failure", async () => {
+    const handler = vi.fn();
+    setSessionExpiredHandler(handler);
+
+    // /auth/login is in NO_REFRESH_PATHS — a successful response from
+    // it must not, by itself, mark this browser as having had a
+    // session (see the apiFetch success path's own NO_REFRESH_PATHS
+    // check), since a plain login success is not "an authenticated
+    // request succeeded."
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: { user: { id: "u1" } } }));
+    await apiFetch("/auth/login", { method: "POST", body: { email: "a@b.com", password: "x" } });
+
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "Access token expired" } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "No refresh token" } }),
+      );
+
+    await expect(apiFetch("/symptom-logs")).rejects.toMatchObject({ status: 401 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("does not throw when refresh fails and no handler is registered", async () => {
+    setSessionExpiredHandler(null);
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: { id: "1" } }));
+    await apiFetch("/symptom-logs");
+
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "Access token expired" } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "Session expired" } }),
+      );
+
+    // Should reject with the original ApiError, not throw some other
+    // error from calling a null handler.
+    await expect(apiFetch("/symptom-logs")).rejects.toMatchObject({ status: 401 });
   });
 });
 

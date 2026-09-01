@@ -143,6 +143,9 @@ function AcceptInviteScreen() {
               })
             : t("joinedUnnamed")}
         </p>
+        <p className="mt-4 rounded border border-teal/20 bg-teal/5 p-3 text-left text-sm text-navy/70">
+          {t("privacyNote")}
+        </p>
         <Button className="mt-6" onClick={() => router.push("/organization")}>
           {t("goToOrganization")}
         </Button>

@@ -18,7 +18,8 @@
     "or": "or",
     "continueWithSso": "Continue with SSO",
     "newToEmbr": "New to EMBR?",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "sessionExpired": "Your session expired. Log in again to continue."
   },
   "LanguageSwitcher": {
     "label": "Language",
@@ -405,7 +406,8 @@
     "logOutAndRetry": "Log out and try again",
     "loggingOut": "Logging out…",
     "stayAndGoToDashboard": "Stay signed in and go to dashboard",
-    "genericError": "Something went wrong accepting that invite. Try again in a moment."
+    "genericError": "Something went wrong accepting that invite. Try again in a moment.",
+    "privacyNote": "Your individual health data stays private. Your employer cannot see your individual symptom records. Organization insights are shown only as aggregate, anonymized trends when there is enough data to protect individual privacy."
   },
   "Export": {
     "title": "Export your data",
