@@ -37,6 +37,7 @@ const NO_REFRESH_PATHS = new Set([
   "/auth/refresh",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/auth/verify-email",
 ]);
 
 interface RequestOptions {

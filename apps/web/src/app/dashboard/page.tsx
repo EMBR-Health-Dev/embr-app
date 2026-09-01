@@ -4,12 +4,13 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
+import type { OnboardingProfileDto, SymptomFrequencyDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
+import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -35,10 +36,6 @@ function isCategory(value: string | null): value is (typeof CATEGORIES)[number] 
   return value !== null && (CATEGORIES as readonly string[]).includes(value);
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function DashboardContent() {
   const t = useTranslations("Dashboard");
   const tEnum = useTranslations("Enums");
@@ -52,6 +49,7 @@ function DashboardContent() {
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const [managesOrg, setManagesOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
+  const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
 
   const suggestedCategory = searchParams.get("logCategory");
   const wantsFirstLog = searchParams.get("firstLog") !== null || Boolean(suggestedCategory);
@@ -106,12 +104,31 @@ function DashboardContent() {
     }
   }
 
+  // The smallest possible ongoing reflection: how many logs this week
+  // and the most common category, reusing the same server-side
+  // aggregate the Trends page already calls (Milestone 9) rather than
+  // adding a new endpoint for a single summary line. Mirrors
+  // apps/mobile/app/(app)/index.tsx's identical reflection line.
+  async function loadWeeklyFrequency() {
+    const from = new Date();
+    from.setDate(from.getDate() - 7);
+    try {
+      const frequency = await api.trends.symptomFrequency({ from: from.toISOString() });
+      return frequency;
+    } catch {
+      return [];
+    }
+  }
+
   useEffect(() => {
     // Matches React's own documented fetch-on-mount pattern — see the
     // equivalent suppression in apps/admin/dashboard/page.tsx for the
     // full reasoning.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (user) void loadLogs();
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void loadLogs();
+      void loadWeeklyFrequency().then(setWeeklyFrequency);
+    }
   }, [user]);
 
   // Most people aren't an ORG_ADMIN of anything — only show the link
@@ -133,7 +150,8 @@ function DashboardContent() {
         occurredAt: new Date().toISOString(),
       });
       setConfirmation(t("hotFlashConfirmation"));
-      await loadLogs();
+      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+      setWeeklyFrequency(frequency);
     } catch (err) {
       setConfirmation(err instanceof ApiError ? err.message : t("hotFlashError"));
     }
@@ -150,7 +168,9 @@ function DashboardContent() {
       });
       setNotes("");
       setFormOpen(false);
-      await loadLogs();
+      setConfirmation(t("logConfirmation"));
+      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+      setWeeklyFrequency(frequency);
     } finally {
       setSubmitting(false);
     }
@@ -160,7 +180,7 @@ function DashboardContent() {
     setCycleSaving(true);
     try {
       await api.cycleEntries.upsert({
-        date: todayIso(),
+        date: toIsoDate(new Date()),
         flow: flow || undefined,
         isPeriodStart: periodStart,
         isPeriodEnd: periodEnd,
@@ -188,6 +208,9 @@ function DashboardContent() {
         <div className="flex items-center gap-4 text-sm text-navy/60">
           <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
             {t("trends")}
+          </Link>
+          <Link href="/treatments" className="underline underline-offset-2 hover:text-navy">
+            {t("treatments")}
           </Link>
           <Link href="/brief" className="underline underline-offset-2 hover:text-navy">
             {t("brief")}
@@ -217,6 +240,14 @@ function DashboardContent() {
         <p className="mt-6 font-display text-lg italic text-navy/80">{t(startingPointKey)}</p>
       )}
 
+      {weeklyFrequency.length > 0 && (
+        <p className="mt-3 text-sm font-medium text-teal">
+          {t("thisWeek", { count: weeklyFrequency.reduce((sum, f) => sum + f.count, 0) })}
+          {" · "}
+          {t("mostCommon", { category: tEnum(`category.${weeklyFrequency[0].category}`) })}
+        </p>
+      )}
+
       {/* Signature interaction: one tap, no form, for the moment that
           actually needs it — mid-hot-flash is not when anyone wants to
           fill out a category picker. */}
@@ -241,6 +272,9 @@ function DashboardContent() {
         >
           {formOpen ? t("close") : t("logDifferentSymptom")}
         </button>
+        {!formOpen && confirmation && (
+          <p className="mt-2 text-sm font-medium text-teal">{confirmation}</p>
+        )}
 
         {formOpen && (
           <div className="mt-4 flex flex-col gap-4 rounded border border-navy/10 p-5">

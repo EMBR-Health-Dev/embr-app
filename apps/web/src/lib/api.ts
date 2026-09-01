@@ -7,6 +7,7 @@ import type {
   DeviceSessionDto,
   MyOrganizationMembershipDto,
   OnboardingProfileDto,
+  OrgBillingStatusDto,
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationMemberDto,
@@ -16,6 +17,8 @@ import type {
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
+  TreatmentDto,
+  TreatmentImpactDto,
   UserDto,
 } from "@embr/types";
 import { apiFetch } from "./api-client";
@@ -33,6 +36,18 @@ export const api = {
     logoutAll: () => apiFetch<void>("/auth/logout-all", { method: "POST" }),
 
     me: () => apiFetch<UserDto>("/auth/me"),
+
+    verifyEmail: (token: string) =>
+      apiFetch<void>("/auth/verify-email", { method: "POST", body: { token } }),
+
+    resendVerification: (email: string) =>
+      apiFetch<void>("/auth/resend-verification", { method: "POST", body: { email } }),
+
+    forgotPassword: (email: string) =>
+      apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
+
+    resetPassword: (input: { token: string; password: string }) =>
+      apiFetch<void>("/auth/reset-password", { method: "POST", body: input }),
 
     changePassword: (input: { currentPassword: string; newPassword: string }) =>
       apiFetch<void>("/auth/change-password", { method: "POST", body: input }),
@@ -83,6 +98,42 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+  },
+
+  treatments: {
+    list: (query?: { page?: number; pageSize?: number; category?: string; active?: boolean }) =>
+      apiFetch<PaginatedResponse<TreatmentDto>>("/treatments", {
+        query:
+          query === undefined
+            ? undefined
+            : {
+                ...query,
+                active: query.active === undefined ? undefined : String(query.active),
+              },
+      }),
+
+    create: (input: {
+      name: string;
+      category: string;
+      startDate: string;
+      endDate?: string;
+      notes?: string;
+    }) => apiFetch<TreatmentDto>("/treatments", { method: "POST", body: input }),
+
+    update: (
+      id: string,
+      input: Partial<{
+        name: string;
+        category: string;
+        startDate: string;
+        endDate: string | null;
+        notes: string;
+      }>,
+    ) => apiFetch<TreatmentDto>(`/treatments/${id}`, { method: "PATCH", body: input }),
+
+    delete: (id: string) => apiFetch<void>(`/treatments/${id}`, { method: "DELETE" }),
+
+    impact: (id: string) => apiFetch<TreatmentImpactDto>(`/treatments/${id}/impact`),
   },
 
   organizations: {
@@ -148,6 +199,27 @@ export const api = {
         apiFetch<SsoConnectionDto>(`/organizations/${organizationId}/sso`, {
           method: "PUT",
           body: input,
+        }),
+    },
+
+    billing: {
+      get: (organizationId: string) =>
+        apiFetch<OrgBillingStatusDto>(`/organizations/${organizationId}/billing`),
+
+      // Returns a Stripe-hosted URL, not same-origin — the caller does
+      // a full-page `window.location.href = url` navigation, same
+      // reasoning as api.sso.startUrl above, just POST-first since
+      // this one needs a body (seat count) and a fresh Checkout
+      // Session per request rather than a deterministic redirect URL.
+      createCheckoutSession: (organizationId: string, input: { seats: number }) =>
+        apiFetch<{ url: string }>(`/organizations/${organizationId}/billing/checkout-session`, {
+          method: "POST",
+          body: input,
+        }),
+
+      createPortalSession: (organizationId: string) =>
+        apiFetch<{ url: string }>(`/organizations/${organizationId}/billing/portal-session`, {
+          method: "POST",
         }),
     },
   },

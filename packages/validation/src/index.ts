@@ -314,6 +314,18 @@ export type OrganizationMemberQuery = z.infer<typeof organizationMemberQuerySche
 export const orgTrendsQuerySchema = trendsQuerySchema;
 export type OrgTrendsQuery = z.infer<typeof orgTrendsQuerySchema>;
 
+// ---- Billing (Stripe) ----
+//
+// One field, deliberately: `seats` is the Stripe Checkout line-item
+// quantity, i.e. how many seats the org is buying. Everything else
+// (customer, price, success/cancel URLs) is server-side — see
+// billing.service.ts — never client-supplied, so a request here can't
+// point Checkout at an arbitrary price id or redirect URL.
+export const createCheckoutSessionSchema = z.object({
+  seats: z.number().int().positive().max(100000),
+});
+export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSchema>;
+
 // ---- SSO (Milestone 15) ----
 
 export const ssoStartQuerySchema = z.object({

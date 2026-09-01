@@ -71,6 +71,10 @@ export default function LoginScreen() {
           />
         </View>
 
+        <Link href="/forgot-password" style={styles.forgotPasswordLink}>
+          <Text style={styles.linkText}>{t("login.forgotPassword")}</Text>
+        </Link>
+
         {fieldError && <Text style={styles.error}>{fieldError}</Text>}
         {formError && <Text style={styles.error}>{formError}</Text>}
 
@@ -121,5 +125,6 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
   link: { marginTop: 8, alignSelf: "center" },
+  forgotPasswordLink: { alignSelf: "flex-end" },
   linkText: { color: theme.colors.success, fontWeight: "500" },
 });

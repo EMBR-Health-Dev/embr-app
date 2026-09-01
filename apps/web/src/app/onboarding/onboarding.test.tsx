@@ -259,6 +259,18 @@ describe("Screen 5 — the loop", () => {
 
     expect(screen.getByText("Sleep · Energy · Mood")).toBeInTheDocument();
   });
+
+  it("mentions that treatments can be tracked too, under the TRACK stage", async () => {
+    const { default: TheLoopScreen } = await import("./the-loop/page");
+
+    renderWithIntl(<TheLoopScreen />);
+
+    expect(
+      screen.getByText(
+        "Treatments you try — HRT, supplements, medication, anything else — can be tracked here too.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("OnboardingScreen — skip behavior (shared by every screen)", () => {

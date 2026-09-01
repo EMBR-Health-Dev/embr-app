@@ -24,10 +24,16 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
 
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+
   const [sessions, setSessions] = useState<DeviceSessionDto[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmingRevokeId, setConfirmingRevokeId] = useState<string | null>(null);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
+  const [confirmingLogoutAll, setConfirmingLogoutAll] = useState(false);
 
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteConfirming, setDeleteConfirming] = useState(false);
@@ -45,6 +51,20 @@ export default function SettingsPage() {
       .then(setSessions)
       .finally(() => setSessionsLoading(false));
   }, [user]);
+
+  async function handleResendVerification() {
+    if (!user) return;
+    setResendError(null);
+    setResending(true);
+    try {
+      await api.auth.resendVerification(user.email);
+      setResendDone(true);
+    } catch (err) {
+      setResendError(err instanceof ApiError ? err.message : t("genericError"));
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function handleChangePassword(e: FormEvent) {
     e.preventDefault();
@@ -74,6 +94,7 @@ export default function SettingsPage() {
   }
 
   async function revokeSession(id: string) {
+    setConfirmingRevokeId(null);
     setRevokingId(id);
     try {
       await api.auth.sessions.revoke(id);
@@ -84,6 +105,7 @@ export default function SettingsPage() {
   }
 
   async function logoutEverywhere() {
+    setConfirmingLogoutAll(false);
     setLoggingOutAll(true);
     try {
       await api.auth.logoutAll();
@@ -131,6 +153,30 @@ export default function SettingsPage() {
       </header>
 
       <section className="mt-10">
+        <h2 className="font-display text-lg text-navy">{t("accountTitle")}</h2>
+        <p className="mt-1 text-sm text-navy/60">{user.email}</p>
+        {user.emailVerified ? (
+          <p className="mt-2 text-sm text-teal">{t("emailVerified")}</p>
+        ) : (
+          <div className="mt-2">
+            <p className="text-sm text-navy/60">{t("emailNotVerified")}</p>
+            {resendDone ? (
+              <p className="mt-2 text-sm text-teal">{t("resendVerificationSuccess")}</p>
+            ) : (
+              <button
+                onClick={() => void handleResendVerification()}
+                disabled={resending}
+                className="mt-2 text-sm font-medium text-teal underline underline-offset-2 disabled:opacity-50"
+              >
+                {resending ? t("resendVerificationSubmitting") : t("resendVerification")}
+              </button>
+            )}
+            {resendError && <p className="mt-2 text-sm text-red-600">{resendError}</p>}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
         <h2 className="font-display text-lg text-navy">{t("changePasswordTitle")}</h2>
         <p className="mt-1 text-sm text-navy/60">{t("changePasswordDescription")}</p>
         <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4" noValidate>
@@ -160,13 +206,32 @@ export default function SettingsPage() {
       <section className="mt-10">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg text-navy">{t("devices")}</h2>
-          <button
-            onClick={logoutEverywhere}
-            disabled={loggingOutAll}
-            className="text-sm font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
-          >
-            {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
-          </button>
+          {!confirmingLogoutAll ? (
+            <button
+              onClick={() => setConfirmingLogoutAll(true)}
+              className="text-sm font-medium text-red-600 underline underline-offset-2"
+            >
+              {t("logoutEverywhere")}
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-navy/60">{t("confirmLogoutAllMessage")}</span>
+              <button
+                onClick={logoutEverywhere}
+                disabled={loggingOutAll}
+                className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+              >
+                {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
+              </button>
+              <button
+                onClick={() => setConfirmingLogoutAll(false)}
+                disabled={loggingOutAll}
+                className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          )}
         </div>
 
         {sessionsLoading ? (
@@ -191,15 +256,31 @@ export default function SettingsPage() {
                     {new Date(s.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                {!s.current && (
-                  <button
-                    onClick={() => revokeSession(s.id)}
-                    disabled={revokingId === s.id}
-                    className="text-red-600 underline underline-offset-2 disabled:opacity-50"
-                  >
-                    {revokingId === s.id ? t("revoking") : t("revoke")}
-                  </button>
-                )}
+                {!s.current &&
+                  (confirmingRevokeId === s.id ? (
+                    <span className="flex items-center gap-3">
+                      <button
+                        onClick={() => revokeSession(s.id)}
+                        disabled={revokingId === s.id}
+                        className="text-red-600 underline underline-offset-2 disabled:opacity-50"
+                      >
+                        {revokingId === s.id ? t("revoking") : t("revoke")}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingRevokeId(null)}
+                        className="text-navy/60 underline underline-offset-2"
+                      >
+                        {t("cancel")}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmingRevokeId(s.id)}
+                      className="text-red-600 underline underline-offset-2"
+                    >
+                      {t("revoke")}
+                    </button>
+                  ))}
               </li>
             ))}
           </ul>
@@ -225,6 +306,12 @@ export default function SettingsPage() {
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
             />
+            <p className="text-xs text-navy/50">
+              {t("forgotPasswordHint")}{" "}
+              <Link href="/forgot-password" className="text-teal underline underline-offset-2">
+                {t("forgotPasswordLink")}
+              </Link>
+            </p>
             {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
             <div className="flex gap-3">
               <button

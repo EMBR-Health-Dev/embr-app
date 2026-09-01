@@ -46,6 +46,10 @@ export default function AppLayout() {
         options={{ title: t("tabs.cycle"), tabBarIcon: tabIcon("calendar-outline") }}
       />
       <Tabs.Screen
+        name="treatments"
+        options={{ title: t("tabs.treatments"), tabBarIcon: tabIcon("medkit-outline") }}
+      />
+      <Tabs.Screen
         name="trends"
         options={{ title: t("tabs.trends"), tabBarIcon: tabIcon("trending-up-outline") }}
       />

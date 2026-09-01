@@ -45,6 +45,15 @@ router.get(
   }),
 );
 
+router.get(
+  "/treatments/:id/impact",
+  validate(idParamSchema, "params"),
+  asyncHandler(async (req, res) => {
+    const impact = await treatmentService.getImpact(req.user!.sub, requireParam(req, "id"));
+    res.status(200).json({ data: impact, requestId: req.requestId });
+  }),
+);
+
 router.patch(
   "/treatments/:id",
   validate(idParamSchema, "params"),

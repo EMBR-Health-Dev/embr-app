@@ -4,6 +4,7 @@ import type {
   OrgTrendsQuery,
 } from "@embr/validation";
 import type { OrgRole } from "@embr/types";
+import type { Prisma } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { toSkipTake } from "../../lib/pagination.js";
 
@@ -67,9 +68,38 @@ export const organizationRepository = {
   /** Hard delete — membership carries no independent history worth
    * retaining once revoked (unlike Session, which keeps revoked rows
    * around for the reuse-detection audit trail). The ORG_MEMBER_REVOKED
-   * audit log entry is the durable record that this happened. */
-  revokeMembership(organizationId: string, userId: string) {
-    return prisma.organizationMembership.deleteMany({ where: { organizationId, userId } });
+   * audit log entry is the durable record that this happened.
+   *
+   * Enforces the "an organization always retains at least one
+   * ORG_ADMIN" invariant server-side — this is the actual security
+   * boundary; any frontend confirmation dialog is UX only. Runs the
+   * read-then-write as a single transaction so a concurrent revoke of
+   * a different admin can't race past the count check: two admins
+   * removing each other "simultaneously" can't both read a count of 2
+   * and both proceed, since Postgres serializes the two transactions
+   * against the same rows. */
+  async revokeMembership(
+    organizationId: string,
+    userId: string,
+  ): Promise<"REVOKED" | "NOT_FOUND" | "LAST_ADMIN"> {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const target = await tx.organizationMembership.findUnique({
+        where: { organizationId_userId: { organizationId, userId } },
+      });
+      if (!target) return "NOT_FOUND";
+
+      if (target.role === "ORG_ADMIN") {
+        const adminCount = await tx.organizationMembership.count({
+          where: { organizationId, role: "ORG_ADMIN" },
+        });
+        if (adminCount <= 1) return "LAST_ADMIN";
+      }
+
+      await tx.organizationMembership.delete({
+        where: { organizationId_userId: { organizationId, userId } },
+      });
+      return "REVOKED";
+    });
   },
 
   /** Invalidates any prior unconsumed invite for this exact (org, email)

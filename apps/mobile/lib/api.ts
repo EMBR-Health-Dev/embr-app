@@ -12,6 +12,8 @@ import type {
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
+  TreatmentDto,
+  TreatmentImpactDto,
   UserDto,
 } from "@embr/types";
 import { apiFetch } from "./api-client";
@@ -35,11 +37,17 @@ export const api = {
 
     me: () => apiFetch<UserDto>("/auth/me"),
 
+    verifyEmail: (token: string) =>
+      apiFetch<void>("/auth/verify-email", { method: "POST", body: { token } }),
+
     resendVerification: (email: string) =>
       apiFetch<void>("/auth/resend-verification", { method: "POST", body: { email } }),
 
     forgotPassword: (email: string) =>
       apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
+
+    resetPassword: (input: { token: string; password: string }) =>
+      apiFetch<void>("/auth/reset-password", { method: "POST", body: input }),
 
     // Server-side revokes every session on success (see
     // auth.service.ts) — same as apps/web, the caller is expected to
@@ -108,6 +116,40 @@ export const api = {
     // re-fetching the list.
     dismiss: (input: { type: ReflectionType; key: string }) =>
       apiFetch<void>("/reflections/dismissals", { method: "POST", body: input }),
+  treatments: {
+    list: (query?: { page?: number; pageSize?: number; category?: string; active?: boolean }) =>
+      apiFetch<PaginatedResponse<TreatmentDto>>("/treatments", {
+        query:
+          query === undefined
+            ? undefined
+            : {
+                ...query,
+                active: query.active === undefined ? undefined : String(query.active),
+              },
+      }),
+
+    create: (input: {
+      name: string;
+      category: string;
+      startDate: string;
+      endDate?: string;
+      notes?: string;
+    }) => apiFetch<TreatmentDto>("/treatments", { method: "POST", body: input }),
+
+    update: (
+      id: string,
+      input: Partial<{
+        name: string;
+        category: string;
+        startDate: string;
+        endDate: string | null;
+        notes: string;
+      }>,
+    ) => apiFetch<TreatmentDto>(`/treatments/${id}`, { method: "PATCH", body: input }),
+
+    delete: (id: string) => apiFetch<void>(`/treatments/${id}`, { method: "DELETE" }),
+
+    impact: (id: string) => apiFetch<TreatmentImpactDto>(`/treatments/${id}/impact`),
   },
 
   briefs: {

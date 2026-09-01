@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { logger } from "../lib/logger.js";
+import { scrubSensitiveQueryParams } from "../lib/scrub-url.js";
 
 /**
  * Logs one structured line per request on completion (not on entry) so
@@ -16,7 +17,7 @@ export function httpLoggerMiddleware() {
         {
           requestId: req.requestId,
           method: req.method,
-          path: req.originalUrl,
+          path: scrubSensitiveQueryParams(req.originalUrl),
           statusCode: res.statusCode,
           durationMs: Math.round(durationMs * 100) / 100,
           userAgent: req.header("user-agent"),

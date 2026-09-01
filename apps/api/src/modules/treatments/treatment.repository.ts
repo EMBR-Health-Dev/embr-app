@@ -25,7 +25,21 @@ export const treatmentRepository = {
   },
 
   async list(userId: string, query: TreatmentQuery) {
-    const today = new Date();
+    // startDate/endDate are @db.Date columns — pure calendar dates,
+    // always written and read without a time-of-day component (see
+    // cycle.mappers.ts's identical doc comment on why). Every stored
+    // value gets there via z.coerce.date() on a "YYYY-MM-DD" string,
+    // which resolves to UTC midnight of that day per ISO 8601. "today"
+    // for the active-status comparison below must be constructed the
+    // same way — a bare `new Date()` carries the current time-of-day,
+    // which for a user in a timezone ahead of UTC (JST, UTC+9, a real
+    // population for this app) means the server's UTC calendar date
+    // can still be "yesterday" for several hours after that user's own
+    // local date — and therefore the treatment they just logged as
+    // starting "today" — has already rolled over. Truncating to UTC
+    // midnight here keeps both sides of every comparison expressed as
+    // the same kind of value: a calendar date, not an instant.
+    const today = new Date(new Date().toISOString().slice(0, 10));
     const where = {
       userId,
       ...(query.category ? { category: query.category } : {}),
@@ -51,6 +65,26 @@ export const treatmentRepository = {
 
   findById(userId: string, id: string) {
     return prisma.treatment.findFirst({ where: { id, userId } });
+  },
+
+  /** Two true DB-side COUNT aggregates (not fetched rows) — matches
+   * trends.repository.ts's own documented preference for
+   * Postgres-side aggregation over fetching and counting in
+   * application code, for exactly the same reason: nothing here needs
+   * the individual log rows, only how many exist in each window. */
+  async countSymptomLogsInWindows(
+    userId: string,
+    windows: { before: { from: Date; to: Date }; after: { from: Date; to: Date } },
+  ): Promise<{ beforeLogCount: number; afterLogCount: number }> {
+    const [beforeLogCount, afterLogCount] = await Promise.all([
+      prisma.symptomLog.count({
+        where: { userId, occurredAt: { gte: windows.before.from, lt: windows.before.to } },
+      }),
+      prisma.symptomLog.count({
+        where: { userId, occurredAt: { gte: windows.after.from, lt: windows.after.to } },
+      }),
+    ]);
+    return { beforeLogCount, afterLogCount };
   },
 
   /** Every treatment that overlaps [fromDate, toDate] at all — not just

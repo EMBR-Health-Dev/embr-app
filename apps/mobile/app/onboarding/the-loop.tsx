@@ -50,7 +50,9 @@ export default function TheLoopScreen() {
       <View style={styles.timeline}>
         <View style={styles.connectingLine} />
 
-        <LoopStage label={t("onboarding.theLoop.trackLabel")} title={trackLabel} />
+        <LoopStage label={t("onboarding.theLoop.trackLabel")} title={trackLabel}>
+          <Text style={styles.caveat}>{t("onboarding.theLoop.trackTreatmentsHint")}</Text>
+        </LoopStage>
         <LoopStage
           label={t("onboarding.theLoop.patternsLabel")}
           title={t("onboarding.theLoop.patternsTitle")}

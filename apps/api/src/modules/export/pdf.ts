@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import type { CycleEntry, SymptomLog } from "../../generated/prisma/index.js";
+import type { CycleEntry, SymptomLog, Treatment } from "../../generated/prisma/index.js";
 import { computeCycleLengths } from "../../lib/cycle-length.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 
@@ -9,6 +9,18 @@ export function categoryLabel(category: string): string {
     .split("_")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+/** categoryLabel (above) does a generic underscore-to-title-case
+ * transform, which is correct for symptom categories but would render
+ * "HRT" as "Hrt" — a real acronym, not a word to title-case. Small and
+ * local to this file rather than changing the shared helper, matching
+ * the exact same fix (and the exact same reasoning for keeping it
+ * local rather than shared) brief.pdf.ts already applies for its own
+ * treatment category rendering. */
+function treatmentCategoryLabel(category: string): string {
+  if (category === "HRT") return "HRT";
+  return categoryLabel(category);
 }
 
 function formatDate(d: Date): string {
@@ -21,6 +33,7 @@ interface SummaryInput {
   to?: Date;
   symptomLogs: SymptomLog[];
   cycleEntries: CycleEntry[];
+  treatments: Treatment[];
 }
 
 // Thin wrapper: the canonical computation now lives in
@@ -135,6 +148,48 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
       if (log.notes) doc.fillColor("#666666").text(`  ${log.notes}`, { indent: 10 });
     }
   }
+
+  doc.moveDown(1);
+
+  // ---- Treatment history ----
+  // Notes are included here — unlike BRIEF's treatmentSummary, which
+  // deliberately excludes them (see treatment-summary.ts's doc
+  // comment: an AI-narrated document showing treatment notes next to
+  // symptom-frequency trends risks implying causation in the
+  // narrative). This is a raw, non-AI data export — no narrative
+  // layer interprets or connects these sections — and every other
+  // record type here (symptom logs above, cycle entries via the CSV
+  // export) already includes the user's own notes. Excluding them
+  // only for treatments would be an inconsistent surprise in what's
+  // supposed to be a complete personal record.
+  doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Treatment history");
+  doc.moveDown(0.4);
+  if (input.treatments.length === 0) {
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .fillColor("#555555")
+      .text("No treatments logged in this range.");
+  } else {
+    doc.fontSize(9).font("Helvetica");
+    for (const treatment of input.treatments) {
+      if (doc.y > 760) doc.addPage();
+      const dateRange = `${formatDate(treatment.startDate)} – ${treatment.endDate ? formatDate(treatment.endDate) : "Ongoing"}`;
+      doc
+        .fillColor(navy)
+        .text(`${treatment.name}  ${treatmentCategoryLabel(treatment.category)}  ${dateRange}`);
+      if (treatment.notes) doc.fillColor("#666666").text(`  ${treatment.notes}`, { indent: 10 });
+    }
+  }
+  doc.moveDown(0.4);
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor("#888888")
+    .text(
+      "This reflects what you've logged. It does not assess whether a treatment is working or" +
+        " make treatment recommendations.",
+    );
 
   return doc;
 }

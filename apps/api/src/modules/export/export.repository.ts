@@ -48,4 +48,28 @@ export const exportRepository = {
       take: EXPORT_ROW_CAP,
     });
   },
+
+  /** Overlap semantics, not "startDate within range" — a treatment that
+   * started before `from` but is still ongoing (or ended) inside the
+   * requested window genuinely was active during it and must still
+   * appear. Same reasoning as treatment.repository.ts's
+   * listOverlappingRange, but reimplemented here rather than called
+   * directly: that function requires both fromDate and toDate, while
+   * ExportQuery's from/to are each independently optional (matching
+   * this file's own listSymptomLogsForExport/listCycleEntriesForExport
+   * above, and the export page's own "leave dates blank to export
+   * everything" UX) — an unbounded side of the range means that half
+   * of the overlap check is simply omitted, not synthesized from a
+   * sentinel date. */
+  listTreatmentsForExport(userId: string, query: ExportQuery) {
+    return prisma.treatment.findMany({
+      where: {
+        userId,
+        ...(query.to ? { startDate: { lte: query.to } } : {}),
+        ...(query.from ? { OR: [{ endDate: null }, { endDate: { gte: query.from } }] } : {}),
+      },
+      orderBy: { startDate: "asc" },
+      take: EXPORT_ROW_CAP,
+    });
+  },
 };

@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
 
 // vi.mock(...) below is hoisted above all other top-level code in this
 // file, so any state its factory closes over must be created via
@@ -31,6 +32,14 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
       }>,
       auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
+      emailVerificationTokens: [] as Array<{
+        id: string;
+        userId: string;
+        tokenHash: string;
+        expiresAt: Date;
+        consumedAt: Date | null;
+        createdAt: Date;
+      }>,
     },
     nextId: () => randomUUID(),
   };
@@ -119,10 +128,63 @@ vi.mock("../src/lib/prisma.js", () => ({
       }),
     },
     emailVerificationToken: {
-      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
-      create: vi.fn().mockResolvedValue({ id: nextId() }),
-      findFirst: vi.fn().mockResolvedValue(null),
-      update: vi.fn().mockResolvedValue({}),
+      // A real, stateful mock (not a static stub) — the previous
+      // version of this mock always returned null from findFirst,
+      // which meant no test could ever exercise a real
+      // verify/resend/expire/consume cycle; every assertion would
+      // have been proving the same "invalid token" branch regardless
+      // of what was actually being tested. Mirrors the session mock
+      // above: real hashing, real expiry comparison, real
+      // consumedAt tracking.
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { userId: string; consumedAt: null };
+          data: { consumedAt: Date };
+        }) => {
+          const matched = state.emailVerificationTokens.filter(
+            (t) => t.userId === where.userId && t.consumedAt === where.consumedAt,
+          );
+          matched.forEach((t) => Object.assign(t, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
+      create: vi.fn(
+        ({
+          data,
+        }: {
+          data: Omit<
+            (typeof state.emailVerificationTokens)[number],
+            "id" | "createdAt" | "consumedAt"
+          >;
+        }) => {
+          const token = { id: nextId(), createdAt: now(), consumedAt: null, ...data };
+          state.emailVerificationTokens.push(token);
+          return Promise.resolve(token);
+        },
+      ),
+      findFirst: vi.fn(
+        ({
+          where,
+        }: {
+          where: { tokenHash: string; consumedAt: null; expiresAt: { gt: Date } };
+        }) => {
+          const found = state.emailVerificationTokens.find(
+            (t) =>
+              t.tokenHash === where.tokenHash &&
+              t.consumedAt === where.consumedAt &&
+              t.expiresAt.getTime() > where.expiresAt.gt.getTime(),
+          );
+          return Promise.resolve(found ?? null);
+        },
+      ),
+      update: vi.fn(({ where, data }: { where: { id: string }; data: { consumedAt: Date } }) => {
+        const token = state.emailVerificationTokens.find((t) => t.id === where.id)!;
+        Object.assign(token, data);
+        return Promise.resolve(token);
+      }),
     },
     passwordResetToken: {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -161,6 +223,8 @@ beforeEach(() => {
   state.users = [];
   state.sessions = [];
   state.auditLogEntries = [];
+  state.emailVerificationTokens = [];
+  vi.mocked(sendVerificationEmail).mockClear();
 });
 
 describe("POST /auth/register", () => {
@@ -197,6 +261,148 @@ describe("POST /auth/register", () => {
 
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe("CONFLICT");
+  });
+});
+
+function lastVerificationToken(): string {
+  const calls = vi.mocked(sendVerificationEmail).mock.calls;
+  const lastCall = calls[calls.length - 1];
+  if (!lastCall) throw new Error("sendVerificationEmail was never called");
+  return lastCall[1];
+}
+
+describe("POST /auth/verify-email", () => {
+  it("verifies the email and marks the account verified end to end", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "verify@embr.health", password: VALID_PASSWORD });
+
+    // The raw token as it actually left the system via the email —
+    // proving the hashing round-trips correctly (findValidEmailVerificationToken
+    // looks up by hashToken(token), not the raw value) rather than
+    // reaching into internal state and bypassing that entirely.
+    const token = lastVerificationToken();
+    expect(state.users[0]!.emailVerifiedAt).toBeNull();
+
+    const res = await request(app).post("/auth/verify-email").send({ token });
+    expect(res.status).toBe(204);
+    expect(state.users[0]!.emailVerifiedAt).not.toBeNull();
+
+    // Post-verification behavior: a fresh session reflects the change.
+    const login = await request(app)
+      .post("/auth/login")
+      .send({ email: "verify@embr.health", password: VALID_PASSWORD });
+    expect(login.body.data.user.emailVerified).toBe(true);
+
+    expect(
+      state.auditLogEntries.some(
+        (e) => e.action === "EMAIL_VERIFIED" && e.userId === state.users[0]!.id,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects a token that was never issued", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "invalidtoken@embr.health", password: VALID_PASSWORD });
+
+    const res = await request(app)
+      .post("/auth/verify-email")
+      .send({ token: "not-a-real-token-ever-issued" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe("This verification link is invalid or has expired");
+    expect(state.users[0]!.emailVerifiedAt).toBeNull();
+  });
+
+  it("rejects an expired token", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "expiredtoken@embr.health", password: VALID_PASSWORD });
+
+    const token = lastVerificationToken();
+    // Force the stored record's own expiresAt into the past — this
+    // exercises findValidEmailVerificationToken's real
+    // `expiresAt: { gt: new Date() }` comparison, not a shortcut
+    // around it.
+    state.emailVerificationTokens[0]!.expiresAt = new Date(Date.now() - 1000);
+
+    const res = await request(app).post("/auth/verify-email").send({ token });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe("This verification link is invalid or has expired");
+    expect(state.users[0]!.emailVerifiedAt).toBeNull();
+  });
+
+  it("rejects a token that has already been consumed", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "consumedtoken@embr.health", password: VALID_PASSWORD });
+    const token = lastVerificationToken();
+
+    const first = await request(app).post("/auth/verify-email").send({ token });
+    expect(first.status).toBe(204);
+
+    const second = await request(app).post("/auth/verify-email").send({ token });
+    expect(second.status).toBe(400);
+    expect(second.body.error.message).toBe("This verification link is invalid or has expired");
+  });
+});
+
+describe("POST /auth/resend-verification", () => {
+  it("returns 202 even for an email with no account — never confirms or denies existence", async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post("/auth/resend-verification")
+      .send({ email: "nobody-registered@embr.health" });
+
+    expect(res.status).toBe(202);
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns 202 without sending another email for an already-verified account", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "alreadyverified@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/verify-email").send({ token: lastVerificationToken() });
+    vi.mocked(sendVerificationEmail).mockClear();
+
+    const res = await request(app)
+      .post("/auth/resend-verification")
+      .send({ email: "alreadyverified@embr.health" });
+
+    expect(res.status).toBe(202);
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it("issues a new token that invalidates the previous one (single live token behavior)", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "resend@embr.health", password: VALID_PASSWORD });
+    const firstToken = lastVerificationToken();
+
+    const resendRes = await request(app)
+      .post("/auth/resend-verification")
+      .send({ email: "resend@embr.health" });
+    expect(resendRes.status).toBe(202);
+
+    const secondToken = lastVerificationToken();
+    expect(secondToken).not.toBe(firstToken);
+
+    // The old token, still held by whoever received the first email,
+    // must no longer work.
+    const oldAttempt = await request(app).post("/auth/verify-email").send({ token: firstToken });
+    expect(oldAttempt.status).toBe(400);
+
+    // The new one must.
+    const newAttempt = await request(app).post("/auth/verify-email").send({ token: secondToken });
+    expect(newAttempt.status).toBe(204);
+    expect(state.users[0]!.emailVerifiedAt).not.toBeNull();
   });
 });
 
@@ -266,9 +472,21 @@ describe("CSRF protection", () => {
   it("rejects /auth/logout without a matching csrf header", async () => {
     const app = createApp();
     const agent = request.agent(app);
-    await registerAndLogin(agent, "csrf@embr.health");
+    const loginRes = await registerAndLogin(agent, "csrf@embr.health");
+    // Manually attach the refresh cookie rather than relying on the
+    // agent's own jar: it's scoped to /api/auth (the path a real
+    // browser proxies through — see cookies.ts's doc comment on
+    // setRefreshTokenCookie), which the agent correctly won't
+    // auto-attach to a bare /auth/logout request made directly against
+    // this API. This deliberately tests the server's own CSRF
+    // enforcement in isolation from the proxy, the same way the token
+    // reuse test further down in this file already manages cookies
+    // manually for the same reason.
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_rt="))!
+      .split(";")[0];
 
-    const res = await agent.post("/auth/logout");
+    const res = await request(app).post("/auth/logout").set("Cookie", rtCookie);
     expect(res.status).toBe(403);
   });
 
@@ -280,8 +498,14 @@ describe("CSRF protection", () => {
       .find((c) => c.startsWith("embr_csrf="))!
       .split(";")[0]
       .split("=")[1];
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_rt="))!
+      .split(";")[0];
 
-    const res = await agent.post("/auth/logout").set("x-csrf-token", csrfCookie);
+    const res = await request(app)
+      .post("/auth/logout")
+      .set("Cookie", [rtCookie, `embr_csrf=${csrfCookie}`])
+      .set("x-csrf-token", csrfCookie);
     expect(res.status).toBe(204);
   });
 });
@@ -317,23 +541,45 @@ describe("POST /auth/refresh", () => {
       .find((c) => c.startsWith("embr_csrf="))!
       .split(";")[0]
       .split("=")[1];
-
-    const firstRefresh = await agent.post("/auth/refresh").set("x-csrf-token", csrfCookie);
-    expect(firstRefresh.status).toBe(200);
-
-    // The agent's cookie jar now holds the *rotated* refresh token, so to
-    // replay the original one we snapshot it before rotating and send it
-    // again manually.
+    // Manually attached, same reasoning as the CSRF describe block
+    // above: /api/auth-scoped, so the agent's own jar won't send it to
+    // a bare /auth/refresh request against this API directly.
     const originalRt = (loginRes.headers["set-cookie"] as unknown as string[])
       .find((c) => c.startsWith("embr_rt="))!
       .split(";")[0];
 
+    const firstRefresh = await request(app)
+      .post("/auth/refresh")
+      .set("Cookie", [originalRt, `embr_csrf=${csrfCookie}`])
+      .set("x-csrf-token", csrfCookie);
+    expect(firstRefresh.status).toBe(200);
+
+    // Replay the same (now-rotated-away) original token — must fail.
     const replay = await request(app)
       .post("/auth/refresh")
       .set("Cookie", [originalRt, `embr_csrf=${csrfCookie}`])
       .set("x-csrf-token", csrfCookie);
 
     expect(replay.status).toBe(401);
+  });
+
+  it("scopes the refresh cookie to /api/auth, not /auth — the path apps/web and apps/admin actually request through their Next.js proxy, not this API's own internal route path", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "refreshcookiepath@embr.health");
+
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[]).find((c) =>
+      c.startsWith("embr_rt="),
+    )!;
+    // A cookie scoped to Path=/auth would never be attached by a real
+    // browser to a request the browser itself sends to /api/auth/refresh
+    // (see cookies.ts's doc comment on setRefreshTokenCookie for the
+    // full reasoning) — silently breaking refresh for every
+    // cookie-authenticated web session the moment the 15-minute access
+    // token expires. This asserts the actual header value a real
+    // browser would evaluate, not just that *some* cookie was set.
+    expect(rtCookie).toContain("Path=/api/auth");
+    expect(rtCookie).not.toContain("Path=/auth;");
   });
 });
 
@@ -435,13 +681,20 @@ describe("Mobile auth (Bearer access token, body-presented refresh token)", () =
   it("does not relax CSRF for a genuinely cookie-authenticated refresh request", async () => {
     const app = createApp();
     const agent = request.agent(app);
-    await registerAndLogin(agent, "still-protected@embr.health");
+    const loginRes = await registerAndLogin(agent, "still-protected@embr.health");
+    // Manually attached — /api/auth-scoped, so the agent's own jar
+    // won't send it to a bare /auth/refresh request against this API
+    // directly (see the POST /auth/refresh describe block above for
+    // the full reasoning).
+    const rtCookie = (loginRes.headers["set-cookie"] as unknown as string[])
+      .find((c) => c.startsWith("embr_rt="))!
+      .split(";")[0];
 
-    // Cookie is present (the agent has it from login) but no CSRF header
-    // is sent — this must still be rejected exactly as before. The
-    // exemption is for requests with no relevant cookie at all, not a
-    // general weakening of the check.
-    const res = await agent.post("/auth/refresh");
+    // Cookie is present but no CSRF header is sent — this must still
+    // be rejected exactly as before. The exemption is for requests
+    // with no relevant cookie at all, not a general weakening of the
+    // check.
+    const res = await request(app).post("/auth/refresh").set("Cookie", rtCookie);
     expect(res.status).toBe(403);
   });
 });
