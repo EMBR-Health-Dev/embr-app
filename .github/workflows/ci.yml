@@ -281,6 +281,18 @@ jobs:
           echo "--- /tmp/boot.log, last 200 lines ---"
           tail -n 200 /tmp/boot.log || echo "(no boot.log content)"
           echo "::endgroup::"
+          # Only on the "never booted" failure path, and only if there's
+          # something to say: regular stdout (everything printed above,
+          # inside the fold) isn't retrievable through the Checks API at
+          # all, confirmed by this diagnostic's own first real run - the
+          # exit-code annotation came through, but this group's own
+          # output did not, anywhere the API exposes it. ::error:: text
+          # does become a real, API-visible annotation, so this is purely
+          # about making already-captured evidence reachable through a
+          # channel that actually is, not gathering anything new.
+          if [ "$ok" != "1" ] && [ -s /tmp/boot.log ]; then
+            echo "::error::boot.log content: $(tr '\n' '|' < /tmp/boot.log | head -c 800)"
+          fi
           if [ "$ok" != "1" ]; then
             echo "::error::API did not log 'api listening' within 30s"
             kill "$PID" 2>/dev/null || true
