@@ -204,7 +204,7 @@ jobs:
       - run: rm -rf dist/generated && cp -R src/generated dist/generated
         working-directory: apps/api
       - name: Start Redis
-        uses: supercharge/redis-github-action@v1
+        uses: supercharge/redis-github-action@1.8.1
         with:
           redis-version: "7"
       - name: Boot the built API and probe it
