@@ -201,8 +201,6 @@ jobs:
       - run: pnpm --filter @embr/api exec prisma generate
       - run: pnpm --filter @embr/shared --filter @embr/types --filter @embr/validation build
       - run: pnpm --filter @embr/api build
-      - run: rm -rf dist/generated && cp -R src/generated dist/generated
-        working-directory: apps/api
       - name: Start Redis
         uses: supercharge/redis-github-action@1.8.1
         with:
