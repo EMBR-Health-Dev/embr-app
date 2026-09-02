@@ -232,16 +232,43 @@ jobs:
           export JWT_REFRESH_SECRET="ci-only-refresh-secret-32-chars-min!"
           export SSO_ENCRYPTION_KEY="$(head -c 32 /dev/zero | base64)"
           export ANTHROPIC_API_KEY="ci-placeholder"
-          node dist/server.js > /tmp/boot.log 2>&1 &
+          # --trace-uncaught: keeps the stack trace for an uncaught
+          # exception, which is otherwise lost by the time it's thrown —
+          # diagnostic only, doesn't change what the process does.
+          node --trace-uncaught dist/server.js > /tmp/boot.log 2>&1 &
           PID=$!
           ok=0
           for i in $(seq 1 30); do
             grep -q "api listening" /tmp/boot.log && ok=1 && break
+            # Diagnostic: distinguishes "hanging" from "exited early"
+            # immediately, rather than waiting out the full 30s for a
+            # process that's already gone. `wait` on a job started with
+            # `&` in this same shell is how bash retrieves its real exit
+            # code — `$?` right after a bare `kill -0` would only reflect
+            # the signal-probe's own result, not the process's.
+            if ! kill -0 "$PID" 2>/dev/null; then
+              wait "$PID"
+              echo "::error::node dist/server.js exited early (code $?) after ${i}s, before logging 'api listening'"
+              break
+            fi
             sleep 1
           done
+          # Unconditional, not just on failure: printed as a folded group
+          # so a passing run stays easy to skim, but this pass's own
+          # baseline (what does a *successful* boot's log/process/ps
+          # state actually look like) is exactly the comparison point a
+          # future failure needs, and won't exist yet if this only prints
+          # when something's already gone wrong.
+          echo "::group::Boot diagnostics"
+          echo "--- is PID $PID still alive? ---"
+          kill -0 "$PID" 2>/dev/null && echo "yes" || echo "no"
+          echo "--- ps snapshot ---"
+          ps -eo pid,ppid,stat,etime,cmd | grep -E "PID|node|$PID" || true
+          echo "--- /tmp/boot.log, last 200 lines ---"
+          tail -n 200 /tmp/boot.log || echo "(no boot.log content)"
+          echo "::endgroup::"
           if [ "$ok" != "1" ]; then
             echo "::error::API did not log 'api listening' within 30s"
-            cat /tmp/boot.log
             kill "$PID" 2>/dev/null || true
             exit 1
           fi
