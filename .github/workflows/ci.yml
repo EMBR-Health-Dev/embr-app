@@ -246,9 +246,23 @@ jobs:
             # `&` in this same shell is how bash retrieves its real exit
             # code — `$?` right after a bare `kill -0` would only reflect
             # the signal-probe's own result, not the process's.
+            #
+            # `|| exitcode=$?`, not a bare `wait "$PID"`, matters here
+            # specifically: an unspecified `shell:` on a Linux runner
+            # invokes `run:` steps as `bash -e {0}` (confirmed against
+            # actions/runner's own ADR 0277, not assumed) — a bare `wait`
+            # returning the crashed process's own non-zero code would
+            # abort this whole script right here, silently, before the
+            # echo below ever ran. This is exactly what the first attempt
+            # at this diagnostic block did, and exactly why it produced
+            # no custom error message at all in CI, only GitHub's own
+            # generic "Process completed with exit code 1" - reproduced
+            # and confirmed locally under `bash -e` before writing this
+            # fix, not guessed at.
             if ! kill -0 "$PID" 2>/dev/null; then
-              wait "$PID"
-              echo "::error::node dist/server.js exited early (code $?) after ${i}s, before logging 'api listening'"
+              exitcode=0
+              wait "$PID" || exitcode=$?
+              echo "::error::node dist/server.js exited early (code $exitcode) after ${i}s, before logging 'api listening'"
               break
             fi
             sleep 1
