@@ -19,18 +19,44 @@ function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** ISO 8601 week identifier (e.g. "2026-W25"), Monday-based.
+ *
+ * Dismissal keys are namespaced by this, not by toIsoDate(to) — a
+ * previous version used the raw calendar date, which meant a
+ * dismissal only survived until midnight UTC: since `to` defaults to
+ * "right now" on every request and the window is a 7-day rolling
+ * window recomputed fresh each call, every single day is technically
+ * a "new period" under date-based keying. A user who dismissed
+ * "you've logged 3 times this week" would see the near-identical
+ * reflection reappear with a brand-new key the very next morning,
+ * which defeats the entire purpose of persisting dismissal state.
+ * Keying by ISO week instead means a dismissal lasts the whole week —
+ * matching what "your week" actually means to the person reading it —
+ * and a genuinely new instance only appears once the week rolls over. */
+function toIsoWeek(date: Date): string {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  // ISO weeks start Monday; getUTCDay() is 0 (Sun) - 6 (Sat), so shift
+  // Sunday to 7 before computing distance from the week's Thursday.
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
 function resolvePeriod(query: ReflectionsQuery): { from: Date; to: Date } {
   const to = query.to ?? new Date();
   const from = query.from ?? new Date(to.getTime() - DEFAULT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
   return { from, to };
 }
 
-/** Every key is namespaced with the period's end date, so the exact
+/** Every key is namespaced with the period's ISO week, so the exact
  * same pattern (e.g. the same co-occurring pair) surfaces again — and
- * can be dismissed again — once real time has moved to a new period,
- * rather than being permanently suppressed the first time it's seen. */
-function buildKey(periodEnd: string, ...parts: string[]): string {
-  return [periodEnd, ...parts].join(":");
+ * can be dismissed again — once the week rolls over, rather than
+ * either being permanently suppressed the first time it's seen or
+ * (the bug this replaced) reappearing on its own the very next day. */
+function buildKey(periodKey: string, ...parts: string[]): string {
+  return [periodKey, ...parts].join(":");
 }
 
 async function filterDismissed<T extends { key: string }>(
@@ -62,6 +88,7 @@ export const reflectionService = {
     const { from, to } = resolvePeriod(query);
     const periodStart = toIsoDate(from);
     const periodEnd = toIsoDate(to);
+    const periodKey = toIsoWeek(to);
 
     const [logs, treatments] = await Promise.all([
       reflectionRepository.symptomLogsForPeriod(userId, from, to),
@@ -74,7 +101,7 @@ export const reflectionService = {
     if (activity) {
       const candidate = {
         type: "LOGGING_ACTIVITY" as const,
-        key: buildKey(periodEnd, "LOGGING_ACTIVITY"),
+        key: buildKey(periodKey, "LOGGING_ACTIVITY"),
         periodStart,
         periodEnd,
         ...activity,
@@ -87,7 +114,7 @@ export const reflectionService = {
     if (frequency) {
       const candidate = {
         type: "SYMPTOM_FREQUENCY" as const,
-        key: buildKey(periodEnd, "SYMPTOM_FREQUENCY", frequency.category),
+        key: buildKey(periodKey, "SYMPTOM_FREQUENCY", frequency.category),
         periodStart,
         periodEnd,
         ...frequency,
@@ -108,7 +135,7 @@ export const reflectionService = {
       const candidate = {
         type: "SYMPTOM_CO_OCCURRENCE" as const,
         key: buildKey(
-          periodEnd,
+          periodKey,
           "SYMPTOM_CO_OCCURRENCE",
           coOccurrence.categoryA,
           coOccurrence.categoryB,
@@ -139,7 +166,7 @@ export const reflectionService = {
         if (!facts) return null;
         return {
           type: "TREATMENT_CONTEXT" as const,
-          key: buildKey(periodEnd, "TREATMENT_CONTEXT", treatment.id),
+          key: buildKey(periodKey, "TREATMENT_CONTEXT", treatment.id),
           periodStart,
           periodEnd,
           ...facts,

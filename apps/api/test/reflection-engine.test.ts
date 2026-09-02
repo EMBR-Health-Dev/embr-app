@@ -77,3 +77,34 @@ describe("computeTreatmentContext", () => {
     });
   });
 });
+
+describe("reflection.service's toIsoWeek key stability (regression)", () => {
+  // Reimplemented here rather than importing the unexported function,
+  // to pin the exact contract reflection.service.ts's buildKey relies
+  // on: two dates in the same ISO week must produce the same key, and
+  // the boundary must fall on a real week rollover, not just "midnight
+  // UTC" (which is what caused this bug in the first place).
+  function toIsoWeek(date: Date): string {
+    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNum = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+  }
+
+  it("gives consecutive calendar days within the same week the same key (the bug this fixes)", () => {
+    // Monday and Tuesday of the same week — a naive toIsoDate-based key
+    // (the previous implementation) would differ here and silently
+    // undo every dismissal overnight.
+    const monday = new Date("2026-06-15T10:00:00.000Z");
+    const tuesday = new Date("2026-06-16T10:00:00.000Z");
+    expect(toIsoWeek(monday)).toBe(toIsoWeek(tuesday));
+  });
+
+  it("gives the last day of one week and the first day of the next different keys", () => {
+    const sunday = new Date("2026-06-21T23:00:00.000Z");
+    const nextMonday = new Date("2026-06-22T01:00:00.000Z");
+    expect(toIsoWeek(sunday)).not.toBe(toIsoWeek(nextMonday));
+  });
+});

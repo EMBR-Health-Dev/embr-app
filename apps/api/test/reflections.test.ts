@@ -467,4 +467,40 @@ describe("POST /reflections/dismissals", () => {
     expect(first.status).toBe(204);
     expect(second.status).toBe(204);
   });
+
+  it("a dismissal survives a day rollover within the same ISO week (regression: dismissal keys were previously namespaced by raw calendar date, so they silently expired at midnight UTC every night)", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "reflections-weekstable@embr.health");
+
+    // A Tuesday, well clear of any week boundary, and 3 logs earlier
+    // that same day so LOGGING_ACTIVITY qualifies when queried with
+    // `to` set to that Tuesday.
+    for (let i = 0; i < 3; i++) {
+      await agent.post("/symptom-logs").send({
+        category: "OTHER",
+        severity: "MILD",
+        occurredAt: "2026-06-16T08:00:00.000Z",
+      });
+    }
+
+    const tuesday = "2026-06-16T10:00:00.000Z";
+    const wednesday = "2026-06-17T10:00:00.000Z"; // same ISO week as Tuesday
+
+    const before = await agent.get("/reflections").query({ to: tuesday });
+    const activity = findByType(before.body.data, "LOGGING_ACTIVITY");
+    expect(activity).toBeDefined();
+
+    const dismissRes = await agent
+      .post("/reflections/dismissals")
+      .send({ type: "LOGGING_ACTIVITY", key: activity.key });
+    expect(dismissRes.status).toBe(204);
+
+    // Query as if it were the next day, still the same ISO week —
+    // before the fix, the dismissal key was namespaced by calendar
+    // date, so this alone would have been enough to make the
+    // reflection reappear.
+    const after = await agent.get("/reflections").query({ to: wednesday });
+    expect(findByType(after.body.data, "LOGGING_ACTIVITY")).toBeUndefined();
+  });
 });
