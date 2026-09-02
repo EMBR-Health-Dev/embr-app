@@ -183,3 +183,80 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api exec prisma generate
       - run: pnpm build
+
+  # Issue #98: lint/typecheck/test/build all previously passed on a commit
+  # that made the API unbootable in both dev and production — vitest's
+  # module interop masked the exact CommonJS/ESM import bug that crashes
+  # `node dist/server.js` outright (see #96/#95). This job is the only one
+  # that actually starts the compiled production entrypoint and proves it
+  # reaches a listening state, closing that gap. No Postgres/Redis service
+  # is configured here deliberately: Prisma connects lazily, only on its
+  # first real query, and ioredis's own connection attempt (lib/redis.ts
+  # has lazyConnect: false, so it does try eagerly) is asynchronous and
+  # non-blocking, with an attached 'error' listener that logs and
+  # continues rather than crashing the process — so an unreachable dummy
+  # connection string on either doesn't stop the server from finishing
+  # boot and calling .listen(). /health/live is also specifically the
+  # DB/Redis-independent probe (see health.ts) for the same reason — so
+  # dummy, unreachable connection strings are sufficient to prove a real
+  # boot, without the added weight of standing up real services for it.
+  boot-smoke:
+    name: API Boot Smoke Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # A separate job runs on its own fresh runner with no filesystem
+      # shared with the `build` job above, so the workspace packages
+      # @embr/api actually imports at runtime have to be built here too —
+      # matching the same prisma generate + build pattern already used by
+      # the typecheck/test/build jobs above, since apps/api's own build
+      # step fails without a generated Prisma client to import.
+      - run: pnpm --filter @embr/shared --filter @embr/types --filter @embr/validation build
+      - run: pnpm --filter @embr/api exec prisma generate
+      - run: pnpm --filter @embr/api build
+      - name: Boot the built API and probe it
+        working-directory: apps/api
+        run: |
+          export DATABASE_URL="postgresql://ci:ci@localhost:5432/ci"
+          export REDIS_URL="redis://localhost:6379"
+          export JWT_ACCESS_SECRET="ci-only-access-secret-32-chars-min!"
+          export JWT_REFRESH_SECRET="ci-only-refresh-secret-32-chars-min!"
+          export SSO_ENCRYPTION_KEY="$(head -c 32 /dev/zero | base64)"
+          export ANTHROPIC_API_KEY="ci-placeholder"
+          node dist/server.js > /tmp/boot.log 2>&1 &
+          PID=$!
+          ok=0
+          for i in $(seq 1 30); do
+            grep -q "api listening" /tmp/boot.log && ok=1 && break
+            sleep 1
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::error::API did not log 'api listening' within 30s"
+            cat /tmp/boot.log
+            kill "$PID" 2>/dev/null || true
+            exit 1
+          fi
+          # Captured explicitly, not relied on as the script's own exit
+          # code: `kill` below runs unconditionally either way (this job's
+          # one and only cleanup step, satisfying "always clean up the
+          # background process" for both outcomes), and without capturing
+          # this first, a failing curl followed by a succeeding kill would
+          # leave the step's real exit code as kill's success, not curl's
+          # failure — silently passing a job that should fail.
+          if curl -sf http://localhost:4000/health/live; then
+            status=0
+          else
+            status=$?
+            echo "::error::/health/live probe failed"
+          fi
+          kill "$PID" 2>/dev/null || true
+          exit "$status"
