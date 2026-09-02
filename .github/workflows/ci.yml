@@ -154,10 +154,9 @@ jobs:
       # noise in a fast-moving JS ecosystem and would make this job cry
       # wolf; high/critical is the bar worth blocking a PR over.
       # REMOVE-BY condition: drop the ignores and bump image-size past 2.0.2 once a patched
-      # release exists (watch GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq
-      # for the fix release).
+      # release exists.
       - name: Dependency audit (pnpm audit)
-        run: pnpm audit --audit-level high --ignore GHSA-w3rx-r6r6-pgpr --ignore GHSA-5p2g-fcmc-qvqq
+        run: pnpm audit --audit-level high
         continue-on-error: false
       # gitleaks/gitleaks-action@v2 requires a paid GITLEAKS_LICENSE for
       # organization-owned repos (this one) as of its v2 licensing change --
