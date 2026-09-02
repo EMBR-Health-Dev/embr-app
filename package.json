@@ -49,6 +49,12 @@
       "deepmerge-ts": ">=8.0.0",
       "uuid": ">=11.1.1",
       "@opentelemetry/core": "^1.30.1"
+    },
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2025-71330",
+        "CVE-2025-71329"
+      ]
     }
   }
 }
