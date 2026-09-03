@@ -186,12 +186,11 @@
     "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
     "logSymptom": "症状を記録",
     "logging": "記録中…",
+    "yourWeek": "今週の記録",
     "logConfirmation": "記録しました。",
     "recentLogs": "最近の記録",
     "delete": "削除",
     "noSymptomsYet": "まだ症状が記録されていません。",
-    "thisWeek_other": "今週の記録: {{count}}件",
-    "mostCommon": "最も多い症状: {{category}}",
     "startingPoint": {
       "understandExperience": "記録を始めましょう。",
       "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
@@ -351,5 +350,26 @@
     "heading": "一緒に記録されたもの",
     "message_other": "{{categoryA}}は{{categoryB}}とともに、{{count}}日記録されています。",
     "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。"
+  },
+  "reflections": {
+    "dismiss": "閉じる",
+    "loggingActivity": {
+      "heading": "今週の記録",
+      "message_other": "{{days}}日間で、{{count}}回記録しました。"
+    },
+    "symptomFrequency": {
+      "heading": "今週目立ったこと",
+      "message_other": "{{category}}が今週最も多く記録された症状でした（{{count}}日）。"
+    },
+    "coOccurrence": {
+      "heading": "気になる点",
+      "message_other": "{{categoryA}}と{{categoryB}}が同じ{{count}}日に記録されています。",
+      "caveat": "これはあなたが記録した内容の記録であり、医学的な結論ではありません。"
+    },
+    "treatmentContext": {
+      "heading": "{{name}}を始めてから",
+      "message_other": "この期間に{{count}}件の症状を記録しました。",
+      "caveat": "これはこの治療期間中に記録された件数であり、効果を示すものではありません。"
+    }
   }
 }

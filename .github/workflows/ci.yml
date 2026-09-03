@@ -150,13 +150,66 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      # This repo pins pnpm 9.x (PNPM_VERSION above). pnpm's native
+      # `--ignore <GHSA>` flag and the auditConfig.ignoreGhsas
+      # package.json setting were only added in pnpm v11 -- on 9.x
+      # there is no `--ignore` flag at all, and the only ignore
+      # mechanism that exists, auditConfig.ignoreCves, filters by CVE
+      # identifier only. Both advisories below have a GHSA id but no
+      # assigned CVE, so ignoreCves cannot match them either. This
+      # step filters pnpm's own JSON report instead, which works
+      # against the pinned version -- confirmed empirically that
+      # `pnpm audit --json` (unlike the table output) ignores
+      # --audit-level entirely and returns every advisory regardless
+      # of severity, so the severity>=high filter below is
+      # re-implemented here rather than assumed to already be applied.
+      #
+      # GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq: both are
+      # image-size@<=2.0.2 (DoS via infinite loops in the ICNS / JXL+HEIF
+      # parsers), reached only through the Expo/metro dev-tooling
+      # dependency tree in apps/mobile -- none of it ships in the
+      # api/web/admin/worker production images. Both advisories' patched
+      # range is `<0.0.0`: no fixed release exists upstream as of this
+      # writing, so there is nothing to upgrade to.
+      # REMOVE-BY: drop both entries from IGNORED_GHSAS and bump
+      # image-size past 2.0.2 once a patched release exists -- watch
+      # https://github.com/advisories/GHSA-w3rx-r6r6-pgpr and
+      # https://github.com/advisories/GHSA-5p2g-fcmc-qvqq for a fix
+      # release, then remove the ignores in the same PR as the bump.
+      #
+      # Two additional MODERATE advisories currently exist
+      # (decode-uri-component GHSA-vcc3-ghjq-m6fr, @opentelemetry/core
+      # GHSA-8988-4f7v-96qf) -- both DO have patched releases available
+      # upstream, unlike the two above. They don't fail this
+      # high-severity gate and are deliberately left out of
+      # IGNORED_GHSAS (nothing here suppresses them), but they're worth
+      # a separate, deliberate dependency-bump PR rather than fixing
+      # silently as a side effect of this one.
       # audit-level high: informational/low-severity advisories are common
       # noise in a fast-moving JS ecosystem and would make this job cry
       # wolf; high/critical is the bar worth blocking a PR over.
       # REMOVE-BY condition: drop the ignores and bump image-size past 2.0.2 once a patched
       # release exists.
       - name: Dependency audit (pnpm audit)
-        run: pnpm audit --audit-level high
+        run: |
+          IGNORED_GHSAS=("GHSA-w3rx-r6r6-pgpr" "GHSA-5p2g-fcmc-qvqq")
+
+          REPORT="$(pnpm audit --json || true)"
+
+          REMAINING="$(echo "$REPORT" | jq -r --argjson ignored "$(printf '%s\n' "${IGNORED_GHSAS[@]}" | jq -R . | jq -s .)" \
+            '[.advisories[]?
+               | select(.severity == "high" or .severity == "critical")
+               | select(([.github_advisory_id] | inside($ignored)) | not)]')"
+
+          COUNT="$(echo "$REMAINING" | jq 'length')"
+
+          if [ "$COUNT" -gt 0 ]; then
+            echo "::error::pnpm audit found $COUNT high/critical advisory(ies) not covered by an approved ignore:"
+            echo "$REMAINING" | jq -r '.[] | "  \(.github_advisory_id)  \(.severity)  \(.module_name)"'
+            exit 1
+          fi
+
+          echo "pnpm audit: no high/critical advisories outside the approved ignore list (${IGNORED_GHSAS[*]})."
         continue-on-error: false
       # gitleaks/gitleaks-action@v2 requires a paid GITLEAKS_LICENSE for
       # organization-owned repos (this one) as of its v2 licensing change --
@@ -201,6 +254,15 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api exec prisma generate
+      # lint/typecheck/test/build all pass without ever actually
+      # starting the process — none of them catch a bug that makes the
+      # server crash (or hang) between process start and the first
+      # app.listen() callback. That already happened once: a bug made
+      # the API unbootable in dev AND production with a fully green CI
+      # run, because vitest's module interop masked it at test time
+      # (see #96, #98). This job is the only one that actually runs
+      # `node dist/server.js` and proves the process reaches
+      # "api listening" and answers a real HTTP request.
       - run: pnpm --filter @embr/shared --filter @embr/types --filter @embr/validation build
       - run: pnpm --filter @embr/api build
       - name: Start Redis
@@ -223,6 +285,6 @@ jobs:
             grep -q "api listening" /tmp/boot.log && ok=1 && break
             sleep 1
           done
-          if [ "$ok" != 1 ]; then cat /tmp/boot.log; kill $PID; exit 1; fi
+          if [ "$ok" != 1 ]; then cat /tmp/boot.log; kill "$PID"; exit 1; fi
           curl -sf http://localhost:4000/health/live
-          kill $PID
+          kill "$PID"

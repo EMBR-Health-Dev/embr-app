@@ -43,7 +43,7 @@ DO $$
 DECLARE
   user_count integer;
 BEGIN
-  SELECT count(*) INTO user_count FROM "User";
+  SELECT count(*) INTO user_count FROM users;
   RAISE NOTICE 'Users restored: %', user_count;
   IF user_count = 0 THEN
     RAISE EXCEPTION 'Restore test failed: 0 users in restored database';

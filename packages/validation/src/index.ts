@@ -238,6 +238,37 @@ export const trendsQuerySchema = z.object({
 });
 export type TrendsQuery = z.infer<typeof trendsQuerySchema>;
 
+// ---- Reflections (Milestone 19) ----
+//
+// Same unpaginated from/to shape as trendsQuerySchema and for the same
+// reason: a reflection is computed over "everything in this period,"
+// not a page of it. Defaults to the trailing 7 days when omitted (see
+// reflection.service.ts) rather than defaulting here, so the default
+// window lives in one place alongside the rest of the computation.
+export const reflectionsQuerySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type ReflectionsQuery = z.infer<typeof reflectionsQuerySchema>;
+
+export const reflectionTypeSchema = z.enum([
+  "LOGGING_ACTIVITY",
+  "SYMPTOM_FREQUENCY",
+  "SYMPTOM_CO_OCCURRENCE",
+  "TREATMENT_CONTEXT",
+]);
+
+// Body, not a URL param — a dismissal key can contain characters (":",
+// category names) that are awkward to guarantee URL-safe across every
+// client, and every other "act on a thing identified by more than a
+// bare id" endpoint in this API (e.g. acceptInviteSchema) already goes
+// through the request body for the same reason.
+export const dismissReflectionSchema = z.object({
+  type: reflectionTypeSchema,
+  key: z.string().min(1).max(200),
+});
+export type DismissReflectionInput = z.infer<typeof dismissReflectionSchema>;
+
 // ---- Organizations (Milestone 12) ----
 //
 // Org provisioning is a platform-ADMIN action, not self-serve (see
