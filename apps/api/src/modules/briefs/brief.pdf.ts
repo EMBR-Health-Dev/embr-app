@@ -61,6 +61,32 @@ export function buildClinicalBriefPdf(
     .text(brief.aiNarrative, { align: "left" });
   doc.moveDown(1);
 
+  // ---- Grounded in your data (the deterministic findings the AI actually cited) ----
+  // Only rendered when both fields are present and non-empty — see
+  // ClinicalBriefDto's own doc comment on citedPatternIds for why an
+  // empty array (the AI cited nothing) is a real, distinct fact from
+  // null (a brief predating this field). Renders the same
+  // observation/association text the web and mobile "Grounded in your
+  // data" section does — never re-derived or reworded here.
+  if (brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation) {
+    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Grounded in your data");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica").fillColor("#333333");
+    for (const id of brief.citedPatternIds) {
+      const pattern = brief.interpretation.patterns.find((entry) => entry.id === id);
+      // Should always resolve — see the same reasoning in page.tsx/
+      // brief.tsx. Skipped rather than throwing, so one unexpected id
+      // can't break PDF generation for the rest of the brief.
+      if (!pattern) continue;
+      const text = pattern.association
+        ? `${pattern.observation} ${pattern.association}`
+        : pattern.observation;
+      doc.text(`•  ${text}`, { indent: 0 });
+      doc.moveDown(0.2);
+    }
+    doc.moveDown(0.8);
+  }
+
   // ---- Discussion topics ----
   doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Questions to bring to your GP");
   doc.moveDown(0.4);
@@ -94,6 +120,72 @@ export function buildClinicalBriefPdf(
   }
 
   doc.moveDown(1);
+
+  // ---- Frequency comparison vs. the immediately preceding period ----
+  // Only rendered when present — see ClinicalBriefDto's own doc
+  // comment: null (a brief generated before this field existed) is
+  // deliberately different from an empty array (the comparison ran
+  // and found nothing to report), and neither older briefs nor a
+  // genuinely-empty comparison need a PDF section for it.
+  if (brief.frequencyComparison && brief.frequencyComparison.length > 0) {
+    doc
+      .fillColor(navy)
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("Compared with the previous period");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica");
+    for (const { category, currentCount, previousCount } of brief.frequencyComparison) {
+      doc.fillColor(navy).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
+      doc
+        .fillColor("#555555")
+        .text(
+          `  Reported on ${currentCount} day${currentCount === 1 ? "" : "s"}, compared with` +
+            ` ${previousCount} day${previousCount === 1 ? "" : "s"} in the previous period.`,
+        );
+    }
+    doc.moveDown(1);
+  }
+
+  // ---- Ongoing symptoms (persistent across both periods, descriptive only) ----
+  // Derived purely from frequencyComparison above — no new counting.
+  // Only rendered when non-empty; see ClinicalBriefDto's own doc
+  // comment for why null/empty-array are distinguished here.
+  // Descriptive only: "remained present," never "your X problem is
+  // persistent and requires treatment" — the same observation-not-
+  // interpretation framing every other deterministic section here
+  // uses.
+  if (brief.persistentSymptoms && brief.persistentSymptoms.length > 0) {
+    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Ongoing symptoms");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica").fillColor("#333333");
+    for (const category of brief.persistentSymptoms) {
+      doc.text(`${categoryLabel(category)} remained present across both periods.`);
+    }
+    doc.moveDown(1);
+  }
+
+  // ---- Patterns noticed (symptom co-occurrence, descriptive only) ----
+  // Only rendered when present — coOccurrence is null both for a
+  // brief predating this field and for one where no pair reached the
+  // existing threshold; see ClinicalBriefDto's own doc comment for
+  // why those two cases aren't distinguished here. Descriptive only:
+  // "reported on the same day," never "triggers" or "causes" — the
+  // same observation-not-causation framing web and mobile use.
+  if (brief.coOccurrence) {
+    const { categoryA, categoryB, days } = brief.coOccurrence;
+    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Patterns noticed");
+    doc.moveDown(0.4);
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .fillColor("#333333")
+      .text(
+        `${categoryLabel(categoryA)} and ${categoryLabel(categoryB)} were both reported on the` +
+          ` same day on ${days} occasion${days === 1 ? "" : "s"}.`,
+      );
+    doc.moveDown(1);
+  }
 
   // ---- Cycle summary ----
   doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Cycle summary");
@@ -143,6 +235,51 @@ export function buildClinicalBriefPdf(
       "This reflects what you've logged. It does not assess whether a treatment is working or" +
         " make treatment recommendations.",
     );
+
+  // ---- Observed changes after starting treatment (deterministic, no AI involvement) ----
+  // Only rendered when non-null and non-empty — unlike coOccurrence,
+  // an empty array here is a real fact ("no treatments started this
+  // period"), so it's distinguished from null the same way
+  // frequencyComparison already is; see ClinicalBriefDto's own doc
+  // comment. Observational only: "X logs before, Y after," never
+  // "the treatment reduced symptoms" — see treatment-impact.ts's own
+  // doc comment on why any efficacy-claim language is explicitly out
+  // of scope here.
+  if (brief.treatmentImpact && brief.treatmentImpact.length > 0) {
+    doc.moveDown(1);
+    doc
+      .fillColor(navy)
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("Observed changes after starting treatment");
+    doc.moveDown(0.4);
+    doc.fontSize(10).font("Helvetica");
+    for (const { name, before, after, insufficientData } of brief.treatmentImpact) {
+      doc.fillColor(navy).text(name);
+      if (insufficientData) {
+        doc
+          .fillColor("#555555")
+          .text("  Not enough time has passed since starting to compare yet.");
+      } else {
+        doc
+          .fillColor("#555555")
+          .text(
+            `  ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} in the` +
+              ` ${before.days} days before starting, compared with ${after.logCount} symptom` +
+              ` log${after.logCount === 1 ? "" : "s"} in the ${after.days} days after.`,
+          );
+      }
+    }
+    doc.moveDown(0.4);
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor("#888888")
+      .text(
+        "This reflects what you've logged. It does not assess whether a treatment is working or" +
+          " make treatment recommendations.",
+      );
+  }
 
   return doc;
 }

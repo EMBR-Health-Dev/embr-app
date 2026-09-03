@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
+import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
@@ -26,6 +26,8 @@ export default function BriefScreen() {
   const [openBriefId, setOpenBriefId] = useState<string | null>(null);
   const [openBrief, setOpenBrief] = useState<ClinicalBriefDto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [trends, setTrends] = useState<BriefTrendsDto | null>(null);
+  const [trendsLoading, setTrendsLoading] = useState(true);
 
   const loadHistory = useCallback(async () => {
     try {
@@ -36,9 +38,28 @@ export default function BriefScreen() {
     }
   }, []);
 
+  const loadTrends = useCallback(async () => {
+    // Independent of loadHistory — evidence aggregation over the
+    // user's own recent briefs, not tied to the paginated history
+    // list's own loading state or page size. Best-effort: if this
+    // fails, the section simply doesn't render (trends stays null) —
+    // nothing else on the screen depends on it, so it's not worth a
+    // blocking error state of its own.
+    try {
+      const result = await api.briefs.trends();
+      setTrends(result);
+    } finally {
+      setTrendsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadHistory();
   }, [loadHistory]);
+
+  useEffect(() => {
+    void loadTrends();
+  }, [loadTrends]);
 
   async function handleGenerate() {
     setGenerateError(null);
@@ -56,6 +77,7 @@ export default function BriefScreen() {
       });
       setJustGenerated(brief);
       await loadHistory();
+      await loadTrends();
     } catch (err) {
       setGenerateError(err instanceof ApiError ? err.message : t("brief.generateError"));
     } finally {
@@ -155,6 +177,36 @@ export default function BriefScreen() {
               </View>
             )}
 
+            {trendsLoading && <LoadingState compact />}
+            {trends && trends.briefCount > 0 && (
+              <View style={styles.trendsSection}>
+                <Text style={styles.sectionTitle}>{t("brief.trendsTitle")}</Text>
+                <Text style={styles.hint}>
+                  {t("brief.trendsAcrossBriefs", { count: trends.briefCount })}
+                </Text>
+                {trends.categories.map((row) => {
+                  // Two-step composition, same reasoning as
+                  // frequencyComparisonEntry/treatmentImpactEntry
+                  // above: i18next's automatic _one/_other suffix
+                  // selection works off a single `count` per t() call,
+                  // and "total" here needs its own independent
+                  // pluralized "brief(s)" phrase composed into the
+                  // full sentence.
+                  const totalPhrase = t("brief.briefCountPhrase", { count: row.totalBriefs });
+                  return (
+                    <Text key={row.category} style={styles.summaryLine}>
+                      {t("brief.trendsCategoryLine", {
+                        category: t(`enums.category.${row.category}`),
+                        present: row.briefsPresent,
+                        totalPhrase,
+                        persistent: row.briefsPersistent,
+                      })}
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
+
             <Text style={[styles.sectionTitle]}>{t("brief.pastBriefs")}</Text>
             {historyLoading && <LoadingState label={t("common.loading")} compact />}
           </View>
@@ -198,11 +250,51 @@ export default function BriefScreen() {
   );
 }
 
+function formatSeverityBreakdown(
+  severityBreakdown: Record<string, number>,
+  t: (key: string) => string,
+  locale: string,
+): string {
+  // Same {severity: count} shape brief.pdf.ts has always rendered — no
+  // new data, this just brings the in-app view to parity with what the
+  // PDF already shows. Intl.ListFormat (not a hardcoded ", " join)
+  // handles locale-appropriate separators — Japanese conventionally
+  // uses "、" rather than a Latin comma-space, so a hardcoded English
+  // separator would have been a real, if small, localization
+  // regression for ja specifically.
+  const parts = Object.entries(severityBreakdown).map(
+    ([severity, count]) => `${count} ${t(`enums.severity.${severity}`)}`,
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(parts);
+}
+
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <View style={styles.briefContent}>
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
+
+      {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.groundedInTitle")}</Text>
+          {brief.citedPatternIds.map((id) => {
+            const pattern = brief.interpretation!.patterns.find((entry) => entry.id === id);
+            // Should always resolve — citedPatternIds is only ever
+            // populated from ids validateStage4Patterns already
+            // confirmed exist in this same interpretation (see
+            // brief.service.ts). Skips rather than throws if it
+            // somehow doesn't, so a single unexpected id can't take
+            // down the whole screen.
+            if (!pattern) return null;
+            return (
+              <Text key={id} style={styles.summaryLine}>
+                {pattern.observation}
+                {pattern.association ? ` ${pattern.association}` : ""}
+              </Text>
+            );
+          })}
+        </>
+      )}
 
       <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
       {brief.aiDiscussionTopics.map((topic, i) => (
@@ -218,9 +310,67 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         brief.symptomSummary.map((entry) => (
           <Text key={entry.category} style={styles.summaryLine}>
             {t(`enums.category.${entry.category}`)} —{" "}
-            {t("brief.occurrenceCount", { count: entry.count })}
+            {t("brief.occurrenceCount", { count: entry.count })} (
+            {formatSeverityBreakdown(entry.severityBreakdown, t, i18n.language)})
           </Text>
         ))
+      )}
+
+      {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.frequencyComparisonTitle")}</Text>
+          {brief.frequencyComparison.map((entry) => {
+            // i18next's automatic _one/_other plural suffix selection
+            // works off a single `count` option per t() call — this
+            // sentence needs two independently-pluralized counts
+            // (currentCount and previousCount), so each is formatted
+            // on its own via frequencyComparisonDayCount first, then
+            // composed into the full sentence. The web equivalent
+            // (page.tsx) uses next-intl's ICU {count, plural, ...},
+            // which supports multiple independent plural clauses in
+            // one message natively — this two-step composition is
+            // i18next's own established way to get the same result,
+            // not a workaround invented for this feature specifically.
+            const current = t("brief.frequencyComparisonDayCount", {
+              count: entry.currentCount,
+            });
+            const previous = t("brief.frequencyComparisonDayCount", {
+              count: entry.previousCount,
+            });
+            return (
+              <Text key={entry.category} style={styles.summaryLine}>
+                {t(`enums.category.${entry.category}`)}:{" "}
+                {t("brief.frequencyComparisonEntry", { current, previous })}
+              </Text>
+            );
+          })}
+        </>
+      )}
+
+      {brief.persistentSymptoms && brief.persistentSymptoms.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.persistentSymptomsTitle")}</Text>
+          {brief.persistentSymptoms.map((category) => (
+            <Text key={category} style={styles.summaryLine}>
+              {t("brief.persistentSymptomsEntry", {
+                category: t(`enums.category.${category}`),
+              })}
+            </Text>
+          ))}
+        </>
+      )}
+
+      {brief.coOccurrence && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.patternsNoticedTitle")}</Text>
+          <Text style={styles.summaryLine}>
+            {t("brief.coOccurrenceEntry", {
+              count: brief.coOccurrence.days,
+              categoryA: t(`enums.category.${brief.coOccurrence.categoryA}`),
+              categoryB: t(`enums.category.${brief.coOccurrence.categoryB}`),
+            })}
+          </Text>
+        </>
       )}
 
       <Text style={styles.contentSectionTitle}>{t("brief.cycleSummary")}</Text>
@@ -245,6 +395,34 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         ))
       )}
       <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>
+
+      {brief.treatmentImpact && brief.treatmentImpact.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.treatmentImpactTitle")}</Text>
+          {brief.treatmentImpact.map((entry) => {
+            // Same two-step composition as frequencyComparison above —
+            // beforeCount and afterCount each need independent
+            // pluralization, which i18next's single-count-per-call
+            // mechanism doesn't support directly.
+            const before = t("brief.treatmentImpactLogCount", { count: entry.before.logCount });
+            const after = t("brief.treatmentImpactLogCount", { count: entry.after.logCount });
+            return (
+              <Text key={entry.treatmentId} style={styles.summaryLine}>
+                {entry.name}:{" "}
+                {entry.insufficientData
+                  ? t("brief.treatmentImpactInsufficientData")
+                  : t("brief.treatmentImpactEntry", {
+                      before,
+                      after,
+                      beforeDays: entry.before.days,
+                      afterDays: entry.after.days,
+                    })}
+              </Text>
+            );
+          })}
+          <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>
+        </>
+      )}
     </View>
   );
 }
@@ -287,6 +465,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: theme.colors.textPrimary,
   },
+  trendsSection: { marginTop: 20 },
   briefContent: { marginTop: 10, gap: 4 },
   narrative: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
   contentSectionTitle: {

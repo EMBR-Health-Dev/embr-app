@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, router } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,12 @@ import { theme } from "../lib/theme";
 export default function LoginScreen() {
   const { t } = useTranslation();
   const { login } = useAuth();
+  // Only "session-expired" is read here — matches the same, deliberately
+  // narrow scope as the web fix. "password-changed" is a separate,
+  // pre-existing gap (settings.tsx already navigates with it, but
+  // nothing on this screen has ever read it) that isn't part of this
+  // change.
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>();
@@ -45,6 +51,10 @@ export default function LoginScreen() {
         <LanguageSwitcher />
 
         <Text style={styles.title}>{t("login.title")}</Text>
+
+        {reason === "session-expired" && (
+          <Text style={styles.notice}>{t("login.sessionExpired")}</Text>
+        )}
 
         <View style={styles.field}>
           <Text style={styles.label}>{t("login.emailLabel")}</Text>
@@ -115,6 +125,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   error: { color: theme.colors.error, fontSize: 14 },
+  notice: {
+    color: theme.colors.success,
+    backgroundColor: theme.colors.successSoft,
+    fontSize: 14,
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 12,
+  },
   button: {
     backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,

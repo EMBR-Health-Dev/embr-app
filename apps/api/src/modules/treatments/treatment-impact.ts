@@ -25,13 +25,13 @@ export const TREATMENT_IMPACT_WINDOW_DAYS = 14;
  * or already ended shortly after starting. */
 export const MIN_TREATMENT_IMPACT_DAYS = 3;
 
-function addDays(date: Date, days: number): Date {
+export function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setUTCDate(result.getUTCDate() + days);
   return result;
 }
 
-function daysBetween(from: Date, to: Date): number {
+export function daysBetween(from: Date, to: Date): number {
   const ms = to.getTime() - from.getTime();
   return Math.max(0, Math.round(ms / (24 * 60 * 60 * 1000)));
 }

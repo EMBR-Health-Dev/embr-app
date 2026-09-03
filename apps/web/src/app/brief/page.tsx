@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import type { ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
+import { useLocale, useTranslations } from "next-intl";
+import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -14,6 +14,7 @@ import { Field } from "../../components/field";
 export default function BriefPage() {
   const t = useTranslations("Brief");
   const tCommon = useTranslations("Common");
+  const tEnum = useTranslations("Enums");
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -27,6 +28,7 @@ export default function BriefPage() {
   const [openBriefId, setOpenBriefId] = useState<string | null>(null);
   const [openBrief, setOpenBrief] = useState<ClinicalBriefDto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [trends, setTrends] = useState<BriefTrendsDto | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -38,6 +40,13 @@ export default function BriefPage() {
 
   useEffect(() => {
     if (user) loadHistory();
+  }, [user]);
+
+  useEffect(() => {
+    // Independent of loadHistory — evidence aggregation over the
+    // user's own recent briefs, not tied to the paginated history
+    // list's own loading state or page size.
+    if (user) api.briefs.trends().then(setTrends);
   }, [user]);
 
   async function handleGenerate(e: React.FormEvent) {
@@ -54,6 +63,7 @@ export default function BriefPage() {
       const brief = await api.briefs.generate({ fromDate, toDate });
       setJustGenerated(brief);
       loadHistory();
+      api.briefs.trends().then(setTrends);
     } catch (err) {
       setGenerateError(err instanceof ApiError ? err.message : t("generateError"));
     } finally {
@@ -142,6 +152,27 @@ export default function BriefPage() {
         </section>
       )}
 
+      {trends && trends.briefCount > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-lg text-navy">{t("trendsTitle")}</h2>
+          <p className="mt-1 text-sm text-navy/60">
+            {t("trendsAcrossBriefs", { count: trends.briefCount })}
+          </p>
+          <ul className="mt-3 flex flex-col gap-1">
+            {trends.categories.map((row) => (
+              <li key={row.category} className="text-sm text-navy/70">
+                {t("trendsCategoryLine", {
+                  category: tEnum(`category.${row.category}`),
+                  present: row.briefsPresent,
+                  total: row.totalBriefs,
+                  persistent: row.briefsPersistent,
+                })}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-10">
         <h2 className="font-display text-lg text-navy">{t("pastBriefs")}</h2>
         {history === null ? (
@@ -193,13 +224,56 @@ export default function BriefPage() {
   );
 }
 
+function formatSeverityBreakdown(
+  severityBreakdown: Record<string, number>,
+  tEnum: (key: string) => string,
+  locale: string,
+): string {
+  // Same {severity: count} shape brief.pdf.ts has always rendered — no
+  // new data, this just brings the in-app view to parity with what the
+  // PDF already shows. Intl.ListFormat (not a hardcoded ", " join)
+  // handles locale-appropriate separators — Japanese conventionally
+  // uses "、" rather than a Latin comma-space, so a hardcoded English
+  // separator would have been a real, if small, localization
+  // regression for ja specifically.
+  const parts = Object.entries(severityBreakdown).map(
+    ([severity, count]) => `${count} ${tEnum(`severity.${severity}`)}`,
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(parts);
+}
+
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
   const t = useTranslations("Brief");
   const tEnum = useTranslations("Enums");
+  const locale = useLocale();
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
       <p className="text-navy/80">{brief.aiNarrative}</p>
+
+      {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
+        <div>
+          <h3 className="font-medium text-navy">{t("groundedInTitle")}</h3>
+          <ul className="mt-1 list-disc pl-5 text-navy/70">
+            {brief.citedPatternIds.flatMap((id) => {
+              const pattern = brief.interpretation!.patterns.find((entry) => entry.id === id);
+              // Should always resolve — citedPatternIds is only ever
+              // populated from ids validateStage4Patterns already
+              // confirmed exist in this same interpretation (see
+              // brief.service.ts). Skips rather than throws if it
+              // somehow doesn't, so a single unexpected id can't take
+              // down the whole page.
+              if (!pattern) return [];
+              return (
+                <li key={id}>
+                  {pattern.observation}
+                  {pattern.association ? ` ${pattern.association}` : ""}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div>
         <h3 className="font-medium text-navy">{t("questionsForGp")}</h3>
@@ -215,11 +289,55 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         <ul className="mt-1 text-navy/70">
           {brief.symptomSummary.map((entry) => (
             <li key={entry.category}>
-              {tEnum(`category.${entry.category}`)} — {t("occurrenceCount", { count: entry.count })}
+              {tEnum(`category.${entry.category}`)} — {t("occurrenceCount", { count: entry.count })}{" "}
+              ({formatSeverityBreakdown(entry.severityBreakdown, tEnum, locale)})
             </li>
           ))}
         </ul>
       </div>
+
+      {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
+        <div>
+          <h3 className="font-medium text-navy">{t("frequencyComparisonTitle")}</h3>
+          <ul className="mt-1 text-navy/70">
+            {brief.frequencyComparison.map((entry) => (
+              <li key={entry.category}>
+                {tEnum(`category.${entry.category}`)}:{" "}
+                {t("frequencyComparisonEntry", {
+                  currentCount: entry.currentCount,
+                  previousCount: entry.previousCount,
+                })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {brief.persistentSymptoms && brief.persistentSymptoms.length > 0 && (
+        <div>
+          <h3 className="font-medium text-navy">{t("persistentSymptomsTitle")}</h3>
+          <ul className="mt-1 text-navy/70">
+            {brief.persistentSymptoms.map((category) => (
+              <li key={category}>
+                {t("persistentSymptomsEntry", { category: tEnum(`category.${category}`) })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {brief.coOccurrence && (
+        <div>
+          <h3 className="font-medium text-navy">{t("patternsNoticedTitle")}</h3>
+          <p className="mt-1 text-navy/70">
+            {t("coOccurrenceEntry", {
+              categoryA: tEnum(`category.${brief.coOccurrence.categoryA}`),
+              categoryB: tEnum(`category.${brief.coOccurrence.categoryB}`),
+              days: brief.coOccurrence.days,
+            })}
+          </p>
+        </div>
+      )}
 
       <div>
         <h3 className="font-medium text-navy">{t("cycleSummary")}</h3>
@@ -249,6 +367,28 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         )}
         <p className="mt-1 text-xs text-navy/50">{t("treatmentSafetyNote")}</p>
       </div>
+
+      {brief.treatmentImpact && brief.treatmentImpact.length > 0 && (
+        <div>
+          <h3 className="font-medium text-navy">{t("treatmentImpactTitle")}</h3>
+          <ul className="mt-1 text-navy/70">
+            {brief.treatmentImpact.map((entry) => (
+              <li key={entry.treatmentId}>
+                {entry.name}:{" "}
+                {entry.insufficientData
+                  ? t("treatmentImpactInsufficientData")
+                  : t("treatmentImpactEntry", {
+                      beforeCount: entry.before.logCount,
+                      beforeDays: entry.before.days,
+                      afterCount: entry.after.logCount,
+                      afterDays: entry.after.days,
+                    })}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-navy/50">{t("treatmentSafetyNote")}</p>
+        </div>
+      )}
     </div>
   );
 }

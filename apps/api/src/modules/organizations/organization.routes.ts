@@ -18,6 +18,7 @@ import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth, requireOrgRole, requireRole } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
+import type { Organization } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { toSkipTake, paginate } from "../../lib/pagination.js";
 import { toOrganizationDto } from "./organization.mappers.js";
@@ -45,13 +46,30 @@ router.get(
       prisma.organization.count(),
     ]);
     const withCounts = await Promise.all(
-      orgs.map(async (org) => ({
+      // `org: Organization` is explicit rather than left to inference
+      // because `prisma.organization.findMany(...)` above only
+      // resolves to a real type once the generated Prisma client
+      // exists; toOrganizationDto below already expects exactly this
+      // type as its first parameter (see organization.mappers.ts), so
+      // this doesn't introduce a new type.
+      orgs.map(async (org: Organization) => ({
         org,
         count: await prisma.organizationMembership.count({ where: { organizationId: org.id } }),
       })),
     );
     const page = paginate(
-      withCounts.map(({ org, count }) => toOrganizationDto(org, count)),
+      // Annotated explicitly rather than relying on it following from
+      // the map above — in an environment where the generated Prisma
+      // client itself can't resolve (this sandbox; see this file's own
+      // import of Organization), a failed type import is treated as
+      // `any` for the rest of the file, which stops that propagation
+      // from being visible here even though it fixes itself the moment
+      // the import above resolves for real. Making both sites explicit
+      // means this is correct either way, not dependent on which
+      // environment it runs in.
+      withCounts.map(({ org, count }: { org: Organization; count: number }) =>
+        toOrganizationDto(org, count),
+      ),
       total,
       query,
     );
@@ -162,6 +180,30 @@ router.delete(
       organizationId,
       revokedUserId,
     });
+    res.status(204).send();
+  }),
+);
+
+/**
+ * Self-service leave — deliberately a distinct route from the
+ * ORG_ADMIN-only revoke above, not a reuse of it with a special-cased
+ * userId. Any existing member may call this on themselves
+ * (requireOrgRole("ORG_ADMIN", "ORG_MEMBER") accepts either of the
+ * only two roles that exist — see packages/types' OrgRole — so this
+ * is really just "must already be a member of this org," with no
+ * further role requirement). Registered after the parameterized
+ * member-removal route above on purpose, matching this file's own
+ * existing route ordering; "leave" has no further path segments that
+ * could collide with :userId the way brief.routes.ts's /briefs/trends
+ * had to be ordered before /briefs/:id.
+ */
+router.post(
+  "/organizations/:organizationId/leave",
+  requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),
+  asyncHandler(async (req, res) => {
+    const organizationId = requireParam(req, "organizationId");
+    await organizationService.leaveOrganization(organizationId, req.user!.sub);
+    await writeAuditLog(req, "ORG_MEMBER_LEFT", req.user!.sub, { organizationId });
     res.status(204).send();
   }),
 );

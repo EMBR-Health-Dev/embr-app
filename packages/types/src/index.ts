@@ -141,6 +141,69 @@ export interface TreatmentImpactDto {
   insufficientData: boolean;
 }
 
+/**
+ * Stage 4 of EMBR's clinical logic pipeline (see the
+ * embr-clinical-logic skill doctrine) — the canonical, deterministic
+ * interpretation layer between Stage 3 evidence and AI narration. The
+ * logic that produces these lives in
+ * apps/api/src/modules/briefs/stage4-interpretation.ts, which imports
+ * these type definitions from here rather than defining them itself —
+ * this package is the single source of truth for the shape, since
+ * ClinicalBriefDto (below) needs to expose it and this is the one
+ * place both the API and every client can import from without a
+ * circular or one-directional-only dependency.
+ */
+export type Stage4PatternType =
+  | "frequency_increased"
+  | "frequency_decreased"
+  | "co_occurrence_detected"
+  | "treatment_window_changed";
+
+export type Stage4EvidenceRef =
+  | { category: SymptomCategory }
+  | { categoryA: SymptomCategory; categoryB: SymptomCategory }
+  | { treatmentId: string };
+
+export interface Stage4Pattern {
+  /** Deterministic — built only from `type` and `evidenceRef`, never
+   * random. The same Stage 3 evidence always produces the same id,
+   * which is what makes citation validation and historical/test
+   * comparison possible: a random UUID would make "did the AI cite a
+   * pattern that genuinely existed" unverifiable across two
+   * independent computations of the same evidence. */
+  id: string;
+  type: Stage4PatternType;
+  /** What the deterministic evidence directly establishes — counts,
+   * dates, categories. Never a claim about why, only what. */
+  observation: string;
+  /** Present only for co_occurrence_detected. Describes temporal
+   * co-occurrence specifically — "reported on the same days" — never
+   * a claim that one symptom causes or influences the other. */
+  association?: string;
+  /** A bounded, deterministic explanation of what the observation (and
+   * association, where present) means at the most literal level —
+   * never a medical or causal inference. Fixed per pattern type, not
+   * authored per instance. */
+  interpretation: string;
+  /** Fixed per pattern type — explicitly guards against
+   * overinterpretation of exactly this pattern type. */
+  caveat: string;
+  /** The only value that exists in this milestone — communicates the
+   * epistemic level of the output (a plain description of the data,
+   * not a statistical or clinical confidence score) rather than
+   * grading how "sure" the finding is. */
+  confidence: "descriptive";
+  /** Points back to the exact Stage 3 evidence entry this pattern was
+   * derived from — never a duplicate copy of that evidence, just
+   * enough to identify it. */
+  evidenceRef: Stage4EvidenceRef;
+}
+
+export interface Stage4Result {
+  interpretationVersion: string;
+  patterns: Stage4Pattern[];
+}
+
 export type FlowIntensity = "SPOTTING" | "LIGHT" | "MEDIUM" | "HEAVY";
 
 export interface CycleEntryDto {
@@ -386,6 +449,22 @@ export interface BriefTreatmentSummaryEntryDto {
   endDate: string | null;
 }
 
+/** Deterministic period-over-period comparison for one symptom
+ * category — see period-comparison.ts for the exact "immediately
+ * preceding period of equal length" definition and the reasoning for
+ * each field. Not sent to the AI as of this milestone (see
+ * BriefInput in brief.ai.ts, unchanged). */
+export interface BriefFrequencyComparisonEntryDto {
+  category: SymptomCategory;
+  currentCount: number;
+  previousCount: number;
+  absoluteChange: number;
+  /** Null when previousCount is 0 — see period-comparison.ts for why
+   * this is never a manufactured percentage. */
+  percentageChange: number | null;
+  direction: "increased" | "decreased" | "unchanged";
+}
+
 /** The list view — no AI content, keeps history/pagination responses
  * small. Fetch the full ClinicalBriefDto to read the narrative. */
 export interface ClinicalBriefListItemDto {
@@ -393,6 +472,19 @@ export interface ClinicalBriefListItemDto {
   fromDate: string;
   toDate: string;
   createdAt: string;
+}
+
+/** Reuses TreatmentImpactDto's shape exactly (windowDays, before/after
+ * log counts and day-spans, insufficientData) — see
+ * treatment-impact.ts for what each field means and why the windows
+ * are sized the way they are. name/category are embedded directly
+ * (not just treatmentId) for the same reason
+ * BriefTreatmentSummaryEntryDto already does: a historical brief must
+ * render without a live join back to a Treatment record that may
+ * since have been edited or deleted. */
+export interface BriefTreatmentImpactEntryDto extends TreatmentImpactDto {
+  name: string;
+  category: TreatmentCategory;
 }
 
 /** aiNarrative and aiDiscussionTopics are AI-generated from the
@@ -405,8 +497,109 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   symptomSummary: BriefSymptomSummaryEntryDto[];
   cycleSummary: BriefCycleSummaryDto;
   treatmentSummary: BriefTreatmentSummaryEntryDto[];
+  /** Null for a brief generated before this field existed — never
+   * backfilled or recomputed for an old snapshot (see ClinicalBrief's
+   * "point-in-time snapshot, not a live view" invariant in
+   * schema.prisma). An empty array means the comparison genuinely ran
+   * and found no categories logged in either period; null means the
+   * comparison was never computed for this brief at all — the two are
+   * not the same fact and must not be conflated in the UI. */
+  frequencyComparison: BriefFrequencyComparisonEntryDto[] | null;
+  /** Computed over the brief's own requested period only — never the
+   * previous comparison period. detectSymptomCoOccurrence itself
+   * returns at most one pair (the strongest qualifying overlap, or
+   * null if none reaches its threshold) — see
+   * apps/api/src/modules/trends/co-occurrence.ts — so, unlike the
+   * array fields above, null here is deliberately overloaded: it
+   * means either "never computed for this brief" (an old snapshot) or
+   * "computed, no pair reached the co-occurrence threshold." Those
+   * two are kept distinct for frequencyComparison because an empty
+   * array there still carries meaning (the comparison ran and found
+   * nothing); a null co-occurrence carries no comparable meaning to
+   * lose by not distinguishing why it's null — both cases render
+   * identically ("nothing to show"), so this deliberately does not
+   * introduce a JSON-null-vs-SQL-null distinction with no consumer
+   * that needs it yet. */
+  coOccurrence: SymptomCoOccurrenceDto | null;
+  /** One entry per treatment that *started* inside the brief's own
+   * requested period — not every treatment in treatmentSummary, which
+   * also includes treatments merely ongoing through the period. A
+   * treatment that started long before this period would have its
+   * before/after windows computed around a start date unrelated to
+   * what this brief is actually about, which is misleading rather
+   * than useful. Null/empty-array distinction matches
+   * frequencyComparison's reasoning, not coOccurrence's: an empty
+   * array here is a real fact ("no treatments started this period"),
+   * so it must stay distinguishable from "never computed." This raw
+   * array itself is never sent to the AI — only a derived,
+   * treatment-name-stripped projection is, via `interpretation` below
+   * (see stage4-ai-projection.ts). */
+  treatmentImpact: BriefTreatmentImpactEntryDto[] | null;
+  /** Derived purely from frequencyComparison — no new counting, no new
+   * query. A category qualifies when it was reported at all in the
+   * previous period and remains at or above a floor in the current
+   * one — see persistent-symptoms.ts for the exact rule and why it's
+   * a floor, not a target. Null/empty-array distinction matches
+   * frequencyComparison's own reasoning: an empty array is a real
+   * fact ("nothing qualified as persistent"), so it must stay
+   * distinguishable from "never computed for this brief." No Stage 4
+   * pattern type maps to this, so it is never sent to the AI in any
+   * form. */
+  persistentSymptoms: SymptomCategory[] | null;
+  /** The canonical Stage 4 result — the same object computed once
+   * during generation, used to validate the AI's response, and
+   * persisted here, never recomputed. Safe to render in full,
+   * including treatment names inside treatment_window_changed
+   * patterns' observation text: that's fine for UI/PDF display, and
+   * is a *different* concern from what's safe to send to the AI —
+   * see stage4-ai-projection.ts for the treatment-name-stripped copy
+   * that's used for that instead. Null for a brief generated before
+   * this field existed; never backfilled, matching every other
+   * additive field on this DTO. */
+  interpretation: Stage4Result | null;
+  /** The subset of interpretation.patterns' ids the AI actually
+   * referenced in aiNarrative/aiDiscussionTopics for this generation —
+   * a real, meaningful subset per brief.ai.ts's own system prompt
+   * (rules 6-7: only cite what was actually used; an empty array is a
+   * valid, intentional response, not a defect). interpretation itself
+   * always contains every pattern that qualified, whether or not the
+   * AI narrated it — this field is what lets a UI distinguish "this is
+   * everything the data showed" from "this is specifically what the
+   * narrative above is grounded in." Null for a brief generated before
+   * this field existed; never backfilled, matching every other
+   * additive field on this DTO. */
+  citedPatternIds: string[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
+}
+
+/** Cross-brief evidence aggregation, not a new clinical inference —
+ * every field here is reshaped from data that already existed on
+ * ClinicalBrief rows before this endpoint existed (symptomSummary,
+ * persistentSymptoms). See apps/api/src/modules/briefs/brief-trends.ts
+ * for the exact aggregation semantics, including why "reported" and
+ * "persistent" are always kept as two separate counts rather than one
+ * inferred from the other. */
+export interface BriefTrendCategoryDto {
+  category: SymptomCategory;
+  briefsPresent: number;
+  briefsPersistent: number;
+  totalBriefs: number;
+  mostRecentBriefFromDate: string;
+  mostRecentBriefToDate: string;
+}
+
+export interface BriefTrendsDto {
+  /** How many of the user's briefs this response actually represents
+   * — always <= the requested limit, and can be fewer for a user who
+   * hasn't generated that many yet. This is what lets the UI say
+   * "across your last N briefs" truthfully. */
+  briefCount: number;
+  /** The actual min(fromDate)/max(toDate) across the represented
+   * briefs — null only when briefCount is 0. */
+  earliestBriefFromDate: string | null;
+  latestBriefToDate: string | null;
+  categories: BriefTrendCategoryDto[];
 }
 
 // ---- Onboarding (Milestone 18) ----

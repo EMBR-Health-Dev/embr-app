@@ -18,7 +18,8 @@
     "or": "または",
     "continueWithSso": "SSOでログイン",
     "newToEmbr": "EMBRは初めてですか?",
-    "createAccount": "アカウントを作成"
+    "createAccount": "アカウントを作成",
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
   },
   "LanguageSwitcher": {
     "label": "言語",
@@ -299,7 +300,13 @@
       "manageBilling": "請求を管理",
       "opening": "開いています…",
       "genericError": "問題が発生しました。もう一度お試しください。"
-    }
+    },
+    "cancel": "キャンセル",
+    "leaveOrganization": "組織を退出する",
+    "leaveConfirmPrompt": "よろしいですか？",
+    "leaveConfirmYes": "はい、退出します",
+    "leaving": "退出中…",
+    "leaveError": "組織を退出できませんでした。もう一度お試しください。"
   },
   "Settings": {
     "title": "設定",
@@ -365,7 +372,20 @@
     "treatmentsLoggedDuringPeriod": "この期間に記録された治療",
     "noTreatmentsInRange": "この期間に記録された治療はありません。",
     "ongoing": "継続中",
-    "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。"
+    "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
+    "frequencyComparisonTitle": "前回の期間との比較",
+    "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#日}}報告され、前回の期間は{previousCount, plural, other {#日}}でした。",
+    "patternsNoticedTitle": "気づいたパターン",
+    "coOccurrenceEntry": "{categoryA}と{categoryB}は同じ日に{days, plural, other {#日}}報告されました。",
+    "treatmentImpactTitle": "治療開始後の変化",
+    "treatmentImpactEntry": "開始前{beforeDays}日間で{beforeCount, plural, other {#件}}の記録、開始後{afterDays}日間で{afterCount, plural, other {#件}}の記録がありました。",
+    "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。",
+    "persistentSymptomsTitle": "継続している症状",
+    "persistentSymptomsEntry": "{category}は両方の期間で継続して報告されました。",
+    "groundedInTitle": "データに基づく根拠",
+    "trendsTitle": "最近の傾向",
+    "trendsAcrossBriefs": "直近{count}件のブリーフについて",
+    "trendsCategoryLine": "{category} — {total}件中{present}件で報告され、{persistent}件で継続として記録されました。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",
@@ -386,7 +406,8 @@
     "logOutAndRetry": "ログアウトしてやり直す",
     "loggingOut": "ログアウト中…",
     "stayAndGoToDashboard": "そのままダッシュボードへ進む",
-    "genericError": "招待の承認中に問題が発生しました。しばらくしてからもう一度お試しください。"
+    "genericError": "招待の承認中に問題が発生しました。しばらくしてからもう一度お試しください。",
+    "privacyNote": "個人の健康データは非公開のままです。勤務先があなたの個人の症状記録を見ることはできません。組織のインサイトは、個人のプライバシーを保護できるだけのデータが集まった場合にのみ、集計・匿名化された傾向としてのみ表示されます。"
   },
   "Export": {
     "title": "データをエクスポート",

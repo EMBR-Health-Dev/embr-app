@@ -63,6 +63,9 @@ export default function OrganizationPage() {
   const [roster, setRoster] = useState<OrganizationMemberDto[]>([]);
   const [rosterLoading, setRosterLoading] = useState(true);
   const [revokingUserId, setRevokingUserId] = useState<string | null>(null);
+  const [leaveConfirming, setLeaveConfirming] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
 
   const [frequency, setFrequency] = useState<OrgSymptomFrequencyDto | null>(null);
   const [trendsLoading, setTrendsLoading] = useState(true);
@@ -180,6 +183,25 @@ export default function OrganizationPage() {
       setOrg((prev) => (prev ? { ...prev, memberCount: prev.memberCount - 1 } : prev));
     } finally {
       setRevokingUserId(null);
+    }
+  }
+
+  async function leaveOrganization() {
+    if (!selectedOrgId) return;
+    setLeaveError(null);
+    setLeaving(true);
+    try {
+      await api.organizations.members.leave(selectedOrgId);
+      // The caller is gone from this org now — nothing left on this
+      // page is theirs to keep showing, same reasoning as an account
+      // deletion redirect elsewhere in this app. Re-running the
+      // "which org(s) do I administer" discovery would just find one
+      // fewer membership; simplest correct behavior is leaving this
+      // page entirely.
+      router.replace("/dashboard");
+    } catch (err) {
+      setLeaveError(err instanceof ApiError ? err.message : t("leaveError"));
+      setLeaving(false);
     }
   }
 
@@ -495,7 +517,7 @@ export default function OrganizationPage() {
                     {new Date(m.joinedAt).toLocaleDateString()}
                   </p>
                 </div>
-                {m.userId !== user.id && (
+                {m.userId !== user.id ? (
                   <button
                     onClick={() => revokeMember(m.userId)}
                     disabled={revokingUserId === m.userId}
@@ -503,6 +525,34 @@ export default function OrganizationPage() {
                   >
                     {revokingUserId === m.userId ? t("revoking") : t("revoke")}
                   </button>
+                ) : !leaveConfirming ? (
+                  <button
+                    onClick={() => setLeaveConfirming(true)}
+                    className="text-red-600 underline underline-offset-2"
+                  >
+                    {t("leaveOrganization")}
+                  </button>
+                ) : (
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-navy/60">{t("leaveConfirmPrompt")}</span>
+                      <button
+                        onClick={leaveOrganization}
+                        disabled={leaving}
+                        className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+                      >
+                        {leaving ? t("leaving") : t("leaveConfirmYes")}
+                      </button>
+                      <button
+                        onClick={() => setLeaveConfirming(false)}
+                        disabled={leaving}
+                        className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
+                      >
+                        {t("cancel")}
+                      </button>
+                    </div>
+                    {leaveError && <p className="text-xs text-red-600">{leaveError}</p>}
+                  </div>
                 )}
               </li>
             ))}

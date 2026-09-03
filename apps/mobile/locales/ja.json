@@ -12,7 +12,8 @@
     "submit": "ログイン",
     "submitting": "ログイン中…",
     "newToEmbr": "EMBRは初めてですか?",
-    "createAccount": "アカウントを作成"
+    "createAccount": "アカウントを作成",
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
   },
   "languageSwitcher": {
     "label": "言語",
@@ -282,7 +283,23 @@
     "treatmentsLoggedDuringPeriod": "この期間に記録された治療",
     "noTreatmentsInRange": "この期間に記録された治療はありません。",
     "ongoing": "継続中",
-    "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。"
+    "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
+    "frequencyComparisonTitle": "前回の期間との比較",
+    "frequencyComparisonDayCount_other": "{{count}}日",
+    "frequencyComparisonEntry": "今回の期間に{{current}}報告され、前回の期間は{{previous}}でした。",
+    "patternsNoticedTitle": "気づいたパターン",
+    "coOccurrenceEntry_other": "{{categoryA}}と{{categoryB}}は同じ日に{{count}}日報告されました。",
+    "treatmentImpactTitle": "治療開始後の変化",
+    "treatmentImpactLogCount_other": "{{count}}件の記録",
+    "treatmentImpactEntry": "開始前{{beforeDays}}日間で{{before}}、開始後{{afterDays}}日間で{{after}}がありました。",
+    "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。",
+    "persistentSymptomsTitle": "継続している症状",
+    "persistentSymptomsEntry": "{{category}}は両方の期間で継続して報告されました。",
+    "groundedInTitle": "データに基づく根拠",
+    "trendsTitle": "最近の傾向",
+    "briefCountPhrase_other": "{{count}}件のブリーフ",
+    "trendsAcrossBriefs_other": "直近{{count}}件のブリーフについて",
+    "trendsCategoryLine": "{{category}} — {{totalPhrase}}中{{present}}件で報告され、{{persistent}}件で継続として記録されました。"
   },
   "settings": {
     "title": "設定",

@@ -596,3 +596,96 @@ Full monorepo `pnpm typecheck`: 12/13 clean — the one failure is the confirmed
 
 **Next milestone**
 To be scoped from here — candidates: the billing settings UI, the self-service "leave organization" gap (still open since Milestone 13), or the SSO dual-login-path decision (still open since Milestone 15).
+
+## Milestone 20 — Clinical Brief 2.0 (deterministic evidence, Stage 4 interpretation, AI safety and provenance, cross-brief trends)
+
+Eleven commits (`c3686e4` through `f859f00`), recorded here as one milestone rather than eleven — each commit was a genuine implementation step, but none of them is a product milestone on its own; together they turn EMBR BRIEF (Milestone 17) from a single AI-narrated summary into a layered pipeline with a deterministic evidence base, a bounded interpretation layer between that evidence and the model, citation-checked AI output, and a longitudinal view across a person's brief history. The self-service "leave organization" feature committed alongside this work (`90d850f`) belongs to the organization roadmap, not this one, and is deliberately not covered here.
+
+### 1. Deterministic evidence layer
+
+Five independent, pure, unit-tested computations, all built directly on already-logged data with no AI involvement at any point:
+
+- **Severity breakdown** — surfaced in web and mobile from the existing `severityBreakdown` aggregation, using `Intl.ListFormat` for locale-correct rendering (Japanese `、` vs. English `,`).
+- **Period-over-period frequency comparison** (`period-comparison.ts`) — the requested period against the immediately preceding period of equal length; `percentageChange` is `null` rather than a fabricated number when the previous count was zero.
+- **Symptom co-occurrence** (`trends/co-occurrence.ts`, wired into the brief) — the single strongest-overlap category pair within the period, reusing the existing detector unmodified rather than building a second implementation.
+- **Persistent symptoms** (`persistent-symptoms.ts`) — a category counts as persistent only when it was reported at all in the previous period and remains at or above a floor in the current one; zero new counting, purely a filter over the frequency comparison already computed.
+- **Treatment impact** (existing `treatment-impact.ts`, wired into the brief) — before/after symptom-log windows for treatments that _started_ inside the requested period specifically, not every treatment merely overlapping it.
+
+Every one of these is a snapshot fact computed once at generation time and persisted with the brief — never recomputed on read, matching the point-in-time-snapshot invariant Milestone 17 established.
+
+### 2. Stage 4 interpretation
+
+`stage4-interpretation.ts` is the layer that decides which deterministic findings are worth narrating, so the AI is never handed raw evidence to interpret on its own. Exactly four pattern types — `frequency_increased`, `frequency_decreased`, `co_occurrence_detected`, `treatment_window_changed` — each with a deterministic `id` (built only from `type` and `evidenceRef`, never random, so the same evidence always produces the same identifier), fixed observation/interpretation/caveat template text, and a `confidence: "descriptive"` marker communicating the epistemic level of the output rather than a statistical score. The frequency thresholds were deliberately _not_ given an independent materiality floor beyond what `period-comparison.ts` already established — Stage 4 interprets qualified evidence, it doesn't redefine what qualifies. Every pattern's evidence reference is traceable back to the exact source that produced it.
+
+### 3. AI safety and provenance
+
+The core invariant: **the AI may describe a relationship only when it corresponds to a Stage 4 pattern that was actually supplied to it.** Established across several pieces working together, not one:
+
+- **`stage4-ai-projection.ts`** — a privacy-safe projection between the canonical, UI/PDF-facing `Stage4Result` (which may legitimately contain a treatment's name) and what actually reaches the model. Found and closed a real gap during this work: `treatment_window_changed` patterns embed a treatment's name in their `observation` text for display purposes, which would otherwise have leaked into the AI's input the moment `interpretation` was added to `BriefInput` — the projection rebuilds that one field from structured before/after counts instead, never by parsing or redacting the canonical string, and never by altering the canonical result itself.
+- **`stage4-validation.ts`** — after the AI responds, every pattern it echoes back is checked against the canonical, server-side interpretation by `id`, `type`, and `evidenceRef`. A returned subset is expected and valid (the model isn't required to narrate every pattern it was given); an altered or invented one fails the whole generation closed via `AppError.internal`, before persistence.
+- **`brief.ai.ts`'s response contract** — extended to require `patterns: Stage4Pattern[]` alongside the existing `narrative`/`discussionTopics`, validated by Zod against the same discriminated `evidenceRef` shapes Stage 4 itself defines (imported from `@embr/types`, not duplicated). The existing content-safety deny-list (diagnosis language, directive treatment language, dosage-shaped figures) now scans pattern text too, not just narrative and discussion topics.
+- **Discussion-topic citation hardening** (the final commit, `865e862`) — closed the one remaining gap in this chain: discussion topics could previously assert a relationship in question form with nothing structurally checking it, relying on a system-prompt instruction alone. The wire format for each topic is now `{text, patternIds}`; any cited id must resolve to a pattern the model also echoed in that same response's `patterns` array, or the whole response fails closed. `patternIds` is stripped after validation — `BriefContent.discussionTopics` remains plain `string[]` to every caller, so nothing downstream needed to change.
+
+An explicit, deliberate limitation, not an oversight: citation validation proves a legitimate evidence source was available. It does not, and cannot, prove the AI's prose is a faithful restatement of that evidence — a model could cite a real pattern and still overstate it in the narrative. The deny-list is the (partial) backstop for that specific residual risk, not a complete solution to it.
+
+### 4. Persistence
+
+`ClinicalBrief` gained six additive, nullable JSON columns across six migrations (`frequencyComparison`, `coOccurrence`, `treatmentImpact`, `persistentSymptoms`, `interpretation`, `citedPatternIds`) — never a schema change to an existing column, so every brief generated before a given field existed remains fully readable, reading back `null` rather than a backfilled or recomputed value. The canonical `interpretation` is computed exactly once per generation (`buildStage4Interpretation`, called a single time, verified directly by a test spying on it) and is what's persisted — never the AI-safe projection, which exists only to bound what the model receives.
+
+### 5. Presentation parity
+
+Web, mobile, and the PDF all render the identical set of sections, in the identical order: AI narrative, a "Grounded in your data" section listing specifically the patterns the AI actually cited (not everything that happened to qualify), GP discussion questions, symptom frequency with severity breakdown, period comparison, persistent symptoms, co-occurrence, cycle summary, treatment summary, and treatment impact. Mobile's screen mirrors web's page section-for-section rather than diverging in what's shown, only in RN-specific rendering mechanics.
+
+### 6. Cross-brief trends
+
+`brief-trends.ts` — a pure aggregation over a user's own N most recent briefs (default 6, reusing the existing `listForUser` pagination primitive rather than a new query), not a sixth deterministic-evidence detector and not a diagnostic trend engine. "Reported" (from `symptomSummary`) and "persistent" (from `persistentSymptoms`) are kept as two independently-counted signals throughout — a category appearing in every one of a user's briefs still shows `briefsPersistent: 0` if it was never actually classified persistent in any of them; repeated appearance is never inferred as persistence. `GET /briefs/trends` is registered _before_ `/briefs/:id` in the router — a real, load-bearing ordering requirement, not a stylistic one, since `idParamSchema` requires a UUID and would otherwise 400 the literal string "trends" before ever reaching this route. Deliberately textual, not charted, for this first slice, and explicit about how many briefs it represents (`briefCount`) so the UI can say "across your last 6 briefs" truthfully rather than implying an unbounded historical analysis.
+
+### 7. Testing and verification
+
+Exact counts, current as of `f859f00`, not implied to be a permanently frozen number: `stage4-interpretation.test.ts` 21, `stage4-validation.test.ts` 13, `stage4-ai-projection.test.ts` 11, `brief.ai.test.ts` 33, `brief-trends.test.ts` 15, `brief.test.ts` 59, plus the pre-existing `period-comparison.test.ts` (15), `persistent-symptoms.test.ts` (9), `treatment-impact.test.ts` (10), and `trends-co-occurrence.test.ts` (10) all still passing unmodified. Full `apps/api` suite: 561 passed, 5 skipped (the pre-existing conditional Redis-integration skips, unrelated). Full `apps/web`: 136 passed, including new coverage for the brief page's citation section and its "Grounded in your data" edge cases (absent/empty/null citedPatternIds, an unresolved citation id degrading gracefully). Full `apps/mobile`: 49 passed — this milestone also stood up `apps/mobile`'s first-ever screen-component test infrastructure (`react-native-web` aliased to `react-native` in the test environment only, `@testing-library/react` + `jsdom`, matching `apps/web`'s exact stack rather than adopting Jest or an unofficial Vitest/RN bridge) specifically to get `brief.tsx` under test.
+
+Typecheck: 25 pre-existing errors on `apps/api`, unchanged in count and file set throughout this entire milestone (21 are the long-standing `generated/prisma` module-resolution gap in this sandbox, 4 are pre-existing implicit-`any` in unrelated files) — verified by diffing the exact error-file list after every single commit in this range, not just checking the count. `apps/web`/`apps/mobile` typecheck clean. This is the same sandbox-vs-`.nvmrc` Node version mismatch recorded in Milestone 19; it was never a blocker for this milestone's own test suite (unlike Milestone 19's Stripe work, everything here ran and passed directly in this sandbox), but it remains open and unrelated to any of this work.
+
+### 8. Remaining work
+
+**Clinical Brief 2.0 itself is complete** — the full chain (deterministic evidence → Stage 4 interpretation → AI citation → narrative → GP questions → web/mobile/PDF → cross-brief trends) is built, tested, and shipped. What follows are deliberate scope boundaries from this milestone, not unfinished pieces of it:
+
+- No per-topic citation surfaced in the UI — a person can see the overall "Grounded in your data" list but not which specific GP question maps to which specific finding. The safety/correctness invariant (citations are real) is closed; the presentation of that fact is a separate, smaller decision.
+- Trends has no charting, no client-configurable N, and best-effort (silently absent, not a visible error) loading on both frontends — all explicit first-slice choices, not gaps.
+- The residual "citation without semantic faithfulness" limitation recorded in section 3 above is accepted for this milestone, backstopped only by the existing deny-list, not solved.
+
+### Next milestone
+
+To be scoped from here — the SSO dual-login-path decision (still open since Milestone 15) remains the one carried-over item from prior milestones' "remaining work" that hasn't been addressed by anything in this range.
+
+## Milestone 21 — Clinical Brief frontend test hardening
+
+A single commit (`4ce7af4`), and deliberately a separate milestone from Milestone 20 rather than an amendment to it: Milestone 20 already records the Clinical Brief 2.0 _product_ as complete, and this is a subsequent verification step, not new product surface. No production code changed anywhere in this milestone — confirmed by `git status` showing only the two test files touched — and no defects were found. This is test hardening, not a bug-fixing release, and that distinction is worth keeping visible in the record rather than blurring the two together.
+
+**What prompted it**: an inspection of the existing web/mobile Clinical Brief test files against the full frontend behavioral surface (API contract, translations, loading/error/empty states, generation, history, detail rendering, deletion, PDF/share, severity breakdown, citations, GP discussion topics, cross-brief trends) found real, specific gaps — most notably that mobile's `handleGenerate` (the entire date-picker-to-success-or-failure flow) had zero test coverage at all, and that the deterministic evidence sections (frequency comparison, persistent symptoms, co-occurrence, cycle summary, treatment summary, treatment impact) were on both platforms only ever exercised with empty fixture defaults, never with real content.
+
+**What changed**
+
+- **Severity breakdown** — previously zero coverage on either platform despite real, locale-aware `Intl.ListFormat` logic. New tests on both platforms use a three-severity-level fixture and assert the exact computed narrow-conjunction string (verified directly via Node before writing the assertion, not assumed).
+- **Mobile generation flow** — the single largest gap closed: validation (no dates picked), success (asserting the generated brief renders _and_ that `list`/`trends` are each genuinely called a second time, not just that some success state exists), and API failure (asserting the error text, that no success text of any kind leaked through, and that no phantom retry or refresh occurred).
+- **Deletion** — mobile gained its first delete coverage entirely; both platforms gained the two branches neither covered before (deleting the currently-open brief clears the detail view; deleting the just-generated brief clears that section), asserted by checking the relevant content actually disappears, not merely that the delete call was made.
+- **PDF/share** — web's download anchor `href` asserted directly; mobile's share helper asserted for the correct brief id, plus a genuine in-flight assertion using a controlled, not-yet-resolved promise to observe the label change while sharing and its reversion afterward.
+- **Deterministic evidence sections with real content** — one realistic fixture per platform (verified field-for-field against the actual `BriefFrequencyComparisonEntryDto`/`BriefTreatmentImpactEntryDto`/`BriefTreatmentSummaryEntryDto` definitions in `@embr/types`, not assumed) covering frequency comparison, persistent symptoms, co-occurrence, a real cycle-length average, treatment summary, and treatment impact including the `insufficientData` case — every section's actual rendered text asserted.
+- **Multiple-item rendering** — more than one discussion topic and more than one trend category, to catch what a single-item fixture can't.
+
+**Test counts, before and after**
+
+- Web: 13 → 21 Clinical Brief tests; full `apps/web` suite 136 → 144.
+- Mobile: 11 → 24 Clinical Brief tests; full `apps/mobile` suite 49 → 62.
+
+**Infrastructure note**: one file-scoped `vi.mock` of the app's own `DatePickerField` component was added to mobile's test file — not a change to shared test infrastructure. The shared native-picker mock in `test/setup.ts` (established in the mobile screen-testing work recorded in Milestone 20) renders nothing, correctly, for every other screen; without a way to simulate an actual date selection, `handleGenerate`'s success/failure paths were entirely unreachable. `test/setup.ts` itself is untouched, confirmed by diff, and the new mock follows the exact same per-file convention this test file already used for `../../lib/api`, `../../lib/brief-pdf`, and `../../lib/api-client`.
+
+**Verification**: both modified files run clean independently (21/21, 24/24) and as part of their full suites (144/144, 62/62). `apps/web`/`apps/mobile` typecheck and lint both clean. `apps/api` typecheck re-run and confirmed unchanged at the established 25-pre-existing-error baseline — this milestone never touches `apps/api`. Format check clean.
+
+**Remaining work**: loading-state transitions (history-loading, detail-loading-while-fetching, mobile's own `trendsLoading` flag) and `ja.json` locale rendering were identified during the original inspection but deliberately left out of this pass as lower-priority than the items above — noted, not forgotten.
+
+**A second roadmap-documentation gap found in passing**: Milestone 18's own "remaining work" ("No frontend yet — neither `apps/web` nor `apps/mobile` have a treatments screen") is stale. Treatment tracking UI was actually built on both platforms in `75cd154` ("Punch-list fixes + treatment tracking UI (web + mobile)"), from an unrelated punch-list workstream that never updated this document — the same class of gap Milestone 20 closed for Clinical Brief, found again here rather than assumed away. Left as-written above rather than retroactively edited, matching this document's existing convention of preserving each milestone's text as it stood at the time (Milestone 17's own "Next" pointer is similarly left stale); recorded here instead so the next reader doesn't plan around a gap that no longer exists.
+
+### Next milestone
+
+To be scoped from here with that correction in mind — treatment tracking UI is not an open gap. The SSO dual-login-path decision (still open since Milestone 15) remains the one genuinely open carried-over item.

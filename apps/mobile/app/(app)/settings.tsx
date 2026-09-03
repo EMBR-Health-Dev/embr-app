@@ -275,7 +275,7 @@ export default function SettingsScreen() {
               disabled={revokingId === item.id}
             >
               <Text style={styles.dangerTextSmall}>
-                {revokingId === item.id ? "…" : t("settings.revoke")}
+                {revokingId === item.id ? t("settings.revoking") : t("settings.revoke")}
               </Text>
             </Pressable>
           </View>

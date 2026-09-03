@@ -39,6 +39,20 @@ router.get(
   }),
 );
 
+// Registered before /briefs/:id deliberately — idParamSchema requires
+// a UUID, so if this route were registered after the :id route,
+// Express would match the path pattern first regardless of order in
+// which handlers are written, land on the :id handler, and fail
+// UUID validation on the literal string "trends" (a 400, never
+// reaching this handler at all) rather than routing here.
+router.get(
+  "/briefs/trends",
+  asyncHandler(async (req, res) => {
+    const result = await briefService.trends(req.user!.sub);
+    res.status(200).json({ data: result, requestId: req.requestId });
+  }),
+);
+
 router.get(
   "/briefs/:id",
   validate(idParamSchema, "params"),

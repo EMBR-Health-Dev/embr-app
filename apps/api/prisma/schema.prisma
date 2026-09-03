@@ -462,6 +462,80 @@ model ClinicalBrief {
   /// deliberately excluded — see treatment-summary.ts's doc comment.
   treatmentSummary Json
 
+  /// Array<{ category, currentCount, previousCount, absoluteChange, percentageChange: number | null, direction }>
+  /// See period-comparison.ts for the exact comparison-window
+  /// definition. Nullable, unlike the three summaries above — added
+  /// after those, so a brief generated before this field existed has
+  /// no value to backfill (recomputing it would violate this model's
+  /// own point-in-time-snapshot invariant against data that may no
+  /// longer reflect what generation time saw). Null means "never
+  /// computed for this brief"; an empty array means the comparison
+  /// ran and found no categories logged in either period — the two
+  /// are different facts. Never sent to the AI as of this milestone.
+  frequencyComparison Json?
+
+  /// { categoryA: SymptomCategory, categoryB: SymptomCategory, days: number } | null
+  /// Computed over the brief's own requested period only, via the
+  /// existing apps/api/src/modules/trends/co-occurrence.ts pattern
+  /// engine — never a second implementation. That function returns at
+  /// most one pair (or null below its own threshold), so unlike
+  /// frequencyComparison above, null here is deliberately overloaded:
+  /// "never computed for this brief" and "computed, no qualifying
+  /// pair" are not distinguished — see BriefFrequencyComparisonEntryDto's
+  /// sibling doc comment in @embr/types for why that's fine here
+  /// specifically. Never sent to the AI as of this milestone.
+  coOccurrence Json?
+
+  /// Array<{ treatmentId, name, category, windowDays, before: {logCount, days}, after: {logCount, days}, insufficientData }>
+  /// One entry per Treatment that *started* inside [fromDate, toDate]
+  /// — not every treatment overlapping the period (treatmentSummary
+  /// above already covers that). Computed via the existing
+  /// apps/api/src/modules/treatments/treatment-impact.ts window/count
+  /// logic, the same function GET /treatments/:id/impact already
+  /// uses — never a second implementation. Nullable/empty-array
+  /// distinction matches frequencyComparison's reasoning: an empty
+  /// array is a real fact ("no treatments started this period"), so
+  /// null ("never computed for this brief") must stay distinguishable
+  /// from it. This raw field itself is never sent to the AI — only a
+  /// derived, treatment-name-stripped projection is, via
+  /// `interpretation` below (see stage4-ai-projection.ts).
+  treatmentImpact Json?
+
+  /// Array<SymptomCategory> — derived purely from frequencyComparison
+  /// above, no new counting. A category qualifies when reported at
+  /// all in the previous period and still at or above a floor in the
+  /// current one — see persistent-symptoms.ts for the exact rule.
+  /// Nullable/empty-array distinction matches frequencyComparison's
+  /// reasoning: an empty array is a real fact ("nothing qualified"),
+  /// so null ("never computed for this brief") must stay
+  /// distinguishable from it. No Stage 4 pattern type maps to this, so
+  /// it is never sent to the AI in any form.
+  persistentSymptoms Json?
+
+  /// { interpretationVersion: string, patterns: Stage4Pattern[] }
+  /// The canonical Stage 4 result (see @embr/types and
+  /// stage4-interpretation.ts) — the same object computed once during
+  /// generation, used to validate the AI's response
+  /// (stage4-validation.ts), and persisted here unchanged, never
+  /// recomputed. Safe to persist and render in full, including
+  /// treatment names inside treatment_window_changed patterns'
+  /// observation text — that's a different concern from what's safe
+  /// to send to the AI (see stage4-ai-projection.ts for the
+  /// treatment-name-stripped copy used for that). Null for a brief
+  /// generated before this field existed; never backfilled, same
+  /// reasoning as every other additive field on this model.
+  interpretation Json?
+
+  /// Array<string> — the subset of interpretation.patterns' ids the AI
+  /// actually referenced for this generation, already validated by
+  /// stage4-validation.ts before persistence. Empty array is a real,
+  /// meaningful fact (the AI cited nothing) — see brief.ai.ts's system
+  /// prompt rules 6-7 for why that's a valid, intentional response, not
+  /// a defect — so it stays distinguishable from null ("never computed
+  /// for this brief"). Never recomputed after generation, same
+  /// point-in-time-snapshot reasoning as every other field here.
+  citedPatternIds Json?
+
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing
   /// constraint (questions to ask, never assertions or suggestions).
