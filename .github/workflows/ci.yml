@@ -240,7 +240,6 @@ jobs:
       - run: pnpm build
 
   boot-smoke:
-    name: API Boot Smoke Test
     name: Boot Smoke
     runs-on: ubuntu-latest
     needs: build
@@ -266,8 +265,6 @@ jobs:
       # "api listening" and answers a real HTTP request.
       - run: pnpm --filter @embr/shared --filter @embr/types --filter @embr/validation build
       - run: pnpm --filter @embr/api build
-      - run: pnpm --filter @embr/shared --filter @embr/types --filter @embr/validation build
-      - run: pnpm --filter @embr/api build
       - name: Start Redis
         uses: supercharge/redis-github-action@1.8.1
         with:
@@ -291,6 +288,3 @@ jobs:
           if [ "$ok" != 1 ]; then cat /tmp/boot.log; kill "$PID"; exit 1; fi
           curl -sf http://localhost:4000/health/live
           kill "$PID"
-          if [ "$ok" != 1 ]; then cat /tmp/boot.log; kill $PID; exit 1; fi
-          curl -sf http://localhost:4000/health/live
-          kill $PID
