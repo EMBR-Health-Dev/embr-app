@@ -1386,6 +1386,56 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
     expect(getRes.body.data.citedPatternIds).toEqual([]);
   });
 
+  it("persists the canonical pattern text, not the AI's own, when the AI cites a real id but alters its prose — the full HTTP round trip, not just the unit-level validator", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4adversarial@embr.health");
+    setUpOneKnownPattern(userId);
+    // A real id, type, and evidenceRef — genuinely matches
+    // KNOWN_PATTERN, so citation validation passes — but the
+    // observation, interpretation, and caveat text has been rewritten
+    // to something the actual evidence (2 days vs 0) does not support.
+    // This is the exact adversarial shape a lead-dev review flagged as
+    // a hardening gap: does the *response the API actually returns*
+    // — not just what a unit test of the validator alone shows —
+    // contain this tampered text, or the real, deterministic text?
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [
+        {
+          ...KNOWN_PATTERN,
+          observation: "HOT_FLASH was reported on 200 days, a severe and alarming increase.",
+          interpretation:
+            "This strongly suggests a hormonal imbalance requiring immediate treatment.",
+          caveat: "This is a serious medical finding.",
+        },
+      ],
+    };
+
+    const generateRes = await agent.post("/briefs").send(RANGE);
+
+    expect(generateRes.status).toBe(201);
+    // Citation succeeded (a real id/type/evidenceRef), so this pattern
+    // is legitimately cited — but its persisted text must be the
+    // canonical KNOWN_PATTERN's, never the tampered copy the AI
+    // returned.
+    expect(generateRes.body.data.citedPatternIds).toEqual(["frequency_increased:HOT_FLASH"]);
+    expect(generateRes.body.data.interpretation).toEqual({
+      interpretationVersion: "1.0",
+      patterns: [KNOWN_PATTERN],
+    });
+    const persistedPattern = generateRes.body.data.interpretation.patterns[0];
+    expect(persistedPattern.observation).not.toMatch(/200 days/);
+    expect(persistedPattern.observation).toBe(KNOWN_PATTERN.observation);
+    expect(persistedPattern.interpretation).not.toMatch(/hormonal imbalance/);
+    expect(persistedPattern.caveat).not.toMatch(/serious medical finding/);
+
+    // Same guarantee on read-back, not just the immediate POST response.
+    const getRes = await agent.get(`/briefs/${generateRes.body.data.id}`);
+    expect(getRes.body.data.interpretation.patterns[0].observation).toBe(KNOWN_PATTERN.observation);
+  });
+
   it("the persisted, UI-facing interpretation may contain a treatment name, even though the AI never received it", async () => {
     // 4, 5: proves both halves of the privacy boundary in one place —
     // the canonical persisted copy is allowed to contain the name

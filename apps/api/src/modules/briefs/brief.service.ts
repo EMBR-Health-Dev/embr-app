@@ -198,10 +198,17 @@ export const briefService = {
     // anything, so a provenance failure means no ClinicalBrief is
     // created at all, matching the AI's own content-safety failure
     // path immediately below.
-    const provenanceFailure = validateStage4Patterns(interpretation.patterns, patterns);
-    if (provenanceFailure) {
-      throw AppError.internal(`Brief generation failed: ${provenanceFailure}`);
+    const validation = validateStage4Patterns(interpretation.patterns, patterns);
+    if (validation.error !== null) {
+      throw AppError.internal(`Brief generation failed: ${validation.error}`);
     }
+    // The *canonical* patterns stage4-validation.ts just resolved each
+    // returned id against — not `patterns` (the AI's own response
+    // objects) directly. Only their ids are actually used below, which
+    // were already proven to match a real supplied pattern either way,
+    // but citedPatterns is what a future caller reads if this
+    // ever needs anything beyond the id.
+    const citedPatterns = validation.patterns;
 
     const brief = await briefRepository.create({
       userId,
@@ -221,13 +228,13 @@ export const briefService = {
       // is no second call to buildStage4Interpretation anywhere in
       // this flow.
       interpretation: JSON.parse(JSON.stringify(interpretation)),
-      // The AI's own validated response, not re-derived from
-      // `interpretation` — this is specifically what the model chose
-      // to cite for *this* narrative, which is a strict subset (see
+      // citedPatterns, not the AI's raw `patterns` — see above. This
+      // is specifically what the model chose to cite for *this*
+      // narrative, which is a strict subset (see
       // validateStage4Patterns's own doc comment on why a subset is
       // expected and valid), not "every pattern that happened to
       // qualify."
-      citedPatternIds: patterns.map((pattern) => pattern.id),
+      citedPatternIds: citedPatterns.map((pattern) => pattern.id),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });
