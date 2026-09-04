@@ -24,6 +24,12 @@ const { state, nextId } = vi.hoisted(() => {
       emailVerificationTokens: [] as Array<{ id: string; userId: string }>,
       passwordResetTokens: [] as Array<{ id: string; userId: string }>,
       auditLogEntries: [] as Array<{ id: string; userId: string | null; action: string }>,
+      organizationMemberships: [] as Array<{
+        id: string;
+        organizationId: string;
+        userId: string;
+        role: "ORG_ADMIN" | "ORG_MEMBER";
+      }>,
     },
     nextId: () => randomUUID(),
   };
@@ -75,6 +81,24 @@ vi.mock("../src/lib/prisma.js", () => {
         state.auditLogEntries.push(entry);
         return Promise.resolve(entry);
       }),
+    },
+    organizationMembership: {
+      findMany: vi.fn(
+        ({ where }: { where: { userId: string; role: "ORG_ADMIN" | "ORG_MEMBER" } }) =>
+          Promise.resolve(
+            state.organizationMemberships.filter(
+              (m) => m.userId === where.userId && m.role === where.role,
+            ),
+          ),
+      ),
+      count: vi.fn(
+        ({ where }: { where: { organizationId: string; role: "ORG_ADMIN" | "ORG_MEMBER" } }) =>
+          Promise.resolve(
+            state.organizationMemberships.filter(
+              (m) => m.organizationId === where.organizationId && m.role === where.role,
+            ).length,
+          ),
+      ),
     },
     user: {
       delete: vi.fn(({ where }: { where: { id: string } }) => {
@@ -292,6 +316,99 @@ describe("DELETE /auth/me", () => {
 
     const deletionEntry = state.auditLogEntries.find((e) => e.action === "ACCOUNT_DELETED");
     expect(deletionEntry).toBeDefined();
+  });
+
+  // Confirmed as a real, untested gap before writing anything here:
+  // OrganizationMembership cascade-deletes along with the user row
+  // regardless of role (schema.prisma's onDelete: Cascade) — nothing
+  // about a plain user delete applies the last-admin protection that
+  // exists specifically in organization.repository.ts's
+  // revokeMembership, since self-deletion is a different code path
+  // that never reaches it. Without the check added here, this would
+  // silently orphan an organization.
+  it("refuses to delete the account if the user is the sole ORG_ADMIN of an organization", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const { userId, csrfCookie } = await registerAndLogin(agent, "soleadmin@embr.health");
+    const organizationId = nextId();
+    state.organizationMemberships.push({
+      id: nextId(),
+      organizationId,
+      userId,
+      role: "ORG_ADMIN",
+    });
+
+    const res = await agent
+      .delete("/auth/me")
+      .set("x-csrf-token", csrfCookie)
+      .send({ password: VALID_PASSWORD });
+
+    expect(res.status).toBe(409);
+    expect(state.users.find((u) => u.id === userId)).toBeDefined();
+    expect(state.organizationMemberships.some((m) => m.userId === userId)).toBe(true);
+  });
+
+  it("allows deletion when the user is an ORG_ADMIN but not the only one", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const { userId, csrfCookie } = await registerAndLogin(agent, "coadmin@embr.health");
+    const organizationId = nextId();
+    state.organizationMemberships.push(
+      { id: nextId(), organizationId, userId, role: "ORG_ADMIN" },
+      { id: nextId(), organizationId, userId: nextId(), role: "ORG_ADMIN" },
+    );
+
+    const res = await agent
+      .delete("/auth/me")
+      .set("x-csrf-token", csrfCookie)
+      .send({ password: VALID_PASSWORD });
+
+    expect(res.status).toBe(204);
+    expect(state.users.find((u) => u.id === userId)).toBeUndefined();
+  });
+
+  it("allows deletion when the user is only an ORG_MEMBER, never an admin, of any organization", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const { userId, csrfCookie } = await registerAndLogin(agent, "plainmember@embr.health");
+    state.organizationMemberships.push({
+      id: nextId(),
+      organizationId: nextId(),
+      userId,
+      role: "ORG_MEMBER",
+    });
+
+    const res = await agent
+      .delete("/auth/me")
+      .set("x-csrf-token", csrfCookie)
+      .send({ password: VALID_PASSWORD });
+
+    expect(res.status).toBe(204);
+    expect(state.users.find((u) => u.id === userId)).toBeUndefined();
+  });
+
+  it("refuses deletion when the user is the sole admin of two organizations, checking both rather than stopping at the first", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const { userId, csrfCookie } = await registerAndLogin(agent, "twoorgsadmin@embr.health");
+    // Sole admin of the first org, co-admin of the second — the
+    // deletion must still be refused because of the first, not
+    // silently allowed because the second one alone would be fine.
+    const orgWithCoAdmin = nextId();
+    const orgSoleAdmin = nextId();
+    state.organizationMemberships.push(
+      { id: nextId(), organizationId: orgWithCoAdmin, userId, role: "ORG_ADMIN" },
+      { id: nextId(), organizationId: orgWithCoAdmin, userId: nextId(), role: "ORG_ADMIN" },
+      { id: nextId(), organizationId: orgSoleAdmin, userId, role: "ORG_ADMIN" },
+    );
+
+    const res = await agent
+      .delete("/auth/me")
+      .set("x-csrf-token", csrfCookie)
+      .send({ password: VALID_PASSWORD });
+
+    expect(res.status).toBe(409);
+    expect(state.users.find((u) => u.id === userId)).toBeDefined();
   });
 
   it("cannot delete another user's account — there is no :id to target one with", async () => {

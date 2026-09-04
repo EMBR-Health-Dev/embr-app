@@ -168,12 +168,48 @@ export const authRepository = {
    * is the wrong behavior here: this specific write and the deletion
    * must succeed or fail together, not independently.
    */
-  async deleteUserAccount(userId: string): Promise<void> {
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  /** Deletes the account and every owned record via schema cascades
+   * (see schema.prisma's onDelete rules — AuditLog uses SetNull, kept
+   * as a compliance/security record even after the user is gone;
+   * everything else the user owns cascades). Checked first, in the
+   * same transaction: is this user the sole ORG_ADMIN of any
+   * organization? OrganizationMembership cascade-deletes along with
+   * the user row regardless of role — nothing about a plain
+   * tx.user.delete() would apply the last-admin protection that
+   * exists specifically in organization.repository.ts's
+   * revokeMembership. Deleting your own account is a different code
+   * path from being revoked by another admin, so that existing check
+   * is never reached at all; without this, self-deletion would
+   * silently orphan an organization the same way the tracked #75/#78
+   * concurrent-revocation race can (a different mechanism, same class
+   * of damage: a real organization with zero remaining admins).
+   * Read-then-delete inside one transaction, matching this file's
+   * existing atomicity pattern for the audit-log-write pairing below
+   * — not a claim that this closes the same cross-transaction race
+   * #75/#78 track for concurrent *revocations*; that specific
+   * vulnerability is out of scope here and already assigned
+   * elsewhere. */
+  async deleteUserAccount(userId: string): Promise<"DELETED" | "LAST_ADMIN"> {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const soleAdminMemberships = await tx.organizationMembership.findMany({
+        where: { userId, role: "ORG_ADMIN" },
+        select: { organizationId: true },
+      });
+
+      for (const membership of soleAdminMemberships) {
+        const adminCount = await tx.organizationMembership.count({
+          where: { organizationId: membership.organizationId, role: "ORG_ADMIN" },
+        });
+        if (adminCount <= 1) {
+          return "LAST_ADMIN";
+        }
+      }
+
       await tx.auditLog.create({
         data: { userId, action: "ACCOUNT_DELETED" },
       });
       await tx.user.delete({ where: { id: userId } });
+      return "DELETED";
     });
   },
 };

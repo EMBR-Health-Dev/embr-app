@@ -250,7 +250,13 @@ export const authService = {
       ]);
     }
 
-    await authRepository.deleteUserAccount(userId);
+    const result = await authRepository.deleteUserAccount(userId);
+    if (result === "LAST_ADMIN") {
+      throw AppError.conflict(
+        "You're the only administrator of at least one organization. Add another admin or " +
+          "leave the organization before deleting your account.",
+      );
+    }
   },
 
   async listSessions(userId: string, currentSessionId: string | null): Promise<DeviceSessionDto[]> {
