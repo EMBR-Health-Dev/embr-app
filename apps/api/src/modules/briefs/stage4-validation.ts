@@ -12,15 +12,35 @@ import type { Stage4EvidenceRef, Stage4Pattern } from "./stage4-interpretation.j
  * comment on this same distinction); this function only ever checks
  * provenance (id, type, evidenceRef), never generated text.
  *
+ * On success, returns the *canonical* patterns — looked up from
+ * `expectedPatterns` by the now-validated ids, never the caller's own
+ * `returnedPatterns` objects. This is the actual hardening a lead-dev
+ * review of this file flagged: id/type/evidenceRef being checked
+ * doesn't, on its own, stop a caller from later reading
+ * `returned.observation`/`.interpretation`/`.caveat` — fields this
+ * function deliberately never inspects — straight off the AI's own
+ * response object. No current caller does that today (verified
+ * directly: brief.service.ts only ever reads `.id` off the AI's
+ * returned patterns, and every display path resolves cited ids back
+ * against the canonical `interpretation.patterns` for its actual
+ * text), but that safety currently depends on every future caller
+ * independently getting that right, not on anything this function
+ * itself enforces. Returning the canonical objects here means a
+ * caller that later did read `.observation` off this function's
+ * result would get the trusted, deterministic text by construction,
+ * not the AI's own, unchecked copy of it.
+ *
  * Deliberately does NOT compare observation/association/interpretation/
  * caveat for exact equality, even though brief.ai.ts's system prompt
  * asks the model to echo that text verbatim. That's a prompted
  * expectation, not something a citation-integrity check needs to
  * force: the id/type/evidenceRef triple is what proves "this really
  * is the deterministic finding," and the residual gap (a model could
- * still misstate the supplied text) is the explicitly accepted
- * limitation from the safety inspection — the causal-language
- * backstop in failsContentSafety covers that risk, not this function.
+ * still misstate the supplied text *in its narrative/discussion
+ * topics*, which this function never sees or governs) is the
+ * explicitly accepted limitation from the safety inspection — the
+ * causal-language backstop in failsContentSafety covers that risk,
+ * not this function.
  *
  * Deliberately does NOT require the returned pattern set to equal the
  * expected set. brief.ai.ts's system prompt (rules 6-7) explicitly
@@ -34,34 +54,40 @@ import type { Stage4EvidenceRef, Stage4Pattern } from "./stage4-interpretation.j
 export function validateStage4Patterns(
   expectedPatterns: Stage4Pattern[],
   returnedPatterns: Stage4Pattern[],
-): string | null {
+): { error: string; patterns?: undefined } | { error: null; patterns: Stage4Pattern[] } {
   const expectedById = new Map(expectedPatterns.map((pattern) => [pattern.id, pattern]));
   const seenIds = new Set<string>();
+  const canonical: Stage4Pattern[] = [];
 
   for (const returned of returnedPatterns) {
     if (seenIds.has(returned.id)) {
-      return `AI response returned the same pattern id more than once: "${returned.id}"`;
+      return { error: `AI response returned the same pattern id more than once: "${returned.id}"` };
     }
     seenIds.add(returned.id);
 
     const expected = expectedById.get(returned.id);
     if (!expected) {
-      return `AI response referenced a pattern id that was never supplied: "${returned.id}"`;
+      return {
+        error: `AI response referenced a pattern id that was never supplied: "${returned.id}"`,
+      };
     }
 
     if (returned.type !== expected.type) {
-      return (
-        `AI response changed the type of pattern "${returned.id}" from ` +
-        `"${expected.type}" to "${returned.type}"`
-      );
+      return {
+        error:
+          `AI response changed the type of pattern "${returned.id}" from ` +
+          `"${expected.type}" to "${returned.type}"`,
+      };
     }
 
     if (!evidenceRefsMatch(expected.evidenceRef, returned.evidenceRef)) {
-      return `AI response changed the evidenceRef of pattern "${returned.id}"`;
+      return { error: `AI response changed the evidenceRef of pattern "${returned.id}"` };
     }
+
+    canonical.push(expected);
   }
 
-  return null;
+  return { error: null, patterns: canonical };
 }
 
 /**

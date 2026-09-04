@@ -28,6 +28,7 @@ import {
   DEFAULT_TREND_BRIEF_LIMIT,
   type BriefTrendSourceBrief,
 } from "./brief-trends.js";
+import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -198,10 +199,17 @@ export const briefService = {
     // anything, so a provenance failure means no ClinicalBrief is
     // created at all, matching the AI's own content-safety failure
     // path immediately below.
-    const provenanceFailure = validateStage4Patterns(interpretation.patterns, patterns);
-    if (provenanceFailure) {
-      throw AppError.internal(`Brief generation failed: ${provenanceFailure}`);
+    const validation = validateStage4Patterns(interpretation.patterns, patterns);
+    if (validation.error !== null) {
+      throw AppError.internal(`Brief generation failed: ${validation.error}`);
     }
+    // The *canonical* patterns stage4-validation.ts just resolved each
+    // returned id against — not `patterns` (the AI's own response
+    // objects) directly. Only their ids are actually used below, which
+    // were already proven to match a real supplied pattern either way,
+    // but citedPatterns is what a future caller reads if this
+    // ever needs anything beyond the id.
+    const citedPatterns = validation.patterns;
 
     const brief = await briefRepository.create({
       userId,
@@ -221,13 +229,13 @@ export const briefService = {
       // is no second call to buildStage4Interpretation anywhere in
       // this flow.
       interpretation: JSON.parse(JSON.stringify(interpretation)),
-      // The AI's own validated response, not re-derived from
-      // `interpretation` — this is specifically what the model chose
-      // to cite for *this* narrative, which is a strict subset (see
+      // citedPatterns, not the AI's raw `patterns` — see above. This
+      // is specifically what the model chose to cite for *this*
+      // narrative, which is a strict subset (see
       // validateStage4Patterns's own doc comment on why a subset is
       // expected and valid), not "every pattern that happened to
       // qualify."
-      citedPatternIds: patterns.map((pattern) => pattern.id),
+      citedPatternIds: citedPatterns.map((pattern) => pattern.id),
       aiNarrative: narrative,
       aiDiscussionTopics: discussionTopics,
     });
@@ -268,7 +276,16 @@ export const briefService = {
       persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
     }));
 
-    return aggregateBriefTrends(sourceBriefs, DEFAULT_TREND_BRIEF_LIMIT);
+    const summary = aggregateBriefTrends(sourceBriefs, DEFAULT_TREND_BRIEF_LIMIT);
+    // Composed here, not inside aggregateBriefTrends itself — same
+    // reasoning as why buildStage4Interpretation is a separate call
+    // from the evidence functions that feed it, not folded into any
+    // one of them: aggregateBriefTrends stays a narrowly-scoped, pure
+    // aggregation with its own already-thorough test coverage,
+    // untouched by this addition.
+    const longitudinalPatterns = buildLongitudinalInterpretation(summary);
+
+    return { ...summary, longitudinalPatterns };
   },
 
   async get(id: string, userId: string): Promise<ClinicalBriefDto> {

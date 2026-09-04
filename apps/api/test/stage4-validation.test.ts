@@ -17,17 +17,23 @@ function pattern(overrides: Partial<Stage4Pattern> = {}): Stage4Pattern {
 
 describe("validateStage4Patterns", () => {
   it("accepts an empty returned array against any expected set", () => {
-    expect(validateStage4Patterns([pattern()], [])).toBeNull();
+    const result = validateStage4Patterns([pattern()], []);
+    expect(result.error).toBeNull();
+    expect(result.patterns).toEqual([]);
   });
 
   it("accepts an empty expected array with an empty returned array", () => {
-    expect(validateStage4Patterns([], [])).toBeNull();
+    const result = validateStage4Patterns([], []);
+    expect(result.error).toBeNull();
+    expect(result.patterns).toEqual([]);
   });
 
   it("accepts a returned pattern that exactly matches an expected one", () => {
     const expected = pattern();
     const returned = pattern();
-    expect(validateStage4Patterns([expected], [returned])).toBeNull();
+    const result = validateStage4Patterns([expected], [returned]);
+    expect(result.error).toBeNull();
+    expect(result.patterns).toEqual([expected]);
   });
 
   it("accepts a returned subset — not every expected pattern needs to be echoed", () => {
@@ -40,19 +46,22 @@ describe("validateStage4Patterns", () => {
     // Only echoes fatigue, not hotFlash — that's allowed per
     // brief.ai.ts's own system prompt (only include patterns actually
     // referenced), not a defect.
-    expect(validateStage4Patterns([hotFlash, fatigue], [fatigue])).toBeNull();
+    const result = validateStage4Patterns([hotFlash, fatigue], [fatigue]);
+    expect(result.error).toBeNull();
+    expect(result.patterns).toEqual([fatigue]);
   });
 
   it("rejects a returned pattern whose id was never supplied", () => {
-    const failure = validateStage4Patterns([pattern()], [pattern({ id: "invented:ID" })]);
-    expect(failure).toMatch(/never supplied/);
-    expect(failure).toContain("invented:ID");
+    const result = validateStage4Patterns([pattern()], [pattern({ id: "invented:ID" })]);
+    expect(result.error).toMatch(/never supplied/);
+    expect(result.error).toContain("invented:ID");
+    expect(result.patterns).toBeUndefined();
   });
 
   it("rejects a duplicate returned id", () => {
     const expected = pattern();
-    const failure = validateStage4Patterns([expected], [pattern(), pattern()]);
-    expect(failure).toMatch(/more than once/);
+    const result = validateStage4Patterns([expected], [pattern(), pattern()]);
+    expect(result.error).toMatch(/more than once/);
   });
 
   it("rejects a returned pattern whose type was changed while keeping the same id", () => {
@@ -61,15 +70,15 @@ describe("validateStage4Patterns", () => {
       id: "frequency_increased:HOT_FLASH",
       type: "frequency_decreased", // same id, different type
     });
-    const failure = validateStage4Patterns([expected], [tampered]);
-    expect(failure).toMatch(/changed the type/);
+    const result = validateStage4Patterns([expected], [tampered]);
+    expect(result.error).toMatch(/changed the type/);
   });
 
   it("rejects a returned pattern whose category evidenceRef was changed while keeping the same id", () => {
     const expected = pattern({ evidenceRef: { category: "HOT_FLASH" } });
     const tampered = pattern({ evidenceRef: { category: "FATIGUE" } });
-    const failure = validateStage4Patterns([expected], [tampered]);
-    expect(failure).toMatch(/changed the evidenceRef/);
+    const result = validateStage4Patterns([expected], [tampered]);
+    expect(result.error).toMatch(/changed the evidenceRef/);
   });
 
   it("rejects a returned pattern whose evidenceRef shape was changed entirely while keeping the same id", () => {
@@ -83,8 +92,8 @@ describe("validateStage4Patterns", () => {
       type: "co_occurrence_detected",
       evidenceRef: { treatmentId: "t1" } as unknown as Stage4Pattern["evidenceRef"],
     });
-    const failure = validateStage4Patterns([expected], [tampered]);
-    expect(failure).toMatch(/changed the evidenceRef/);
+    const result = validateStage4Patterns([expected], [tampered]);
+    expect(result.error).toMatch(/changed the evidenceRef/);
   });
 
   it("accepts a co-occurrence evidenceRef regardless of key order — structural, not string, comparison", () => {
@@ -101,7 +110,9 @@ describe("validateStage4Patterns", () => {
       type: "co_occurrence_detected",
       evidenceRef: { categoryB: "HOT_FLASH", categoryA: "BRAIN_FOG" },
     });
-    expect(validateStage4Patterns([expected], [returned])).toBeNull();
+    const result = validateStage4Patterns([expected], [returned]);
+    expect(result.error).toBeNull();
+    expect(result.patterns).toEqual([expected]);
   });
 
   it("accepts a treatment_window_changed evidenceRef that matches", () => {
@@ -115,25 +126,91 @@ describe("validateStage4Patterns", () => {
       type: "treatment_window_changed",
       evidenceRef: { treatmentId: "t1" },
     });
-    expect(validateStage4Patterns([expected], [returned])).toBeNull();
+    const result = validateStage4Patterns([expected], [returned]);
+    expect(result.error).toBeNull();
+    expect(result.patterns).toEqual([expected]);
   });
 
-  it("does not compare observation/interpretation/caveat text — only id, type, and evidenceRef are provenance fields", () => {
+  it("does not compare observation/interpretation/caveat text for pass/fail — only id, type, and evidenceRef are provenance fields", () => {
     const expected = pattern({ observation: "Original observation text." });
     const returned = pattern({ observation: "A completely different sentence." });
     // Deliberately still valid: the id/type/evidenceRef triple matches,
     // which is all this function is responsible for checking. See its
     // own doc comment for why prose fields are explicitly out of scope
-    // here.
-    expect(validateStage4Patterns([expected], [returned])).toBeNull();
+    // for the pass/fail decision — but see the canonicalization tests
+    // below for what happens to the mismatched text itself.
+    const result = validateStage4Patterns([expected], [returned]);
+    expect(result.error).toBeNull();
   });
 
   it("validates multiple returned patterns independently — one invalid pattern fails the whole check", () => {
     const valid = pattern({ id: "frequency_increased:HOT_FLASH" });
     const invalid = pattern({ id: "frequency_increased:HOT_FLASH", type: "frequency_decreased" });
-    const failure = validateStage4Patterns([valid], [valid, invalid]);
+    const result = validateStage4Patterns([valid], [valid, invalid]);
     // Same id appears twice with the second altered — caught either as
     // a duplicate id or a type mismatch, but never silently accepted.
-    expect(failure).not.toBeNull();
+    expect(result.error).not.toBeNull();
+  });
+
+  describe("canonicalization — the returned .patterns are never the AI's own objects", () => {
+    it("substitutes the canonical pattern even when only its prose text was altered", () => {
+      const expected = pattern({
+        observation: "HOT_FLASH was reported on 6 days during the current period, compared with 4.",
+      });
+      // Exactly the scenario this hardening exists for: id/type/
+      // evidenceRef genuinely match a real, supplied pattern, but the
+      // model's own copy of the observation text has been altered —
+      // here, exaggerated far beyond what the real evidence supports.
+      const returned = pattern({
+        observation: "HOT_FLASH was reported on 200 days, a massive and alarming increase.",
+      });
+      const result = validateStage4Patterns([expected], [returned]);
+      expect(result.error).toBeNull();
+      // The returned object is the canonical one — the tampered
+      // observation text from `returned` must not survive into the
+      // result at all.
+      expect(result.patterns).toEqual([expected]);
+      expect(result.patterns?.[0].observation).not.toBe(returned.observation);
+      expect(result.patterns?.[0].observation).toBe(expected.observation);
+    });
+
+    it("substitutes the canonical pattern even when interpretation and caveat text were both altered", () => {
+      const expected = pattern({
+        interpretation: "This represents an increase in how often HOT_FLASH was reported.",
+        caveat: "This reflects self-reported logging frequency only.",
+      });
+      const returned = pattern({
+        interpretation: "This strongly suggests a hormonal imbalance requiring treatment.",
+        caveat: "This is a serious finding.",
+      });
+      const result = validateStage4Patterns([expected], [returned]);
+      expect(result.error).toBeNull();
+      expect(result.patterns).toEqual([expected]);
+      expect(result.patterns?.[0].interpretation).toBe(expected.interpretation);
+      expect(result.patterns?.[0].caveat).toBe(expected.caveat);
+    });
+
+    it("preserves the AI's own citation order across multiple returned patterns", () => {
+      const hotFlash = pattern({ id: "frequency_increased:HOT_FLASH" });
+      const fatigue = pattern({
+        id: "frequency_decreased:FATIGUE",
+        type: "frequency_decreased",
+        evidenceRef: { category: "FATIGUE" },
+      });
+      // Cited in the opposite order from how they were supplied.
+      const result = validateStage4Patterns([hotFlash, fatigue], [fatigue, hotFlash]);
+      expect(result.error).toBeNull();
+      expect(result.patterns?.map((p) => p.id)).toEqual([fatigue.id, hotFlash.id]);
+    });
+
+    it("returns object identity to the expected pattern, not a deep clone", () => {
+      // Not load-bearing behavior on its own, but worth pinning: the
+      // canonical objects returned are the exact same references
+      // passed in via expectedPatterns, confirming nothing here
+      // constructs a new object from any part of `returned`.
+      const expected = pattern();
+      const result = validateStage4Patterns([expected], [pattern()]);
+      expect(result.patterns?.[0]).toBe(expected);
+    });
   });
 });

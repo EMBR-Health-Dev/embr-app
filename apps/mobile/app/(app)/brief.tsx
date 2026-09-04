@@ -204,6 +204,19 @@ export default function BriefScreen() {
                     </Text>
                   );
                 })}
+                {trends.longitudinalPatterns.length > 0 && (
+                  <View style={styles.longitudinalSection}>
+                    <Text style={styles.sectionTitle}>{t("brief.longitudinalPatternsTitle")}</Text>
+                    {trends.longitudinalPatterns.map((pattern) => (
+                      <Text key={pattern.id} style={styles.summaryLine}>
+                        {t("brief.longitudinalPatternsLine", {
+                          category: t(`enums.category.${pattern.category}`),
+                          totalPhrase: t("brief.briefCountPhrase", { count: pattern.totalBriefs }),
+                        })}
+                      </Text>
+                    ))}
+                  </View>
+                )}
               </View>
             )}
 
@@ -466,6 +479,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   trendsSection: { marginTop: 20 },
+  longitudinalSection: { marginTop: 12 },
   briefContent: { marginTop: 10, gap: 4 },
   narrative: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
   contentSectionTitle: {

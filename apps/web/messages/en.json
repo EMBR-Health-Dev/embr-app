@@ -385,7 +385,9 @@
     "groundedInTitle": "Grounded in your data",
     "trendsTitle": "Your recent trends",
     "trendsAcrossBriefs": "Across your last {count, plural, one {# brief} other {# briefs}}",
-    "trendsCategoryLine": "{category} — reported in {present} of {total, plural, one {# brief} other {# briefs}}, marked persistent in {persistent}."
+    "trendsCategoryLine": "{category} — reported in {present} of {total, plural, one {# brief} other {# briefs}}, marked persistent in {persistent}.",
+    "longitudinalPatternsTitle": "Recurring across your briefs",
+    "longitudinalPatternsLine": "{category} has appeared in every one of your last {total, plural, one {# brief} other {# briefs}}."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",

@@ -170,6 +170,21 @@ export default function BriefPage() {
               </li>
             ))}
           </ul>
+          {trends.longitudinalPatterns.length > 0 && (
+            <div className="mt-4">
+              <h3 className="font-display text-sm text-navy">{t("longitudinalPatternsTitle")}</h3>
+              <ul className="mt-2 flex flex-col gap-1">
+                {trends.longitudinalPatterns.map((pattern) => (
+                  <li key={pattern.id} className="text-sm text-navy/70">
+                    {t("longitudinalPatternsLine", {
+                      category: tEnum(`category.${pattern.category}`),
+                      total: pattern.totalBriefs,
+                    })}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 

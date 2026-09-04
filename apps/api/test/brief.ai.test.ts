@@ -356,6 +356,54 @@ describe("brief.ai", () => {
       await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
     });
 
+    // PR #105 hardening. Distinct from the "doesn't match any of the
+    // three known shapes" case above — this is a *valid* discriminant
+    // key (category) with a *valid* value, plus one extra field
+    // alongside it. Confirms evidenceRefSchema's .strict() modifier
+    // (see brief.ai.ts's own doc comment on why it's there — "rejects
+    // extra/misplaced keys rather than silently accepting them")
+    // actually does what its comment says, rather than trusting the
+    // comment alone.
+    it("rejects a pattern whose evidenceRef has a valid shape plus an extra, unexpected field", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [dt("Question?")],
+            patterns: [
+              { ...VALID_PATTERN, evidenceRef: { category: "HOT_FLASH", confidence: "high" } },
+            ],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    });
+
+    it("rejects a pattern whose evidenceRef is null rather than omitted or a valid object", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [dt("Question?")],
+            patterns: [{ ...VALID_PATTERN, evidenceRef: null }],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    });
+
+    it("rejects a response where patterns is null rather than an array", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({ narrative: "n", discussionTopics: [dt("Question?")], patterns: null }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    });
+
     it("rejects a pattern whose evidenceRef category isn't a real SymptomCategory", async () => {
       mockCreate.mockResolvedValue(
         textResponse(
@@ -441,6 +489,42 @@ describe("brief.ai", () => {
       await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
         discussionTopics: ["Ask whether the increase in hot flashes is typical?"],
         patterns: [pattern],
+      });
+    });
+
+    // PR #105 hardening. A duplicate id within one topic's own
+    // patternIds has no real effect either way — patternIds only ever
+    // exists to be validated, then discarded (see the "strips
+    // patternIds before returning" test below) — but this confirms
+    // that explicitly, rather than leaving it unproven that a
+    // duplicate doesn't accidentally trip a false rejection.
+    it("accepts a duplicate pattern id within one topic's own patternIds", async () => {
+      const pattern = {
+        id: "frequency_increased:HOT_FLASH",
+        type: "frequency_increased",
+        observation: "Hot flash frequency increased during the selected period.",
+        interpretation: "The available symptom data shows an increase in logged hot flashes.",
+        caveat: "This is a descriptive pattern in the logged data and does not establish a cause.",
+        confidence: "descriptive",
+        evidenceRef: { category: "HOT_FLASH" },
+      };
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [
+              dt("Ask about this twice-cited finding?", [
+                "frequency_increased:HOT_FLASH",
+                "frequency_increased:HOT_FLASH",
+              ]),
+            ],
+            patterns: [pattern],
+          }),
+        ),
+      );
+
+      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
+        discussionTopics: ["Ask about this twice-cited finding?"],
       });
     });
 

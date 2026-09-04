@@ -385,7 +385,9 @@
     "groundedInTitle": "データに基づく根拠",
     "trendsTitle": "最近の傾向",
     "trendsAcrossBriefs": "直近{count}件のブリーフについて",
-    "trendsCategoryLine": "{category} — {total}件中{present}件で報告され、{persistent}件で継続として記録されました。"
+    "trendsCategoryLine": "{category} — {total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
+    "longitudinalPatternsTitle": "ブリーフ全体で継続している傾向",
+    "longitudinalPatternsLine": "{category}は直近{total}件のブリーフすべてで報告されています。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

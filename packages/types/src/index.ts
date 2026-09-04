@@ -653,6 +653,17 @@ export interface BriefTrendCategoryDto {
   mostRecentBriefToDate: string;
 }
 
+export type LongitudinalPatternType = "recurring_across_briefs";
+
+export interface LongitudinalPatternDto {
+  id: string;
+  type: LongitudinalPatternType;
+  category: SymptomCategory;
+  observation: string;
+  briefsPresent: number;
+  totalBriefs: number;
+}
+
 export interface BriefTrendsDto {
   /** How many of the user's briefs this response actually represents
    * — always <= the requested limit, and can be fewer for a user who
@@ -664,6 +675,12 @@ export interface BriefTrendsDto {
   earliestBriefFromDate: string | null;
   latestBriefToDate: string | null;
   categories: BriefTrendCategoryDto[];
+  /** Deterministic longitudinal patterns derived from `categories` —
+   * always [] when briefCount < 2, since a single brief can't
+   * establish anything longitudinal. See
+   * longitudinal-interpretation.ts's own doc comment for exactly what
+   * "recurring_across_briefs" does and doesn't claim. */
+  longitudinalPatterns: LongitudinalPatternDto[];
 }
 
 // ---- Onboarding (Milestone 18) ----

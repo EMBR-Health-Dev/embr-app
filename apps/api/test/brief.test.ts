@@ -878,6 +878,137 @@ describe("POST /briefs — treatment impact (deterministic, no AI involvement)",
   });
 });
 
+// PR #105 hardening. Traced the actual enforcement point before writing
+// any of this, not assumed from the doc comments alone: the real
+// inclusive/exclusive boundary decision is a Prisma query —
+// treatment.repository.ts's countSymptomLogsInWindows, `occurredAt: {
+// gte, lt }` on both windows — not something computeTreatmentImpactWindows
+// itself decides (it only computes the from/to Date values; a separate
+// function applies them against real rows). That's a live database
+// query, not a pure function, so the strongest available test level is
+// this file's existing integration harness — confirmed first that its
+// symptomLog.count mock genuinely implements gte/lt with an exclusive
+// upper bound (`log.occurredAt >= where.occurredAt.lt` correctly
+// excludes), not a naive stand-in that would pass regardless of the
+// real implementation's correctness.
+//
+// Confirmed against schema.prisma directly: Treatment.startDate is
+// `DateTime @db.Date` with no `?` — never nullable — and
+// computeTreatmentImpactWindows's own signature requires `startDate:
+// Date`, never `Date | null`. "Treatment has no start date" (one of
+// the 8 originally requested scenarios) is not a reachable state in
+// the current domain model, so no test asserts behavior for it — that
+// would be inventing a business rule around an input the schema
+// itself makes impossible, not testing an existing contract.
+describe("POST /briefs — treatment impact date boundaries", () => {
+  it("a symptom on the treatment's own start date belongs to 'after', not 'before' — inclusive lower bound", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary1@embr.health");
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: null });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-10") }); // == startDate
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].before.logCount).toBe(0);
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(1);
+  });
+
+  it("a symptom one day before the treatment's start date belongs to 'before' — the day immediately preceding the exclusive upper bound", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary2@embr.health");
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: null });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-09") }); // == startDate - 1
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].before.logCount).toBe(1);
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(0);
+  });
+
+  it("a symptom exactly on the treatment's end date is excluded from 'after' — exclusive upper bound", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary3@embr.health");
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: new Date("2026-01-15") });
+    // One log the day before endDate (must count) and one exactly on
+    // endDate (must not) — proves the boundary is where it's meant to
+    // be, not just that *a* log near it happens to be excluded.
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-14") });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-15") }); // == endDate
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(1);
+  });
+
+  it("a symptom one day after the treatment's end date is excluded entirely — the treatment had already ended", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary4@embr.health");
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: new Date("2026-01-15") });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-16") }); // == endDate + 1
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].before.logCount).toBe(0);
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(0);
+  });
+
+  it("an ongoing treatment (no end date) still counts a log within the 14-day cap correctly", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary6@embr.health");
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: null });
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-20") }); // 10 days in, well inside the 14-day cap
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(1);
+  });
+
+  it("logs at both edges of the full before+after span are each counted exactly once — nothing double-counted or missed at the boundary between the two windows", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary7@embr.health");
+    // startDate 2026-01-10, no endDate: before = [2025-12-27, 2026-01-10),
+    // after = [2026-01-10, 2026-01-24) (capped at start+14, since RANGE's
+    // own toDate of 2026-02-01 is used as "today" by brief generation,
+    // well past the cap).
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: null });
+    addSymptomLog(userId, { occurredAt: new Date("2025-12-27") }); // before.from — first inclusive day
+    addSymptomLog(userId, { occurredAt: new Date("2026-01-23") }); // after.to - 1 — last inclusive day
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].before.logCount).toBe(1);
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(1);
+  });
+
+  it("a symptom well outside both windows is attributed to neither", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txboundary8@embr.health");
+    addTreatment(userId, { startDate: new Date("2026-01-10"), endDate: null });
+    // 30 days before startDate — well before even the 14-day "before"
+    // window begins (2025-12-27).
+    addSymptomLog(userId, { occurredAt: new Date("2025-12-11") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.treatmentImpact[0].before.logCount).toBe(0);
+    expect(res.body.data.treatmentImpact[0].after.logCount).toBe(0);
+  });
+});
+
 // Integration coverage only — detectPersistentSymptoms' own filtering
 // logic (the floor, the both-periods requirement) is already
 // exhaustively covered in persistent-symptoms.test.ts. These tests
@@ -1386,6 +1517,56 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
     expect(getRes.body.data.citedPatternIds).toEqual([]);
   });
 
+  it("persists the canonical pattern text, not the AI's own, when the AI cites a real id but alters its prose — the full HTTP round trip, not just the unit-level validator", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "stage4adversarial@embr.health");
+    setUpOneKnownPattern(userId);
+    // A real id, type, and evidenceRef — genuinely matches
+    // KNOWN_PATTERN, so citation validation passes — but the
+    // observation, interpretation, and caveat text has been rewritten
+    // to something the actual evidence (2 days vs 0) does not support.
+    // This is the exact adversarial shape a lead-dev review flagged as
+    // a hardening gap: does the *response the API actually returns*
+    // — not just what a unit test of the validator alone shows —
+    // contain this tampered text, or the real, deterministic text?
+    aiState.nextResponse = {
+      narrative: "n",
+      discussionTopics: ["Q?"],
+      patterns: [
+        {
+          ...KNOWN_PATTERN,
+          observation: "HOT_FLASH was reported on 200 days, a severe and alarming increase.",
+          interpretation:
+            "This strongly suggests a hormonal imbalance requiring immediate treatment.",
+          caveat: "This is a serious medical finding.",
+        },
+      ],
+    };
+
+    const generateRes = await agent.post("/briefs").send(RANGE);
+
+    expect(generateRes.status).toBe(201);
+    // Citation succeeded (a real id/type/evidenceRef), so this pattern
+    // is legitimately cited — but its persisted text must be the
+    // canonical KNOWN_PATTERN's, never the tampered copy the AI
+    // returned.
+    expect(generateRes.body.data.citedPatternIds).toEqual(["frequency_increased:HOT_FLASH"]);
+    expect(generateRes.body.data.interpretation).toEqual({
+      interpretationVersion: "1.0",
+      patterns: [KNOWN_PATTERN],
+    });
+    const persistedPattern = generateRes.body.data.interpretation.patterns[0];
+    expect(persistedPattern.observation).not.toMatch(/200 days/);
+    expect(persistedPattern.observation).toBe(KNOWN_PATTERN.observation);
+    expect(persistedPattern.interpretation).not.toMatch(/hormonal imbalance/);
+    expect(persistedPattern.caveat).not.toMatch(/serious medical finding/);
+
+    // Same guarantee on read-back, not just the immediate POST response.
+    const getRes = await agent.get(`/briefs/${generateRes.body.data.id}`);
+    expect(getRes.body.data.interpretation.patterns[0].observation).toBe(KNOWN_PATTERN.observation);
+  });
+
   it("the persisted, UI-facing interpretation may contain a treatment name, even though the AI never received it", async () => {
     // 4, 5: proves both halves of the privacy boundary in one place —
     // the canonical persisted copy is allowed to contain the name
@@ -1727,6 +1908,7 @@ describe("GET /briefs/trends", () => {
       earliestBriefFromDate: null,
       latestBriefToDate: null,
       categories: [],
+      longitudinalPatterns: [],
     });
   });
 
@@ -1765,6 +1947,19 @@ describe("GET /briefs/trends", () => {
           totalBriefs: 2,
           mostRecentBriefFromDate: "2026-02-01",
           mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+      // Present in both briefs in the window — genuinely recurring
+      // per longitudinal-interpretation.ts's strictest-possible bar,
+      // not just a coincidence of this fixture's shape.
+      longitudinalPatterns: [
+        {
+          id: "recurring_across_briefs:HOT_FLASH",
+          type: "recurring_across_briefs",
+          category: "HOT_FLASH",
+          observation: "HOT_FLASH was reported in every one of your last 2 briefs.",
+          briefsPresent: 2,
+          totalBriefs: 2,
         },
       ],
     });
@@ -1818,5 +2013,208 @@ describe("GET /briefs/trends", () => {
     expect(res.body.data.categories.map((c: { category: string }) => c.category)).toEqual([
       "HOT_FLASH",
     ]);
+  });
+});
+
+// PR #105 hardening. Every individual Stage 2-4 module already handles
+// an empty input safely by construction (compareSymptomFrequency's
+// `.map()` over an empty Set of categories, buildStage4Interpretation's
+// `for` loops over empty arrays and null-check on coOccurrence,
+// averageCycleLengthDays returning null for zero intervals) — traced
+// each one before writing anything here, not assumed. Existing tests
+// already cover most of these one field at a time (e.g. "returns an
+// empty array, not null, when nothing qualifies" for persistentSymptoms
+// alone). What's missing, and what a bug in how these pieces compose
+// together would most likely show up in, is a single end-to-end brief
+// generation for a genuinely fresh user with zero data of every kind at
+// once — the actual "minimal valid patient history" case, not each
+// field's emptiness proven in isolation.
+describe("POST /briefs — sparse and empty datasets", () => {
+  it("a completely fresh user with zero symptom logs, cycle entries, or treatments still generates a valid, non-crashing brief", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "sparse1@embr.health");
+    // Deliberately nothing logged at all.
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: [] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.symptomSummary).toEqual([]);
+    expect(res.body.data.treatmentSummary).toEqual([]);
+    expect(res.body.data.frequencyComparison).toEqual([]);
+    expect(res.body.data.coOccurrence).toBeNull();
+    expect(res.body.data.treatmentImpact).toEqual([]);
+    expect(res.body.data.persistentSymptoms).toEqual([]);
+    expect(res.body.data.interpretation).toEqual({ interpretationVersion: "1.0", patterns: [] });
+    expect(res.body.data.citedPatternIds).toEqual([]);
+    expect(res.body.data.cycleSummary).toEqual({
+      averageCycleLengthDays: null,
+      cycleCount: 0,
+      periodDaysLogged: 0,
+    });
+  });
+
+  it("the AI is still called with a well-formed, minimal input for a zero-data user — not skipped, not sent malformed data", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "sparse2@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: [] };
+
+    await agent.post("/briefs").send(RANGE);
+
+    const lastCallArg = vi.mocked(briefAi.generate).mock.calls.at(-1)![0];
+    expect(lastCallArg.symptomSummary).toEqual([]);
+    expect(lastCallArg.interpretation.patterns).toEqual([]);
+  });
+
+  it("a single symptom log with nothing else still produces a valid brief — the minimal non-empty case", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "sparse3@embr.health");
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-15") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: [] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.symptomSummary).toEqual([
+      { category: "HOT_FLASH", count: 1, severityBreakdown: { MODERATE: 1 } },
+    ]);
+    // One log, logged for the first time — a real, correctly-derived
+    // "0 -> 1" comparison, not suppressed just because the count is
+    // small.
+    expect(res.body.data.frequencyComparison).toEqual([
+      {
+        category: "HOT_FLASH",
+        currentCount: 1,
+        previousCount: 0,
+        absoluteChange: 1,
+        percentageChange: null,
+        direction: "increased",
+      },
+    ]);
+    // A single category can never co-occur with itself.
+    expect(res.body.data.coOccurrence).toBeNull();
+    // Never persistent on a first-ever appearance — nothing in the
+    // previous period to have persisted from.
+    expect(res.body.data.persistentSymptoms).toEqual([]);
+  });
+
+  it("a brief generation failure for a zero-data user is a genuine AI/citation failure, not a crash from missing evidence — patterns: [] is a valid, empty citation set", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "sparse4@embr.health");
+    // The AI has nothing to cite (no patterns were ever supplied) but
+    // still returns a plain narrative and no discussion topics —
+    // a real, valid response for a user with nothing to report, not
+    // an error condition on its own.
+    aiState.nextResponse = {
+      narrative: "No symptoms, cycle activity, or treatments were logged in this period.",
+      discussionTopics: [],
+      patterns: [],
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiNarrative).toBe(
+      "No symptoms, cycle activity, or treatments were logged in this period.",
+    );
+    expect(res.body.data.aiDiscussionTopics).toEqual([]);
+  });
+});
+
+// PR #105 hardening. Confirmed the actual risk surface first: the
+// legacy-NULL scenario is already covered end-to-end for GET
+// /briefs/:id (the existing "brief generated before this field
+// existed" test above), and the list endpoint
+// (toClinicalBriefListItemDto) never touches any of the 6 nullable
+// fields at all — id/fromDate/toDate/createdAt only, confirmed
+// directly in brief.mappers.ts, so it's structurally safe regardless
+// of what's stored underneath. The one genuine, unproven gap: PDF
+// generation. Reading brief.pdf.ts shows every one of the 6 fields
+// guarded before use (`brief.frequencyComparison && ...`,
+// `brief.coOccurrence` as a bare truthy check, etc.) — it *looks*
+// correctly written, but nothing had actually exercised that code
+// path against a real legacy-null brief object before this test.
+describe("GET /briefs/:id/pdf — legacy NULL compatibility", () => {
+  it("generates a PDF without crashing for a brief predating every Stage 4 field, all six null", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "legacypdf1@embr.health");
+
+    const briefId = nextId();
+    state.briefs.push({
+      id: briefId,
+      userId,
+      fromDate: new Date("2026-01-01"),
+      toDate: new Date("2026-02-01"),
+      symptomSummary: [],
+      cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 0 },
+      treatmentSummary: [],
+      frequencyComparison: null,
+      coOccurrence: null,
+      treatmentImpact: null,
+      persistentSymptoms: null,
+      interpretation: null,
+      citedPatternIds: null,
+      aiNarrative: "A brief from before this field existed.",
+      aiDiscussionTopics: ["n/a"],
+      createdAt: now(),
+    });
+
+    const res = await agent.get(`/briefs/${briefId}/pdf`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("application/pdf");
+  });
+
+  it("generates a PDF without crashing for a brief with a mix of null and populated legacy fields", async () => {
+    // A more realistic legacy state than all-six-null: brief created
+    // after frequencyComparison shipped but before interpretation/
+    // citedPatternIds did — proves the guards are independent per
+    // field, not accidentally coupled (e.g. a guard that only checks
+    // `interpretation` before touching a *different* field).
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "legacypdf2@embr.health");
+
+    const briefId = nextId();
+    state.briefs.push({
+      id: briefId,
+      userId,
+      fromDate: new Date("2026-01-01"),
+      toDate: new Date("2026-02-01"),
+      symptomSummary: [{ category: "HOT_FLASH", count: 3, severityBreakdown: { MODERATE: 3 } }],
+      cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 0 },
+      treatmentSummary: [],
+      frequencyComparison: [
+        {
+          category: "HOT_FLASH",
+          currentCount: 3,
+          previousCount: 1,
+          absoluteChange: 2,
+          percentageChange: 200,
+          direction: "increased",
+        },
+      ],
+      coOccurrence: null,
+      treatmentImpact: null,
+      persistentSymptoms: null,
+      // Not yet built for this brief — genuinely old rows have this
+      // combination: frequencyComparison populated, interpretation/
+      // citedPatternIds still null, since those columns shipped later.
+      interpretation: null,
+      citedPatternIds: null,
+      aiNarrative: "Frequency change noted.",
+      aiDiscussionTopics: ["n/a"],
+      createdAt: now(),
+    });
+
+    const res = await agent.get(`/briefs/${briefId}/pdf`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("application/pdf");
   });
 });
