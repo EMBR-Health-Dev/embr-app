@@ -168,14 +168,60 @@ See `docs/BACKUPS.md`.
 - **Web/Admin**: Vercel keeps every deployment and lets you "promote to
   production" any prior one instantly.
 - **Database migrations**: `apps/api/prisma/schema.prisma` is the source
-  of truth; no migration history is committed to this repo yet (CI runs
-  `prisma migrate deploy`, so this needs to exist before a real
-  production deploy — run `pnpm db:migrate` locally once to generate and
-  commit the first migration). Once migrations exist, treat any that
-  drop or rename a column as high-risk: take a manual backup via
-  `scripts/db-backup.sh` first and confirm the rollback plan for that
-  specific migration, since `prisma migrate deploy` has no automatic
-  "undo."
+  of truth. A single squashed initial migration
+  (`prisma/migrations/20260819005012_initial_prisma_migration`) is
+  committed and covers the schema as of that date — CI runs `prisma
+migrate deploy`, which applies it (and any later ones) against
+  whatever database it's pointed at. Every schema change since then
+  needs its own `pnpm db:migrate` run locally to generate a new
+  migration file (this sandbox can't run it — see the note on
+  `binaries.prisma.sh` network access elsewhere in this repo's
+  history) and commit it, same as the first one. Treat any migration
+  that drops or renames a column as high-risk: take a manual backup
+  via `scripts/db-backup.sh` first and confirm the rollback plan for
+  that specific migration, since `prisma migrate deploy` has no
+  automatic "undo."
+
+## Mobile app builds & submission
+
+`apps/mobile/eas.json` defines three EAS Build profiles:
+
+- **development** — `developmentClient: true`, internal distribution,
+  points at `localhost:4000`. For running a custom dev client against
+  a locally-running API.
+- **preview** — internal distribution (no App Store/Play Store
+  submission), points at a `staging-api.embr.health` placeholder.
+  Update this once a real staging API domain exists. Use this profile
+  for TestFlight-internal or ad-hoc Android builds during the beta.
+- **production** — auto-increments the build number, points at an
+  `api.embr.health` placeholder. Update this once the real production
+  API domain exists — **do not ship a production build with a
+  placeholder API URL.**
+
+Both non-development `EXPO_PUBLIC_API_URL` values in `eas.json` are
+placeholders following this product's intended domain (matching
+`SMTP_FROM`'s existing `@embr.health` convention in `.env.example`) —
+neither domain is registered or deployed yet as of this writing. This
+is safe to commit as-is (it's a public, non-secret build-time value,
+not a credential) but must be corrected before running a real preview
+or production build, or the built app will simply fail to reach any
+API.
+
+**One-time setup, not yet done** (needs an Expo account, so it can't
+be run from an unattended environment): `eas init` (or `eas
+build:configure`) from `apps/mobile`, which links this project to a
+real EAS project and writes the resulting `extra.eas.projectId` into
+`app.json`. Do this before the first real build — `eas build` will
+fail without it.
+
+**Building**: `eas build --profile preview --platform ios` (or
+`android`, or `--platform all`) from `apps/mobile`. **Submitting**:
+`eas submit --platform ios` for TestFlight, once a build exists and an
+Apple Developer account is set up — the `submit` section in
+`eas.json` is currently an empty placeholder (`{}`); it needs
+`appleId`/`ascAppId`/`appleTeamId` (or equivalent Android
+service-account config) filled in once that account exists, which
+this repo has no evidence of yet.
 
 ## Branch protection
 
