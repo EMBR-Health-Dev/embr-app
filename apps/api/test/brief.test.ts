@@ -1908,6 +1908,7 @@ describe("GET /briefs/trends", () => {
       earliestBriefFromDate: null,
       latestBriefToDate: null,
       categories: [],
+      longitudinalPatterns: [],
     });
   });
 
@@ -1946,6 +1947,19 @@ describe("GET /briefs/trends", () => {
           totalBriefs: 2,
           mostRecentBriefFromDate: "2026-02-01",
           mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+      // Present in both briefs in the window — genuinely recurring
+      // per longitudinal-interpretation.ts's strictest-possible bar,
+      // not just a coincidence of this fixture's shape.
+      longitudinalPatterns: [
+        {
+          id: "recurring_across_briefs:HOT_FLASH",
+          type: "recurring_across_briefs",
+          category: "HOT_FLASH",
+          observation: "HOT_FLASH was reported in every one of your last 2 briefs.",
+          briefsPresent: 2,
+          totalBriefs: 2,
         },
       ],
     });

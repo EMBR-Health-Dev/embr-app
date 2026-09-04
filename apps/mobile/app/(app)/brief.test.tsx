@@ -17,6 +17,7 @@ const trendsMock = vi.fn().mockResolvedValue({
   earliestBriefFromDate: null,
   latestBriefToDate: null,
   categories: [],
+  longitudinalPatterns: [],
 });
 vi.mock("../../lib/api", () => ({
   api: {
@@ -111,6 +112,7 @@ beforeEach(() => {
     earliestBriefFromDate: null,
     latestBriefToDate: null,
     categories: [],
+    longitudinalPatterns: [],
   });
 });
 
@@ -416,6 +418,7 @@ describe("Brief screen — Your recent trends", () => {
           mostRecentBriefToDate: "2026-03-01",
         },
       ],
+      longitudinalPatterns: [],
     });
     const { default: BriefScreen } = await import("./brief");
     render(
@@ -431,6 +434,75 @@ describe("Brief screen — Your recent trends", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the recurring-across-briefs section when longitudinalPatterns is non-empty", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    trendsMock.mockResolvedValue({
+      briefCount: 3,
+      earliestBriefFromDate: "2026-01-01",
+      latestBriefToDate: "2026-03-01",
+      categories: [
+        {
+          category: "HOT_FLASH",
+          briefsPresent: 3,
+          briefsPersistent: 2,
+          totalBriefs: 3,
+          mostRecentBriefFromDate: "2026-02-01",
+          mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+      longitudinalPatterns: [
+        {
+          id: "recurring_across_briefs:HOT_FLASH",
+          type: "recurring_across_briefs",
+          category: "HOT_FLASH",
+          observation: "HOT_FLASH was reported in every one of your last 3 briefs.",
+          briefsPresent: 3,
+          totalBriefs: 3,
+        },
+      ],
+    });
+    const { default: BriefScreen } = await import("./brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByText("Recurring across your briefs")).toBeInTheDocument();
+    expect(
+      screen.getByText("Hot Flash has appeared in every one of your last 3 briefs."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the recurring-across-briefs section when longitudinalPatterns is empty", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    trendsMock.mockResolvedValue({
+      briefCount: 3,
+      earliestBriefFromDate: "2026-01-01",
+      latestBriefToDate: "2026-03-01",
+      categories: [
+        {
+          category: "HOT_FLASH",
+          briefsPresent: 2,
+          briefsPersistent: 1,
+          totalBriefs: 3,
+          mostRecentBriefFromDate: "2026-02-01",
+          mostRecentBriefToDate: "2026-03-01",
+        },
+      ],
+      longitudinalPatterns: [],
+    });
+    const { default: BriefScreen } = await import("./brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
+    expect(screen.queryByText("Recurring across your briefs")).not.toBeInTheDocument();
+  });
+
   it("does not show the trends section when briefCount is 0", async () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
     trendsMock.mockResolvedValue({
@@ -438,6 +510,7 @@ describe("Brief screen — Your recent trends", () => {
       earliestBriefFromDate: null,
       latestBriefToDate: null,
       categories: [],
+      longitudinalPatterns: [],
     });
     const { default: BriefScreen } = await import("./brief");
     render(
@@ -607,6 +680,7 @@ describe("Brief screen — multiple items", () => {
           mostRecentBriefToDate: "2026-03-01",
         },
       ],
+      longitudinalPatterns: [],
     });
     const { default: BriefScreen } = await import("./brief");
     render(

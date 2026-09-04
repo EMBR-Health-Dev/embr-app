@@ -298,7 +298,9 @@
     "trendsTitle": "最近の傾向",
     "briefCountPhrase_other": "{{count}}件のブリーフ",
     "trendsAcrossBriefs_other": "直近{{count}}件のブリーフについて",
-    "trendsCategoryLine": "{{category}} — {{totalPhrase}}中{{present}}件で報告され、{{persistent}}件で継続として記録されました。"
+    "trendsCategoryLine": "{{category}} — {{totalPhrase}}中{{present}}件で報告され、{{persistent}}件で継続として記録されました。",
+    "longitudinalPatternsTitle": "ブリーフ全体で継続している傾向",
+    "longitudinalPatternsLine": "{{category}}は直近{{totalPhrase}}すべてで報告されています。"
   },
   "settings": {
     "title": "設定",

@@ -306,7 +306,9 @@
     "briefCountPhrase_other": "{{count}} briefs",
     "trendsAcrossBriefs_one": "Across your last {{count}} brief",
     "trendsAcrossBriefs_other": "Across your last {{count}} briefs",
-    "trendsCategoryLine": "{{category}} — reported in {{present}} of {{totalPhrase}}, marked persistent in {{persistent}}."
+    "trendsCategoryLine": "{{category}} — reported in {{present}} of {{totalPhrase}}, marked persistent in {{persistent}}.",
+    "longitudinalPatternsTitle": "Recurring across your briefs",
+    "longitudinalPatternsLine": "{{category}} has appeared in every one of your last {{totalPhrase}}."
   },
   "settings": {
     "title": "Settings",

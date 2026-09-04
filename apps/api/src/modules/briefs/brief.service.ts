@@ -28,6 +28,7 @@ import {
   DEFAULT_TREND_BRIEF_LIMIT,
   type BriefTrendSourceBrief,
 } from "./brief-trends.js";
+import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -275,7 +276,16 @@ export const briefService = {
       persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
     }));
 
-    return aggregateBriefTrends(sourceBriefs, DEFAULT_TREND_BRIEF_LIMIT);
+    const summary = aggregateBriefTrends(sourceBriefs, DEFAULT_TREND_BRIEF_LIMIT);
+    // Composed here, not inside aggregateBriefTrends itself — same
+    // reasoning as why buildStage4Interpretation is a separate call
+    // from the evidence functions that feed it, not folded into any
+    // one of them: aggregateBriefTrends stays a narrowly-scoped, pure
+    // aggregation with its own already-thorough test coverage,
+    // untouched by this addition.
+    const longitudinalPatterns = buildLongitudinalInterpretation(summary);
+
+    return { ...summary, longitudinalPatterns };
   },
 
   async get(id: string, userId: string): Promise<ClinicalBriefDto> {
