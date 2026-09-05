@@ -11,6 +11,12 @@ COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile --filter @embr/web...
 
 FROM deps AS build
+# The /api/* same-origin proxy target is evaluated by next.config.ts at
+# BUILD time and baked into the standalone output (required-server-files
+# json) — a runtime API_URL cannot change it. Default to the compose
+# service name; other deployments override via --build-arg.
+ARG API_URL=http://api:4000
+ENV API_URL=${API_URL}
 COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY packages/validation ./packages/validation
