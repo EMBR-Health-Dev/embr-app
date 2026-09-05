@@ -503,4 +503,105 @@ describe("POST /reflections/dismissals", () => {
     const after = await agent.get("/reflections").query({ to: wednesday });
     expect(findByType(after.body.data, "LOGGING_ACTIVITY")).toBeUndefined();
   });
+
+  // PR follow-up while auditing the reflections module for bugs.
+  // toIsoWeek's hand-rolled ISO-8601 week arithmetic had zero test
+  // coverage at a year boundary before this — exactly the class of
+  // date-math edge case (does Jan 1 belong to week 1 of the new year,
+  // or week 52/53 of the old one?) most likely to hide a real bug.
+  // Verified first, outside the test suite, against the actual
+  // algorithm: Dec 28 2026 (Monday) through Jan 3 2027 (Sunday) all
+  // correctly resolve to 2026-W53 — Jan 1 2027 is a Friday, and per
+  // ISO 8601 belongs to the week containing its Thursday (Dec 31
+  // 2026), not the new calendar year. The algorithm was already
+  // correct; this proves it, and guards against a future refactor
+  // silently breaking it.
+  it("a dismissal survives a rollover from Dec 31 into the new year, within the same ISO week", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "reflections-yearstable@embr.health");
+
+    for (let i = 0; i < 3; i++) {
+      await agent.post("/symptom-logs").send({
+        category: "OTHER",
+        severity: "MILD",
+        occurredAt: "2026-12-30T08:00:00.000Z",
+      });
+    }
+
+    const dec31 = "2026-12-31T10:00:00.000Z"; // Thursday — defines ISO week 2026-W53
+    const jan1 = "2027-01-01T10:00:00.000Z"; // Friday — same ISO week, next calendar year
+
+    const before = await agent.get("/reflections").query({ to: dec31 });
+    const activity = findByType(before.body.data, "LOGGING_ACTIVITY");
+    expect(activity).toBeDefined();
+    expect(activity.key).toContain("2026-W53");
+
+    const dismissRes = await agent
+      .post("/reflections/dismissals")
+      .send({ type: "LOGGING_ACTIVITY", key: activity.key });
+    expect(dismissRes.status).toBe(204);
+
+    const after = await agent.get("/reflections").query({ to: jan1 });
+    expect(findByType(after.body.data, "LOGGING_ACTIVITY")).toBeUndefined();
+  });
+
+  // The service's own comment on the TREATMENT_CONTEXT date comparison
+  // explains why it compares calendar-date strings rather than raw
+  // Date objects: a log timestamped later in the day than midnight on
+  // the treatment's endDate must still count as "during" it. That
+  // specific scenario — an explicit endDate, with a log logged late in
+  // the day on that exact date — had no direct test before this; the
+  // existing TREATMENT_CONTEXT test only covers an ongoing (endDate:
+  // null) treatment.
+  it("counts a log timestamped late in the day on the treatment's end date as still during it", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "reflections-endday@embr.health");
+    const userId = loginRes.body.data.user.id as string;
+
+    state.treatments.push({
+      id: nextId(),
+      userId,
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date(Date.UTC(2026, 5, 1)),
+      endDate: new Date(Date.UTC(2026, 5, 10)), // @db.Date — midnight UTC
+    });
+    // Logged at 23:00 UTC on the treatment's own end date — well past
+    // midnight, but still calendar-date-equal to endDate.
+    await agent.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "MILD",
+      occurredAt: new Date(Date.UTC(2026, 5, 10, 23)).toISOString(),
+    });
+
+    const res = await agent.get("/reflections").query({ from: "2026-06-01T00:00:00.000Z" });
+    const treatmentContext = findByType(res.body.data, "TREATMENT_CONTEXT");
+    expect(treatmentContext).toMatchObject({ logCount: 1 });
+  });
+
+  it("does not count a log the day after the treatment's end date", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "reflections-afterend@embr.health");
+    const userId = loginRes.body.data.user.id as string;
+
+    state.treatments.push({
+      id: nextId(),
+      userId,
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date(Date.UTC(2026, 5, 1)),
+      endDate: new Date(Date.UTC(2026, 5, 10)),
+    });
+    await agent.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "MILD",
+      occurredAt: new Date(Date.UTC(2026, 5, 11, 1)).toISOString(),
+    });
+
+    const res = await agent.get("/reflections").query({ from: "2026-06-01T00:00:00.000Z" });
+    expect(findByType(res.body.data, "TREATMENT_CONTEXT")).toBeUndefined();
+  });
 });

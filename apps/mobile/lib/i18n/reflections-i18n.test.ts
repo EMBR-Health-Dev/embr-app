@@ -22,6 +22,7 @@ const REFLECTION_KEYS = [
   "reflections.dismiss",
   "reflections.loggingActivity.heading",
   "reflections.loggingActivity.message",
+  "reflections.loggingActivity.daysPhrase",
   "reflections.symptomFrequency.heading",
   "reflections.symptomFrequency.message",
   "reflections.coOccurrence.heading",
@@ -50,22 +51,50 @@ describe("reflections locale parity", () => {
 });
 
 describe("reflections.loggingActivity.message", () => {
-  it("English pluralizes on count", () => {
+  // daysPhrase is composed via its own t() call — the same
+  // independent-pluralization pattern reflection-card.tsx itself
+  // uses, not passed as a bare number. See reflection-card.tsx's own
+  // comment on why: count and days are independently pluralizable
+  // (e.g. 3 logs on a single day), and a single t() call's plural
+  // selection keys off exactly one interpolated value.
+  function loggingActivityMessage(count: number, days: number): string {
+    return i18next.t("reflections.loggingActivity.message", {
+      count,
+      daysPhrase: i18next.t("reflections.loggingActivity.daysPhrase", { count: days }),
+    });
+  }
+
+  it("English pluralizes count and days independently when they agree", () => {
     i18next.changeLanguage("en");
-    expect(i18next.t("reflections.loggingActivity.message", { count: 1, days: 1 })).toBe(
-      "You've logged 1 time, across 1 day.",
-    );
-    expect(i18next.t("reflections.loggingActivity.message", { count: 5, days: 3 })).toBe(
-      "You've logged 5 times, across 3 days.",
-    );
+    expect(loggingActivityMessage(1, 1)).toBe("You've logged 1 time, across 1 day.");
+    expect(loggingActivityMessage(5, 3)).toBe("You've logged 5 times, across 3 days.");
   });
 
-  it("Japanese uses the single 'other' plural form at any count", () => {
+  // Regression: before daysPhrase existed, this message interpolated
+  // a bare {{days}} number into text whose singular/plural form was
+  // selected by `count` alone — so logCount's plural form was silently
+  // applied to daysLogged too. Confirmed directly against the actual
+  // shipped code before fixing it: `t(message, { count: 3, days: 1 })`
+  // produced the literal text "You've logged 3 times, across 1 days."
+  // This is a real, reachable case, not a contrived one: it's exactly
+  // what MIN_REFLECTION_LOGS's floor of 3 combined with a user logging
+  // several symptoms on a single day produces.
+  it("English pluralizes count and days independently when they disagree — the reachable case reflection-engine.ts's own MIN_REFLECTION_LOGS floor produces", () => {
+    i18next.changeLanguage("en");
+    // 3+ logs (the minimum to ever surface this reflection at all),
+    // all on the same single day.
+    expect(loggingActivityMessage(3, 1)).toBe("You've logged 3 times, across 1 day.");
+    // The inverse: few enough distinct days to read as singular, but
+    // more individual logs than days (e.g. 2 logs on day one, 1 on
+    // day two would be count=3, days=2 — still plural "days").
+    expect(loggingActivityMessage(4, 2)).toBe("You've logged 4 times, across 2 days.");
+  });
+
+  it("Japanese uses the single 'other' plural form at any count, for both count and days", () => {
     i18next.changeLanguage("ja");
-    const one = i18next.t("reflections.loggingActivity.message", { count: 1, days: 1 });
-    const five = i18next.t("reflections.loggingActivity.message", { count: 5, days: 3 });
-    expect(one).toBe("1日間で、1回記録しました。");
-    expect(five).toBe("3日間で、5回記録しました。");
+    expect(loggingActivityMessage(1, 1)).toBe("1日間で、1回記録しました。");
+    expect(loggingActivityMessage(5, 3)).toBe("3日間で、5回記録しました。");
+    expect(loggingActivityMessage(3, 1)).toBe("1日間で、3回記録しました。");
   });
 });
 

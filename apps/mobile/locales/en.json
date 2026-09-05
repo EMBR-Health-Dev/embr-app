@@ -366,8 +366,10 @@
     "dismiss": "Dismiss",
     "loggingActivity": {
       "heading": "Your week so far",
-      "message_one": "You've logged {{count}} time, across {{days}} day.",
-      "message_other": "You've logged {{count}} times, across {{days}} days."
+      "daysPhrase_one": "{{count}} day",
+      "daysPhrase_other": "{{count}} days",
+      "message_one": "You've logged {{count}} time, across {{daysPhrase}}.",
+      "message_other": "You've logged {{count}} times, across {{daysPhrase}}."
     },
     "symptomFrequency": {
       "heading": "What stood out this week",
