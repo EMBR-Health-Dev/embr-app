@@ -241,6 +241,8 @@
     "impactInsufficientData": "Not enough time has passed since starting to show a comparison yet.",
     "impactBeforeLabel": "Symptom logs before treatment",
     "impactAfterLabel": "Symptom logs since treatment began",
+    "impactSeverityHeader": "By severity",
+    "impactCategoryHeader": "By symptom",
     "impactWindow_one": "{{count}} day",
     "impactWindow_other": "{{count}} days",
     "impactDisclaimer": "A count of how often you logged symptoms, not a measure of whether the treatment is working."

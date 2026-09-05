@@ -77,6 +77,8 @@ export const treatmentService = {
       userId,
       windows,
     );
+    const { before: beforeBreakdown, after: afterBreakdown } =
+      await treatmentRepository.symptomBreakdownInWindows(userId, windows);
 
     return buildTreatmentImpact({
       treatmentId: treatment.id,
@@ -85,6 +87,8 @@ export const treatmentService = {
       today,
       beforeLogCount,
       afterLogCount,
+      beforeBreakdown,
+      afterBreakdown,
     });
   },
 };

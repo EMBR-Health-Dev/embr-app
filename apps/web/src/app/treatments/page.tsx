@@ -14,6 +14,29 @@ import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = ["HRT", "SUPPLEMENT", "MEDICATION", "LIFESTYLE", "OTHER"] as const;
 
+/** Pure presentation-layer merge, not business logic — the impact
+ * endpoint already returns two independently-sorted, deterministic
+ * arrays (see treatment-impact.ts's summarizeCategoryCounts); this
+ * only zips them into rows for a side-by-side before/after list,
+ * ordered by combined count descending, then alphabetically. Missing
+ * on one side means 0, not absent from the row — a category that
+ * dropped to zero after a treatment is exactly the row worth seeing. */
+function mergedCategoryCounts(
+  before: TreatmentImpactDto["before"]["categoryCounts"],
+  after: TreatmentImpactDto["after"]["categoryCounts"],
+): Array<{ category: string; before: number; after: number }> {
+  const categories = new Set([...before.map((c) => c.category), ...after.map((c) => c.category)]);
+  return [...categories]
+    .map((category) => ({
+      category,
+      before: before.find((c) => c.category === category)?.count ?? 0,
+      after: after.find((c) => c.category === category)?.count ?? 0,
+    }))
+    .sort(
+      (a, b) => b.before + b.after - (a.before + a.after) || a.category.localeCompare(b.category),
+    );
+}
+
 export default function TreatmentsPage() {
   const t = useTranslations("Treatments");
   const tEnum = useTranslations("Enums");
@@ -306,6 +329,55 @@ export default function TreatmentsPage() {
                               {t("impactWindow", { count: impact.data!.after.days })}
                             </span>
                           </div>
+
+                          <div className="mt-2 border-t border-teal/20 pt-2">
+                            <p className="text-xs font-medium uppercase tracking-wide text-navy/50">
+                              {t("impactSeverityHeader")}
+                            </p>
+                            <div className="mt-1 flex flex-col gap-1">
+                              {impact.data!.before.severityCounts.map((beforeEntry, i) => {
+                                const afterEntry = impact.data!.after.severityCounts[i]!;
+                                return (
+                                  <div
+                                    key={beforeEntry.severity}
+                                    className="flex items-center justify-between"
+                                  >
+                                    <span className="text-navy/70">
+                                      {tEnum(`severity.${beforeEntry.severity}`)}
+                                    </span>
+                                    <span className="font-medium text-navy">
+                                      {beforeEntry.count} → {afterEntry.count}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {(impact.data!.before.categoryCounts.length > 0 ||
+                            impact.data!.after.categoryCounts.length > 0) && (
+                            <div className="mt-2 border-t border-teal/20 pt-2">
+                              <p className="text-xs font-medium uppercase tracking-wide text-navy/50">
+                                {t("impactCategoryHeader")}
+                              </p>
+                              <div className="mt-1 flex flex-col gap-1">
+                                {mergedCategoryCounts(
+                                  impact.data!.before.categoryCounts,
+                                  impact.data!.after.categoryCounts,
+                                ).map(({ category, before, after }) => (
+                                  <div key={category} className="flex items-center justify-between">
+                                    <span className="text-navy/70">
+                                      {tEnum(`category.${category}`)}
+                                    </span>
+                                    <span className="font-medium text-navy">
+                                      {before} → {after}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           <p className="mt-1 text-xs text-navy/50">{t("impactDisclaimer")}</p>
                         </div>
                       )}

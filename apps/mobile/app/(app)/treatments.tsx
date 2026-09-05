@@ -15,6 +15,27 @@ import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = treatmentCategorySchema.options;
 
+/** Mirrors apps/web/src/app/treatments/page.tsx's identical
+ * mergedCategoryCounts — pure presentation-layer merge of two
+ * independently-sorted, deterministic arrays into before/after rows,
+ * not business logic. See that copy's doc comment for the full
+ * reasoning. */
+function mergedCategoryCounts(
+  before: TreatmentImpactDto["before"]["categoryCounts"],
+  after: TreatmentImpactDto["after"]["categoryCounts"],
+): { category: string; before: number; after: number }[] {
+  const categories = new Set([...before.map((c) => c.category), ...after.map((c) => c.category)]);
+  return [...categories]
+    .map((category) => ({
+      category,
+      before: before.find((c) => c.category === category)?.count ?? 0,
+      after: after.find((c) => c.category === category)?.count ?? 0,
+    }))
+    .sort(
+      (a, b) => b.before + b.after - (a.before + a.after) || a.category.localeCompare(b.category),
+    );
+}
+
 export default function TreatmentsScreen() {
   const { t } = useTranslation();
   const [treatments, setTreatments] = useState<TreatmentDto[]>([]);
@@ -291,6 +312,50 @@ export default function TreatmentsScreen() {
                           {t("treatments.impactWindow", { count: impact.data!.after.days })}
                         </Text>
                       </View>
+
+                      <View style={styles.impactSection}>
+                        <Text style={styles.impactSectionHeader}>
+                          {t("treatments.impactSeverityHeader")}
+                        </Text>
+                        {impact.data!.before.severityCounts.map((beforeEntry, i) => {
+                          const afterEntry = impact.data!.after.severityCounts[i]!;
+                          return (
+                            <View key={beforeEntry.severity} style={styles.impactRow}>
+                              <Text style={styles.impactLabel}>
+                                {t(`enums.severity.${beforeEntry.severity}`)}
+                              </Text>
+                              <Text style={styles.impactValue}>
+                                {beforeEntry.count} → {afterEntry.count}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+
+                      {mergedCategoryCounts(
+                        impact.data!.before.categoryCounts,
+                        impact.data!.after.categoryCounts,
+                      ).length > 0 && (
+                        <View style={styles.impactSection}>
+                          <Text style={styles.impactSectionHeader}>
+                            {t("treatments.impactCategoryHeader")}
+                          </Text>
+                          {mergedCategoryCounts(
+                            impact.data!.before.categoryCounts,
+                            impact.data!.after.categoryCounts,
+                          ).map(({ category, before, after }) => (
+                            <View key={category} style={styles.impactRow}>
+                              <Text style={styles.impactLabel}>
+                                {t(`enums.category.${category}`)}
+                              </Text>
+                              <Text style={styles.impactValue}>
+                                {before} → {after}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
                       <Text style={styles.impactDisclaimer}>
                         {t("treatments.impactDisclaimer")}
                       </Text>
@@ -386,6 +451,15 @@ const styles = StyleSheet.create({
   impactMuted: { fontSize: 13, color: theme.colors.textMuted },
   impactError: { fontSize: 13, color: theme.colors.error },
   impactRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  impactSection: { marginTop: 4, gap: 4 },
+  impactSectionHeader: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    color: theme.colors.textMuted,
+    marginBottom: 2,
+  },
   impactLabel: { fontSize: 13, color: theme.colors.textSecondary },
   impactValue: { fontSize: 13, fontWeight: "600", color: theme.colors.textPrimary },
   impactDisclaimer: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },

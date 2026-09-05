@@ -70,8 +70,8 @@ function populatedImpact(overrides: Partial<TreatmentImpactDto> = {}): Treatment
   return {
     treatmentId: "t1",
     windowDays: 14,
-    before: { logCount: 5, days: 14 },
-    after: { logCount: 2, days: 14 },
+    before: { logCount: 5, days: 14, categoryCounts: [], severityCounts: [] },
+    after: { logCount: 2, days: 14, categoryCounts: [], severityCounts: [] },
     insufficientData: false,
     ...overrides,
   };
@@ -114,12 +114,7 @@ describe("Treatments page — impact section", () => {
   });
 
   it("shows before/after counts and the non-efficacy disclaimer once impact data loads", async () => {
-    impactMock.mockResolvedValue(
-      populatedImpact({
-        before: { logCount: 5, days: 14 },
-        after: { logCount: 2, days: 14 },
-      }),
-    );
+    impactMock.mockResolvedValue(populatedImpact());
 
     const user = userEvent.setup();
     const { default: TreatmentsPage } = await import("./page");
@@ -164,6 +159,54 @@ describe("Treatments page — impact section", () => {
       expect(screen.getByText("Symptom logs before treatment")).toBeInTheDocument(),
     );
     expect(impactMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows severity and category breakdowns, before → after, when data is available", async () => {
+    impactMock.mockResolvedValue(
+      populatedImpact({
+        before: {
+          logCount: 5,
+          days: 14,
+          categoryCounts: [
+            { category: "HOT_FLASH", count: 2 },
+            { category: "BRAIN_FOG", count: 1 },
+          ],
+          severityCounts: [
+            { severity: "MILD", count: 1 },
+            { severity: "MODERATE", count: 0 },
+            { severity: "SEVERE", count: 2 },
+          ],
+        },
+        after: {
+          logCount: 2,
+          days: 14,
+          categoryCounts: [{ category: "HOT_FLASH", count: 1 }],
+          severityCounts: [
+            { severity: "MILD", count: 1 },
+            { severity: "MODERATE", count: 0 },
+            { severity: "SEVERE", count: 0 },
+          ],
+        },
+      }),
+    );
+
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await user.click(screen.getByText("See impact"));
+
+    await waitFor(() => expect(screen.getByText("By severity")).toBeInTheDocument());
+    expect(screen.getByText("By symptom")).toBeInTheDocument();
+
+    // Severity: fixed MILD/MODERATE/SEVERE order, before → after.
+    expect(screen.getByText("Severe")).toBeInTheDocument();
+    expect(screen.getByText("2 → 0")).toBeInTheDocument();
+
+    // Category: only categories that were actually logged, before → after.
+    expect(screen.getByText("Hot Flash")).toBeInTheDocument();
+    expect(screen.getByText("1 → 0")).toBeInTheDocument(); // Brain Fog dropped to 0 after
   });
 
   it("shows a neutral message, not a claim, when there isn't enough data yet", async () => {
