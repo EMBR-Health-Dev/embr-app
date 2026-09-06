@@ -15,7 +15,7 @@ FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
-RUN pnpm --filter @embr/api prisma generate
+RUN pnpm --filter @embr/api exec prisma generate
 RUN pnpm --filter @embr/shared build && \
     pnpm --filter @embr/types build && \
     pnpm --filter @embr/validation build && \

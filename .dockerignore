@@ -1,0 +1,14 @@
+# Build output and local state must never enter the Docker build
+# context. Before this file existed, `COPY apps/api ./apps/api` shipped
+# the developer's host-generated Prisma client (a darwin query engine)
+# into a linux-musl image — see the api Dockerfile's generate step and
+# schema.prisma's binaryTargets for the paired fixes.
+**/node_modules
+**/dist
+apps/*/src/generated
+packages/*/dist
+.git
+.github
+backups
+*.log
+.DS_Store
