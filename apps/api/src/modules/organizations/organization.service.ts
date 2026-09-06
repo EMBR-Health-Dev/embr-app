@@ -79,8 +79,11 @@ export const organizationService = {
     if (!org) throw AppError.notFound("Organization");
 
     if (org.seatLimit !== null) {
-      const memberCount = await organizationRepository.countMembers(organizationId);
-      if (memberCount >= org.seatLimit) {
+      const [memberCount, pendingInviteCount] = await Promise.all([
+        organizationRepository.countMembers(organizationId),
+        organizationRepository.countPendingInvites(organizationId, input.email),
+      ]);
+      if (memberCount + pendingInviteCount >= org.seatLimit) {
         throw AppError.conflict("This organization has no remaining seats");
       }
     }

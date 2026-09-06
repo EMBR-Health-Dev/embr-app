@@ -220,6 +220,34 @@ export const ssoService = {
       user.id,
     );
     if (!existingMembership) {
+      // Same seatLimit enforcement invite creation uses (see
+      // organization.service.ts's inviteMember) — JIT provisioning is
+      // a second, completely independent path onto the same
+      // organization, and without this check it bypasses seatLimit
+      // entirely: any employee with a verified @<allowedEmailDomain>
+      // address can join just by authenticating via the configured
+      // IdP, with no admin action and no relation to how many seats
+      // were actually paid for. Counting pending invites too, not
+      // just members, for the same reason inviteMember does — a seat
+      // already reserved for a specific invitee shouldn't be
+      // claimable by a different, unrelated person joining via SSO.
+      const org = await organizationRepository.findOrganizationById(connection.organizationId);
+      if (org?.seatLimit != null) {
+        const [memberCount, pendingInviteCount] = await Promise.all([
+          organizationRepository.countMembers(connection.organizationId),
+          organizationRepository.countPendingInvites(connection.organizationId),
+        ]);
+        if (memberCount + pendingInviteCount >= org.seatLimit) {
+          await writeAuditLog(req, "SSO_LOGIN_FAILED", user.id, {
+            reason: "seat_limit_reached",
+            connectionId: connection.id,
+          });
+          throw AppError.conflict(
+            "This organization has no remaining seats — contact your administrator",
+          );
+        }
+      }
+
       await organizationRepository.createMembership(
         connection.organizationId,
         user.id,

@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import type { StripeSubscriptionStatus } from "../../generated/prisma/index.js";
+import type { Prisma, StripeSubscriptionStatus } from "../../generated/prisma/index.js";
 import { AppError } from "@embr/shared";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
@@ -64,7 +64,9 @@ export function verifyWebhookSignature(payload: Buffer, signatureHeader: string)
  * Applies one already-verified Stripe event. Idempotent: a duplicate
  * delivery of the same event id (Stripe's docs guarantee at-least-once,
  * not exactly-once) is recorded once and every later delivery is a
- * no-op — see billing.repository.ts's recordWebhookEventIfNew.
+ * no-op — see billingRepository.runIdempotentWebhookTransaction's own
+ * doc comment for why the idempotency record and the actual processing
+ * below must commit or roll back together, not as two separate steps.
  *
  * Only three event types are handled — see docs/MILESTONES.md's entry
  * for why checkout.session.completed is deliberately NOT one of them:
@@ -79,27 +81,31 @@ export function verifyWebhookSignature(payload: Buffer, signatureHeader: string)
  * size.
  */
 export async function processWebhookEvent(event: Stripe.Event): Promise<void> {
-  const isNew = await billingRepository.recordWebhookEventIfNew(event.id, event.type);
-  if (!isNew) {
-    logger.info({ eventId: event.id, type: event.type }, "billing webhook: duplicate, skipping");
-    return;
-  }
+  const result = await billingRepository.runIdempotentWebhookTransaction(
+    event.id,
+    event.type,
+    async (tx) => {
+      switch (event.type) {
+        case "customer.subscription.created":
+        case "customer.subscription.updated":
+          await applySubscription(tx, event.data.object as Stripe.Subscription);
+          return;
+        case "customer.subscription.deleted":
+          await applySubscriptionDeleted(tx, event.data.object as Stripe.Subscription);
+          return;
+        default:
+          logger.info({ eventId: event.id, type: event.type }, "billing webhook: unhandled type");
+      }
+    },
+  );
 
-  switch (event.type) {
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
-      await applySubscription(event.data.object as Stripe.Subscription);
-      return;
-    case "customer.subscription.deleted":
-      await applySubscriptionDeleted(event.data.object as Stripe.Subscription);
-      return;
-    default:
-      logger.info({ eventId: event.id, type: event.type }, "billing webhook: unhandled type");
+  if (result === null) {
+    logger.info({ eventId: event.id, type: event.type }, "billing webhook: duplicate, skipping");
   }
 }
 
-async function organizationForCustomer(customerId: string) {
-  const org = await billingRepository.findOrganizationByStripeCustomerId(customerId);
+async function organizationForCustomer(tx: Prisma.TransactionClient, customerId: string) {
+  const org = await billingRepository.findOrganizationByStripeCustomerId(tx, customerId);
   if (!org) {
     // Not an error worth failing the webhook over (Stripe would retry
     // indefinitely) — most plausibly a customer created directly in
@@ -120,10 +126,13 @@ async function organizationForCustomer(customerId: string) {
  * this needs to change to sum or otherwise combine quantities, not
  * silently read the wrong one.
  */
-async function applySubscription(subscription: Stripe.Subscription): Promise<void> {
+async function applySubscription(
+  tx: Prisma.TransactionClient,
+  subscription: Stripe.Subscription,
+): Promise<void> {
   const customerId =
     typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
-  const org = await organizationForCustomer(customerId);
+  const org = await organizationForCustomer(tx, customerId);
   if (!org) return;
 
   const item = subscription.items.data[0];
@@ -135,7 +144,7 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
     return;
   }
 
-  await billingRepository.applySubscriptionState(org.id, {
+  await billingRepository.applySubscriptionState(tx, org.id, {
     stripeSubscriptionId: subscription.id,
     subscriptionStatus: toSubscriptionStatus(subscription.status),
     seatLimit: item.quantity ?? org.seatLimit ?? 0,
@@ -143,11 +152,14 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
   });
 }
 
-async function applySubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+async function applySubscriptionDeleted(
+  tx: Prisma.TransactionClient,
+  subscription: Stripe.Subscription,
+): Promise<void> {
   const customerId =
     typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
-  const org = await organizationForCustomer(customerId);
+  const org = await organizationForCustomer(tx, customerId);
   if (!org) return;
 
-  await billingRepository.markSubscriptionCanceled(org.id, "CANCELED");
+  await billingRepository.markSubscriptionCanceled(tx, org.id, "CANCELED");
 }

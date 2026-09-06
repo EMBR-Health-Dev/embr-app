@@ -7,6 +7,7 @@ import {
   processWebhookEvent,
   verifyWebhookSignature,
 } from "../src/modules/billing/billing.webhook.js";
+import { prisma } from "../src/lib/prisma.js";
 import type Stripe from "stripe";
 
 const { state, nextId } = vi.hoisted(() => {
@@ -84,8 +85,18 @@ vi.mock("../src/modules/auth/mailer.js", () => ({
   sendOrganizationInviteEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../src/lib/prisma.js", () => ({
-  prisma: {
+// Constructed inside vi.mock's own factory function, not a separate
+// vi.hoisted() block — needed for $transaction to reference the
+// finished client object (a plain object literal can't refer to
+// itself while still being constructed), but a second, independent
+// vi.hoisted() call here raced against the first one (state/nextId)
+// in a way that threw "Cannot access '__vi_import_1__' before
+// initialization" — confirmed by hitting that exact error before
+// switching to this approach. vi.mock's factory itself runs after
+// every vi.hoisted() block is set up, so state/nextId/now are already
+// safely available here without needing their own hoisting.
+vi.mock("../src/lib/prisma.js", () => {
+  const client: Record<string, unknown> = {
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
         const found = state.users.find((u) => u.email === where.email || u.id === where.id);
@@ -225,8 +236,30 @@ vi.mock("../src/lib/prisma.js", () => ({
         return Promise.resolve(event);
       }),
     },
-  },
-}));
+  };
+
+  // Real rollback simulation, not the simpler "just call the callback
+  // against the same mock" pattern used elsewhere in this codebase's
+  // tests (see organization.test.ts's own comment on why that simpler
+  // version doesn't model rollback) — needed here specifically to
+  // prove the actual fix this file's new "idempotency record rolls
+  // back" tests exist for: if the callback throws, every mutation it
+  // made to `state` must not have happened, the same way a real
+  // ROLLBACK would undo them. structuredClone gives a real,
+  // independent deep copy to restore from, not a reference that
+  // mutations would still reach.
+  client.$transaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
+    const snapshot = structuredClone(state);
+    try {
+      return await callback(client);
+    } catch (err) {
+      Object.assign(state, structuredClone(snapshot));
+      throw err;
+    }
+  });
+
+  return { prisma: client };
+});
 
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
@@ -585,6 +618,119 @@ describe("processWebhookEvent", () => {
       fakeSubscription({ customer: "cus_unknown" }),
     );
     await expect(processWebhookEvent(event)).resolves.toBeUndefined();
+  });
+
+  // Regression for the confirmed bug this transaction wrapper fixes:
+  // idempotency used to be persisted (a separate, already-committed
+  // write) before the actual business effect ran. A later failure —
+  // this test simulates a generic transient one, not tied to any
+  // single code path, to prove the property belongs to the
+  // transaction wrapper itself — left the event permanently marked
+  // processed even though nothing was actually applied. Stripe's
+  // automatic retry of that same event id would then be silently
+  // treated as a duplicate and skipped, losing the update with no
+  // further retry possible. Verifies actual persisted state at every
+  // step (state.webhookEvents, state.organizations), not just that
+  // mocks were called — a mock-calls-only assertion would not catch a
+  // rollback that silently failed to actually undo anything.
+  it("rolls back the idempotency record when processing fails, so a retry with the same event id is correctly treated as new (not silently skipped as a duplicate)", async () => {
+    const org = createOrg({ stripeCustomerId: "cus_123", seatLimit: 5, subscriptionStatus: null });
+    const event = fakeEvent(
+      "customer.subscription.updated",
+      fakeSubscription({ status: "active" }),
+      "evt_rollback_test",
+    );
+
+    // Attempt 1: the business effect fails.
+    vi.mocked(prisma.organization.update).mockImplementationOnce(() => {
+      throw new Error("simulated transient database error");
+    });
+
+    await expect(processWebhookEvent(event)).rejects.toThrow("simulated transient database error");
+
+    // Transaction rolled back: neither the idempotency record nor the
+    // business effect survived — both writes happened in the same
+    // transaction the thrown error aborted.
+    expect(state.webhookEvents.some((e) => e.id === "evt_rollback_test")).toBe(false);
+    expect(state.organizations.find((o) => o.id === org.id)!.seatLimit).toBe(5);
+
+    // Attempt 2: same event id. mockImplementationOnce from attempt 1
+    // has already been consumed, so this call uses the real
+    // (state-mutating) mock implementation and succeeds.
+    await processWebhookEvent(event);
+
+    expect(state.webhookEvents.some((e) => e.id === "evt_rollback_test")).toBe(true);
+    const updated = state.organizations.find((o) => o.id === org.id)!;
+    expect(updated.seatLimit).toBe(25); // fakeSubscription()'s item.quantity
+    expect(updated.subscriptionStatus).toBe("ACTIVE");
+
+    // Attempt 3: same event id again — now a genuine duplicate.
+    // Mutate the org first so a reprocessing would be visible if the
+    // business effect were (incorrectly) applied again.
+    updated.seatLimit = 999;
+    await processWebhookEvent(event);
+
+    expect(state.organizations.find((o) => o.id === org.id)!.seatLimit).toBe(999);
+  });
+
+  it("rejects an unrecognized Stripe subscription status, and rolls back the idempotency record the same way any other processing failure does", async () => {
+    createOrg({ stripeCustomerId: "cus_123" });
+    const event = fakeEvent(
+      "customer.subscription.updated",
+      // A status value that predates or postdates the known set —
+      // toSubscriptionStatus's own explicit throw, not a mocked one.
+      fakeSubscription({ status: "some_future_status" as Stripe.Subscription.Status }),
+      "evt_unrecognized_status",
+    );
+
+    await expect(processWebhookEvent(event)).rejects.toThrow(
+      "Unrecognized Stripe subscription status",
+    );
+
+    expect(state.webhookEvents.some((e) => e.id === "evt_unrecognized_status")).toBe(false);
+  });
+
+  it("logs an error and does not throw when the subscription has no items", async () => {
+    const org = createOrg({ stripeCustomerId: "cus_123", seatLimit: 5 });
+    const event = fakeEvent(
+      "customer.subscription.updated",
+      fakeSubscription({ items: { object: "list", data: [], has_more: false, url: "" } as never }),
+      "evt_no_items",
+    );
+
+    await expect(processWebhookEvent(event)).resolves.toBeUndefined();
+    // Skipped, not applied with a wrong/default seat count — and the
+    // event is still correctly recorded as processed, since "no
+    // items" is a handled, not-thrown case (see billing.webhook.ts's
+    // own early return), unlike the unrecognized-status case above.
+    expect(state.organizations.find((o) => o.id === org.id)!.seatLimit).toBe(5);
+    expect(state.webhookEvents.some((e) => e.id === "evt_no_items")).toBe(true);
+  });
+
+  it("a concurrent duplicate delivery is rejected atomically by the unique constraint, not a racy findUnique-then-create", async () => {
+    // Confirms recordWebhookEventIfNew's own create()+P2002 approach
+    // is what's actually exercised — not a vulnerable check-then-act
+    // idempotency implementation. Two deliveries "racing" here can't
+    // really race inside a single-threaded mock, but this proves the
+    // real code path handles a second create() attempt for an
+    // already-existing id via the P2002 branch, exactly as it would
+    // under genuine concurrent Postgres transactions.
+    const org = createOrg({ stripeCustomerId: "cus_123", seatLimit: 5 });
+    const event = fakeEvent(
+      "customer.subscription.updated",
+      fakeSubscription({ status: "active" }),
+      "evt_concurrent",
+    );
+
+    const [first, second] = await Promise.allSettled([
+      processWebhookEvent(event),
+      processWebhookEvent(event),
+    ]);
+
+    expect(first.status).toBe("fulfilled");
+    expect(second.status).toBe("fulfilled");
+    expect(state.webhookEvents.filter((e) => e.id === "evt_concurrent")).toHaveLength(1);
+    expect(state.organizations.find((o) => o.id === org.id)!.seatLimit).toBe(25);
   });
 });
 

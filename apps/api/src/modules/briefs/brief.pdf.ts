@@ -1,6 +1,11 @@
 import PDFDocument from "pdfkit";
 import type { ClinicalBriefDto } from "@embr/types";
 import { categoryLabel } from "../export/pdf.js";
+import {
+  EMBR_PDF_BODY_FONT,
+  EMBR_PDF_HEADING_FONT,
+  registerEmbrPdfFonts,
+} from "../../lib/pdf-fonts.js";
 
 /** categoryLabel (above) does a generic underscore-to-title-case
  * transform, which is correct for symptom categories but would render
@@ -24,14 +29,15 @@ export function buildClinicalBriefPdf(
   userEmail: string,
 ): PDFKit.PDFDocument {
   const doc = new PDFDocument({ margin: 50, size: "A4" });
+  registerEmbrPdfFonts(doc);
   const brass = "#b8974f";
   const navy = "#0f1b2d";
 
-  doc.fillColor(navy).fontSize(20).font("Helvetica-Bold").text("EMBR BRIEF");
+  doc.fillColor(navy).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR BRIEF");
   doc.moveDown(0.3);
   doc
     .fontSize(10)
-    .font("Helvetica")
+    .font(EMBR_PDF_BODY_FONT)
     .fillColor("#555555")
     .text(`Prepared for ${userEmail}`)
     .text(`Range: ${brief.fromDate} to ${brief.toDate}`)
@@ -52,11 +58,11 @@ export function buildClinicalBriefPdf(
   doc.moveDown(1);
 
   // ---- AI narrative ----
-  doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Summary");
+  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Summary");
   doc.moveDown(0.4);
   doc
     .fontSize(10)
-    .font("Helvetica")
+    .font(EMBR_PDF_BODY_FONT)
     .fillColor("#333333")
     .text(brief.aiNarrative, { align: "left" });
   doc.moveDown(1);
@@ -69,9 +75,9 @@ export function buildClinicalBriefPdf(
   // observation/association text the web and mobile "Grounded in your
   // data" section does — never re-derived or reworded here.
   if (brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation) {
-    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Grounded in your data");
+    doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Grounded in your data");
     doc.moveDown(0.4);
-    doc.fontSize(10).font("Helvetica").fillColor("#333333");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor("#333333");
     for (const id of brief.citedPatternIds) {
       const pattern = brief.interpretation.patterns.find((entry) => entry.id === id);
       // Should always resolve — see the same reasoning in page.tsx/
@@ -88,9 +94,13 @@ export function buildClinicalBriefPdf(
   }
 
   // ---- Discussion topics ----
-  doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Questions to bring to your GP");
+  doc
+    .fillColor(navy)
+    .fontSize(14)
+    .font(EMBR_PDF_HEADING_FONT)
+    .text("Questions to bring to your GP");
   doc.moveDown(0.4);
-  doc.fontSize(10).font("Helvetica").fillColor("#333333");
+  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor("#333333");
   for (const topic of brief.aiDiscussionTopics) {
     doc.text(`•  ${topic}`, { indent: 0 });
     doc.moveDown(0.2);
@@ -98,16 +108,16 @@ export function buildClinicalBriefPdf(
   doc.moveDown(0.8);
 
   // ---- Symptom frequency ----
-  doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Symptom frequency");
+  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Symptom frequency");
   doc.moveDown(0.4);
   if (brief.symptomSummary.length === 0) {
     doc
       .fontSize(10)
-      .font("Helvetica")
+      .font(EMBR_PDF_BODY_FONT)
       .fillColor("#555555")
       .text("No symptoms logged in this range.");
   } else {
-    doc.fontSize(10).font("Helvetica");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, count, severityBreakdown } of brief.symptomSummary) {
       const bySeverity = Object.entries(severityBreakdown)
         .map(([severity, n]) => `${n} ${severity.toLowerCase()}`)
@@ -131,10 +141,10 @@ export function buildClinicalBriefPdf(
     doc
       .fillColor(navy)
       .fontSize(14)
-      .font("Helvetica-Bold")
+      .font(EMBR_PDF_HEADING_FONT)
       .text("Compared with the previous period");
     doc.moveDown(0.4);
-    doc.fontSize(10).font("Helvetica");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, currentCount, previousCount } of brief.frequencyComparison) {
       doc.fillColor(navy).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
       doc
@@ -156,9 +166,9 @@ export function buildClinicalBriefPdf(
   // interpretation framing every other deterministic section here
   // uses.
   if (brief.persistentSymptoms && brief.persistentSymptoms.length > 0) {
-    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Ongoing symptoms");
+    doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Ongoing symptoms");
     doc.moveDown(0.4);
-    doc.fontSize(10).font("Helvetica").fillColor("#333333");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor("#333333");
     for (const category of brief.persistentSymptoms) {
       doc.text(`${categoryLabel(category)} remained present across both periods.`);
     }
@@ -174,11 +184,11 @@ export function buildClinicalBriefPdf(
   // same observation-not-causation framing web and mobile use.
   if (brief.coOccurrence) {
     const { categoryA, categoryB, days } = brief.coOccurrence;
-    doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Patterns noticed");
+    doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Patterns noticed");
     doc.moveDown(0.4);
     doc
       .fontSize(10)
-      .font("Helvetica")
+      .font(EMBR_PDF_BODY_FONT)
       .fillColor("#333333")
       .text(
         `${categoryLabel(categoryA)} and ${categoryLabel(categoryB)} were both reported on the` +
@@ -188,10 +198,10 @@ export function buildClinicalBriefPdf(
   }
 
   // ---- Cycle summary ----
-  doc.fillColor(navy).fontSize(14).font("Helvetica-Bold").text("Cycle summary");
+  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Cycle summary");
   doc.moveDown(0.4);
   const { averageCycleLengthDays, cycleCount, periodDaysLogged } = brief.cycleSummary;
-  doc.fontSize(10).font("Helvetica").fillColor(navy);
+  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(navy);
   if (averageCycleLengthDays === null) {
     doc.text("Not enough period-start entries in this range to compute cycle length.");
   } else {
@@ -209,17 +219,17 @@ export function buildClinicalBriefPdf(
   doc
     .fillColor(navy)
     .fontSize(14)
-    .font("Helvetica-Bold")
+    .font(EMBR_PDF_HEADING_FONT)
     .text("Treatments logged during this period");
   doc.moveDown(0.4);
   if (brief.treatmentSummary.length === 0) {
     doc
       .fontSize(10)
-      .font("Helvetica")
+      .font(EMBR_PDF_BODY_FONT)
       .fillColor("#555555")
       .text("No treatments logged in this range.");
   } else {
-    doc.fontSize(10).font("Helvetica");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { name, category, startDate, endDate } of brief.treatmentSummary) {
       const dateRange = `${startDate} – ${endDate ?? "Ongoing"}`;
       doc.fillColor(navy).text(`${name}`, { continued: true, width: 300 });
@@ -229,7 +239,7 @@ export function buildClinicalBriefPdf(
   doc.moveDown(0.4);
   doc
     .fontSize(9)
-    .font("Helvetica")
+    .font(EMBR_PDF_BODY_FONT)
     .fillColor("#888888")
     .text(
       "This reflects what you've logged. It does not assess whether a treatment is working or" +
@@ -250,10 +260,10 @@ export function buildClinicalBriefPdf(
     doc
       .fillColor(navy)
       .fontSize(14)
-      .font("Helvetica-Bold")
+      .font(EMBR_PDF_HEADING_FONT)
       .text("Observed changes after starting treatment");
     doc.moveDown(0.4);
-    doc.fontSize(10).font("Helvetica");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { name, before, after, insufficientData } of brief.treatmentImpact) {
       doc.fillColor(navy).text(name);
       if (insufficientData) {
@@ -273,7 +283,7 @@ export function buildClinicalBriefPdf(
     doc.moveDown(0.4);
     doc
       .fontSize(9)
-      .font("Helvetica")
+      .font(EMBR_PDF_BODY_FONT)
       .fillColor("#888888")
       .text(
         "This reflects what you've logged. It does not assess whether a treatment is working or" +

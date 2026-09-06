@@ -18,11 +18,25 @@ function reflectionCopy(
 ): { heading: string; message: string; caveat?: string } {
   switch (reflection.type) {
     case "LOGGING_ACTIVITY":
+      // daysLogged needs its own independent plural form, separate
+      // from logCount's — composed via its own t() call, the same
+      // two-step pattern web/mobile already use elsewhere for two
+      // independently-pluralizable numbers in one sentence (e.g.
+      // brief.tsx's totalPhrase). A single t() call's _one/_other
+      // selection keys off exactly one interpolated value (`count`),
+      // so passing both logCount and daysLogged as bare numbers to
+      // one call silently applies logCount's plural form to daysLogged
+      // too — wrong whenever they diverge, e.g. 3 logs on a single
+      // day produced the literal, shipped text "across 1 days."
+      // before this fix (confirmed by directly executing i18next
+      // against that exact input, not assumed).
       return {
         heading: t("reflections.loggingActivity.heading"),
         message: t("reflections.loggingActivity.message", {
           count: reflection.logCount,
-          days: reflection.daysLogged,
+          daysPhrase: t("reflections.loggingActivity.daysPhrase", {
+            count: reflection.daysLogged,
+          }),
         }),
       };
     case "SYMPTOM_FREQUENCY":
