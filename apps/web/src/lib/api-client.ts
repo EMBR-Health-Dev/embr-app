@@ -217,3 +217,37 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     return rawFetch<T>(path, { ...options, _isRetry: true });
   }
 }
+
+// For binary (PDF) responses — apiFetch/rawFetch always call
+// res.json(), which a PDF isn't. Same URL-building, same-origin
+// cookie auth, and error-shape parsing as rawFetch, but no
+// refresh-and-retry: this backs a single, occasional user-initiated
+// download rather than every authenticated call in the app, so a
+// session that expires in the exact instant between generating a
+// brief and clicking "download" surfaces as a plain, retryable error
+// state rather than a silent refresh — simpler, and correct for how
+// rarely this specific path runs. A real refresh happens on the next
+// ordinary apiFetch call (e.g. reloading the briefs list) regardless.
+export async function apiFetchBlob(
+  path: string,
+  query?: Record<string, string | undefined>,
+): Promise<Blob> {
+  const searchParams = new URLSearchParams();
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) searchParams.set(key, value);
+    }
+  }
+  const queryString = searchParams.toString();
+  const url = `/api${path}${queryString ? `?${queryString}` : ""}`;
+
+  const res = await fetch(url, { credentials: "same-origin" });
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const err = json?.error ?? { code: "UNKNOWN", message: "Something went wrong" };
+    throw new ApiError(res.status, err.code, err.message, err.details);
+  }
+
+  return res.blob();
+}

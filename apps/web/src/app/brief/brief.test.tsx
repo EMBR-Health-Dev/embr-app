@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
@@ -28,6 +28,7 @@ const listMock = vi
   .mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
 const getMock = vi.fn();
 const deleteMock = vi.fn();
+const summaryPdfMock = vi.fn();
 const trendsMock = vi.fn().mockResolvedValue({
   briefCount: 0,
   earliestBriefFromDate: null,
@@ -44,6 +45,9 @@ vi.mock("../../lib/api", () => ({
       get: (...args: unknown[]) => getMock(...args),
       delete: (...args: unknown[]) => deleteMock(...args),
       pdfUrl: (id: string) => `/api/briefs/${id}/pdf`,
+    },
+    export: {
+      clinicianSummaryPdf: (...args: unknown[]) => summaryPdfMock(...args),
     },
   },
 }));
@@ -100,6 +104,7 @@ beforeEach(() => {
   listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
   getMock.mockReset();
   deleteMock.mockReset();
+  summaryPdfMock.mockReset();
   trendsMock.mockClear();
   trendsMock.mockResolvedValue({
     briefCount: 0,
@@ -572,6 +577,114 @@ describe("Brief page — PDF download", () => {
 
     const link = await screen.findByText("Download PDF");
     expect(link).toHaveAttribute("href", "/api/briefs/b-pdf-1/pdf");
+  });
+});
+
+describe("Brief page — clinician summary download", () => {
+  // jsdom doesn't implement the object-URL APIs the download flow
+  // uses to hand a fetched Blob to the browser — stub them so the
+  // component's own logic can run without throwing on an unrelated,
+  // unimplemented jsdom gap.
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => "blob:mock-url");
+    URL.revokeObjectURL = vi.fn();
+    // jsdom attempts (and logs a warning for) real navigation when a
+    // dynamically-created <a> is clicked — the component's own logic
+    // under test is "did we build and click the link with the right
+    // href," not "does jsdom implement navigation," so stub the actual
+    // navigation step.
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.mocked(HTMLAnchorElement.prototype.click).mockRestore();
+  });
+
+  it("requests the summary PDF scoped to this brief's own date range and triggers a download", async () => {
+    generateMock.mockResolvedValue(
+      brief({ id: "b-sum-1", fromDate: "2026-01-01", toDate: "2026-02-01" }),
+    );
+    summaryPdfMock.mockResolvedValue(new Blob(["%PDF-1.4 fake"], { type: "application/pdf" }));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    const button = await screen.findByRole("button", { name: "Download clinician summary" });
+    await user.click(button);
+
+    await waitFor(() => {
+      expect(summaryPdfMock).toHaveBeenCalledWith({ from: "2026-01-01", to: "2026-02-01" });
+    });
+    // The actual PDF-ness of the response and its Japanese-content
+    // fidelity are the backend's own responsibility, already verified
+    // directly against a real Blob in apps/api/test/export.pdf.test.ts
+    // — this level only needs to confirm the Blob this mock returns is
+    // what gets handed off to the browser's download mechanism.
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob)));
+  });
+
+  it("shows a loading state while the summary is being prepared", async () => {
+    generateMock.mockResolvedValue(brief({ id: "b-sum-2" }));
+    let resolveDownload: (blob: Blob) => void = () => {};
+    summaryPdfMock.mockReturnValue(new Promise((resolve) => (resolveDownload = resolve)));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    const button = await screen.findByRole("button", { name: "Download clinician summary" });
+    await user.click(button);
+
+    expect(await screen.findByRole("button", { name: "Preparing…" })).toBeDisabled();
+    resolveDownload(new Blob(["%PDF-1.4"], { type: "application/pdf" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Download clinician summary" })).not.toBeDisabled(),
+    );
+  });
+
+  it("shows the server's own error message when the summary request fails", async () => {
+    generateMock.mockResolvedValue(brief({ id: "b-sum-3" }));
+    const { ApiError } = await import("../../lib/api-client");
+    summaryPdfMock.mockRejectedValue(new ApiError(401, "UNAUTHORIZED", "Please log in again"));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    const button = await screen.findByRole("button", { name: "Download clinician summary" });
+    await user.click(button);
+
+    expect(await screen.findByText("Please log in again")).toBeInTheDocument();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a generic error message for a non-API failure", async () => {
+    generateMock.mockResolvedValue(brief({ id: "b-sum-4" }));
+    summaryPdfMock.mockRejectedValue(new Error("network down"));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    const button = await screen.findByRole("button", { name: "Download clinician summary" });
+    await user.click(button);
+
+    expect(
+      await screen.findByText("Couldn't prepare the summary — try again."),
+    ).toBeInTheDocument();
   });
 });
 

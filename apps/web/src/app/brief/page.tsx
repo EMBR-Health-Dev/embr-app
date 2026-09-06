@@ -29,6 +29,8 @@ export default function BriefPage() {
   const [openBrief, setOpenBrief] = useState<ClinicalBriefDto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [trends, setTrends] = useState<BriefTrendsDto | null>(null);
+  const [downloadingSummary, setDownloadingSummary] = useState(false);
+  const [summaryDownloadError, setSummaryDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -68,6 +70,32 @@ export default function BriefPage() {
       setGenerateError(err instanceof ApiError ? err.message : t("generateError"));
     } finally {
       setGenerating(false);
+    }
+  }
+
+  // The clinician-summary PDF (raw symptom/cycle/treatment data, no AI
+  // narrative) is a different document from the brief's own PDF above
+  // — see docs/openapi.yaml's /export/summary.pdf description. Scoped
+  // to the same fromDate/toDate the brief was just generated for, so
+  // the person doesn't have to re-enter a range they already picked on
+  // the separate /export page.
+  async function handleDownloadSummary(brief: ClinicalBriefDto) {
+    setSummaryDownloadError(null);
+    setDownloadingSummary(true);
+    try {
+      const blob = await api.export.clinicianSummaryPdf({ from: brief.fromDate, to: brief.toDate });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "embr-health-summary.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setSummaryDownloadError(err instanceof ApiError ? err.message : t("downloadSummaryError"));
+    } finally {
+      setDownloadingSummary(false);
     }
   }
 
@@ -143,12 +171,24 @@ export default function BriefPage() {
         <section className="mt-8 rounded border border-brass/40 bg-brass/5 p-5">
           <h2 className="font-display text-lg text-navy">{t("briefReady")}</h2>
           <BriefContent brief={justGenerated} />
-          <a
-            href={api.briefs.pdfUrl(justGenerated.id)}
-            className="mt-4 inline-block text-sm font-medium text-teal underline underline-offset-2"
-          >
-            {t("downloadPdf")}
-          </a>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <a
+              href={api.briefs.pdfUrl(justGenerated.id)}
+              className="inline-block text-sm font-medium text-teal underline underline-offset-2"
+            >
+              {t("downloadPdf")}
+            </a>
+            <button
+              onClick={() => void handleDownloadSummary(justGenerated)}
+              disabled={downloadingSummary}
+              className="text-sm font-medium text-teal underline underline-offset-2 disabled:opacity-50"
+            >
+              {downloadingSummary ? t("downloadingSummary") : t("downloadSummary")}
+            </button>
+          </div>
+          {summaryDownloadError && (
+            <p className="mt-2 text-sm text-red-600">{summaryDownloadError}</p>
+          )}
         </section>
       )}
 

@@ -22,7 +22,7 @@ import type {
   TreatmentImpactDto,
   UserDto,
 } from "@embr/types";
-import { apiFetch } from "./api-client";
+import { apiFetch, apiFetchBlob } from "./api-client";
 
 export const api = {
   auth: {
@@ -245,6 +245,18 @@ export const api = {
     // a plain same-origin URL the browser handles natively (cookies
     // included automatically via the /api proxy), not a fetch() call.
     pdfUrl: (id: string) => `/api/briefs/${id}/pdf`,
+  },
+
+  export: {
+    // Unlike briefs.pdfUrl above, this one is consumed via
+    // apiFetchBlob (fetch + explicit error handling), not a plain <a
+    // href> — see brief/page.tsx's handleDownloadSummary for why: a
+    // contextual download button needs a loading state and an
+    // in-page error message on failure, which a bare anchor tag can't
+    // provide. The /export page's own links stay as plain hrefs
+    // since they don't need either.
+    clinicianSummaryPdf: (query: { from?: string; to?: string }) =>
+      apiFetchBlob("/export/summary.pdf", query),
   },
 
   sso: {
