@@ -24,6 +24,7 @@ const { state, nextId } = vi.hoisted(() => {
         name: string;
         slug: string;
         seatLimit: number | null;
+        subscriptionStatus: string | null;
         createdAt: Date;
         updatedAt: Date;
       }>,
@@ -245,6 +246,7 @@ vi.mock("../src/lib/prisma.js", () => {
           name: data.name,
           slug: data.slug,
           seatLimit: data.seatLimit ?? null,
+          subscriptionStatus: null,
           createdAt: now(),
           updatedAt: now(),
         };
@@ -356,6 +358,27 @@ vi.mock("../src/lib/prisma.js", () => {
       ),
     },
     organizationInvite: {
+      count: vi.fn(
+        ({
+          where,
+        }: {
+          where: {
+            organizationId: string;
+            consumedAt: null;
+            expiresAt: { gt: Date };
+            email?: { not: string };
+          };
+        }) => {
+          const count = state.invites.filter(
+            (i) =>
+              i.organizationId === where.organizationId &&
+              i.consumedAt === null &&
+              i.expiresAt.getTime() > where.expiresAt.gt.getTime() &&
+              (!where.email || i.email !== where.email.not),
+          ).length;
+          return Promise.resolve(count);
+        },
+      ),
       create: vi.fn(
         ({
           data,
@@ -595,6 +618,121 @@ describe("org invite + accept flow", () => {
       .send({ token: "not-a-real-token" });
     expect(res.status).toBe(400);
   });
+
+  // Confirmed as a real, reachable bug before writing anything here,
+  // no concurrency required: inviteMember's seat check only ever
+  // compared the *current member count* against seatLimit — it never
+  // accounted for invites already sent but not yet accepted. An admin
+  // could send more invites than there are free seats in a completely
+  // normal, sequential flow (three invites when only one seat is
+  // free), and every one of those invites accepting would push the
+  // organization over its seatLimit with nothing to stop it.
+  it("rejects a new invite once members + pending invites reach the seat limit, even though no invite has been accepted yet", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-seat1@embr.health");
+    promoteToAdmin("ops-seat1@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops-seat1@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-seat1" });
+    const organizationId = orgRes.body.data.id as string;
+    const org = state.organizations.find((o) => o.id === organizationId)!;
+    org.seatLimit = 2;
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLogin(orgAdminAgent, "orgadmin-seat1@embr.health");
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+    // 1 member (the admin) + seatLimit 2 = 1 seat genuinely free.
+
+    const first = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "first@embr.health" });
+    expect(first.status).toBe(201);
+
+    // The one free seat is now reserved by the pending invite above —
+    // a second invite must be rejected, exactly as it would be if a
+    // second *member* already occupied that seat.
+    const second = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "second@embr.health" });
+    expect(second.status).toBe(409);
+  });
+
+  it("allows re-sending an invite to the same email at exact capacity — replacing a pending invite is not the same as adding one", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-seat2@embr.health");
+    promoteToAdmin("ops-seat2@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops-seat2@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-seat2" });
+    const organizationId = orgRes.body.data.id as string;
+    const org = state.organizations.find((o) => o.id === organizationId)!;
+    org.seatLimit = 2;
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLogin(orgAdminAgent, "orgadmin-seat2@embr.health");
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+
+    const first = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "resend-me@embr.health" });
+    expect(first.status).toBe(201);
+
+    // Same email, org still sits at exactly 1 member + 1 pending
+    // invite = seatLimit — a resend must succeed since it replaces
+    // the existing pending invite rather than adding a new one.
+    const resend = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "resend-me@embr.health" });
+    expect(resend.status).toBe(201);
+  });
+
+  it("does not let an org exceed its seat limit end to end: two invites sent while one seat is free, both accepted", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-seat3@embr.health");
+    promoteToAdmin("ops-seat3@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops-seat3@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-seat3" });
+    const organizationId = orgRes.body.data.id as string;
+    const org = state.organizations.find((o) => o.id === organizationId)!;
+    org.seatLimit = 2;
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLogin(orgAdminAgent, "orgadmin-seat3@embr.health");
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+
+    const first = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "personA@embr.health" });
+    expect(first.status).toBe(201);
+    const personAAgent = request.agent(app);
+    await registerAndLogin(personAAgent, "personA@embr.health");
+    const acceptA = await personAAgent
+      .post("/organizations/invites/accept")
+      .send({ token: sentInvites[sentInvites.length - 1]!.token });
+    expect(acceptA.status).toBe(200);
+
+    // Now genuinely at capacity: 2 members, seatLimit 2, 0 pending.
+    const second = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "personB@embr.health" });
+    expect(second.status).toBe(409);
+
+    const membersRes = await orgAdminAgent.get(`/organizations/${organizationId}/members`);
+    expect(membersRes.body.data.items).toHaveLength(2);
+  });
 });
 
 describe("GET /organizations/:organizationId/members", () => {
@@ -622,6 +760,42 @@ describe("GET /organizations/:organizationId/members", () => {
     expect(res.body.data.total).toBe(2);
     const fields = Object.keys(res.body.data.items[0]);
     expect(fields.sort()).toEqual(["email", "id", "joinedAt", "role", "userId"].sort());
+  });
+
+  // Documents current, confirmed behavior rather than a bug: traced
+  // every organization route (organization.routes.ts) and found each
+  // one gated by requireRole/requireOrgRole only — subscriptionStatus
+  // is never checked anywhere outside the billing module itself
+  // (confirmed by a repo-wide grep). Per env.ts's own doc comment on
+  // STRIPE_SEAT_PRICE_ID, a tiered/gated pricing model is explicitly
+  // "a later, deliberate decision, not assumed here" — so this isn't
+  // an API bypassing an intended boundary, it's unfinished
+  // monetization infrastructure with no specified access rule yet to
+  // violate. This test exists as a canary: if server-side entitlement
+  // enforcement is ever added, this specific test's expectation
+  // should change right along with it, not silently stop reflecting
+  // reality.
+  it("an ORG_ADMIN can still access the roster when the organization's subscription is canceled — no server-side gate on subscriptionStatus exists today", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-billing1@embr.health");
+    promoteToAdmin("ops-billing1@embr.health");
+    await platformAdminAgent
+      .post("/auth/login")
+      .send({ email: "ops-billing1@embr.health", password: VALID_PASSWORD });
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-billing1" });
+    const organizationId = orgRes.body.data.id as string;
+    const org = state.organizations.find((o) => o.id === organizationId)!;
+    org.subscriptionStatus = "CANCELED";
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLogin(orgAdminAgent, "orgadmin-billing1@embr.health");
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/members`);
+    expect(res.status).toBe(200);
   });
 
   it("returns 404 (not 403) for a valid org the caller isn't a member of", async () => {

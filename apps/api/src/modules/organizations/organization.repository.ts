@@ -27,6 +27,32 @@ export const organizationRepository = {
     return prisma.organizationMembership.count({ where: { organizationId } });
   },
 
+  /** Same "valid" definition as findValidInvite: not yet accepted,
+   * not yet expired. A pending invite reserves a seat the same way an
+   * existing member occupies one — without counting these, an admin
+   * could send more invites than there are free seats (each
+   * invite-creation check would only ever see the *current* member
+   * count, never the invites still outstanding), and every one of
+   * them accepting would push the organization over its seatLimit
+   * with no concurrency or race required at all.
+   *
+   * excludingEmail excludes any pending invite already outstanding
+   * for that address — createInvite itself revokes and replaces that
+   * exact invite rather than adding a new one (see its own doc
+   * comment), so re-sending to someone already invited must not count
+   * as needing an *additional* seat, or a legitimate resend would be
+   * wrongly rejected the moment the org sits exactly at capacity. */
+  countPendingInvites(organizationId: string, excludingEmail?: string) {
+    return prisma.organizationInvite.count({
+      where: {
+        organizationId,
+        consumedAt: null,
+        expiresAt: { gt: new Date() },
+        ...(excludingEmail ? { email: { not: excludingEmail } } : {}),
+      },
+    });
+  },
+
   findMembership(organizationId: string, userId: string) {
     return prisma.organizationMembership.findUnique({
       where: { organizationId_userId: { organizationId, userId } },

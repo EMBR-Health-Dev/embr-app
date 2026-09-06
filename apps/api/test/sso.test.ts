@@ -183,6 +183,12 @@ vi.mock("../src/lib/prisma.js", () => ({
       }),
     },
     organizationMembership: {
+      count: vi.fn(({ where }: { where: { organizationId: string } }) => {
+        const count = state.memberships.filter(
+          (m) => m.organizationId === where.organizationId,
+        ).length;
+        return Promise.resolve(count);
+      }),
       create: vi.fn(
         ({
           data,
@@ -208,6 +214,14 @@ vi.mock("../src/lib/prisma.js", () => ({
           return Promise.resolve(found ?? null);
         },
       ),
+    },
+    organizationInvite: {
+      // Pending invites aren't exercised by any SSO test — their
+      // interaction with seatLimit is already covered directly in
+      // organization.test.ts. A stub returning 0 keeps this file's
+      // seat-limit tests focused on the member-count side of the same
+      // check ssoService.handleCallback now shares with inviteMember.
+      count: vi.fn().mockResolvedValue(0),
     },
     organizationSsoConnection: {
       findUnique: vi.fn(({ where }: { where: { organizationId?: string; id?: string } }) => {
@@ -460,6 +474,78 @@ describe("GET /auth/sso/callback", () => {
     expect(user!.emailVerifiedAt).not.toBeNull();
     const membership = state.memberships.find((m) => m.userId === user!.id);
     expect(membership).toMatchObject({ organizationId: org.id, role: "ORG_MEMBER" });
+  });
+
+  // Confirmed as a real, reachable bug before writing anything here:
+  // JIT provisioning called organizationRepository.createMembership
+  // unconditionally, with no seatLimit check at all — a completely
+  // separate path onto the organization from inviteMember, and one
+  // that bypassed its seat enforcement entirely. Any employee with a
+  // verified @<allowedEmailDomain> address could join just by
+  // authenticating via the configured IdP, regardless of how many
+  // seats the organization had actually paid for, with no admin
+  // action required per person.
+  it("rejects a new SSO login once the organization is at its seat limit", async () => {
+    const app = createApp();
+    const org = addOrganization("Acme", "acme");
+    org.seatLimit = 1;
+    addSsoConnection(org.id, { allowedEmailDomain: "acme.com", enabled: true });
+    // One existing member already occupies the org's only seat.
+    const existingUserId = await registerAndLogin(request.agent(app), "founder@acme.com");
+    state.memberships.push({
+      id: nextId(),
+      organizationId: org.id,
+      userId: existingUserId,
+      createdAt: now(),
+      role: "ORG_ADMIN",
+    });
+
+    oidcState.nextIdentity = { email: "newperson@acme.com", emailVerified: true, subject: "sub-1" };
+    await startAttempt(app, "newperson@acme.com");
+    const res = await request(app)
+      .get("/auth/sso/callback")
+      .query({ code: "test-code", state: "test-state" });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("http://localhost:3000/login?ssoError=sso_callback_failed");
+    expect(res.headers["set-cookie"]).toBeUndefined();
+    // No membership was created for the rejected login — the org
+    // genuinely stayed at its seat limit, not just an error surfaced
+    // while a membership was created anyway.
+    const newUser = state.users.find((u) => u.email === "newperson@acme.com");
+    if (newUser) {
+      expect(state.memberships.some((m) => m.userId === newUser.id)).toBe(false);
+    }
+    expect(state.memberships.filter((m) => m.organizationId === org.id)).toHaveLength(1);
+  });
+
+  it("allows an SSO login for an existing member even when the organization is at its seat limit", async () => {
+    // The seat-limit check only applies to *new* memberships — an
+    // already-provisioned member logging in again must never be
+    // locked out just because the org later filled up or its limit
+    // was lowered.
+    const app = createApp();
+    const org = addOrganization("Acme", "acme");
+    org.seatLimit = 1;
+    addSsoConnection(org.id, { allowedEmailDomain: "acme.com", enabled: true });
+    const agent = request.agent(app);
+    const existingUserId = await registerAndLogin(agent, "existing@acme.com");
+    state.memberships.push({
+      id: nextId(),
+      organizationId: org.id,
+      userId: existingUserId,
+      createdAt: now(),
+      role: "ORG_MEMBER",
+    });
+
+    oidcState.nextIdentity = { email: "existing@acme.com", emailVerified: true, subject: "sub-2" };
+    await startAttempt(app, "existing@acme.com");
+    const res = await request(app)
+      .get("/auth/sso/callback")
+      .query({ code: "test-code", state: "test-state" });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("http://localhost:3000/dashboard");
   });
 
   it("logs in and joins an existing (password-registered) user by matching email", async () => {
