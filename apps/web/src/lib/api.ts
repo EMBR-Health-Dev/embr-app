@@ -14,6 +14,8 @@ import type {
   OrganizationMemberDto,
   OrgSymptomFrequencyDto,
   PaginatedResponse,
+  ReflectionDto,
+  ReflectionType,
   SsoConnectionDto,
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
@@ -276,5 +278,16 @@ export const api = {
       appointmentStatus?: string;
       status?: "completed" | "skipped";
     }) => apiFetch<OnboardingProfileDto>("/onboarding", { method: "PATCH", body: input }),
+  },
+
+  reflections: {
+    list: (query?: { from?: string; to?: string }) =>
+      apiFetch<ReflectionDto[]>("/reflections", { query }),
+
+    // 204 on success — same convention as apps/mobile: the caller
+    // drops the dismissed reflection from its own state rather than
+    // re-fetching the list.
+    dismiss: (input: { type: ReflectionType; key: string }) =>
+      apiFetch<void>("/reflections/dismissals", { method: "POST", body: input }),
   },
 };

@@ -9,6 +9,7 @@ import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
+import { ReflectionsSection } from "../../components/reflections-section";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
 
@@ -50,6 +51,11 @@ function DashboardContent() {
   const [managesOrg, setManagesOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
+  // Bumped on every successful log submission — ReflectionsSection
+  // re-fetches whenever this changes. Same "acknowledge right after
+  // logging" contract as apps/mobile/app/(app)/index.tsx's identical
+  // refreshKey.
+  const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
 
   const suggestedCategory = searchParams.get("logCategory");
   const wantsFirstLog = searchParams.get("firstLog") !== null || Boolean(suggestedCategory);
@@ -107,8 +113,10 @@ function DashboardContent() {
   // The smallest possible ongoing reflection: how many logs this week
   // and the most common category, reusing the same server-side
   // aggregate the Trends page already calls (Milestone 9) rather than
-  // adding a new endpoint for a single summary line. Mirrors
-  // apps/mobile/app/(app)/index.tsx's identical reflection line.
+  // adding a new endpoint for a single summary line. This is a
+  // separate, narrower thing from the /reflections feature below
+  // (four richer, dismissible reflection types) — not a substitute
+  // for it.
   async function loadWeeklyFrequency() {
     const from = new Date();
     from.setDate(from.getDate() - 7);
@@ -152,6 +160,7 @@ function DashboardContent() {
       setConfirmation(t("hotFlashConfirmation"));
       const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
       setWeeklyFrequency(frequency);
+      setReflectionsRefreshKey((key) => key + 1);
     } catch (err) {
       setConfirmation(err instanceof ApiError ? err.message : t("hotFlashError"));
     }
@@ -171,6 +180,7 @@ function DashboardContent() {
       setConfirmation(t("logConfirmation"));
       const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
       setWeeklyFrequency(frequency);
+      setReflectionsRefreshKey((key) => key + 1);
     } finally {
       setSubmitting(false);
     }
@@ -247,6 +257,8 @@ function DashboardContent() {
           {t("mostCommon", { category: tEnum(`category.${weeklyFrequency[0].category}`) })}
         </p>
       )}
+
+      <ReflectionsSection refreshKey={reflectionsRefreshKey} />
 
       {/* Signature interaction: one tap, no form, for the moment that
           actually needs it — mid-hot-flash is not when anyone wants to

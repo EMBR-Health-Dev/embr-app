@@ -456,5 +456,28 @@
     "impactAfterLabel": "Symptom logs since treatment began",
     "impactWindow": "{count, plural, one {# day} other {# days}}",
     "impactDisclaimer": "A count of how often you logged symptoms, not a measure of whether the treatment is working."
+  },
+  "Reflections": {
+    "heading": "Your week",
+    "dismiss": "Dismiss",
+    "loggingActivity": {
+      "heading": "Your week so far",
+      "daysPhrase": "{count, plural, one {# day} other {# days}}",
+      "message": "You've logged {count, plural, one {# time} other {# times}}, across {daysPhrase}."
+    },
+    "symptomFrequency": {
+      "heading": "What stood out this week",
+      "message": "{category} was your most frequently logged symptom, on {count, plural, one {# day} other {# days}}."
+    },
+    "coOccurrence": {
+      "heading": "Something you may want to notice",
+      "message": "You logged {categoryA} and {categoryB} on the same {count, plural, one {# day} other {# days}}.",
+      "caveat": "This is a record of what you logged, not a medical conclusion."
+    },
+    "treatmentContext": {
+      "heading": "Since starting {name}",
+      "message": "You've logged {count, plural, one {# symptom entry} other {# symptom entries}} during this period.",
+      "caveat": "A count of what you've logged during this treatment — not a measure of how well it's working."
+    }
   }
 }

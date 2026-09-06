@@ -456,5 +456,28 @@
     "impactAfterLabel": "治療開始後の症状記録",
     "impactWindow": "{count, plural, other {#日間}}",
     "impactDisclaimer": "症状を記録した回数であり、治療の効果を示すものではありません。"
+  },
+  "Reflections": {
+    "heading": "今週",
+    "dismiss": "閉じる",
+    "loggingActivity": {
+      "heading": "今週の記録",
+      "daysPhrase": "{count, plural, other {#日間}}",
+      "message": "{daysPhrase}で、{count, plural, other {#回}}記録しました。"
+    },
+    "symptomFrequency": {
+      "heading": "今週目立ったこと",
+      "message": "{category}が今週最も多く記録された症状でした（{count, plural, other {#日}}）。"
+    },
+    "coOccurrence": {
+      "heading": "気になる点",
+      "message": "{categoryA}と{categoryB}が同じ{count, plural, other {#日}}に記録されています。",
+      "caveat": "これはあなたが記録した内容の記録であり、医学的な結論ではありません。"
+    },
+    "treatmentContext": {
+      "heading": "{name}を始めてから",
+      "message": "この期間に{count, plural, other {#件}}の症状を記録しました。",
+      "caveat": "これはこの治療期間中に記録された件数であり、効果を示すものではありません。"
+    }
   }
 }

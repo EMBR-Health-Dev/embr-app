@@ -40,6 +40,7 @@ vi.mock("../../lib/api", () => ({
     onboarding: { get: vi.fn().mockResolvedValue({ jobToBeDone: null }) },
     organizations: { mine: vi.fn().mockResolvedValue([]) },
     trends: { symptomFrequency },
+    reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
   },
 }));
 
