@@ -11,6 +11,8 @@ test-results
 .env.*.local
 # real compose api secrets (docker/api.env.example is the committed template)
 docker/api.env
+# encrypted backup artifacts (scripts/db-backup.sh output)
+backups/
 *.log
 .DS_Store
 .pnpm-store
