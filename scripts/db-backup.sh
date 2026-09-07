@@ -35,11 +35,25 @@ ENCRYPTED_FILE="${DUMP_FILE}.gpg"
 
 mkdir -p "${BACKUP_DIR}"
 
+# The plaintext dump must never survive a failed run (a gpg failure or a
+# Ctrl-C mid-encrypt would otherwise leave unencrypted health data on
+# disk); the rm below after successful encryption makes this a no-op on
+# the happy path.
+trap 'rm -f "${DUMP_FILE}"' EXIT
+
+# Prisma-style URLs carry a ?schema=public query param that libpq
+# rejects ("invalid URI query parameter") — every DATABASE_URL in this
+# repo's env examples, compose file, and CI workflow uses that shape.
+# pg_dump doesn't need the param (it dumps the whole cluster/default
+# schema), so strip the query string rather than making every caller
+# remember a script-only URL shape.
+PG_URL="${DATABASE_URL%%\?*}"
+
 echo "==> Dumping database (custom format, compressed)"
 # Custom format (-Fc) rather than plain SQL: supports parallel restore
 # and selective table restore later, and is already gzip-compressed
 # internally so we're not double-compressing on top of gpg.
-pg_dump "${DATABASE_URL}" -Fc -f "${DUMP_FILE}"
+pg_dump "${PG_URL}" -Fc -f "${DUMP_FILE}"
 
 echo "==> Encrypting dump"
 gpg --batch --yes --symmetric --cipher-algo AES256 \

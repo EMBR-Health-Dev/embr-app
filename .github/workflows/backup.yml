@@ -87,7 +87,7 @@ jobs:
       - name: Restore into scratch database and sanity-check
         env:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-          RESTORE_TEST_DB_URL: postgresql://embr:restore_test_password@localhost:5432/embr_restore_test?schema=public
+          RESTORE_TEST_DB_URL: postgresql://embr:restore_test_password@localhost:5432/embr_restore_test
         run: |
           LATEST=$(ls -t backups/embr-*.dump.gpg | head -1)
           ./scripts/db-restore-test.sh "$LATEST"
