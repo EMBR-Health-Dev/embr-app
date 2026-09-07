@@ -31,12 +31,20 @@ EMBR is not a diagnostic tool and does not give medical advice. It turns what a 
 
 ```bash
 cp .env.example .env
+cp docker/api.env.example docker/api.env   # one-time: api secrets for the compose stack
 pnpm install
 pnpm docker:up            # postgres, redis, mailhog
 pnpm db:generate
 pnpm db:migrate
 pnpm dev                  # runs all apps in parallel via Turborepo
 ```
+
+`docker/api.env` holds the env values the API's fail-closed config
+requires (JWT secrets, SSO key, Anthropic key) when it runs inside
+compose — the root `.env` covers the host dev server, this file covers
+the containerized one. It's gitignored; the committed
+`docker/api.env.example` documents each key. `pnpm docker:up` fails
+fast with a "env file not found" error until the copy exists.
 
 - API: http://localhost:4000 (docs at `/docs`, health at `/health/live` and `/health/ready`)
 - Web: http://localhost:3000

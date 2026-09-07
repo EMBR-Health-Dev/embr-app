@@ -42,8 +42,26 @@ App already does would just be two systems that can disagree about what
 ## Secrets management
 
 Never commit real secrets to this repo — `.env` is git-ignored precisely
-so this doesn't happen by accident. In order of preference for where
-production secrets actually live:
+so this doesn't happen by accident.
+
+Two git-ignored files hold local secrets, for two different runtimes:
+
+- **`.env`** (repo root, template `.env.example`) — the host dev
+  servers (`pnpm dev`). Everything the API and workers read, including
+  the JWT/SSO/Anthropic keys.
+- **`docker/api.env`** (template `docker/api.env.example`) — the
+  containerized API in `docker/docker-compose.yml`, which loads it via
+  `env_file` (#120). Only the four keys compose's own `environment:`
+  block doesn't already set (JWT_ACCESS_SECRET, JWT_REFRESH_SECRET,
+  SSO_ENCRYPTION_KEY, ANTHROPIC_API_KEY) — `environment:` wins over
+  `env_file` for any key both define, so DATABASE_URL/REDIS_URL/SMTP
+  keep coming from the compose file itself. One-time setup:
+  `cp docker/api.env.example docker/api.env`; without it, `compose up`
+  fails fast with "env file not found" instead of crash-looping the
+  API. Real values should be generated per machine (`openssl rand
+-base64 48` for JWT, `-base64 32` for the SSO key).
+
+In order of preference for where production secrets actually live:
 
 1. **Platform-native secrets** (Railway Variables, Vercel Environment
    Variables, Fly `fly secrets`) for anything only that platform's
