@@ -770,7 +770,15 @@ describe("Brief screen — deletion", () => {
 
     fireEvent.click(screen.getByText("Delete"));
 
-    await waitFor(() => expect(screen.queryByText("Open detail text.")).not.toBeInTheDocument());
+    await waitFor(
+      () => expect(screen.queryByText("Open detail text.")).not.toBeInTheDocument(),
+      // Explicit generous timeout: the default 1000ms proved flake-prone on
+      // CPU-starved CI runners (one observed failure ran this chain in
+      // 1176ms; locally ~130ms). The chain itself is short (mocked delete →
+      // state clear — see handleDelete), so this is contention headroom,
+      // not masking a second failure mode. See issue #115.
+      { timeout: 5000 },
+    );
   });
 
   it("clears the just-generated section when that same brief is deleted from history", async () => {
@@ -801,7 +809,13 @@ describe("Brief screen — deletion", () => {
     // `if (justGenerated?.id === id) setJustGenerated(null)` branch.
     fireEvent.click(screen.getByText("Delete"));
 
-    await waitFor(() => expect(screen.queryByText("Fresh brief text.")).not.toBeInTheDocument());
+    await waitFor(
+      () => expect(screen.queryByText("Fresh brief text.")).not.toBeInTheDocument(),
+      // Same as the sibling deletion test above — the default 1000ms
+      // waitFor timeout tripped this test once on a slow CI runner
+      // (1176ms runtime vs ~130ms locally). See issue #115.
+      { timeout: 5000 },
+    );
   });
 });
 
