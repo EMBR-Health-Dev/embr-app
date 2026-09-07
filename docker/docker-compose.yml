@@ -48,6 +48,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Secrets the api's env schema hard-requires (JWT signing, SSO
+    # client-secret encryption, Anthropic key). Real values live in
+    # docker/api.env — gitignored, never committed; the committed
+    # docker/api.env.example documents each key. `environment:` above
+    # still wins over env_file for the keys it sets, so the two blocks
+    # compose without behavior change.
+    env_file:
+      - ./api.env
     environment:
       NODE_ENV: development
       API_PORT: 4000

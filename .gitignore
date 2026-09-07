@@ -9,6 +9,8 @@ test-results
 .env
 .env.local
 .env.*.local
+# real compose api secrets (docker/api.env.example is the committed template)
+docker/api.env
 *.log
 .DS_Store
 .pnpm-store
