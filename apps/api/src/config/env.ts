@@ -25,7 +25,16 @@ function booleanEnvVar() {
 }
 
 const apiEnvSchema = z.object({
-  API_PORT: z.coerce.number().int().positive().default(4000),
+  // Railway (and most PaaS hosts) assign the listen port dynamically via
+  // `PORT` and route their own healthcheck at it — a hardcoded API_PORT
+  // ignores that, so the app binds to 4000 while the platform's
+  // healthcheck connects to whatever it assigned, and times out. `PORT`
+  // wins when present; local dev (where it's unset) keeps using
+  // API_PORT, defaulting to 4000 as before.
+  API_PORT: z.preprocess(
+    (val) => process.env.PORT ?? val,
+    z.coerce.number().int().positive().default(4000),
+  ),
   API_HOST: z.string().default("0.0.0.0"),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
