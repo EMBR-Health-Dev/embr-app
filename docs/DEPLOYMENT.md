@@ -69,7 +69,14 @@ In order of preference for where production secrets actually live:
 2. **GitHub Actions Secrets** (repo Settings → Secrets and variables →
    Actions) for anything a CI/CD workflow itself needs to read — e.g.
    `PRODUCTION_DATABASE_URL` and `BACKUP_ENCRYPTION_KEY` for
-   `.github/workflows/backup.yml`.
+   `.github/workflows/backup.yml`. `.github/workflows/retention.yml`
+   needs six: `PRODUCTION_DATABASE_URL`, `PRODUCTION_REDIS_URL`,
+   `PRODUCTION_JWT_ACCESS_SECRET`, `PRODUCTION_JWT_REFRESH_SECRET`,
+   `PRODUCTION_SSO_ENCRYPTION_KEY`, and `PRODUCTION_ANTHROPIC_API_KEY`
+   — most aren't functionally used by the retention script itself but
+   are required because it imports the API's shared `env.ts`, which
+   validates every required env var at import time regardless of
+   which script is running (see `docs/RETENTION.md`).
 3. **Doppler or 1Password Secrets Automation** if secrets need to be
    shared identically across more than one of the above (e.g. the same
    `JWT_ACCESS_SECRET` value needs to exist in both Railway and a local
