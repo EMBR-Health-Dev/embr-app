@@ -18,12 +18,28 @@ import { logger } from "../../lib/logger.js";
 const auth =
   env.SMTP_USER && env.SMTP_PASS ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined;
 
+// Explicit, short timeouts (nodemailer's own defaults are minutes long,
+// and socketTimeout has no default at all) — without these, a
+// misconfigured or firewalled SMTP_HOST doesn't fail fast, it hangs.
+// That hang is invisible on the old "localhost:1025" dev default (an
+// unreachable localhost port rejects the connection immediately), but
+// a real host that's unreachable or blocked on the configured port
+// blocks on transport.verify()/sendMail() for as long as the
+// underlying socket lets it — which is exactly what turned GET
+// /health/ready from a fast "smtp: down" into a request that hangs
+// until something upstream (Railway's edge proxy) times it out first,
+// even though /health/live never touches SMTP and keeps responding.
+const SMTP_TIMEOUT_MS = 5_000;
+
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
   port: env.SMTP_PORT,
   secure: env.SMTP_SECURE,
   requireTLS: env.SMTP_REQUIRE_TLS,
   auth,
+  connectionTimeout: SMTP_TIMEOUT_MS,
+  greetingTimeout: SMTP_TIMEOUT_MS,
+  socketTimeout: SMTP_TIMEOUT_MS,
 });
 
 /** Verifies the transport can actually connect and (if configured)
