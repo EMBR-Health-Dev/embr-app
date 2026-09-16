@@ -34,7 +34,7 @@
     "checkEmailBody": "We've sent a verification link to <strong>{email}</strong>. Once you've confirmed it, come back and log in.",
     "goToLogin": "Go to login",
     "title": "Create your account",
-    "subtitle": "Track symptoms and cycles on your terms — private by default.",
+    "subtitle": "Turn what you're experiencing into evidence — on your terms, private by default.",
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "passwordHint": "At least 12 characters, with an uppercase letter, a lowercase letter, and a digit.",
@@ -90,7 +90,7 @@
   "Onboarding": {
     "skipToDashboard": "Skip to dashboard",
     "welcome": {
-      "headline": "A place to keep track of what's actually happening to you.",
+      "headline": "Turn what's actually happening to you into something you can see.",
       "body": "EMBR helps you turn what you're experiencing into something you can look back on, understand, and eventually bring into a conversation with your doctor. It doesn't diagnose you or replace your clinician. It helps you organize your own record, on your own terms.",
       "getStarted": "Get started"
     },
@@ -215,7 +215,7 @@
     "saveTodaysEntry": "Save today's entry",
     "saved": "Saved ✓",
     "recentSymptoms": "Recent symptoms",
-    "noLogsYet": "Nothing logged yet — use the button above whenever something happens.",
+    "noLogsYet": "Nothing recorded yet — use the button above whenever something happens.",
     "thisWeek": "{count, plural, one {# log this week} other {# logs this week}}",
     "mostCommon": "Most common: {category}",
     "startingPoint": {
@@ -349,7 +349,7 @@
   "Brief": {
     "title": "EMBR BRIEF",
     "backToDashboard": "← Dashboard",
-    "description": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
+    "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
     "fromLabel": "From",
     "toLabel": "To",
     "generate": "Generate brief",
