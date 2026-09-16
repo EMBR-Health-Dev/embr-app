@@ -192,7 +192,9 @@ export default function BriefPage() {
           </Button>
         </form>
         {generateError && (
-          <p className="mt-2 text-sm font-medium text-foreground">{generateError}</p>
+          <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+            {generateError}
+          </p>
         )}
 
         {justGenerated && (
@@ -215,7 +217,9 @@ export default function BriefPage() {
               </button>
             </div>
             {summaryDownloadError && (
-              <p className="mt-2 text-sm font-medium text-foreground">{summaryDownloadError}</p>
+              <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                {summaryDownloadError}
+              </p>
             )}
           </section>
         )}
@@ -261,12 +265,18 @@ export default function BriefPage() {
         <section className="mt-10">
           <h2 className="font-display text-heading-m text-foreground">{t("pastBriefs")}</h2>
           {briefDetailError && (
-            <p className="mt-2 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4">
+            <p
+              role="alert"
+              className="mt-2 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4"
+            >
               {briefDetailError}
             </p>
           )}
           {deleteError && (
-            <p className="mt-2 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4">
+            <p
+              role="alert"
+              className="mt-2 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4"
+            >
               {deleteError}
             </p>
           )}

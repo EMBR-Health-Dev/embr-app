@@ -204,7 +204,9 @@ function AcceptInviteScreen() {
   return (
     <div className="w-full max-w-sm text-center">
       <h1 className="font-display text-heading-xl text-foreground">{t("couldntAccept")}</h1>
-      <p className="mt-3 text-sm font-medium text-foreground">{errorMessage}</p>
+      <p role="alert" className="mt-3 text-sm font-medium text-foreground">
+        {errorMessage}
+      </p>
       <Link
         href="/dashboard"
         className="mt-6 inline-block text-sm font-medium text-foreground underline underline-offset-2"

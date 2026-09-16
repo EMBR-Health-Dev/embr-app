@@ -7,6 +7,7 @@ import {
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCsrfToken } from "../auth/csrf.js";
 import { reflectionService } from "./reflection.service.js";
 
 const router: ExpressRouter = Router();
@@ -27,6 +28,7 @@ router.get(
 
 router.post(
   "/reflections/dismissals",
+  requireCsrfToken(),
   validate(dismissReflectionSchema),
   asyncHandler(async (req, res) => {
     const { type, key } = req.body as {

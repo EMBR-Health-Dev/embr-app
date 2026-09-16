@@ -11,6 +11,7 @@ import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
+import { requireCsrfToken } from "../auth/csrf.js";
 import { cycleService } from "./cycle.service.js";
 
 const router: ExpressRouter = Router();
@@ -22,6 +23,7 @@ router.use("/cycle-entries", requireAuth());
  * to correct an earlier entry. */
 router.post(
   "/cycle-entries",
+  requireCsrfToken(),
   validate(upsertCycleEntrySchema),
   asyncHandler(async (req, res) => {
     const entry = await cycleService.upsert(req.user!.sub, req.body);
@@ -50,6 +52,7 @@ router.get(
 
 router.patch(
   "/cycle-entries/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   validate(updateCycleEntrySchema),
   asyncHandler(async (req, res) => {
@@ -61,6 +64,7 @@ router.patch(
 
 router.delete(
   "/cycle-entries/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     const cycleEntryId = requireParam(req, "id");

@@ -81,7 +81,11 @@ export default function ForgotPasswordPage() {
             error={fieldErrors.email}
           />
 
-          {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
+          {formError && (
+            <p role="alert" className="text-sm font-medium text-foreground">
+              {formError}
+            </p>
+          )}
 
           <Button type="submit" disabled={submitting} className="mt-2">
             {submitting ? t("submitting") : t("submit")}

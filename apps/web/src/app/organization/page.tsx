@@ -438,7 +438,9 @@ export default function OrganizationPage() {
                   </Button>
                 </div>
                 {checkoutError && (
-                  <p className="mt-2 text-sm font-medium text-foreground">{checkoutError}</p>
+                  <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                    {checkoutError}
+                  </p>
                 )}
               </div>
             )}
@@ -455,7 +457,9 @@ export default function OrganizationPage() {
                   {openingPortal ? t("billing.opening") : t("billing.manageBilling")}
                 </Button>
                 {portalError && (
-                  <p className="mt-2 text-sm font-medium text-foreground">{portalError}</p>
+                  <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                    {portalError}
+                  </p>
                 )}
               </div>
             )}
@@ -494,8 +498,16 @@ export default function OrganizationPage() {
               ))}
             </div>
           </label>
-          {inviteError && <p className="text-sm font-medium text-foreground">{inviteError}</p>}
-          {inviteSuccess && <p className="text-sm font-medium text-foreground">{inviteSuccess}</p>}
+          {inviteError && (
+            <p role="alert" className="text-sm font-medium text-foreground">
+              {inviteError}
+            </p>
+          )}
+          {inviteSuccess && (
+            <p role="status" className="text-sm font-medium text-foreground">
+              {inviteSuccess}
+            </p>
+          )}
           <Button type="submit" disabled={inviting} className="self-start">
             {inviting ? t("sending") : t("sendInvite")}
           </Button>
@@ -620,8 +632,16 @@ export default function OrganizationPage() {
               {t("enabledLabel")}
             </label>
 
-            {ssoError && <p className="text-sm font-medium text-foreground">{ssoError}</p>}
-            {ssoSuccess && <p className="text-sm font-medium text-foreground">{ssoSuccess}</p>}
+            {ssoError && (
+              <p role="alert" className="text-sm font-medium text-foreground">
+                {ssoError}
+              </p>
+            )}
+            {ssoSuccess && (
+              <p role="status" className="text-sm font-medium text-foreground">
+                {ssoSuccess}
+              </p>
+            )}
 
             <Button type="submit" disabled={ssoSaving} className="self-start">
               {ssoSaving

@@ -100,7 +100,11 @@ function RegisterForm() {
           />
           <p className="text-xs text-foreground/50">{t("passwordHint")}</p>
 
-          {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
+          {formError && (
+            <p role="alert" className="text-sm font-medium text-foreground">
+              {formError}
+            </p>
+          )}
 
           <Button type="submit" disabled={submitting} className="mt-2">
             {submitting ? t("submitting") : t("submit")}

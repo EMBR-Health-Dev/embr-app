@@ -181,7 +181,9 @@ export default function SettingsPage() {
                 </button>
               )}
               {resendError && (
-                <p className="mt-2 text-sm font-medium text-foreground">{resendError}</p>
+                <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                  {resendError}
+                </p>
               )}
             </div>
           )}
@@ -210,7 +212,9 @@ export default function SettingsPage() {
               error={fieldErrors.newPassword}
             />
             {passwordError && (
-              <p className="text-sm font-medium text-foreground">{passwordError}</p>
+              <p role="alert" className="text-sm font-medium text-foreground">
+                {passwordError}
+              </p>
             )}
             <Button type="submit" disabled={changingPassword} className="self-start">
               {changingPassword ? t("changing") : t("changePassword")}
@@ -327,7 +331,11 @@ export default function SettingsPage() {
                   {t("forgotPasswordLink")}
                 </Link>
               </p>
-              {deleteError && <p className="text-sm font-medium text-foreground">{deleteError}</p>}
+              {deleteError && (
+                <p role="alert" className="text-sm font-medium text-foreground">
+                  {deleteError}
+                </p>
+              )}
               <div className="flex gap-3">
                 <button
                   onClick={handleDeleteAccount}

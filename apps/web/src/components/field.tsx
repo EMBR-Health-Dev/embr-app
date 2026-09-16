@@ -1,16 +1,19 @@
 "use client";
 
-import type { InputHTMLAttributes } from "react";
+import { useId, type InputHTMLAttributes } from "react";
 
 export function Field({
   label,
   error,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
+  const errorId = useId();
   return (
     <label className="flex flex-col gap-1.5 text-sm">
       <span className="font-medium text-foreground">{label}</span>
       <input
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         className={`rounded-sm border bg-background px-3 py-2 text-foreground placeholder:text-foreground/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
           error ? "border-foreground" : "border-border"
         }`}
@@ -22,7 +25,11 @@ export function Field({
           stays foreground (always safe) and destructive appears only as
           a small accent stripe, never as the text color itself. */}
       {error && (
-        <span className="border-l-2 border-destructive pl-2 text-xs font-medium text-foreground">
+        <span
+          id={errorId}
+          role="alert"
+          className="border-l-2 border-destructive pl-2 text-xs font-medium text-foreground"
+        >
           {error}
         </span>
       )}

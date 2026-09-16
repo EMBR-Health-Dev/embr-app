@@ -114,7 +114,10 @@ function LoginForm() {
       )}
 
       {ssoError && (
-        <p className="mb-6 mt-6 rounded-sm border-l-2 border-destructive bg-muted px-3 py-2 text-sm font-medium text-foreground">
+        <p
+          role="alert"
+          className="mb-6 mt-6 rounded-sm border-l-2 border-destructive bg-muted px-3 py-2 text-sm font-medium text-foreground"
+        >
           {t.has(`ssoError.${ssoError}`) ? t(`ssoError.${ssoError}`) : t("ssoError.default")}
         </p>
       )}
@@ -144,7 +147,11 @@ function LoginForm() {
           {t("forgotPassword")}
         </Link>
 
-        {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
+        {formError && (
+          <p role="alert" className="text-sm font-medium text-foreground">
+            {formError}
+          </p>
+        )}
 
         <Button type="submit" disabled={submitting} className="mt-2">
           {submitting ? t("submitting") : t("submit")}

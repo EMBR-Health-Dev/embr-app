@@ -62,7 +62,11 @@ function ResendVerificationForm() {
           onChange={(e) => setEmail(e.target.value)}
           error={fieldError}
         />
-        {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
+        {formError && (
+          <p role="alert" className="text-sm font-medium text-foreground">
+            {formError}
+          </p>
+        )}
         <Button onClick={handleResend} disabled={submitting} className="self-start">
           {submitting ? t("resendSubmitting") : t("resendButton")}
         </Button>

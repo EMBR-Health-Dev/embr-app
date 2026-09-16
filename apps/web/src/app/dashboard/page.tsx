@@ -293,7 +293,11 @@ function DashboardContent() {
             </button>
             <p className="font-display text-heading-m text-foreground">{t("hotFlashPrompt")}</p>
             <p className="text-sm text-foreground/60">{t("hotFlashHint")}</p>
-            {confirmation && <p className="text-sm font-medium text-foreground">{confirmation}</p>}
+            {confirmation && (
+              <p role="status" className="text-sm font-medium text-foreground">
+                {confirmation}
+              </p>
+            )}
 
             {!confirmation && (
               <p className="mt-2 text-sm text-foreground/60">
@@ -337,14 +341,29 @@ function DashboardContent() {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-foreground">{t("severityLabel")}</span>
+                {/* Not a <label> wrapping three buttons — a label is only
+                    meant to associate with a single form control, and
+                    wrapping several here produced an unpredictable
+                    accessible name (confirmed directly: the browser's
+                    own accessibility tree exposed "Severity" as part of
+                    more than one button's computed name). A labelled
+                    group is the correct shape for a set of toggle
+                    buttons acting as one selection. */}
+                <div
+                  role="group"
+                  aria-labelledby="severity-group-label"
+                  className="flex flex-col gap-1.5 text-sm"
+                >
+                  <span id="severity-group-label" className="font-medium text-foreground">
+                    {t("severityLabel")}
+                  </span>
                   <div className="flex gap-2">
                     {SEVERITIES.map((s) => (
                       <button
                         key={s}
                         type="button"
                         onClick={() => setSeverity(s)}
+                        aria-pressed={severity === s}
                         className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
                           severity === s
                             ? "border-primary bg-primary text-primary-foreground"
@@ -355,7 +374,7 @@ function DashboardContent() {
                       </button>
                     ))}
                   </div>
-                </label>
+                </div>
 
                 <label className="flex flex-col gap-1.5 text-sm">
                   <span className="font-medium text-foreground">{t("notesLabel")}</span>
@@ -368,7 +387,10 @@ function DashboardContent() {
                 </label>
 
                 {logSubmitError && (
-                  <p className="text-sm font-medium text-foreground underline decoration-destructive underline-offset-4">
+                  <p
+                    role="alert"
+                    className="text-sm font-medium text-foreground underline decoration-destructive underline-offset-4"
+                  >
                     {logSubmitError}
                   </p>
                 )}

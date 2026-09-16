@@ -226,7 +226,11 @@ export default function TreatmentsPage() {
           />
         </label>
 
-        {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
+        {formError && (
+          <p role="alert" className="text-sm font-medium text-foreground">
+            {formError}
+          </p>
+        )}
 
         <Button onClick={handleSave} disabled={saving} className="self-start">
           {saving ? t("saving") : t("addTreatment")}
