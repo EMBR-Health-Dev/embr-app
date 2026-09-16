@@ -86,8 +86,11 @@ function LoginForm() {
       return;
     }
     // Full-page navigation, not a fetch — the browser needs to actually
-    // leave this page and follow the API's redirect to the IdP.
-    window.location.href = api.sso.startUrl(parsedEmail.data);
+    // leave this page and follow the API's redirect to the IdP. Same
+    // redirect param the password-login path above already honors —
+    // without threading it through, SSO always landed on /dashboard
+    // regardless of what page sent the person to /login.
+    window.location.href = api.sso.startUrl(parsedEmail.data, redirectParam ?? undefined);
   }
 
   return (

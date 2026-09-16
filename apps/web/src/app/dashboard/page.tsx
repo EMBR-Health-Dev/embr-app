@@ -56,6 +56,8 @@ function DashboardContent() {
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [loggingHotFlash, setLoggingHotFlash] = useState(false);
+  const [logSubmitError, setLogSubmitError] = useState<string | null>(null);
   const [managesOrg, setManagesOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
@@ -170,6 +172,12 @@ function DashboardContent() {
   }, [user]);
 
   async function logHotFlashNow() {
+    // Guards against a double-tap or a slow/retried request creating
+    // two near-identical records — there's no server-side idempotency
+    // check for symptom logs (unlike cycle entries' unique-per-day
+    // upsert), so this is the only thing preventing a duplicate here.
+    if (loggingHotFlash) return;
+    setLoggingHotFlash(true);
     try {
       await api.symptomLogs.create({
         category: "HOT_FLASH",
@@ -182,11 +190,14 @@ function DashboardContent() {
       setReflectionsRefreshKey((key) => key + 1);
     } catch (err) {
       setConfirmation(err instanceof ApiError ? err.message : t("hotFlashError"));
+    } finally {
+      setLoggingHotFlash(false);
     }
   }
 
   async function handleLogSubmit() {
     setSubmitting(true);
+    setLogSubmitError(null);
     try {
       await api.symptomLogs.create({
         category,
@@ -200,6 +211,12 @@ function DashboardContent() {
       const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
       setWeeklyFrequency(frequency);
       setReflectionsRefreshKey((key) => key + 1);
+    } catch (err) {
+      // Stays visible next to the form itself, not in the TODAY hero
+      // above — that's where confirmation renders, but a person who
+      // scrolled down to fill out this form shouldn't have to scroll
+      // back up to find out it failed.
+      setLogSubmitError(err instanceof ApiError ? err.message : t("logError"));
     } finally {
       setSubmitting(false);
     }
@@ -264,9 +281,11 @@ function DashboardContent() {
                 that actually needs it — mid-hot-flash is not when
                 anyone wants to fill out a category picker. */}
             <button
-              onClick={logHotFlashNow}
-              className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100"
+              onClick={() => void logHotFlashNow()}
+              disabled={loggingHotFlash}
+              className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100"
               aria-label={t("hotFlashAriaLabel")}
+              aria-busy={loggingHotFlash}
             >
               <span className="text-3xl" aria-hidden="true">
                 ◉
@@ -347,6 +366,12 @@ function DashboardContent() {
                     className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
                   />
                 </label>
+
+                {logSubmitError && (
+                  <p className="text-sm font-medium text-foreground underline decoration-destructive underline-offset-4">
+                    {logSubmitError}
+                  </p>
+                )}
 
                 <Button onClick={handleLogSubmit} disabled={submitting}>
                   {submitting ? t("saving") : t("save")}

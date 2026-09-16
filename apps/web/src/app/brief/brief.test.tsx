@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ClinicalBriefDto, Stage4Pattern } from "@embr/types";
 import messages from "../../../messages/en.json";
+import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
@@ -143,6 +144,28 @@ describe("Brief page — generation", () => {
 
     expect(await screen.findByText("Hot flashes were logged often.")).toBeInTheDocument();
     expect(screen.getByText("A question?")).toBeInTheDocument();
+  });
+
+  it("sends precise start/end-of-local-day instants, not bare date strings", async () => {
+    // A bare "2026-02-01" is parsed by the API as UTC midnight — for
+    // `toDate` specifically, that would silently exclude nearly the
+    // entire picked end date from the generated brief. Regression test
+    // for that bug.
+    generateMock.mockResolvedValue(brief({ aiNarrative: "Content." }));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    await waitFor(() =>
+      expect(generateMock).toHaveBeenCalledWith({
+        fromDate: startOfLocalDay("2026-01-01"),
+        toDate: endOfLocalDay("2026-02-01"),
+      }),
+    );
   });
 
   it("shows the API error message when generation fails", async () => {
@@ -727,6 +750,35 @@ describe("Brief page — history", () => {
     expect(getMock).toHaveBeenCalledWith("b1");
   });
 
+  it("shows a real error, not a permanent loading state, when fetching a brief's detail fails", async () => {
+    listMock.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
+    getMock.mockRejectedValue(new Error("network down"));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    const entry = await screen.findByText("2026-01-01 to 2026-02-01");
+    await user.click(entry);
+
+    // Previously this left openBriefId set with the detail never
+    // fetched — a "loading…" placeholder that never resolved.
+    expect(await screen.findByText("Couldn't load that brief — try again.")).toBeInTheDocument();
+    expect(screen.queryByText("loading…")).not.toBeInTheDocument();
+  });
+
   it("removes a deleted brief from the history list", async () => {
     listMock.mockResolvedValue({
       items: [
@@ -754,6 +806,33 @@ describe("Brief page — history", () => {
     await waitFor(() =>
       expect(screen.queryByText("2026-01-01 to 2026-02-01")).not.toBeInTheDocument(),
     );
+  });
+
+  it("shows a real error and keeps the brief in the list when deletion fails", async () => {
+    listMock.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
+    deleteMock.mockRejectedValue(new Error("network down"));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    await screen.findByText("2026-01-01 to 2026-02-01");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Couldn't delete that brief — try again.")).toBeInTheDocument();
+    expect(screen.getByText("2026-01-01 to 2026-02-01")).toBeInTheDocument();
   });
 
   it("clears the expanded detail view when the currently-open brief is deleted", async () => {

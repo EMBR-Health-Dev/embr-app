@@ -7,6 +7,7 @@ import i18next from "i18next";
 import { I18nextProvider } from "react-i18next";
 import type { ClinicalBriefDto, Stage4Pattern } from "@embr/types";
 import en from "../../locales/en.json";
+import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 const generateMock = vi.fn();
 const listMock = vi.fn();
@@ -230,7 +231,14 @@ describe("Brief screen — generation", () => {
     fireEvent.click(screen.getByText("Generate brief"));
 
     expect(await screen.findByText("Freshly generated.")).toBeInTheDocument();
-    expect(generateMock).toHaveBeenCalledWith({ fromDate: "2026-01-01", toDate: "2026-02-01" });
+    // Sent as precise start/end-of-local-day instants, not bare
+    // "YYYY-MM-DD" strings — the API parses a bare date as UTC
+    // midnight, which would silently exclude nearly all of the picked
+    // end date from the generated brief (see date-format.ts).
+    expect(generateMock).toHaveBeenCalledWith({
+      fromDate: startOfLocalDay(new Date(2026, 0, 1)),
+      toDate: endOfLocalDay(new Date(2026, 1, 1)),
+    });
     // Not just that a success state exists — that it specifically
     // triggered a real refresh of both independent data sources, per
     // handleGenerate's own await loadHistory()/await loadTrends().

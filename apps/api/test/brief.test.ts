@@ -1818,6 +1818,20 @@ describe("GET/DELETE /briefs — access control", () => {
     expect(res.headers["content-type"]).toContain("application/pdf");
   });
 
+  it("GET /briefs/:id/pdf 404s (and never returns PDF bytes) for another user's brief", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    await registerAndLogin(agentA, "pdf-owner2@embr.health");
+    const briefId = await createBriefFor(agentA);
+
+    const agentB = request.agent(app);
+    await registerAndLogin(agentB, "pdf-intruder@embr.health");
+
+    const res = await agentB.get(`/briefs/${briefId}/pdf`);
+    expect(res.status).toBe(404);
+    expect(res.headers["content-type"]).not.toContain("application/pdf");
+  });
+
   it("DELETE /briefs/:id removes it for the owner", async () => {
     const app = createApp();
     const agent = request.agent(app);

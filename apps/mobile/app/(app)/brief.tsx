@@ -10,7 +10,7 @@ import { theme } from "../../lib/theme";
 import { DatePickerField } from "../../components/date-picker-field";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
-import { toIsoDate } from "../../lib/date-format";
+import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 export default function BriefScreen() {
   const { t } = useTranslation();
@@ -72,8 +72,8 @@ export default function BriefScreen() {
     setGenerating(true);
     try {
       const brief = await api.briefs.generate({
-        fromDate: toIsoDate(fromDate),
-        toDate: toIsoDate(toDate),
+        fromDate: startOfLocalDay(fromDate),
+        toDate: endOfLocalDay(toDate),
       });
       setJustGenerated(brief);
       await loadHistory();

@@ -37,6 +37,21 @@ interface PendingState {
   connectionId: string;
   codeVerifier: string;
   nonce: string;
+  redirectTo?: string;
+}
+
+/** Same same-origin-only rule apps/web's safeRedirect enforces —
+ * duplicated rather than shared cross-package because it's three
+ * lines and the two call sites (deciding what to embed in the OIDC
+ * state, and here) have different failure behavior (null vs. a
+ * hardcoded fallback). A redirect target that fails this check is
+ * dropped, not rejected — an untrusted string riding through Redis
+ * state is not a reason to fail someone's whole SSO login, just a
+ * reason not to honor it. */
+function safeRedirectPath(path: string | undefined): string | undefined {
+  if (!path) return undefined;
+  if (!path.startsWith("/") || path.startsWith("//")) return undefined;
+  return path;
 }
 
 export const ssoService = {
@@ -92,7 +107,7 @@ export const ssoService = {
    * login — the caller (the route layer) decides how to present that
    * to a browser mid-navigation.
    */
-  async startLogin(email: string): Promise<string> {
+  async startLogin(email: string, redirectTo?: string): Promise<string> {
     const domain = domainOf(email);
     if (!domain) throw AppError.validation("Invalid email address");
 
@@ -109,6 +124,7 @@ export const ssoService = {
       connectionId: connection.id,
       codeVerifier: pending.codeVerifier,
       nonce: pending.nonce,
+      redirectTo: safeRedirectPath(redirectTo),
     };
     await redis.setex(stateKey(pending.state), env.SSO_STATE_TTL_SECONDS, JSON.stringify(record));
 
@@ -128,7 +144,7 @@ export const ssoService = {
   async handleCallback(
     req: Request,
     callbackUrl: URL,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string; redirectTo?: string }> {
     const state = callbackUrl.searchParams.get("state");
     if (!state) {
       await writeAuditLog(req, "SSO_LOGIN_FAILED", null, { reason: "missing_state" });
@@ -262,6 +278,6 @@ export const ssoService = {
     const session = await issueSession(req, user);
     await writeAuditLog(req, "SSO_LOGIN_SUCCEEDED", user.id, { connectionId: connection.id });
 
-    return session;
+    return { ...session, redirectTo: pending.redirectTo };
   },
 };

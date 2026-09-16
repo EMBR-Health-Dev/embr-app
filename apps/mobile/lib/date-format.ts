@@ -12,3 +12,34 @@ export function toIsoDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * The ISO instant for local midnight at the start of the given date's
+ * calendar day. Used wherever a picked date needs to become a precise
+ * instant for the API's from/to range filters (brief generation) —
+ * mirrors apps/web/src/lib/date-format.ts's identical helper, taking
+ * a Date directly since the native date picker already hands back a
+ * real Date rather than a bare "YYYY-MM-DD" string.
+ */
+export function startOfLocalDay(date: Date): string {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0).toISOString();
+}
+
+/**
+ * The end-of-day counterpart to startOfLocalDay — local 23:59:59.999
+ * on the given date, not local midnight. Without this, a range's `to`
+ * would exclude nearly the entire final day: the API's from/to
+ * filters are instant comparisons, and "to = today" has to mean
+ * "through the end of today."
+ */
+export function endOfLocalDay(date: Date): string {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    23,
+    59,
+    59,
+    999,
+  ).toISOString();
+}

@@ -10,6 +10,7 @@ import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { AppNav } from "../../components/app-nav";
+import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 export default function BriefPage() {
   const t = useTranslations("Brief");
@@ -29,6 +30,8 @@ export default function BriefPage() {
   const [openBriefId, setOpenBriefId] = useState<string | null>(null);
   const [openBrief, setOpenBrief] = useState<ClinicalBriefDto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [briefDetailError, setBriefDetailError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [trends, setTrends] = useState<BriefTrendsDto | null>(null);
   const [downloadingSummary, setDownloadingSummary] = useState(false);
   const [summaryDownloadError, setSummaryDownloadError] = useState<string | null>(null);
@@ -71,7 +74,10 @@ export default function BriefPage() {
 
     setGenerating(true);
     try {
-      const brief = await api.briefs.generate({ fromDate, toDate });
+      const brief = await api.briefs.generate({
+        fromDate: startOfLocalDay(fromDate),
+        toDate: endOfLocalDay(toDate),
+      });
       setJustGenerated(brief);
       loadHistory();
       api.briefs.trends().then(setTrends);
@@ -116,12 +122,22 @@ export default function BriefPage() {
     }
     setOpenBriefId(id);
     setOpenBrief(null);
-    const brief = await api.briefs.get(id);
-    setOpenBrief(brief);
+    setBriefDetailError(null);
+    try {
+      const brief = await api.briefs.get(id);
+      setOpenBrief(brief);
+    } catch (err) {
+      // Without this, a failed fetch left openBriefId set with
+      // openBrief still null — the "loading…" placeholder below never
+      // resolves, a permanent spinner rather than a real failure.
+      setOpenBriefId(null);
+      setBriefDetailError(err instanceof ApiError ? err.message : t("briefDetailError"));
+    }
   }
 
   async function handleDelete(id: string) {
     setDeletingId(id);
+    setDeleteError(null);
     try {
       await api.briefs.delete(id);
       setHistory((prev) => prev?.filter((b) => b.id !== id) ?? null);
@@ -130,6 +146,8 @@ export default function BriefPage() {
         setOpenBrief(null);
       }
       if (justGenerated?.id === id) setJustGenerated(null);
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : t("deleteError"));
     } finally {
       setDeletingId(null);
     }
@@ -242,6 +260,16 @@ export default function BriefPage() {
 
         <section className="mt-10">
           <h2 className="font-display text-heading-m text-foreground">{t("pastBriefs")}</h2>
+          {briefDetailError && (
+            <p className="mt-2 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4">
+              {briefDetailError}
+            </p>
+          )}
+          {deleteError && (
+            <p className="mt-2 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4">
+              {deleteError}
+            </p>
+          )}
           {history === null ? (
             <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
           ) : history.length === 0 ? (

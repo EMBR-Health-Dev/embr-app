@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
+import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 function buildExportUrl(path: string, from: string, to: string): string {
   const params = new URLSearchParams();
-  if (from) params.set("from", new Date(from).toISOString());
-  if (to) params.set("to", new Date(to).toISOString());
+  // `<input type="date">` gives a bare "YYYY-MM-DD" — `new Date(from)`
+  // parses that as UTC midnight, not local midnight, which for `to`
+  // in particular would exclude nearly the entire final day from the
+  // export (see date-format.ts's startOfLocalDay/endOfLocalDay).
+  if (from) params.set("from", startOfLocalDay(from));
+  if (to) params.set("to", endOfLocalDay(to));
   const query = params.toString();
   return `/api/export/${path}${query ? `?${query}` : ""}`;
 }
