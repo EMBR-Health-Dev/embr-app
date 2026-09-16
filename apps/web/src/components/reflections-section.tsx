@@ -100,9 +100,13 @@ export function ReflectionsSection({ refreshKey }: { refreshKey: number }) {
   // on it.
   if (loading || reflections.length === 0) return null;
 
+  // No visible heading of its own: this renders directly under the
+  // dashboard's "PATTERNS" SectionLabel (see dashboard/page.tsx), and a
+  // second, smaller "Your week" heading immediately beneath that would
+  // just repeat the same landmark. `t("heading")` still names the
+  // section for assistive tech via aria-label.
   return (
     <section className="mt-6 flex flex-col gap-3" aria-label={t("heading")}>
-      <h2 className="text-sm font-medium text-foreground/60">{t("heading")}</h2>
       {reflections.map((reflection) => (
         <ReflectionCard
           key={`${reflection.type}:${reflection.key}`}

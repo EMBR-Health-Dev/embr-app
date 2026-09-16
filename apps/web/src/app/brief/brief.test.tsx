@@ -7,6 +7,7 @@ import messages from "../../../messages/en.json";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/brief",
 }));
 
 // Stable object reference, not a fresh literal per render — same
@@ -19,7 +20,7 @@ const mockUser = {
   onboardingCompletedAt: "2026-01-01T00:00:00Z",
 };
 vi.mock("../../lib/auth-context", () => ({
-  useAuth: () => ({ user: mockUser, loading: false }),
+  useAuth: () => ({ user: mockUser, loading: false, logout: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 const generateMock = vi.fn();
@@ -48,6 +49,9 @@ vi.mock("../../lib/api", () => ({
     },
     export: {
       clinicianSummaryPdf: (...args: unknown[]) => summaryPdfMock(...args),
+    },
+    organizations: {
+      mine: vi.fn().mockResolvedValue([]),
     },
   },
 }));

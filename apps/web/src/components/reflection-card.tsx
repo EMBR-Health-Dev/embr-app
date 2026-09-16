@@ -90,12 +90,12 @@ export function ReflectionCard({
 
   return (
     <div
-      className="rounded border border-border-subtle bg-white p-4"
+      className="rounded border border-border-subtle bg-background p-4"
       role="region"
       aria-label={copy.heading}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-display text-sm text-foreground">{copy.heading}</h3>
+        <h3 className="font-display text-body-l text-foreground">{copy.heading}</h3>
         <button
           onClick={onDismiss}
           aria-label={t("dismiss")}

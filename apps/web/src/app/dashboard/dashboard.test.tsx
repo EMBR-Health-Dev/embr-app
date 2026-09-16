@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "../../../messages/en.json";
@@ -8,6 +8,7 @@ import ja from "../../../messages/ja.json";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/dashboard",
 }));
 
 // A stable object reference (not a fresh literal per call) — several
@@ -41,6 +42,7 @@ vi.mock("../../lib/api", () => ({
     organizations: { mine: vi.fn().mockResolvedValue([]) },
     trends: { symptomFrequency },
     reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
+    briefs: { list: vi.fn().mockResolvedValue({ items: [] }) },
   },
 }));
 
@@ -62,8 +64,13 @@ describe("Dashboard — translation", () => {
     renderWithIntl(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
-    expect(screen.getByText("Trends")).toBeInTheDocument();
-    expect(screen.getByText("BRIEF")).toBeInTheDocument();
+    // Scoped to the desktop nav variant specifically: AppNav renders both
+    // a desktop row and a mobile menu with the same links (only one is
+    // visually shown at a time via a CSS breakpoint, which jsdom doesn't
+    // evaluate), so an unscoped query would match each link twice.
+    const desktopNav = screen.getByTestId("app-nav-desktop");
+    expect(within(desktopNav).getByRole("link", { name: "Patterns" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "Clinical Brief" })).toBeInTheDocument();
     expect(screen.getByText("Today's cycle entry")).toBeInTheDocument();
     expect(screen.getByText("Having a hot flash right now?")).toBeInTheDocument();
   });
@@ -73,7 +80,9 @@ describe("Dashboard — translation", () => {
     renderWithIntl(<DashboardPage />, "ja");
 
     await waitFor(() => expect(screen.getByText("最近の症状")).toBeInTheDocument());
-    expect(screen.getByText("設定")).toBeInTheDocument();
+    const desktopNav = screen.getByTestId("app-nav-desktop");
+    expect(within(desktopNav).getByRole("link", { name: "パターン" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "設定" })).toBeInTheDocument();
     expect(screen.getByText("今日の周期記録")).toBeInTheDocument();
     expect(screen.getByText("今、ホットフラッシュが起きていますか?")).toBeInTheDocument();
   });

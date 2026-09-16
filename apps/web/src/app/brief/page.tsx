@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
@@ -10,13 +9,15 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { AppNav } from "../../components/app-nav";
 
 export default function BriefPage() {
   const t = useTranslations("Brief");
   const tCommon = useTranslations("Common");
   const tEnum = useTranslations("Enums");
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const [managesOrg, setManagesOrg] = useState(false);
 
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -35,6 +36,14 @@ export default function BriefPage() {
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    api.organizations
+      .mine()
+      .then((rows) => setManagesOrg(rows.some((m) => m.role === "ORG_ADMIN")))
+      .catch(() => setManagesOrg(false));
+  }, [user]);
 
   function loadHistory() {
     api.briefs.list({ pageSize: 20 }).then((page) => setHistory(page.items));
@@ -134,150 +143,152 @@ export default function BriefPage() {
     );
   }
 
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
+
   return (
-    <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
-      <header className="flex items-center justify-between">
+    <div className="min-h-screen">
+      <AppNav userEmail={user.email} managesOrg={managesOrg} onLogout={() => void handleLogout()} />
+      <main className="mx-auto max-w-2xl px-6 py-10">
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-foreground underline underline-offset-2"
-        >
-          {t("backToDashboard")}
-        </Link>
-      </header>
 
-      <p className="mt-3 text-sm text-foreground/60">{t("description")}</p>
+        <p className="mt-3 text-sm text-foreground/60">{t("description")}</p>
 
-      <form onSubmit={handleGenerate} className="mt-8 flex flex-wrap items-end gap-4">
-        <Field
-          label={t("fromLabel")}
-          type="date"
-          value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
-        />
-        <Field
-          label={t("toLabel")}
-          type="date"
-          value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
-        />
-        <Button type="submit" disabled={generating}>
-          {generating ? t("generating") : t("generate")}
-        </Button>
-      </form>
-      {generateError && <p className="mt-2 text-sm font-medium text-foreground">{generateError}</p>}
-
-      {justGenerated && (
-        <section className="mt-8 rounded border border-primary bg-primary/5 p-5">
-          <h2 className="font-display text-heading-m text-foreground">{t("briefReady")}</h2>
-          <BriefContent brief={justGenerated} />
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <a
-              href={api.briefs.pdfUrl(justGenerated.id)}
-              className="inline-block text-sm font-medium text-foreground underline underline-offset-2"
-            >
-              {t("downloadPdf")}
-            </a>
-            <button
-              onClick={() => void handleDownloadSummary(justGenerated)}
-              disabled={downloadingSummary}
-              className="text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50"
-            >
-              {downloadingSummary ? t("downloadingSummary") : t("downloadSummary")}
-            </button>
-          </div>
-          {summaryDownloadError && (
-            <p className="mt-2 text-sm font-medium text-foreground">{summaryDownloadError}</p>
-          )}
-        </section>
-      )}
-
-      {trends && trends.briefCount > 0 && (
-        <section className="mt-10">
-          <h2 className="font-display text-heading-m text-foreground">{t("trendsTitle")}</h2>
-          <p className="mt-1 text-sm text-foreground/60">
-            {t("trendsAcrossBriefs", { count: trends.briefCount })}
-          </p>
-          <ul className="mt-3 flex flex-col gap-1">
-            {trends.categories.map((row) => (
-              <li key={row.category} className="text-sm text-foreground/70">
-                {t("trendsCategoryLine", {
-                  category: tEnum(`category.${row.category}`),
-                  present: row.briefsPresent,
-                  total: row.totalBriefs,
-                  persistent: row.briefsPersistent,
-                })}
-              </li>
-            ))}
-          </ul>
-          {trends.longitudinalPatterns.length > 0 && (
-            <div className="mt-4">
-              <h3 className="font-display text-body-l text-foreground">
-                {t("longitudinalPatternsTitle")}
-              </h3>
-              <ul className="mt-2 flex flex-col gap-1">
-                {trends.longitudinalPatterns.map((pattern) => (
-                  <li key={pattern.id} className="text-sm text-foreground/70">
-                    {t("longitudinalPatternsLine", {
-                      category: tEnum(`category.${pattern.category}`),
-                      total: pattern.totalBriefs,
-                    })}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      )}
-
-      <section className="mt-10">
-        <h2 className="font-display text-heading-m text-foreground">{t("pastBriefs")}</h2>
-        {history === null ? (
-          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
-        ) : history.length === 0 ? (
-          <p className="mt-3 text-sm text-foreground/50">{t("noBriefsYet")}</p>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-3">
-            {history.map((item) => (
-              <li key={item.id} className="rounded border border-border-subtle p-4">
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => void toggleBrief(item.id)}
-                    className="text-left text-sm font-medium text-foreground"
-                  >
-                    {item.fromDate} to {item.toDate}
-                    <span className="ml-2 text-xs font-normal text-foreground/50">
-                      {t("generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
-                    </span>
-                  </button>
-                  <div className="flex items-center gap-3">
-                    <a
-                      href={api.briefs.pdfUrl(item.id)}
-                      className="text-xs font-medium text-primary underline underline-offset-2"
-                    >
-                      {t("pdf")}
-                    </a>
-                    <button
-                      onClick={() => void handleDelete(item.id)}
-                      disabled={deletingId === item.id}
-                      className="text-xs font-medium text-foreground underline decoration-destructive underline-offset-2"
-                    >
-                      {deletingId === item.id ? "…" : t("delete")}
-                    </button>
-                  </div>
-                </div>
-                {openBriefId === item.id &&
-                  (openBrief ? (
-                    <BriefContent brief={openBrief} />
-                  ) : (
-                    <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
-                  ))}
-              </li>
-            ))}
-          </ul>
+        <form onSubmit={handleGenerate} className="mt-8 flex flex-wrap items-end gap-4">
+          <Field
+            label={t("fromLabel")}
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+          />
+          <Field
+            label={t("toLabel")}
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+          />
+          <Button type="submit" disabled={generating}>
+            {generating ? t("generating") : t("generate")}
+          </Button>
+        </form>
+        {generateError && (
+          <p className="mt-2 text-sm font-medium text-foreground">{generateError}</p>
         )}
-      </section>
-    </main>
+
+        {justGenerated && (
+          <section className="mt-8 rounded border border-primary bg-primary/5 p-5">
+            <h2 className="font-display text-heading-m text-foreground">{t("briefReady")}</h2>
+            <BriefContent brief={justGenerated} />
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <a
+                href={api.briefs.pdfUrl(justGenerated.id)}
+                className="inline-block text-sm font-medium text-foreground underline underline-offset-2"
+              >
+                {t("downloadPdf")}
+              </a>
+              <button
+                onClick={() => void handleDownloadSummary(justGenerated)}
+                disabled={downloadingSummary}
+                className="text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50"
+              >
+                {downloadingSummary ? t("downloadingSummary") : t("downloadSummary")}
+              </button>
+            </div>
+            {summaryDownloadError && (
+              <p className="mt-2 text-sm font-medium text-foreground">{summaryDownloadError}</p>
+            )}
+          </section>
+        )}
+
+        {trends && trends.briefCount > 0 && (
+          <section className="mt-10">
+            <h2 className="font-display text-heading-m text-foreground">{t("trendsTitle")}</h2>
+            <p className="mt-1 text-sm text-foreground/60">
+              {t("trendsAcrossBriefs", { count: trends.briefCount })}
+            </p>
+            <ul className="mt-3 flex flex-col gap-1">
+              {trends.categories.map((row) => (
+                <li key={row.category} className="text-sm text-foreground/70">
+                  {t("trendsCategoryLine", {
+                    category: tEnum(`category.${row.category}`),
+                    present: row.briefsPresent,
+                    total: row.totalBriefs,
+                    persistent: row.briefsPersistent,
+                  })}
+                </li>
+              ))}
+            </ul>
+            {trends.longitudinalPatterns.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-display text-body-l text-foreground">
+                  {t("longitudinalPatternsTitle")}
+                </h3>
+                <ul className="mt-2 flex flex-col gap-1">
+                  {trends.longitudinalPatterns.map((pattern) => (
+                    <li key={pattern.id} className="text-sm text-foreground/70">
+                      {t("longitudinalPatternsLine", {
+                        category: tEnum(`category.${pattern.category}`),
+                        total: pattern.totalBriefs,
+                      })}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+
+        <section className="mt-10">
+          <h2 className="font-display text-heading-m text-foreground">{t("pastBriefs")}</h2>
+          {history === null ? (
+            <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
+          ) : history.length === 0 ? (
+            <p className="mt-3 text-sm text-foreground/50">{t("noBriefsYet")}</p>
+          ) : (
+            <ul className="mt-4 flex flex-col gap-3">
+              {history.map((item) => (
+                <li key={item.id} className="rounded border border-border-subtle p-4">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => void toggleBrief(item.id)}
+                      className="text-left text-sm font-medium text-foreground"
+                    >
+                      {item.fromDate} to {item.toDate}
+                      <span className="ml-2 text-xs font-normal text-foreground/50">
+                        {t("generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
+                      </span>
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={api.briefs.pdfUrl(item.id)}
+                        className="text-xs font-medium text-primary underline underline-offset-2"
+                      >
+                        {t("pdf")}
+                      </a>
+                      <button
+                        onClick={() => void handleDelete(item.id)}
+                        disabled={deletingId === item.id}
+                        className="text-xs font-medium text-foreground underline decoration-destructive underline-offset-2"
+                      >
+                        {deletingId === item.id ? "…" : t("delete")}
+                      </button>
+                    </div>
+                  </div>
+                  {openBriefId === item.id &&
+                    (openBrief ? (
+                      <BriefContent brief={openBrief} />
+                    ) : (
+                      <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
+                    ))}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
 
