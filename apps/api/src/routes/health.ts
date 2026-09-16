@@ -2,7 +2,7 @@ import { Router, type Router as ExpressRouter } from "express";
 import type { HealthCheckResponse } from "@embr/types";
 import { prisma } from "../lib/prisma.js";
 import { redis } from "../lib/redis.js";
-import { verifyMailTransport } from "../modules/auth/mailer.js";
+import { isEmailConfigured } from "../modules/auth/mailer.js";
 import { asyncHandler } from "../lib/async-handler.js";
 
 const router: ExpressRouter = Router();
@@ -36,17 +36,19 @@ router.get(
       await redis.ping();
     });
 
-    // Deliberately excluded from `allOk` below — see verifyMailTransport's
-    // doc comment. Reported for visibility (so a broken SMTP config in
-    // staging is a thing you can *see* by hitting this endpoint,
-    // instead of discovering it only when a real user's verification
-    // email silently never arrives), but a mail-provider outage
-    // shouldn't take an otherwise-healthy API instance out of a load
-    // balancer's rotation.
-    const smtpCheck = await timedCheck(verifyMailTransport);
-
     const allOk = Object.values(checks).every((c) => c.status === "ok");
-    checks.smtp = smtpCheck;
+
+    // Deliberately excluded from `allOk` above — see isEmailConfigured's
+    // doc comment. Reported for visibility (so a missing RESEND_API_KEY
+    // in staging is a thing you can *see* by hitting this endpoint,
+    // instead of discovering it only when a real user's verification
+    // email silently never arrives), but a mail-provider issue
+    // shouldn't take an otherwise-healthy API instance out of a load
+    // balancer's rotation. Unlike the old SMTP check, this doesn't make
+    // a live network call — see isEmailConfigured for why.
+    checks.email = isEmailConfigured()
+      ? { status: "ok" }
+      : { status: "down", message: "RESEND_API_KEY is not configured" };
 
     const body: HealthCheckResponse = {
       status: allOk ? "ok" : "degraded",

@@ -123,40 +123,43 @@ prioritizing before a wider beta, not before a small closed one.
 ## Email delivery
 
 `apps/api/src/modules/auth/mailer.ts` sends verification, password-reset,
-and organization-invite emails via SMTP (`nodemailer`). Local dev/test
-points at MailHog (`docker-compose.yml`), which accepts unauthenticated
-connections — this is why `SMTP_USER`/`SMTP_PASS` aren't required by
-default.
+and organization-invite emails via [Resend](https://resend.com)'s HTTPS
+API. This replaced an earlier Nodemailer/SMTP transport outright — Railway
+(where `apps/api` actually runs, despite the platform table above)
+blocks all outbound SMTP ports below its Pro plan, and recommends
+HTTPS-API email providers even where SMTP is available. There is
+deliberately no SMTP fallback: an HTTPS-only path doesn't depend on
+Railway's plan tier or outbound port policy at all.
 
 **What's already handled from the repo, no code change needed to go
-live**: point `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` at any
-real SMTP-speaking provider (SES's SMTP interface, Postmark, SendGrid,
-...) and set `SMTP_REQUIRE_TLS=true` — the transport wires
-authentication and TLS correctly based on these alone.
+live**: set `RESEND_API_KEY` (from the Resend dashboard) and, if the
+sending domain ever changes, `EMAIL_FROM` (defaults to
+`no-reply@embrhealthcare.com`). Both are optional at the schema level —
+if `RESEND_API_KEY` is unset (local dev/CI without a real Resend
+account), the mailer logs and skips sending rather than failing, so
+nothing needs to be configured just to boot the API locally.
 
 **What's genuinely external, not something a code change can do**:
 
-- An actual provider account and its SMTP credentials.
-- **Sending-domain DNS records** — SPF, DKIM, and ideally DMARC for
-  whatever domain `SMTP_FROM` uses. Without these, most providers will
-  still accept the send but real inboxes (especially Gmail/Outlook)
-  will mark the mail as spam or reject it outright — this is the
-  single most common reason "email works in testing but nobody gets
-  the verification link in production" happens, and it's entirely a
-  DNS/provider-console task, not a repo one.
-- Provider-side sending limits/reputation warm-up for a new sending
-  domain, if the provider requires it.
+- A Resend account and API key.
+- **A verified sending domain** in Resend (SPF/DKIM records on whatever
+  domain `EMAIL_FROM` uses) — Resend won't send from an unverified
+  domain. This is the equivalent of the DNS/DMARC work any SMTP
+  provider would have needed too; it's a Resend-console/DNS task, not a
+  repo one.
+- Provider-side sending limits, if Resend's plan requires raising them.
 
-**Verifying it's actually working**: `GET /health/ready` now includes
-an `smtp` check (`verifyMailTransport()` in mailer.ts) that confirms
-the transport can connect and authenticate — hit this in staging after
-setting the env vars above to confirm SMTP is genuinely configured
-correctly, rather than discovering it's broken only when a real user's
-verification email silently never arrives. Deliberately excluded from
-the endpoint's overall pass/fail status (a mail-provider outage
-shouldn't pull an otherwise-healthy API instance out of a load
-balancer's rotation) — check the `checks.smtp` field specifically, not
-just the top-level `status`.
+**Verifying it's actually working**: `GET /health/ready` includes an
+`email` check (`isEmailConfigured()` in mailer.ts) that reports whether
+`RESEND_API_KEY` is set. This is a configuration-presence check, not a
+live API call — Resend has no bare "verify these credentials" endpoint,
+and probing one of its admin endpoints (listing API keys/domains) would
+falsely report "down" for a correctly configured, least-privilege
+sending-only key, which is the right key type for this use case.
+Deliberately excluded from the endpoint's overall pass/fail status (a
+mail-provider issue shouldn't pull an otherwise-healthy API instance out
+of a load balancer's rotation) — check the `checks.email` field
+specifically, not just the top-level `status`.
 
 ## Health check monitoring
 

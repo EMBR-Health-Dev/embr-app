@@ -19,8 +19,13 @@ describe("boolean env var parsing", () => {
   // treats any non-empty string — including the literal string
   // "false" — as truthy. That's the exact bug these tests guard
   // against: without env.ts's booleanEnvVar() preprocessing, every one
-  // of these would incorrectly resolve to `true`.
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
+  // of these would incorrectly resolve to `true`. COOKIE_SECURE is the
+  // only remaining consumer of booleanEnvVar() since the SMTP_SECURE/
+  // SMTP_REQUIRE_TLS fields were removed with the Nodemailer→Resend
+  // migration — kept as an `it.each` (rather than collapsing to plain
+  // `it`s) so a future second boolean env var slots in without
+  // restructuring these.
+  it.each(["COOKIE_SECURE"] as const)(
     "parses an explicit %s=false as false, not true",
     async (key) => {
       vi.resetModules();
@@ -32,31 +37,25 @@ describe("boolean env var parsing", () => {
     },
   );
 
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
-    "parses an explicit %s=0 as false",
-    async (key) => {
-      vi.resetModules();
-      process.env[key] = "0";
-      process.env.NODE_ENV = "development";
+  it.each(["COOKIE_SECURE"] as const)("parses an explicit %s=0 as false", async (key) => {
+    vi.resetModules();
+    process.env[key] = "0";
+    process.env.NODE_ENV = "development";
 
-      const { env } = await import("../src/config/env.js");
-      expect(env[key]).toBe(false);
-    },
-  );
+    const { env } = await import("../src/config/env.js");
+    expect(env[key]).toBe(false);
+  });
 
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
-    "parses an explicit %s=true as true",
-    async (key) => {
-      vi.resetModules();
-      process.env[key] = "true";
-      process.env.NODE_ENV = "development";
+  it.each(["COOKIE_SECURE"] as const)("parses an explicit %s=true as true", async (key) => {
+    vi.resetModules();
+    process.env[key] = "true";
+    process.env.NODE_ENV = "development";
 
-      const { env } = await import("../src/config/env.js");
-      expect(env[key]).toBe(true);
-    },
-  );
+    const { env } = await import("../src/config/env.js");
+    expect(env[key]).toBe(true);
+  });
 
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
+  it.each(["COOKIE_SECURE"] as const)(
     "parses %s case-insensitively (TRUE / FALSE)",
     async (key) => {
       vi.resetModules();
@@ -72,17 +71,6 @@ describe("boolean env var parsing", () => {
       expect(envTrue[key]).toBe(true);
     },
   );
-
-  it("SMTP_SECURE and SMTP_REQUIRE_TLS default to false when unset, regardless of NODE_ENV", async () => {
-    vi.resetModules();
-    delete process.env.SMTP_SECURE;
-    delete process.env.SMTP_REQUIRE_TLS;
-    process.env.NODE_ENV = "production";
-
-    const { env } = await import("../src/config/env.js");
-    expect(env.SMTP_SECURE).toBe(false);
-    expect(env.SMTP_REQUIRE_TLS).toBe(false);
-  });
 });
 
 describe("env COOKIE_SECURE default", () => {

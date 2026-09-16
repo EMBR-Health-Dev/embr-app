@@ -38,23 +38,20 @@ const apiEnvSchema = z.object({
   API_HOST: z.string().default("0.0.0.0"),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
-  SMTP_HOST: z.string().default("localhost"),
-  SMTP_PORT: z.coerce.number().int().positive().default(1025),
-  SMTP_FROM: z.string().default("no-reply@embr.health"),
-  // Optional: local dev/test points at MailHog (see docker-compose.yml),
-  // which accepts unauthenticated connections, so these have no
-  // default and are simply omitted from the transport config when
-  // unset. Any real provider (SES, Postmark, SendGrid, ...) requires
-  // both — see mailer.ts's doc comment for what was actually missing
-  // here before this.
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  // Defaults match MailHog's plaintext-friendly local setup. A real
-  // deployment should set SMTP_REQUIRE_TLS=true explicitly — this is
-  // never inferred from SMTP_USER/SMTP_PASS being present, since
-  // that's a decision worth making deliberately, not guessing at.
-  SMTP_SECURE: booleanEnvVar().default(false),
-  SMTP_REQUIRE_TLS: booleanEnvVar().default(false),
+
+  // ---- Email (Resend) ----
+  // Optional, matching SENTRY_DSN/STRIPE_SECRET_KEY's precedent below:
+  // the mailer stays fully inert (logs and skips sending — see
+  // mailer.ts) rather than every environment without a real Resend
+  // account (local dev, CI) failing to boot. Railway blocks outbound
+  // SMTP entirely below its Pro plan, which is why this replaced the
+  // previous Nodemailer/SMTP transport outright — Resend's HTTPS API
+  // isn't affected by that restriction.
+  RESEND_API_KEY: z.string().optional(),
+  // Not a secret — the visible "From" address on every transactional
+  // email. Same env-var-with-a-real-default pattern the old SMTP_FROM
+  // used, just renamed since it's no longer SMTP-specific.
+  EMAIL_FROM: z.string().default("no-reply@embrhealthcare.com"),
 
   // ---- Retention (closed-beta minimum) ----
   // Applies only to already-dead rows (expired tokens, expired/revoked
