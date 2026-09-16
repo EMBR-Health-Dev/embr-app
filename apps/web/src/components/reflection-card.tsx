@@ -90,22 +90,22 @@ export function ReflectionCard({
 
   return (
     <div
-      className="rounded border border-navy/10 bg-white p-4"
+      className="rounded border border-border-subtle bg-white p-4"
       role="region"
       aria-label={copy.heading}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-display text-sm text-navy">{copy.heading}</h3>
+        <h3 className="font-display text-sm text-foreground">{copy.heading}</h3>
         <button
           onClick={onDismiss}
           aria-label={t("dismiss")}
-          className="shrink-0 text-navy/40 hover:text-navy/70"
+          className="shrink-0 text-foreground/40 hover:text-foreground/70"
         >
           ×
         </button>
       </div>
-      <p className="mt-1 text-sm text-navy/80">{copy.message}</p>
-      {copy.caveat && <p className="mt-1 text-xs text-navy/50">{copy.caveat}</p>}
+      <p className="mt-1 text-sm text-foreground/80">{copy.message}</p>
+      {copy.caveat && <p className="mt-1 text-xs text-foreground/50">{copy.caveat}</p>}
     </div>
   );
 }

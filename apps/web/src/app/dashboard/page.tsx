@@ -204,7 +204,7 @@ function DashboardContent() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">{tCommon("loading")}</p>
+        <p className="text-foreground/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -214,32 +214,35 @@ function DashboardContent() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">EMBR</h1>
-        <div className="flex items-center gap-4 text-sm text-navy/60">
-          <Link href="/trends" className="underline underline-offset-2 hover:text-navy">
+        <h1 className="font-display text-heading-xl text-foreground">EMBR</h1>
+        <div className="flex items-center gap-4 text-sm text-foreground/60">
+          <Link href="/trends" className="underline underline-offset-2 hover:text-foreground">
             {t("trends")}
           </Link>
-          <Link href="/treatments" className="underline underline-offset-2 hover:text-navy">
+          <Link href="/treatments" className="underline underline-offset-2 hover:text-foreground">
             {t("treatments")}
           </Link>
-          <Link href="/brief" className="underline underline-offset-2 hover:text-navy">
+          <Link href="/brief" className="underline underline-offset-2 hover:text-foreground">
             {t("brief")}
           </Link>
-          <Link href="/export" className="underline underline-offset-2 hover:text-navy">
+          <Link href="/export" className="underline underline-offset-2 hover:text-foreground">
             {t("export")}
           </Link>
           {managesOrg && (
-            <Link href="/organization" className="underline underline-offset-2 hover:text-navy">
+            <Link
+              href="/organization"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
               {t("organization")}
             </Link>
           )}
-          <Link href="/settings" className="underline underline-offset-2 hover:text-navy">
+          <Link href="/settings" className="underline underline-offset-2 hover:text-foreground">
             {t("settings")}
           </Link>
           <span>{user.email}</span>
           <button
             onClick={() => logout().then(() => router.replace("/login"))}
-            className="underline underline-offset-2 hover:text-navy"
+            className="underline underline-offset-2 hover:text-foreground"
           >
             {t("logout")}
           </button>
@@ -247,11 +250,11 @@ function DashboardContent() {
       </header>
 
       {startingPointKey && (
-        <p className="mt-6 font-display text-lg italic text-navy/80">{t(startingPointKey)}</p>
+        <p className="mt-6 font-display text-lg italic text-foreground/80">{t(startingPointKey)}</p>
       )}
 
       {weeklyFrequency.length > 0 && (
-        <p className="mt-3 text-sm font-medium text-teal">
+        <p className="mt-3 text-sm font-medium text-foreground">
           {t("thisWeek", { count: weeklyFrequency.reduce((sum, f) => sum + f.count, 0) })}
           {" · "}
           {t("mostCommon", { category: tEnum(`category.${weeklyFrequency[0].category}`) })}
@@ -263,39 +266,39 @@ function DashboardContent() {
       {/* Signature interaction: one tap, no form, for the moment that
           actually needs it — mid-hot-flash is not when anyone wants to
           fill out a category picker. */}
-      <section className="mt-10 flex flex-col items-center gap-3 rounded border border-brass/30 bg-brass/5 py-10 text-center">
+      <section className="mt-10 flex flex-col items-center gap-3 rounded border border-primary bg-primary/5 py-10 text-center">
         <button
           onClick={logHotFlashNow}
-          className="flex h-24 w-24 items-center justify-center rounded-full bg-brass text-bone shadow-[0_0_0_6px_rgba(184,151,79,0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy active:scale-95"
+          className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95"
           aria-label={t("hotFlashAriaLabel")}
         >
           <span className="text-3xl">◉</span>
         </button>
-        <p className="font-display text-lg text-navy">{t("hotFlashPrompt")}</p>
-        <p className="text-sm text-navy/60">{t("hotFlashHint")}</p>
-        {confirmation && <p className="text-sm font-medium text-teal">{confirmation}</p>}
+        <p className="font-display text-heading-m text-foreground">{t("hotFlashPrompt")}</p>
+        <p className="text-sm text-foreground/60">{t("hotFlashHint")}</p>
+        {confirmation && <p className="text-sm font-medium text-foreground">{confirmation}</p>}
       </section>
 
       {/* Everything else — a real form, but tucked away until asked for. */}
       <section className="mt-6">
         <button
           onClick={() => setFormOpen((v) => !v)}
-          className="text-sm font-medium text-teal underline underline-offset-2"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
         >
           {formOpen ? t("close") : t("logDifferentSymptom")}
         </button>
         {!formOpen && confirmation && (
-          <p className="mt-2 text-sm font-medium text-teal">{confirmation}</p>
+          <p className="mt-2 text-sm font-medium text-foreground">{confirmation}</p>
         )}
 
         {formOpen && (
-          <div className="mt-4 flex flex-col gap-4 rounded border border-navy/10 p-5">
+          <div className="mt-4 flex flex-col gap-4 rounded border border-border-subtle p-5">
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-navy">{t("symptomLabel")}</span>
+              <span className="font-medium text-foreground">{t("symptomLabel")}</span>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
-                className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
@@ -306,7 +309,7 @@ function DashboardContent() {
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-navy">{t("severityLabel")}</span>
+              <span className="font-medium text-foreground">{t("severityLabel")}</span>
               <div className="flex gap-2">
                 {SEVERITIES.map((s) => (
                   <button
@@ -314,7 +317,9 @@ function DashboardContent() {
                     type="button"
                     onClick={() => setSeverity(s)}
                     className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
-                      severity === s ? "border-navy bg-navy text-bone" : "border-navy/20 text-navy"
+                      severity === s
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-foreground"
                     }`}
                   >
                     {tEnum(`severity.${s}`)}
@@ -324,12 +329,12 @@ function DashboardContent() {
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-navy">{t("notesLabel")}</span>
+              <span className="font-medium text-foreground">{t("notesLabel")}</span>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
               />
             </label>
 
@@ -341,18 +346,18 @@ function DashboardContent() {
       </section>
 
       {/* Cycle quick-log for today. */}
-      <section className="mt-8 rounded border border-teal/20 bg-teal/5 p-5">
-        <h2 className="font-display text-lg text-navy">{t("todaysCycleEntry")}</h2>
+      <section className="mt-8 rounded border border-accent bg-accent p-5">
+        <h2 className="font-display text-heading-m text-foreground">{t("todaysCycleEntry")}</h2>
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-navy">{t("flowLabel")}</span>
+            <span className="font-medium text-foreground">{t("flowLabel")}</span>
             <select
               value={flow}
               onChange={(e) => {
                 setFlow(e.target.value as (typeof FLOWS)[number] | "");
                 setCycleSaved(false);
               }}
-              className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+              className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
             >
               <option value="">{t("flowNone")}</option>
               {FLOWS.map((f) => (
@@ -363,7 +368,7 @@ function DashboardContent() {
             </select>
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-navy">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={periodStart}
@@ -375,7 +380,7 @@ function DashboardContent() {
             {t("periodStartedToday")}
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-navy">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={periodEnd}
@@ -394,21 +399,25 @@ function DashboardContent() {
 
       {/* Recent history. */}
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">{t("recentSymptoms")}</h2>
+        <h2 className="font-display text-heading-m text-foreground">{t("recentSymptoms")}</h2>
         {logsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : logs.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">{t("noLogsYet")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{t("noLogsYet")}</p>
         ) : (
-          <ul className="mt-3 divide-y divide-navy/10">
+          <ul className="mt-3 divide-y divide-border-subtle">
             {logs.map((log) => (
               <li key={log.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
-                  <span className="font-medium text-navy">{tEnum(`category.${log.category}`)}</span>
-                  <span className="ml-2 text-navy/50">{tEnum(`severity.${log.severity}`)}</span>
-                  {log.notes && <p className="mt-1 text-navy/60">{log.notes}</p>}
+                  <span className="font-medium text-foreground">
+                    {tEnum(`category.${log.category}`)}
+                  </span>
+                  <span className="ml-2 text-foreground/50">
+                    {tEnum(`severity.${log.severity}`)}
+                  </span>
+                  {log.notes && <p className="mt-1 text-foreground/60">{log.notes}</p>}
                 </div>
-                <time className="text-navy/40" dateTime={log.occurredAt}>
+                <time className="text-foreground/40" dateTime={log.occurredAt}>
                   {new Date(log.occurredAt).toLocaleString(undefined, {
                     month: "short",
                     day: "numeric",
@@ -431,7 +440,7 @@ export default function DashboardPage() {
     <Suspense
       fallback={
         <main className="flex min-h-screen items-center justify-center">
-          <p className="text-navy/50">{t("loading")}</p>
+          <p className="text-foreground/50">{t("loading")}</p>
         </main>
       }
     >

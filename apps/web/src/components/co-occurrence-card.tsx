@@ -46,8 +46,8 @@ export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
 
   if (loading) {
     return (
-      <section className="mt-8 rounded border border-navy/10 p-5" aria-busy="true">
-        <div className="h-4 w-40 animate-pulse rounded bg-navy/10" />
+      <section className="mt-8 rounded border border-border-subtle p-5" aria-busy="true">
+        <div className="h-4 w-40 animate-pulse rounded bg-muted" />
       </section>
     );
   }
@@ -59,19 +59,19 @@ export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
 
   return (
     <section
-      className="mt-8 rounded border border-brass/40 bg-brass/5 p-5"
+      className="mt-8 rounded border border-primary bg-primary/5 p-5"
       role="region"
       aria-label={t("heading")}
     >
-      <h2 className="font-display text-lg text-navy">{t("heading")}</h2>
-      <p className="mt-2 text-[15px] text-navy/80">
+      <h2 className="font-display text-lg text-foreground">{t("heading")}</h2>
+      <p className="mt-2 text-[15px] text-foreground/80">
         {t("message", {
           categoryA: tEnum(`category.${result.categoryA}`),
           categoryB: tEnum(`category.${result.categoryB}`),
           days: result.days,
         })}
       </p>
-      <p className="mt-2 text-xs text-navy/50">{t("caveat")}</p>
+      <p className="mt-2 text-xs text-foreground/50">{t("caveat")}</p>
     </section>
   );
 }

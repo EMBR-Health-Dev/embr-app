@@ -96,22 +96,22 @@ function LoginForm() {
         <LanguageSwitcher />
       </div>
 
-      <h1 className="font-display text-3xl text-navy">{t("title")}</h1>
+      <h1 className="font-display text-display-m text-foreground">{t("title")}</h1>
 
       {reason === "password-changed" && (
-        <p className="mb-6 mt-6 rounded-sm bg-teal/10 px-3 py-2 text-sm text-teal">
+        <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
           {t("passwordChanged")}
         </p>
       )}
 
       {reason === "session-expired" && (
-        <p className="mb-6 mt-6 rounded-sm bg-teal/10 px-3 py-2 text-sm text-teal">
+        <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
           {t("sessionExpired")}
         </p>
       )}
 
       {ssoError && (
-        <p className="mb-6 mt-6 rounded-sm bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="mb-6 mt-6 rounded-sm border-l-2 border-destructive bg-muted px-3 py-2 text-sm font-medium text-foreground">
           {t.has(`ssoError.${ssoError}`) ? t(`ssoError.${ssoError}`) : t("ssoError.default")}
         </p>
       )}
@@ -136,31 +136,31 @@ function LoginForm() {
 
         <Link
           href="/forgot-password"
-          className="self-end text-xs font-medium text-teal underline underline-offset-2"
+          className="self-end text-xs font-medium text-primary underline underline-offset-2"
         >
           {t("forgotPassword")}
         </Link>
 
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
+        {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
 
         <Button type="submit" disabled={submitting} className="mt-2">
           {submitting ? t("submitting") : t("submit")}
         </Button>
       </form>
 
-      <div className="mt-6 flex items-center gap-3 text-xs uppercase tracking-wide text-navy/40">
-        <span className="h-px flex-1 bg-navy/10" />
+      <div className="mt-6 flex items-center gap-3 text-xs uppercase tracking-wide text-foreground/40">
+        <span className="h-px flex-1 bg-muted" />
         {t("or")}
-        <span className="h-px flex-1 bg-navy/10" />
+        <span className="h-px flex-1 bg-muted" />
       </div>
 
       <Button variant="ghost" className="mt-6 w-full" onClick={handleSsoClick}>
         {t("continueWithSso")}
       </Button>
 
-      <p className="mt-6 text-center text-sm text-navy/60">
+      <p className="mt-6 text-center text-sm text-foreground/60">
         {t("newToEmbr")}{" "}
-        <Link href={registerHref} className="font-medium text-teal underline underline-offset-2">
+        <Link href={registerHref} className="font-medium text-primary underline underline-offset-2">
           {t("createAccount")}
         </Link>
       </p>

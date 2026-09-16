@@ -135,7 +135,7 @@ export default function SettingsPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">{tCommon("loading")}</p>
+        <p className="text-foreground/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -143,42 +143,44 @@ export default function SettingsPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
+        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <Link
           href="/dashboard"
-          className="text-sm font-medium text-teal underline underline-offset-2"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
         >
           {t("backToDashboard")}
         </Link>
       </header>
 
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">{t("accountTitle")}</h2>
-        <p className="mt-1 text-sm text-navy/60">{user.email}</p>
+        <h2 className="font-display text-heading-m text-foreground">{t("accountTitle")}</h2>
+        <p className="mt-1 text-sm text-foreground/60">{user.email}</p>
         {user.emailVerified ? (
-          <p className="mt-2 text-sm text-teal">{t("emailVerified")}</p>
+          <p className="mt-2 text-sm text-foreground">{t("emailVerified")}</p>
         ) : (
           <div className="mt-2">
-            <p className="text-sm text-navy/60">{t("emailNotVerified")}</p>
+            <p className="text-sm text-foreground/60">{t("emailNotVerified")}</p>
             {resendDone ? (
-              <p className="mt-2 text-sm text-teal">{t("resendVerificationSuccess")}</p>
+              <p className="mt-2 text-sm text-foreground">{t("resendVerificationSuccess")}</p>
             ) : (
               <button
                 onClick={() => void handleResendVerification()}
                 disabled={resending}
-                className="mt-2 text-sm font-medium text-teal underline underline-offset-2 disabled:opacity-50"
+                className="mt-2 text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50"
               >
                 {resending ? t("resendVerificationSubmitting") : t("resendVerification")}
               </button>
             )}
-            {resendError && <p className="mt-2 text-sm text-red-600">{resendError}</p>}
+            {resendError && (
+              <p className="mt-2 text-sm font-medium text-foreground">{resendError}</p>
+            )}
           </div>
         )}
       </section>
 
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">{t("changePasswordTitle")}</h2>
-        <p className="mt-1 text-sm text-navy/60">{t("changePasswordDescription")}</p>
+        <h2 className="font-display text-heading-m text-foreground">{t("changePasswordTitle")}</h2>
+        <p className="mt-1 text-sm text-foreground/60">{t("changePasswordDescription")}</p>
         <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4" noValidate>
           <Field
             label={t("currentPasswordLabel")}
@@ -196,7 +198,7 @@ export default function SettingsPage() {
             onChange={(e) => setNewPassword(e.target.value)}
             error={fieldErrors.newPassword}
           />
-          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
+          {passwordError && <p className="text-sm font-medium text-foreground">{passwordError}</p>}
           <Button type="submit" disabled={changingPassword} className="self-start">
             {changingPassword ? t("changing") : t("changePassword")}
           </Button>
@@ -205,28 +207,28 @@ export default function SettingsPage() {
 
       <section className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg text-navy">{t("devices")}</h2>
+          <h2 className="font-display text-heading-m text-foreground">{t("devices")}</h2>
           {!confirmingLogoutAll ? (
             <button
               onClick={() => setConfirmingLogoutAll(true)}
-              className="text-sm font-medium text-red-600 underline underline-offset-2"
+              className="text-sm font-medium text-foreground underline decoration-destructive underline-offset-2"
             >
               {t("logoutEverywhere")}
             </button>
           ) : (
             <div className="flex items-center gap-3 text-sm">
-              <span className="text-navy/60">{t("confirmLogoutAllMessage")}</span>
+              <span className="text-foreground/60">{t("confirmLogoutAllMessage")}</span>
               <button
                 onClick={logoutEverywhere}
                 disabled={loggingOutAll}
-                className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+                className="font-medium text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
               >
                 {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
               </button>
               <button
                 onClick={() => setConfirmingLogoutAll(false)}
                 disabled={loggingOutAll}
-                className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
+                className="text-foreground/60 underline underline-offset-2 disabled:opacity-50"
               >
                 {t("cancel")}
               </button>
@@ -235,23 +237,23 @@ export default function SettingsPage() {
         </div>
 
         {sessionsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : sessions.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">{t("noActiveSessions")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{t("noActiveSessions")}</p>
         ) : (
-          <ul className="mt-4 divide-y divide-navy/10">
+          <ul className="mt-4 divide-y divide-border-subtle">
             {sessions.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
-                  <p className="text-navy">
+                  <p className="text-foreground">
                     {s.userAgent ?? t("unknownDevice")}
                     {s.current && (
-                      <span className="ml-2 rounded-sm bg-teal/10 px-1.5 py-0.5 text-xs font-medium text-teal">
+                      <span className="ml-2 rounded-sm bg-accent px-1.5 py-0.5 text-xs font-medium text-accent-foreground">
                         {t("thisDevice")}
                       </span>
                     )}
                   </p>
-                  <p className="text-navy/50">
+                  <p className="text-foreground/50">
                     {s.ipAddress ?? t("unknownIp")} · {t("signedIn")}{" "}
                     {new Date(s.createdAt).toLocaleDateString()}
                   </p>
@@ -262,13 +264,13 @@ export default function SettingsPage() {
                       <button
                         onClick={() => revokeSession(s.id)}
                         disabled={revokingId === s.id}
-                        className="text-red-600 underline underline-offset-2 disabled:opacity-50"
+                        className="text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
                       >
                         {revokingId === s.id ? t("revoking") : t("revoke")}
                       </button>
                       <button
                         onClick={() => setConfirmingRevokeId(null)}
-                        className="text-navy/60 underline underline-offset-2"
+                        className="text-foreground/60 underline underline-offset-2"
                       >
                         {t("cancel")}
                       </button>
@@ -276,7 +278,7 @@ export default function SettingsPage() {
                   ) : (
                     <button
                       onClick={() => setConfirmingRevokeId(s.id)}
-                      className="text-red-600 underline underline-offset-2"
+                      className="text-foreground underline decoration-destructive underline-offset-2"
                     >
                       {t("revoke")}
                     </button>
@@ -287,14 +289,14 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="mt-10 border-t border-red-200 pt-8">
-        <h2 className="font-display text-lg text-navy">{t("deleteAccountTitle")}</h2>
-        <p className="mt-2 text-sm text-navy/60">{t("deleteAccountDescription")}</p>
+      <section className="mt-10 border-t border-destructive/30 pt-8">
+        <h2 className="font-display text-heading-m text-foreground">{t("deleteAccountTitle")}</h2>
+        <p className="mt-2 text-sm text-foreground/60">{t("deleteAccountDescription")}</p>
 
         {!deleteConfirming ? (
           <button
             onClick={() => setDeleteConfirming(true)}
-            className="mt-4 text-sm font-medium text-red-600 underline underline-offset-2"
+            className="mt-4 text-sm font-medium text-foreground underline decoration-destructive underline-offset-2"
           >
             {t("deleteMyAccount")}
           </button>
@@ -306,18 +308,18 @@ export default function SettingsPage() {
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
             />
-            <p className="text-xs text-navy/50">
+            <p className="text-xs text-foreground/50">
               {t("forgotPasswordHint")}{" "}
-              <Link href="/forgot-password" className="text-teal underline underline-offset-2">
+              <Link href="/forgot-password" className="text-primary underline underline-offset-2">
                 {t("forgotPasswordLink")}
               </Link>
             </p>
-            {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+            {deleteError && <p className="text-sm font-medium text-foreground">{deleteError}</p>}
             <div className="flex gap-3">
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleting}
-                className="rounded-sm bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="rounded-sm bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50"
               >
                 {deleting ? t("deleting") : t("permanentlyDelete")}
               </button>
@@ -328,7 +330,7 @@ export default function SettingsPage() {
                   setDeleteError(null);
                 }}
                 disabled={deleting}
-                className="text-sm text-navy/60 underline underline-offset-2 disabled:opacity-50"
+                className="text-sm text-foreground/60 underline underline-offset-2 disabled:opacity-50"
               >
                 {t("cancel")}
               </button>

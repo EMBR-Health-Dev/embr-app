@@ -102,7 +102,7 @@ export function ReflectionsSection({ refreshKey }: { refreshKey: number }) {
 
   return (
     <section className="mt-6 flex flex-col gap-3" aria-label={t("heading")}>
-      <h2 className="text-sm font-medium text-navy/60">{t("heading")}</h2>
+      <h2 className="text-sm font-medium text-foreground/60">{t("heading")}</h2>
       {reflections.map((reflection) => (
         <ReflectionCard
           key={`${reflection.type}:${reflection.key}`}

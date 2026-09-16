@@ -21,7 +21,7 @@ export function LanguageSwitcher() {
   }
 
   return (
-    <div className="flex items-center gap-2 text-xs text-navy/50">
+    <div className="flex items-center gap-2 text-xs text-foreground/50">
       <span className="sr-only">{t("label")}</span>
       {LOCALES.map((l) => (
         <button
@@ -32,8 +32,8 @@ export function LanguageSwitcher() {
           aria-current={l === locale}
           className={
             l === locale
-              ? "font-medium text-navy underline underline-offset-2"
-              : "text-navy/50 hover:text-navy disabled:opacity-50"
+              ? "font-medium text-foreground underline underline-offset-2"
+              : "text-foreground/50 hover:text-foreground disabled:opacity-50"
           }
         >
           {t(l)}

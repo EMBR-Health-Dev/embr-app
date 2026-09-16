@@ -142,7 +142,7 @@ export default function TreatmentsPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">{tCommon("loading")}</p>
+        <p className="text-foreground/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -150,18 +150,18 @@ export default function TreatmentsPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
+        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <Link
           href="/dashboard"
-          className="text-sm font-medium text-teal underline underline-offset-2"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
         >
           {t("backToDashboard")}
         </Link>
       </header>
 
-      <p className="mt-2 text-sm text-navy/60">{t("hint")}</p>
+      <p className="mt-2 text-sm text-foreground/60">{t("hint")}</p>
 
-      <section className="mt-6 flex flex-col gap-4 rounded border border-navy/10 p-5">
+      <section className="mt-6 flex flex-col gap-4 rounded border border-border-subtle p-5">
         <Field
           label={t("namePlaceholder")}
           value={name}
@@ -169,11 +169,11 @@ export default function TreatmentsPage() {
         />
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">{t("category")}</span>
+          <span className="font-medium text-foreground">{t("category")}</span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
-            className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -192,7 +192,7 @@ export default function TreatmentsPage() {
             onChange={(e) => setStartDate(e.target.value)}
           />
 
-          <label className="flex items-center gap-2 text-sm text-navy">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={ongoing}
@@ -217,16 +217,16 @@ export default function TreatmentsPage() {
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">{t("notesPlaceholder")}</span>
+          <span className="font-medium text-foreground">{t("notesPlaceholder")}</span>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
           />
         </label>
 
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
+        {formError && <p className="text-sm font-medium text-foreground">{formError}</p>}
 
         <Button onClick={handleSave} disabled={saving} className="self-start">
           {saving ? t("saving") : t("addTreatment")}
@@ -234,13 +234,13 @@ export default function TreatmentsPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">{t("currentAndPast")}</h2>
+        <h2 className="font-display text-heading-m text-foreground">{t("currentAndPast")}</h2>
         {treatmentsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : treatments.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">{t("noneYet")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{t("noneYet")}</p>
         ) : (
-          <ul className="mt-3 divide-y divide-navy/10">
+          <ul className="mt-3 divide-y divide-border-subtle">
             {treatments.map((tr) => {
               const isOngoing = !tr.endDate;
               const impact = impactState[tr.id];
@@ -249,17 +249,17 @@ export default function TreatmentsPage() {
                 <li key={tr.id} className="py-3 text-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-navy">{tr.name}</p>
-                      <p className="text-navy/50">
+                      <p className="font-medium text-foreground">{tr.name}</p>
+                      <p className="text-foreground/50">
                         {tEnum(`treatmentCategory.${tr.category}`)} · {tr.startDate} –{" "}
                         {isOngoing ? t("ongoing") : tr.endDate}
                       </p>
-                      {tr.notes && <p className="mt-1 text-navy/60">{tr.notes}</p>}
+                      {tr.notes && <p className="mt-1 text-foreground/60">{tr.notes}</p>}
                     </div>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => void toggleImpact(tr.id)}
-                        className="text-teal underline underline-offset-2"
+                        className="text-primary underline underline-offset-2"
                       >
                         {expanded ? t("hideImpact") : t("showImpact")}
                       </button>
@@ -267,7 +267,7 @@ export default function TreatmentsPage() {
                         <button
                           onClick={() => handleEndToday(tr.id)}
                           disabled={endingId === tr.id}
-                          className="text-teal underline underline-offset-2 disabled:opacity-50"
+                          className="text-primary underline underline-offset-2 disabled:opacity-50"
                         >
                           {endingId === tr.id ? "…" : t("endToday")}
                         </button>
@@ -275,7 +275,7 @@ export default function TreatmentsPage() {
                       <button
                         onClick={() => handleDelete(tr.id)}
                         disabled={deletingId === tr.id}
-                        className="text-red-600 underline underline-offset-2 disabled:opacity-50"
+                        className="text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
                       >
                         {deletingId === tr.id ? "…" : t("delete")}
                       </button>
@@ -283,30 +283,30 @@ export default function TreatmentsPage() {
                   </div>
 
                   {expanded && (
-                    <div className="mt-3 rounded border border-teal/20 bg-teal/5 p-3 text-sm">
+                    <div className="mt-3 rounded border border-accent bg-accent p-3 text-sm">
                       {!impact || impact.loading ? (
-                        <p className="text-navy/50">{tCommon("loading")}</p>
+                        <p className="text-foreground/50">{tCommon("loading")}</p>
                       ) : impact.error ? (
-                        <p className="text-red-600">{t("impactError")}</p>
+                        <p className="font-medium text-foreground">{t("impactError")}</p>
                       ) : impact.data!.insufficientData ? (
-                        <p className="text-navy/60">{t("impactInsufficientData")}</p>
+                        <p className="text-foreground/60">{t("impactInsufficientData")}</p>
                       ) : (
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-navy/70">{t("impactBeforeLabel")}</span>
-                            <span className="font-medium text-navy">
+                            <span className="text-foreground/70">{t("impactBeforeLabel")}</span>
+                            <span className="font-medium text-foreground">
                               {impact.data!.before.logCount} ·{" "}
                               {t("impactWindow", { count: impact.data!.before.days })}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-navy/70">{t("impactAfterLabel")}</span>
-                            <span className="font-medium text-navy">
+                            <span className="text-foreground/70">{t("impactAfterLabel")}</span>
+                            <span className="font-medium text-foreground">
                               {impact.data!.after.logCount} ·{" "}
                               {t("impactWindow", { count: impact.data!.after.days })}
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-navy/50">{t("impactDisclaimer")}</p>
+                          <p className="mt-1 text-xs text-foreground/50">{t("impactDisclaimer")}</p>
                         </div>
                       )}
                     </div>

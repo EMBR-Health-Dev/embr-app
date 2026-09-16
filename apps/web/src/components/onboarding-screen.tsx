@@ -23,7 +23,7 @@ export function OnboardingScreen({
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-bone px-6 py-10">
+    <main className="flex min-h-screen flex-col bg-background px-6 py-10">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <div className="flex items-center justify-between">
           <div className="flex gap-1.5" aria-hidden="true">
@@ -31,14 +31,14 @@ export function OnboardingScreen({
               <span
                 key={s}
                 className={`h-[3px] w-6 rounded-full transition-colors ${
-                  i <= index ? "bg-brass" : "bg-navy/10"
+                  i <= index ? "bg-primary" : "bg-muted"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={() => void handleSkip()}
-            className="text-xs font-medium text-navy/50 underline underline-offset-2 hover:text-navy"
+            className="text-xs font-medium text-foreground/50 underline underline-offset-2 hover:text-foreground"
           >
             {t("skipToDashboard")}
           </button>
