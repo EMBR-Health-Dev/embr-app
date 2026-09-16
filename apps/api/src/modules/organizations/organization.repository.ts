@@ -180,6 +180,29 @@ export const organizationRepository = {
     return prisma.organizationInvite.update({ where: { id }, data: { consumedAt: new Date() } });
   },
 
+  /** Atomic counterpart to calling createMembership + consumeInvite
+   * separately (what acceptInvite used to do) — a crash between the
+   * two left a real membership row with the invite still marked
+   * unconsumed. Self-healing on retry (the next call would just hit
+   * the "already a member" branch and consume the invite), but not
+   * atomic, and a concurrent duplicate request could double-fire the
+   * ORG_MEMBER_JOINED side effects. Wrapping both writes here removes
+   * that window entirely. */
+  async createMembershipAndConsumeInvite(
+    organizationId: string,
+    userId: string,
+    role: OrgRole,
+    inviteId: string,
+  ): Promise<void> {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.organizationMembership.create({ data: { organizationId, userId, role } });
+      await tx.organizationInvite.update({
+        where: { id: inviteId },
+        data: { consumedAt: new Date() },
+      });
+    });
+  },
+
   async memberUserIds(organizationId: string): Promise<string[]> {
     const rows = await prisma.organizationMembership.findMany({
       where: { organizationId },

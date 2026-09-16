@@ -24,6 +24,33 @@ function booleanEnvVar() {
   }, z.boolean());
 }
 
+/**
+ * A plain `.default("http://localhost:3000")` is convenient for local
+ * dev but a real production risk for a var like APP_URL/CORS_ORIGIN:
+ * forgetting to set it doesn't crash, it silently bakes localhost into
+ * real password-reset/verification/org-invite email links, SSO
+ * redirect URLs, and Stripe Checkout return URLs (APP_URL), or makes
+ * the API reject every real browser origin (CORS_ORIGIN) — both are
+ * "looks fine at boot, breaks for actual users" failure modes, the
+ * opposite of this file's "fail fast on bad config" rule (see
+ * docs/ARCHITECTURE.md). Outside production, the dev default still
+ * applies unchanged.
+ */
+function requiredInProduction(name: string, devDefault: string) {
+  return z.preprocess(
+    (value) => {
+      if (typeof value === "string" && value.trim().length > 0) return value;
+      if (process.env.NODE_ENV === "production") return undefined;
+      return devDefault;
+    },
+    z
+      .string({
+        required_error: `${name} has no safe default in production and must be set explicitly`,
+      })
+      .min(1),
+  );
+}
+
 const apiEnvSchema = z.object({
   // Railway (and most PaaS hosts) assign the listen port dynamically via
   // `PORT` and route their own healthcheck at it — a hardcoded API_PORT
@@ -66,10 +93,10 @@ const apiEnvSchema = z.object({
   // from the separate landing-page repo without loosening anything
   // else — every other route still requires a session cookie those
   // requests will never carry anyway, cross-origin.
-  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  CORS_ORIGIN: requiredInProduction("CORS_ORIGIN", "http://localhost:3000"),
 
   // ---- Auth (Milestone 2) ----
-  APP_URL: z.string().default("http://localhost:3000"),
+  APP_URL: requiredInProduction("APP_URL", "http://localhost:3000"),
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce

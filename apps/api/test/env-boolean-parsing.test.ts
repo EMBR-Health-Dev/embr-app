@@ -78,6 +78,10 @@ describe("env COOKIE_SECURE default", () => {
     vi.resetModules();
     delete process.env.COOKIE_SECURE;
     process.env.NODE_ENV = "production";
+    // APP_URL/CORS_ORIGIN are also required in production (see below) —
+    // set explicitly here so this test only exercises COOKIE_SECURE.
+    process.env.APP_URL = "https://embrhealthcare.com";
+    process.env.CORS_ORIGIN = "https://embrhealthcare.com";
 
     const { env } = await import("../src/config/env.js");
     expect(env.COOKIE_SECURE).toBe(true);
@@ -105,6 +109,8 @@ describe("env COOKIE_SECURE default", () => {
     vi.resetModules();
     process.env.COOKIE_SECURE = "false";
     process.env.NODE_ENV = "production";
+    process.env.APP_URL = "https://embrhealthcare.com";
+    process.env.CORS_ORIGIN = "https://embrhealthcare.com";
 
     const { env } = await import("../src/config/env.js");
     expect(env.COOKIE_SECURE).toBe(false);
@@ -118,4 +124,59 @@ describe("env COOKIE_SECURE default", () => {
     const { env } = await import("../src/config/env.js");
     expect(env.COOKIE_SECURE).toBe(true);
   });
+});
+
+describe("env APP_URL / CORS_ORIGIN production requirement", () => {
+  // Forgetting to set these in production doesn't crash on its own —
+  // it silently bakes localhost into real password-reset/verification/
+  // org-invite emails, SSO redirects, and Stripe return URLs (APP_URL),
+  // or makes the API reject every real browser origin (CORS_ORIGIN).
+  // Both must fail loudly at boot instead.
+  it.each(["APP_URL", "CORS_ORIGIN"] as const)(
+    "exits the process with a clear message when %s is unset in production",
+    async (key) => {
+      vi.resetModules();
+      const sibling = key === "APP_URL" ? "CORS_ORIGIN" : "APP_URL";
+      delete process.env[key];
+      process.env[sibling] = "https://embrhealthcare.com";
+      process.env.NODE_ENV = "production";
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => undefined as never);
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      await import("../src/config/env.js");
+
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(errorSpy.mock.calls.flat().join("\n")).toContain(
+        `${key} has no safe default in production`,
+      );
+      exitSpy.mockRestore();
+      errorSpy.mockRestore();
+    },
+  );
+
+  it.each(["APP_URL", "CORS_ORIGIN"] as const)(
+    "still honors an explicit %s value in production",
+    async (key) => {
+      vi.resetModules();
+      const sibling = key === "APP_URL" ? "CORS_ORIGIN" : "APP_URL";
+      process.env[key] = "https://embrhealthcare.com";
+      process.env[sibling] = "https://embrhealthcare.com";
+      process.env.NODE_ENV = "production";
+
+      const { env } = await import("../src/config/env.js");
+      expect(env[key]).toBe("https://embrhealthcare.com");
+    },
+  );
+
+  it.each(["APP_URL", "CORS_ORIGIN"] as const)(
+    "still defaults to localhost outside production when %s is unset",
+    async (key) => {
+      vi.resetModules();
+      delete process.env[key];
+      process.env.NODE_ENV = "development";
+
+      const { env } = await import("../src/config/env.js");
+      expect(env[key]).toBe("http://localhost:3000");
+    },
+  );
 });

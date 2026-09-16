@@ -20,6 +20,18 @@ None of these are hard requirements — the Dockerfiles under each `apps/*`
 directory are the actual portability boundary, and any container platform
 works.
 
+**`apps/worker`'s current state**: the process, Dockerfile, and BullMQ
+wiring are real and deployable, but it only runs a placeholder
+`system-maintenance` queue (`apps/worker/src/index.ts`) that logs and
+returns — nothing in `apps/api` enqueues a real job to it yet. PDF
+generation and the Clinical Brief AI call are both fully synchronous
+within the API's own request/response cycle today (the AI call has its
+own 30s timeout for exactly that reason — see `brief.ai.ts`). Deploying
+`apps/worker` right now keeps the door open for real async jobs later;
+it does not currently do anything a beta depends on, so it is deferrable
+if minimizing what's deployed for a first beta matters more than having
+the process running.
+
 ## Pipeline shape
 
 ```
@@ -189,18 +201,25 @@ See `docs/BACKUPS.md`.
 - **Web/Admin**: Vercel keeps every deployment and lets you "promote to
   production" any prior one instantly.
 - **Database migrations**: `apps/api/prisma/schema.prisma` is the source
-  of truth. A single squashed initial migration
-  (`prisma/migrations/20260819005012_initial_prisma_migration`) is
-  committed and covers the schema as of that date — CI runs `prisma
-migrate deploy`, which applies it (and any later ones) against
-  whatever database it's pointed at. Every schema change since then
-  needs its own `pnpm db:migrate` run locally to generate a new
-  migration file (this sandbox can't run it — see the note on
-  `binaries.prisma.sh` network access elsewhere in this repo's
-  history) and commit it, same as the first one. Treat any migration
-  that drops or renames a column as high-risk: take a manual backup
-  via `scripts/db-backup.sh` first and confirm the rollback plan for
-  that specific migration, since `prisma migrate deploy` has no
+  of truth; `apps/api/prisma/migrations` now holds a real, linear
+  migration history (nine migrations as of this writing, from the
+  initial schema through the Stripe billing fields). Generate new ones
+  with `pnpm db:migrate` against a real local Postgres and commit the
+  result, same as every prior one.
+  **`prisma migrate deploy` running in `ci.yml` only ever applies
+  against CI's own ephemeral Postgres service container** — it verifies
+  the migration history is valid and applies cleanly, it is not a
+  production deploy step. Nothing in this repository automatically runs
+  migrations against a real staging/production database on deploy: `apps/api/Dockerfile`'s
+  `CMD` starts the server directly, with no pre-flight migration step,
+  and no `railway.json`/`fly.toml`/release-command config exists yet.
+  Whoever sets up the real deploy must add an explicit `prisma migrate
+deploy` step — a Railway/Fly "pre-deploy" or "release" command, run
+  once per deploy before the new API version starts serving traffic —
+  or migrations will simply never reach the real database. Treat any
+  migration that drops or renames a column as high-risk: take a manual
+  backup via `scripts/db-backup.sh` first and confirm the rollback plan
+  for that specific migration, since `prisma migrate deploy` has no
   automatic "undo."
 
 ## Mobile app builds & submission
@@ -249,3 +268,73 @@ this repo has no evidence of yet.
 Run `scripts/setup-branch-protection.mjs` once (see the script's header
 comment for usage) to require CI to pass, require one PR approval, and
 block force-pushes/deletion on `main`.
+
+## Production configuration checklist
+
+A human operator's checklist for verifying a real deployment's
+environment — not a claim that any of this is currently set anywhere.
+Never paste real values into a PR, issue, or chat when working through
+this; just confirm each is set, in whatever secret store the platform
+uses. `.env.example` documents every variable `apps/api` reads; this
+groups them by what happens if you forget.
+
+**Will refuse to boot at all if missing** (`apps/api/src/config/env.ts`
+fails fast with a specific per-field message — see
+`docs/ARCHITECTURE.md`'s "fail fast on bad config" rule):
+
+- `DATABASE_URL`, `REDIS_URL`
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (each ≥32 chars — generate
+  with `openssl rand -hex 32`, never reuse `.env.example`'s placeholders)
+- `SSO_ENCRYPTION_KEY` (must decode to exactly 32 bytes —
+  `openssl rand -base64 32`)
+- `ANTHROPIC_API_KEY`
+
+**Boots fine, but silently misconfigured for real users if forgotten**
+(this is the dangerous category — no crash, no error, just wrong
+behavior the first real user hits):
+
+- `APP_URL` — required as of this pass whenever `NODE_ENV=production`
+  (previously defaulted to `localhost:3000`, silently corrupting every
+  password-reset/verification/org-invite email link, SSO redirect, and
+  Stripe Checkout return URL). Set to the real, public app origin.
+- `CORS_ORIGIN` — same production requirement. Set to the real
+  browser-facing origin(s), comma-separated if more than one. Get this
+  wrong and every real browser request gets rejected by CORS (a loud,
+  visible failure in this direction, at least).
+- `COOKIE_SECURE` — defaults to `true` outside development/test, so
+  leaving it unset in production is actually the safe outcome. Confirm
+  it's _not_ explicitly set to `false` anywhere in the real deploy config.
+- `EMAIL_FROM` — must be a verified-in-Resend sending domain, or Resend
+  will reject every send (see "Email delivery" above).
+
+**Genuinely optional — the corresponding feature just stays inert**
+(confirm this matches intent for this deploy, don't treat "unset" as
+automatically wrong):
+
+- `RESEND_API_KEY` unset → no transactional email sends (verification,
+  password reset, org invites all silently no-op — real if intentional
+  for a very first internal test, a real problem for actual beta users)
+- `SENTRY_DSN` unset → no error monitoring for `apps/api`/`apps/worker`
+  (client-side error monitoring doesn't exist yet regardless — see the
+  "Known gap" note above)
+- `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_SEAT_PRICE_ID`
+  unset → billing routes return a clean 503, not a crash; fine if this
+  beta isn't charging anyone yet
+
+**Build-time, not runtime** — baked into the built artifact and can't
+be changed by an env var at container start:
+
+- `apps/web`/`apps/admin`'s `API_URL` build arg (Dockerfile) — must
+  point at the real API's reachable address at build time
+- `apps/mobile`'s `EXPO_PUBLIC_API_URL` per EAS build profile
+  (`eas.json`) — still placeholder domains as of this writing (see
+  "Mobile app builds" above); a production build made before these are
+  corrected will build successfully and simply be unable to reach any
+  API
+
+**Migrations**: confirm the chosen platform actually runs
+`pnpm --filter @embr/api exec prisma migrate deploy` before the new API
+version starts serving traffic — nothing does this automatically today
+(see "Rollback strategy" above). This is the one item on this list that
+isn't an env var at all, but is just as capable of leaving the API
+"boots fine, immediately broken" if skipped.

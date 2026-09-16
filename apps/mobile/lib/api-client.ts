@@ -42,6 +42,38 @@ export function setSessionExpiredHandler(handler: (() => void) | null): void {
 // process.env here would be undefined at runtime.
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000";
 
+// EAS's own build profiles (apps/mobile/eas.json) set EXPO_PUBLIC_API_URL
+// correctly for every real build. This only catches a build made
+// through a path that bypasses that — a custom CI job, or `expo run:*`
+// without the profile's env exported — which would otherwise silently
+// ship pointed at localhost with no signal until every request fails.
+// __DEV__ is Expo/React Native's own build-time flag, not this file's
+// own invention.
+if (!__DEV__ && API_BASE_URL.includes("localhost")) {
+  console.warn(
+    `EXPO_PUBLIC_API_URL was not set for this production build — falling back to ${API_BASE_URL}, which is not reachable from a real device.`,
+  );
+}
+
+// No request this app makes is expected to take longer than this —
+// mirrors apps/web/src/lib/api-client.ts's identical REQUEST_TIMEOUT_MS.
+// Without it, a hung connection (dead cell/wifi hop, a backend that
+// accepted the connection but never responds) leaves the awaited
+// promise pending forever — every screen's loading state gated on it
+// spins indefinitely, with no recovery path short of force-quitting
+// the app.
+const REQUEST_TIMEOUT_MS = 30_000;
+
+async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // Auth endpoints never go through the refresh-and-retry path below —
 // a 401 from /auth/login is just "wrong password," not "your session
 // expired," and retrying /auth/refresh itself on its own 401 would
@@ -81,7 +113,7 @@ async function rawFetch<T>(path: string, options: RequestOptions, accessToken?: 
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
-  const res = await fetch(buildUrl(path, options.query), {
+  const res = await fetchWithTimeout(buildUrl(path, options.query), {
     method,
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
