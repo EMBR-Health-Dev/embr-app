@@ -448,6 +448,26 @@ function promoteToAdmin(email: string) {
   if (user) user.role = "ADMIN";
 }
 
+async function promoteToAdminAndRelogin(
+  agent: ReturnType<typeof request.agent>,
+  email: string,
+): Promise<void> {
+  promoteToAdmin(email);
+  // Re-login picks up the new ADMIN role in a fresh JWT — and, like
+  // any login, issues a fresh CSRF cookie. Echo it onto the agent the
+  // same way registerAndLogin does, or every subsequent CSRF-protected
+  // request on this agent would carry the stale token from the first
+  // login and get rejected with 403.
+  const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
+  const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+    c.startsWith("embr_csrf="),
+  );
+  if (csrfCookie) {
+    const token = csrfCookie.split(";")[0]!.split("=")[1]!;
+    agent.set("x-csrf-token", token);
+  }
+}
+
 function addMembership(
   organizationId: string,
   userId: string,
@@ -495,10 +515,7 @@ describe("POST /organizations", () => {
     const app = createApp();
     const agent = request.agent(app);
     await registerAndLogin(agent, "platformadmin@embr.health");
-    promoteToAdmin("platformadmin@embr.health");
-    await agent
-      .post("/auth/login")
-      .send({ email: "platformadmin@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(agent, "platformadmin@embr.health");
 
     const res = await agent.post("/organizations").send({ name: "Acme Corp", slug: "acme-corp" });
     expect(res.status).toBe(201);
@@ -509,10 +526,7 @@ describe("POST /organizations", () => {
     const app = createApp();
     const agent = request.agent(app);
     await registerAndLogin(agent, "dupadmin@embr.health");
-    promoteToAdmin("dupadmin@embr.health");
-    await agent
-      .post("/auth/login")
-      .send({ email: "dupadmin@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(agent, "dupadmin@embr.health");
 
     await agent.post("/organizations").send({ name: "First", slug: "dup-slug" });
     const res = await agent.post("/organizations").send({ name: "Second", slug: "dup-slug" });
@@ -525,10 +539,7 @@ describe("org invite + accept flow", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops1@embr.health");
-    promoteToAdmin("ops1@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops1@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops1@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-1" });
@@ -548,10 +559,7 @@ describe("org invite + accept flow", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops2@embr.health");
-    promoteToAdmin("ops2@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops2@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops2@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-2" });
@@ -592,10 +600,7 @@ describe("org invite + accept flow", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops3@embr.health");
-    promoteToAdmin("ops3@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops3@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops3@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-3" });
@@ -641,10 +646,7 @@ describe("org invite + accept flow", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops-seat1@embr.health");
-    promoteToAdmin("ops-seat1@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops-seat1@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops-seat1@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-seat1" });
@@ -675,10 +677,7 @@ describe("org invite + accept flow", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops-seat2@embr.health");
-    promoteToAdmin("ops-seat2@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops-seat2@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops-seat2@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-seat2" });
@@ -708,10 +707,7 @@ describe("org invite + accept flow", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops-seat3@embr.health");
-    promoteToAdmin("ops-seat3@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops-seat3@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops-seat3@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-seat3" });
@@ -750,10 +746,7 @@ describe("GET /organizations/:organizationId/members", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops4@embr.health");
-    promoteToAdmin("ops4@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops4@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops4@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-4" });
@@ -789,10 +782,7 @@ describe("GET /organizations/:organizationId/members", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops-billing1@embr.health");
-    promoteToAdmin("ops-billing1@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops-billing1@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops-billing1@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-billing1" });
@@ -812,10 +802,7 @@ describe("GET /organizations/:organizationId/members", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops5@embr.health");
-    promoteToAdmin("ops5@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops5@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops5@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-5" });
@@ -836,10 +823,7 @@ describe("GET /organizations/:organizationId/members", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops-roster@embr.health");
-    promoteToAdmin("ops-roster@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops-roster@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops-roster@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-roster" });
@@ -866,10 +850,7 @@ describe("GET /organizations", () => {
     const app = createApp();
     const adminAgent = request.agent(app);
     const adminId = await registerAndLogin(adminAgent, "ops-list@embr.health");
-    promoteToAdmin("ops-list@embr.health");
-    await adminAgent
-      .post("/auth/login")
-      .send({ email: "ops-list@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(adminAgent, "ops-list@embr.health");
 
     const res = await adminAgent.get("/organizations");
     expect(res.status).toBe(200);
@@ -952,10 +933,7 @@ describe("DELETE /organizations/:organizationId/members/:userId", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops6@embr.health");
-    promoteToAdmin("ops6@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops6@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops6@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-6" });
@@ -980,10 +958,7 @@ describe("DELETE /organizations/:organizationId/members/:userId", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops7@embr.health");
-    promoteToAdmin("ops7@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops7@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops7@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-7" });
@@ -1037,10 +1012,7 @@ describe("DELETE /organizations/:organizationId/members/:userId", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "ops8@embr.health");
-    promoteToAdmin("ops8@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "ops8@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops8@embr.health");
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: "acme-8" });
@@ -1150,10 +1122,7 @@ describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, `ops-trend-${memberCount}@embr.health`);
-    promoteToAdmin(`ops-trend-${memberCount}@embr.health`);
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: `ops-trend-${memberCount}@embr.health`, password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, `ops-trend-${memberCount}@embr.health`);
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: `acme-trend-${memberCount}` });
@@ -1230,10 +1199,7 @@ describe("GET /organizations/:organizationId/trends/activation", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, `ops-act-${suffix}@embr.health`);
-    promoteToAdmin(`ops-act-${suffix}@embr.health`);
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: `ops-act-${suffix}@embr.health`, password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, `ops-act-${suffix}@embr.health`);
     const orgRes = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Acme", slug: `acme-act-${suffix}` });
@@ -1461,10 +1427,7 @@ describe("GET /organizations/mine", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "opsmine@embr.health");
-    promoteToAdmin("opsmine@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "opsmine@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "opsmine@embr.health");
 
     const orgA = await platformAdminAgent
       .post("/organizations")
@@ -1503,10 +1466,7 @@ describe("GET /organizations/mine", () => {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
     await registerAndLogin(platformAdminAgent, "opsmine2@embr.health");
-    promoteToAdmin("opsmine2@embr.health");
-    await platformAdminAgent
-      .post("/auth/login")
-      .send({ email: "opsmine2@embr.health", password: VALID_PASSWORD });
+    await promoteToAdminAndRelogin(platformAdminAgent, "opsmine2@embr.health");
     const org = await platformAdminAgent
       .post("/organizations")
       .send({ name: "Initech", slug: "initech-mine" });

@@ -23,14 +23,15 @@ runner. The active mechanism is:
   scratch database, then sanity-checks that it actually contains data.
   Not yet wired into an automated schedule — see "What this doesn't cover"
   below.
-- `.github/workflows/backup.yml` — **currently inactive for the daily
-  backup path.** It predates the private-Postgres discovery: a
-  GitHub-hosted runner has no route to `postgres.railway.internal`, so
-  `PRODUCTION_DATABASE_URL` was never actually reachable from it, and
-  even with that secret set the job would still fail to connect. Kept in
-  the repo as-is rather than deleted in this pass — worth a deliberate
-  decision on whether to disable or repurpose it now that `embr-db-backup`
-  is the real path.
+- `.github/workflows/backup.yml` — **disabled from its daily/weekly
+  schedule, `workflow_dispatch`-only now.** It predates the
+  private-Postgres discovery: a GitHub-hosted runner has no route to
+  `postgres.railway.internal`, so `PRODUCTION_DATABASE_URL` was never
+  actually reachable from it — every scheduled run failed immediately,
+  every day, for a reason no secret could fix. Left runnable manually
+  (for a future environment where the target really is reachable from a
+  runner) rather than deleted, but the schedule that produced daily
+  false-failure noise is gone.
 
 ## Why encryption isn't optional here
 
@@ -60,7 +61,7 @@ retry-loop.
 If this service is ever recreated, redo this list — Railway Bucket
 credentials are per-bucket and not something to copy from elsewhere.
 
-## Setup checklist for the dormant GitHub Actions path (`backup.yml`)
+## Setup checklist for the manual-only GitHub Actions path (`backup.yml`)
 
 Only relevant if that workflow is ever repurposed instead of removed —
 see the note above. It would still need:
