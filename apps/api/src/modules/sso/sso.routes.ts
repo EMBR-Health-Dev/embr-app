@@ -11,6 +11,7 @@ import { validate } from "../../lib/validate.js";
 import { logger } from "../../lib/logger.js";
 import { env } from "../../config/env.js";
 import { requireAuth, requireOrgRole } from "../auth/auth.middleware.js";
+import { requireCsrfToken } from "../auth/csrf.js";
 import { setAccessTokenCookie, setRefreshTokenCookie } from "../auth/cookies.js";
 import { loginLimiter } from "../auth/rate-limiters.js";
 import { ssoService } from "./sso.service.js";
@@ -33,6 +34,7 @@ router.put(
   "/organizations/:organizationId/sso",
   requireAuth(),
   requireOrgRole("ORG_ADMIN"),
+  requireCsrfToken(),
   validate(upsertSsoConnectionSchema),
   asyncHandler(async (req, res) => {
     const connection = await ssoService.upsertConnection(

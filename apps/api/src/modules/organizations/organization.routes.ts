@@ -17,6 +17,7 @@ import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth, requireOrgRole, requireRole } from "../auth/auth.middleware.js";
+import { requireCsrfToken } from "../auth/csrf.js";
 import { writeAuditLog } from "../auth/audit.js";
 import type { Organization } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
@@ -81,6 +82,7 @@ router.get(
 router.post(
   "/organizations",
   requireRole("ADMIN"),
+  requireCsrfToken(),
   validate(createOrganizationSchema),
   asyncHandler(async (req, res) => {
     const org = await organizationService.createOrganization(req.body as CreateOrganizationInput);
@@ -138,6 +140,7 @@ router.get(
 router.post(
   "/organizations/:organizationId/invites",
   requireOrgRole("ORG_ADMIN"),
+  requireCsrfToken(),
   validate(inviteMemberSchema),
   asyncHandler(async (req, res) => {
     const organizationId = requireParam(req, "organizationId");
@@ -160,6 +163,7 @@ router.post(
  * a brand-new user who's never seen this organization's id before. */
 router.post(
   "/organizations/invites/accept",
+  requireCsrfToken(),
   validate(acceptInviteSchema),
   asyncHandler(async (req, res) => {
     const { token } = req.body as AcceptInviteInput;
@@ -172,6 +176,7 @@ router.post(
 router.delete(
   "/organizations/:organizationId/members/:userId",
   requireOrgRole("ORG_ADMIN"),
+  requireCsrfToken(),
   asyncHandler(async (req, res) => {
     const organizationId = requireParam(req, "organizationId");
     const revokedUserId = requireParam(req, "userId");
@@ -200,6 +205,7 @@ router.delete(
 router.post(
   "/organizations/:organizationId/leave",
   requireOrgRole("ORG_ADMIN", "ORG_MEMBER"),
+  requireCsrfToken(),
   asyncHandler(async (req, res) => {
     const organizationId = requireParam(req, "organizationId");
     await organizationService.leaveOrganization(organizationId, req.user!.sub);
