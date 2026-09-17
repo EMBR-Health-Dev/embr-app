@@ -21,6 +21,14 @@ WORKDIR /app
 COPY scripts/db-backup.sh ./db-backup.sh
 RUN chmod +x ./db-backup.sh
 
+# Also available in this image (not run by the cron CMD below): lets a
+# temporary Railway service reuse this same, already-correct image to
+# perform a real restore drill against an isolated scratch database,
+# without needing a second image build or exposing secrets outside
+# Railway's own variable-reference resolution.
+COPY scripts/db-restore-test.sh ./db-restore-test.sh
+RUN chmod +x ./db-restore-test.sh
+
 # Railway cron: runs this command on the schedule, expects it to exit
 # when done — db-backup.sh already does, unchanged.
 CMD ["./db-backup.sh"]
