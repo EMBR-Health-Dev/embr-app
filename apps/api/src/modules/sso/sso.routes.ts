@@ -75,9 +75,9 @@ router.get(
   loginLimiter,
   validate(ssoStartQuerySchema, "query"),
   async (req, res) => {
-    const { email } = req.query as unknown as SsoStartQuery;
+    const { email, redirect } = req.query as unknown as SsoStartQuery;
     try {
-      const redirectUrl = await ssoService.startLogin(email);
+      const redirectUrl = await ssoService.startLogin(email, redirect);
       res.redirect(302, redirectUrl);
     } catch (err) {
       const reason =
@@ -95,10 +95,13 @@ router.get(
 router.get("/auth/sso/callback", async (req, res) => {
   try {
     const callbackUrl = reconstructCallbackUrl(req.originalUrl);
-    const { accessToken, refreshToken } = await ssoService.handleCallback(req, callbackUrl);
+    const { accessToken, refreshToken, redirectTo } = await ssoService.handleCallback(
+      req,
+      callbackUrl,
+    );
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, refreshToken);
-    res.redirect(302, `${env.APP_URL}/dashboard`);
+    res.redirect(302, `${env.APP_URL}${redirectTo ?? "/dashboard"}`);
   } catch (err) {
     if (!(err instanceof AppError)) {
       logger.error({ err }, "unexpected error completing SSO login");

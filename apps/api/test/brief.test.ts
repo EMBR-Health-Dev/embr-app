@@ -297,7 +297,20 @@ const VALID_PASSWORD = "Sup3rSecret!Pass";
 
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
   const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
-  await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
+  const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
+  // Mirrors what a real browser does automatically: read the CSRF
+  // cookie the login response just set and echo it back as a header
+  // on every subsequent request this agent makes. `agent.set()` sets a
+  // default header applied to every future request issued through
+  // this same agent, not just the next one — one place to satisfy
+  // requireCsrfToken() rather than every individual mutating call.
+  const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+    c.startsWith("embr_csrf="),
+  );
+  if (csrfCookie) {
+    const token = csrfCookie.split(";")[0]!.split("=")[1]!;
+    agent.set("x-csrf-token", token);
+  }
   return register.body.data.id as string;
 }
 
@@ -1816,6 +1829,20 @@ describe("GET/DELETE /briefs — access control", () => {
     const res = await agent.get(`/briefs/${briefId}/pdf`);
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("application/pdf");
+  });
+
+  it("GET /briefs/:id/pdf 404s (and never returns PDF bytes) for another user's brief", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    await registerAndLogin(agentA, "pdf-owner2@embr.health");
+    const briefId = await createBriefFor(agentA);
+
+    const agentB = request.agent(app);
+    await registerAndLogin(agentB, "pdf-intruder@embr.health");
+
+    const res = await agentB.get(`/briefs/${briefId}/pdf`);
+    expect(res.status).toBe(404);
+    expect(res.headers["content-type"]).not.toContain("application/pdf");
   });
 
   it("DELETE /briefs/:id removes it for the owner", async () => {

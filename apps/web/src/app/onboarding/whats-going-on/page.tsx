@@ -64,15 +64,15 @@ export default function WhatsGoingOnScreen() {
   if (loading) {
     return (
       <OnboardingScreen step="WHATS_GOING_ON">
-        <p className="text-navy/50">{tCommon("loading")}</p>
+        <p className="text-foreground/50">{tCommon("loading")}</p>
       </OnboardingScreen>
     );
   }
 
   return (
     <OnboardingScreen step="WHATS_GOING_ON">
-      <p className="font-display text-2xl text-navy">{t("headline")}</p>
-      <p className="mt-3 text-sm text-navy/60">{t("hint")}</p>
+      <p className="font-display text-heading-xl text-foreground">{t("headline")}</p>
+      <p className="mt-3 text-sm text-foreground/60">{t("hint")}</p>
       <div className="mt-8 flex flex-wrap gap-2.5">
         {AREAS.map((value) => {
           const isSelected = selected.includes(value);
@@ -83,8 +83,8 @@ export default function WhatsGoingOnScreen() {
               aria-pressed={isSelected}
               className={`rounded-sm border px-4 py-2 text-sm transition-colors ${
                 isSelected
-                  ? "border-navy bg-navy text-bone"
-                  : "border-navy/20 text-navy/75 hover:border-navy/40"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-foreground/75 hover:border-border"
               }`}
             >
               {t(AREA_KEYS[value])}

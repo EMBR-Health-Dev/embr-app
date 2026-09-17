@@ -11,6 +11,8 @@ import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
+import { requireCsrfToken } from "../auth/csrf.js";
+import { treatmentWriteLimiter } from "./treatment-rate-limiter.js";
 import { treatmentService } from "./treatment.service.js";
 
 const router: ExpressRouter = Router();
@@ -19,6 +21,8 @@ router.use("/treatments", requireAuth());
 
 router.post(
   "/treatments",
+  treatmentWriteLimiter,
+  requireCsrfToken(),
   validate(createTreatmentSchema),
   asyncHandler(async (req, res) => {
     const treatment = await treatmentService.create(req.user!.sub, req.body);
@@ -56,6 +60,7 @@ router.get(
 
 router.patch(
   "/treatments/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   validate(updateTreatmentSchema),
   asyncHandler(async (req, res) => {
@@ -71,6 +76,7 @@ router.patch(
 
 router.delete(
   "/treatments/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     const treatmentId = requireParam(req, "id");

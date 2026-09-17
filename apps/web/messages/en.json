@@ -34,7 +34,7 @@
     "checkEmailBody": "We've sent a verification link to <strong>{email}</strong>. Once you've confirmed it, come back and log in.",
     "goToLogin": "Go to login",
     "title": "Create your account",
-    "subtitle": "Track symptoms and cycles on your terms — private by default.",
+    "subtitle": "Turn what you're experiencing into evidence — on your terms, private by default.",
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "passwordHint": "At least 12 characters, with an uppercase letter, a lowercase letter, and a digit.",
@@ -90,7 +90,7 @@
   "Onboarding": {
     "skipToDashboard": "Skip to dashboard",
     "welcome": {
-      "headline": "A place to keep track of what's actually happening to you.",
+      "headline": "Turn what's actually happening to you into something you can see.",
       "body": "EMBR helps you turn what you're experiencing into something you can look back on, understand, and eventually bring into a conversation with your doctor. It doesn't diagnose you or replace your clinician. It helps you organize your own record, on your own terms.",
       "getStarted": "Get started"
     },
@@ -207,6 +207,7 @@
     "save": "Save",
     "saving": "Saving…",
     "logConfirmation": "Logged.",
+    "logError": "Couldn't save that — check your connection and try again.",
     "todaysCycleEntry": "Today's cycle entry",
     "flowLabel": "Flow",
     "flowNone": "None",
@@ -215,7 +216,7 @@
     "saveTodaysEntry": "Save today's entry",
     "saved": "Saved ✓",
     "recentSymptoms": "Recent symptoms",
-    "noLogsYet": "Nothing logged yet — use the button above whenever something happens.",
+    "noLogsYet": "Nothing recorded yet — use the button above whenever something happens.",
     "thisWeek": "{count, plural, one {# log this week} other {# logs this week}}",
     "mostCommon": "Most common: {category}",
     "startingPoint": {
@@ -224,11 +225,36 @@
       "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
-    }
+    },
+    "todayLabel": "Today",
+    "todayLoggedSummary": "{count, plural, one {# entry recorded today} other {# entries recorded today}}",
+    "todayEmptyTitle": "No signal recorded yet today.",
+    "todayEmptyHint": "Log a hot flash the moment it happens, or record anything else below.",
+    "yourRecordLabel": "Your record",
+    "patternsLabel": "Patterns",
+    "patternsBody": "A weekly view of what's been logged. The full picture lives in Patterns.",
+    "viewPatterns": "View patterns",
+    "evidenceLabel": "Your evidence",
+    "evidenceBody": "Your Clinical Brief turns your recorded history into a concise document for a healthcare conversation.",
+    "viewClinicalBrief": "View Clinical Brief",
+    "generateFirstBrief": "Generate your first Clinical Brief"
+  },
+  "Nav": {
+    "navigationLabel": "Main navigation",
+    "home": "Home",
+    "patterns": "Patterns",
+    "clinicalBrief": "Clinical Brief",
+    "settings": "Settings",
+    "more": "More",
+    "menu": "Menu",
+    "treatments": "Treatments",
+    "export": "Export",
+    "organization": "Organization",
+    "logout": "Log out"
   },
   "Trends": {
-    "title": "Trends",
-    "backToDashboard": "← Dashboard",
+    "title": "Patterns",
+    "reportedDataLabel": "Reported data",
     "symptomsHeader": "Symptoms, last {days} days",
     "noSymptomsYet": "Nothing logged in this window yet — patterns will show up here as you go.",
     "cycleLengthHeader": "Cycle length, last {days} days",
@@ -238,9 +264,12 @@
     "irregularityNote": "Cycle irregularity is expected during perimenopause — this view is here to help you notice your own pattern, not to flag it as a problem."
   },
   "CoOccurrence": {
+    "observedPatternLabel": "Observed pattern",
     "heading": "What you've logged together",
     "message": "{categoryA} appeared alongside {categoryB} on {days, plural, one {# day} other {# days}}.",
-    "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause."
+    "caveat": "A description of what you've logged — not a diagnosis, and not a claim about cause.",
+    "emptyTitle": "Not enough logged yet to show a pattern here.",
+    "emptyBody": "This becomes more informative as your record grows — keep logging, and EMBR will surface it here once there's enough to see."
   },
   "Organization": {
     "title": "Organization",
@@ -310,7 +339,6 @@
   },
   "Settings": {
     "title": "Settings",
-    "backToDashboard": "← Dashboard",
     "accountTitle": "Account",
     "emailVerified": "Your email is verified.",
     "emailNotVerified": "Your email address isn't verified yet.",
@@ -348,8 +376,7 @@
   },
   "Brief": {
     "title": "EMBR BRIEF",
-    "backToDashboard": "← Dashboard",
-    "description": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
+    "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
     "fromLabel": "From",
     "toLabel": "To",
     "generate": "Generate brief",
@@ -366,6 +393,8 @@
     "generatedOn": "generated {date}",
     "pdf": "PDF",
     "delete": "Delete",
+    "briefDetailError": "Couldn't load that brief — try again.",
+    "deleteError": "Couldn't delete that brief — try again.",
     "questionsForGp": "Questions to bring to your GP",
     "symptomFrequency": "Symptom frequency",
     "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",

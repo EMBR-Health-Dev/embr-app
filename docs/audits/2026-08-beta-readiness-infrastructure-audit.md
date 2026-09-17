@@ -2,6 +2,30 @@
 
 **Scope:** Full re-verification against `main` at commit `f4ca89b` (post-PR #64, treatment tracking backend merged). Audit only — no code changed. Every finding below is backed by something actually read in this session (file contents, config values, test runs), not carried over from earlier conversations.
 
+> **Superseded in large part — verified 2026-09-16.** This audit is kept
+> as a historical record, not a current status report. Since it was
+> written, the following P0/P1 items it lists as unresolved have been
+> fixed and directly re-verified against the current repository:
+>
+> - **Database migration strategy**: nine migrations now exist in
+>   `apps/api/prisma/migrations`, `ci.yml` applies them against a real
+>   Postgres 16 container. See `docs/MIGRATION-AUDIT.md`'s own status
+>   update.
+> - **Email provider**: migrated to Resend's HTTPS API (`docs/DEPLOYMENT.md`'s
+>   "Email delivery" section); the `SMTP_HOST` default this audit flags
+>   no longer exists in the codebase.
+> - **`COOKIE_SECURE` default**: now `process.env.NODE_ENV === "production"`
+>   (`apps/api/src/config/env.ts`) — fails secure by default, not insecure.
+> - **Onboarding**: a full onboarding flow exists on web (`apps/web/src/app/onboarding`).
+> - **Treatment tracking UI**: exists on web (`apps/web/src/app/treatments`).
+> - **Account deletion**: exists (`Settings.deleteMyAccount`, both web and API).
+>
+> Not independently re-verified this pass: whether a real production
+> Postgres/Redis/domain is actually deployed anywhere, database backup
+> workflow functionality against a real target, and mobile EAS/App Store
+> configuration. Treat those specific line items below as still open
+> unless a later audit says otherwise.
+
 ---
 
 ## How to read this

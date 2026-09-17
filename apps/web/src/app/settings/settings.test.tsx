@@ -8,6 +8,7 @@ const routerPush = vi.fn();
 const routerReplace = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: routerPush, replace: routerReplace }),
+  usePathname: () => "/settings",
 }));
 
 // A stable object reference (not a fresh literal per call) — see
@@ -23,7 +24,7 @@ const mockUser = {
   onboardingCompletedAt: "2026-01-01T00:00:00Z",
 };
 vi.mock("../../lib/auth-context", () => ({
-  useAuth: () => ({ user: mockUser, loading: false }),
+  useAuth: () => ({ user: mockUser, loading: false, logout: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 const deleteAccountMock = vi.fn();
@@ -37,6 +38,9 @@ vi.mock("../../lib/api", () => ({
       resendVerification: (...args: unknown[]) => resendVerificationMock(...args),
       changePassword: vi.fn(),
       logoutAll: vi.fn(),
+    },
+    organizations: {
+      mine: vi.fn().mockResolvedValue([]),
     },
   },
 }));

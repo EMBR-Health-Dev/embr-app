@@ -6,6 +6,7 @@ import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
+import { requireCsrfToken } from "../auth/csrf.js";
 import { briefGenerationLimiter } from "./brief-rate-limiter.js";
 import { briefService } from "./brief.service.js";
 import { buildClinicalBriefPdf } from "./brief.pdf.js";
@@ -17,6 +18,7 @@ router.use("/briefs", requireAuth());
 router.post(
   "/briefs",
   briefGenerationLimiter,
+  requireCsrfToken(),
   validate(generateBriefSchema),
   asyncHandler(async (req, res) => {
     const { fromDate, toDate } = req.body as GenerateBriefInput;
@@ -83,6 +85,7 @@ router.get(
 
 router.delete(
   "/briefs/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     const id = requireParam(req, "id");

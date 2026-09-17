@@ -11,6 +11,8 @@ import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
+import { requireCsrfToken } from "../auth/csrf.js";
+import { symptomLogWriteLimiter } from "./symptom-rate-limiter.js";
 import { symptomService } from "./symptom.service.js";
 
 const router: ExpressRouter = Router();
@@ -19,6 +21,8 @@ router.use("/symptom-logs", requireAuth());
 
 router.post(
   "/symptom-logs",
+  symptomLogWriteLimiter,
+  requireCsrfToken(),
   validate(createSymptomLogSchema),
   asyncHandler(async (req, res) => {
     const log = await symptomService.create(req.user!.sub, req.body);
@@ -47,6 +51,7 @@ router.get(
 
 router.patch(
   "/symptom-logs/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   validate(updateSymptomLogSchema),
   asyncHandler(async (req, res) => {
@@ -58,6 +63,7 @@ router.patch(
 
 router.delete(
   "/symptom-logs/:id",
+  requireCsrfToken(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     const symptomLogId = requireParam(req, "id");

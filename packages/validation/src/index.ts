@@ -330,6 +330,15 @@ export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSch
 
 export const ssoStartQuerySchema = z.object({
   email: emailSchema,
+  // Where to send the person after a successful SSO login — same
+  // "return to the page that sent you to /login" contract password
+  // login already honors via /login?redirect=. Optional and
+  // unvalidated here beyond being a string; sso.service.ts re-checks
+  // it's a safe same-origin path before ever using it; an interloper
+  // could otherwise smuggle an open-redirect target through, and
+  // schema-level validation isn't the right place to enforce a path
+  // shape that already has its own checker.
+  redirect: z.string().optional(),
 });
 export type SsoStartQuery = z.infer<typeof ssoStartQuerySchema>;
 

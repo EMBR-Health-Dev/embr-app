@@ -189,7 +189,21 @@ const VALID_PASSWORD = "Sup3rSecret!Pass";
 
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
   await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
-  return agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
+  const res = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
+  // Mirrors what a real browser does automatically: read the CSRF
+  // cookie the login response just set and echo it back as a header
+  // on every subsequent request this agent makes. `agent.set()` sets a
+  // default header applied to every future request issued through
+  // this same agent, not just the next one — one place to satisfy
+  // requireCsrfToken() rather than every individual mutating call.
+  const csrfCookie = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+    c.startsWith("embr_csrf="),
+  );
+  if (csrfCookie) {
+    const token = csrfCookie.split(";")[0]!.split("=")[1]!;
+    agent.set("x-csrf-token", token);
+  }
+  return res;
 }
 
 beforeEach(() => {

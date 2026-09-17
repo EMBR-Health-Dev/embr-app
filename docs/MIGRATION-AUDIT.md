@@ -196,3 +196,20 @@ unnoticed once this gets run in a real environment: a cheap, explicit
 CI check that fails loudly if `apps/api/prisma/migrations` is empty at
 the point CI would otherwise silently no-op past it. See the commit
 for the exact change.
+
+## Status update (2026-09-16)
+
+**Resolved.** `apps/api/prisma/migrations` now contains nine committed
+migrations, from `20260819005012_initial_prisma_migration` through
+`20260906010000_add_stripe_billing_fields`, plus `migration_lock.toml`.
+The everything-above audit (sections A–F) describes a real state this
+repository was previously in, not the current one — left intact as a
+record of what the gap was and why it mattered, not because it still
+applies. `ci.yml`'s empty-migrations guard (the "Implementation"
+section above) is still in place and still doing real work: it's what
+would catch this same gap recurring, not a leftover from before it was
+fixed. `prisma migrate deploy` in CI now applies real migrations
+against the real Postgres 16 service container instead of silently
+no-op'ing. Nothing else in this file needed correction — the schema
+audit in section F was already validated against the current schema
+independently of the migration-history question.

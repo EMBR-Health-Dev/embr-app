@@ -1,15 +1,19 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
-const { mockCreateTransport, mockVerify, mockSendMail } = vi.hoisted(() => ({
-  mockCreateTransport: vi.fn(),
-  mockVerify: vi.fn(),
-  mockSendMail: vi.fn().mockResolvedValue(undefined),
-}));
+const { mockSend, MockResend } = vi.hoisted(() => {
+  const mockSend = vi.fn();
+  // Must be a real `function`, not an arrow function — mailer.ts calls
+  // `new Resend(key)`, and an arrow function can't be used as a
+  // constructor (returning an object from a plain function called with
+  // `new` substitutes that object for `this`, which is all this needs).
+  const MockResend = vi.fn(function (this: unknown) {
+    return { emails: { send: mockSend } };
+  });
+  return { mockSend, MockResend };
+});
 
-vi.mock("nodemailer", () => ({
-  default: {
-    createTransport: mockCreateTransport,
-  },
+vi.mock("resend", () => ({
+  Resend: MockResend,
 }));
 
 vi.mock("../src/lib/logger.js", () => ({
@@ -19,13 +23,8 @@ vi.mock("../src/lib/logger.js", () => ({
 function mockEnv(overrides: Partial<Record<string, unknown>> = {}) {
   vi.doMock("../src/config/env.js", () => ({
     env: {
-      SMTP_HOST: "localhost",
-      SMTP_PORT: 1025,
-      SMTP_FROM: "no-reply@embr.health",
-      SMTP_SECURE: false,
-      SMTP_REQUIRE_TLS: false,
-      SMTP_USER: undefined,
-      SMTP_PASS: undefined,
+      RESEND_API_KEY: "re_test_key",
+      EMAIL_FROM: "no-reply@embrhealthcare.com",
       APP_URL: "http://localhost:3000",
       EMAIL_VERIFICATION_TTL_SECONDS: 86400,
       PASSWORD_RESET_TTL_SECONDS: 3600,
@@ -37,62 +36,140 @@ function mockEnv(overrides: Partial<Record<string, unknown>> = {}) {
 
 beforeEach(() => {
   vi.resetModules();
-  mockCreateTransport.mockReturnValue({ verify: mockVerify, sendMail: mockSendMail });
-  mockVerify.mockReset();
+  mockSend.mockReset();
+  MockResend.mockClear();
 });
 
 afterEach(() => {
   vi.doUnmock("../src/config/env.js");
+  vi.useRealTimers();
 });
 
-describe("mailer transport configuration", () => {
-  it("omits auth entirely when SMTP_USER/SMTP_PASS are both unset (MailHog/local dev)", async () => {
+describe("Resend client configuration", () => {
+  it("constructs a Resend client with the configured API key", async () => {
     mockEnv();
     await import("../src/modules/auth/mailer.js");
 
-    expect(mockCreateTransport).toHaveBeenCalledWith(expect.objectContaining({ auth: undefined }));
+    expect(MockResend).toHaveBeenCalledWith("re_test_key");
   });
 
-  it("omits auth when only one of SMTP_USER/SMTP_PASS is set — not a valid half-configured state", async () => {
-    mockEnv({ SMTP_USER: "someuser" });
+  it("does not construct a Resend client when RESEND_API_KEY is unset", async () => {
+    mockEnv({ RESEND_API_KEY: undefined });
     await import("../src/modules/auth/mailer.js");
 
-    expect(mockCreateTransport).toHaveBeenCalledWith(expect.objectContaining({ auth: undefined }));
-  });
-
-  it("includes auth when both SMTP_USER and SMTP_PASS are set — this is the actual fix: before it, no real provider could ever authenticate", async () => {
-    mockEnv({ SMTP_USER: "apikey", SMTP_PASS: "secret-value" });
-    await import("../src/modules/auth/mailer.js");
-
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ auth: { user: "apikey", pass: "secret-value" } }),
-    );
-  });
-
-  it("passes SMTP_SECURE and SMTP_REQUIRE_TLS through explicitly, not hardcoded", async () => {
-    mockEnv({ SMTP_SECURE: true, SMTP_REQUIRE_TLS: true });
-    await import("../src/modules/auth/mailer.js");
-
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ secure: true, requireTLS: true }),
-    );
+    expect(MockResend).not.toHaveBeenCalled();
   });
 });
 
-describe("verifyMailTransport", () => {
-  it("resolves when the transport verifies successfully", async () => {
+describe("isEmailConfigured", () => {
+  it("returns true when RESEND_API_KEY is set", async () => {
     mockEnv();
-    mockVerify.mockResolvedValue(true);
-    const { verifyMailTransport } = await import("../src/modules/auth/mailer.js");
+    const { isEmailConfigured } = await import("../src/modules/auth/mailer.js");
 
-    await expect(verifyMailTransport()).resolves.toBeUndefined();
+    expect(isEmailConfigured()).toBe(true);
   });
 
-  it("propagates a verification failure rather than swallowing it — the health check needs the real reason", async () => {
-    mockEnv();
-    mockVerify.mockRejectedValue(new Error("535 Authentication failed"));
-    const { verifyMailTransport } = await import("../src/modules/auth/mailer.js");
+  it("returns false when RESEND_API_KEY is unset", async () => {
+    mockEnv({ RESEND_API_KEY: undefined });
+    const { isEmailConfigured } = await import("../src/modules/auth/mailer.js");
 
-    await expect(verifyMailTransport()).rejects.toThrow("535 Authentication failed");
+    expect(isEmailConfigured()).toBe(false);
+  });
+});
+
+describe("sendVerificationEmail", () => {
+  it("sends via Resend with the configured from address and correct subject", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_123" }, error: null });
+    const { sendVerificationEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendVerificationEmail("user@example.com", "test-token");
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "no-reply@embrhealthcare.com",
+        to: "user@example.com",
+        subject: "Verify your EMBR account",
+        html: expect.stringContaining("test-token"),
+        text: expect.stringContaining("test-token"),
+      }),
+    );
+  });
+
+  it("skips sending (and does not throw) when RESEND_API_KEY is unset — never breaks registration", async () => {
+    mockEnv({ RESEND_API_KEY: undefined });
+    const { sendVerificationEmail } = await import("../src/modules/auth/mailer.js");
+
+    await expect(sendVerificationEmail("user@example.com", "test-token")).resolves.toBeUndefined();
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it("logs and does not throw when Resend returns an error response — the SDK returns errors, it doesn't throw them", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({
+      data: null,
+      error: { message: "Invalid `from` field", statusCode: 422, name: "invalid_from_address" },
+    });
+    const { sendVerificationEmail } = await import("../src/modules/auth/mailer.js");
+
+    await expect(sendVerificationEmail("user@example.com", "test-token")).resolves.toBeUndefined();
+  });
+
+  it("logs and does not throw when the Resend request itself rejects (network failure)", async () => {
+    mockEnv();
+    mockSend.mockRejectedValue(new Error("fetch failed"));
+    const { sendVerificationEmail } = await import("../src/modules/auth/mailer.js");
+
+    await expect(sendVerificationEmail("user@example.com", "test-token")).resolves.toBeUndefined();
+  });
+
+  it("times out and logs rather than hanging indefinitely when Resend never responds", async () => {
+    mockEnv();
+    vi.useFakeTimers();
+    mockSend.mockReturnValue(new Promise(() => {}));
+    const { sendVerificationEmail } = await import("../src/modules/auth/mailer.js");
+
+    const pending = sendVerificationEmail("user@example.com", "test-token");
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await expect(pending).resolves.toBeUndefined();
+  });
+});
+
+describe("sendPasswordResetEmail", () => {
+  it("sends via Resend with the correct subject and reset link", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_456" }, error: null });
+    const { sendPasswordResetEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendPasswordResetEmail("user@example.com", "reset-token");
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "no-reply@embrhealthcare.com",
+        to: "user@example.com",
+        subject: "Reset your EMBR password",
+        html: expect.stringContaining("reset-token"),
+      }),
+    );
+  });
+});
+
+describe("sendOrganizationInviteEmail", () => {
+  it("sends via Resend with the org name in the subject and body", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_789" }, error: null });
+    const { sendOrganizationInviteEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendOrganizationInviteEmail("user@example.com", "Acme Health", "invite-token");
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "no-reply@embrhealthcare.com",
+        to: "user@example.com",
+        subject: "You've been invited to join Acme Health on EMBR",
+        html: expect.stringContaining("invite-token"),
+      }),
+    );
   });
 });

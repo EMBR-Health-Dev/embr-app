@@ -19,8 +19,13 @@ describe("boolean env var parsing", () => {
   // treats any non-empty string — including the literal string
   // "false" — as truthy. That's the exact bug these tests guard
   // against: without env.ts's booleanEnvVar() preprocessing, every one
-  // of these would incorrectly resolve to `true`.
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
+  // of these would incorrectly resolve to `true`. COOKIE_SECURE is the
+  // only remaining consumer of booleanEnvVar() since the SMTP_SECURE/
+  // SMTP_REQUIRE_TLS fields were removed with the Nodemailer→Resend
+  // migration — kept as an `it.each` (rather than collapsing to plain
+  // `it`s) so a future second boolean env var slots in without
+  // restructuring these.
+  it.each(["COOKIE_SECURE"] as const)(
     "parses an explicit %s=false as false, not true",
     async (key) => {
       vi.resetModules();
@@ -32,31 +37,25 @@ describe("boolean env var parsing", () => {
     },
   );
 
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
-    "parses an explicit %s=0 as false",
-    async (key) => {
-      vi.resetModules();
-      process.env[key] = "0";
-      process.env.NODE_ENV = "development";
+  it.each(["COOKIE_SECURE"] as const)("parses an explicit %s=0 as false", async (key) => {
+    vi.resetModules();
+    process.env[key] = "0";
+    process.env.NODE_ENV = "development";
 
-      const { env } = await import("../src/config/env.js");
-      expect(env[key]).toBe(false);
-    },
-  );
+    const { env } = await import("../src/config/env.js");
+    expect(env[key]).toBe(false);
+  });
 
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
-    "parses an explicit %s=true as true",
-    async (key) => {
-      vi.resetModules();
-      process.env[key] = "true";
-      process.env.NODE_ENV = "development";
+  it.each(["COOKIE_SECURE"] as const)("parses an explicit %s=true as true", async (key) => {
+    vi.resetModules();
+    process.env[key] = "true";
+    process.env.NODE_ENV = "development";
 
-      const { env } = await import("../src/config/env.js");
-      expect(env[key]).toBe(true);
-    },
-  );
+    const { env } = await import("../src/config/env.js");
+    expect(env[key]).toBe(true);
+  });
 
-  it.each(["SMTP_SECURE", "SMTP_REQUIRE_TLS", "COOKIE_SECURE"] as const)(
+  it.each(["COOKIE_SECURE"] as const)(
     "parses %s case-insensitively (TRUE / FALSE)",
     async (key) => {
       vi.resetModules();
@@ -72,17 +71,6 @@ describe("boolean env var parsing", () => {
       expect(envTrue[key]).toBe(true);
     },
   );
-
-  it("SMTP_SECURE and SMTP_REQUIRE_TLS default to false when unset, regardless of NODE_ENV", async () => {
-    vi.resetModules();
-    delete process.env.SMTP_SECURE;
-    delete process.env.SMTP_REQUIRE_TLS;
-    process.env.NODE_ENV = "production";
-
-    const { env } = await import("../src/config/env.js");
-    expect(env.SMTP_SECURE).toBe(false);
-    expect(env.SMTP_REQUIRE_TLS).toBe(false);
-  });
 });
 
 describe("env COOKIE_SECURE default", () => {
@@ -90,6 +78,10 @@ describe("env COOKIE_SECURE default", () => {
     vi.resetModules();
     delete process.env.COOKIE_SECURE;
     process.env.NODE_ENV = "production";
+    // APP_URL/CORS_ORIGIN are also required in production (see below) —
+    // set explicitly here so this test only exercises COOKIE_SECURE.
+    process.env.APP_URL = "https://embrhealthcare.com";
+    process.env.CORS_ORIGIN = "https://embrhealthcare.com";
 
     const { env } = await import("../src/config/env.js");
     expect(env.COOKIE_SECURE).toBe(true);
@@ -117,6 +109,8 @@ describe("env COOKIE_SECURE default", () => {
     vi.resetModules();
     process.env.COOKIE_SECURE = "false";
     process.env.NODE_ENV = "production";
+    process.env.APP_URL = "https://embrhealthcare.com";
+    process.env.CORS_ORIGIN = "https://embrhealthcare.com";
 
     const { env } = await import("../src/config/env.js");
     expect(env.COOKIE_SECURE).toBe(false);
@@ -130,4 +124,59 @@ describe("env COOKIE_SECURE default", () => {
     const { env } = await import("../src/config/env.js");
     expect(env.COOKIE_SECURE).toBe(true);
   });
+});
+
+describe("env APP_URL / CORS_ORIGIN production requirement", () => {
+  // Forgetting to set these in production doesn't crash on its own —
+  // it silently bakes localhost into real password-reset/verification/
+  // org-invite emails, SSO redirects, and Stripe return URLs (APP_URL),
+  // or makes the API reject every real browser origin (CORS_ORIGIN).
+  // Both must fail loudly at boot instead.
+  it.each(["APP_URL", "CORS_ORIGIN"] as const)(
+    "exits the process with a clear message when %s is unset in production",
+    async (key) => {
+      vi.resetModules();
+      const sibling = key === "APP_URL" ? "CORS_ORIGIN" : "APP_URL";
+      delete process.env[key];
+      process.env[sibling] = "https://embrhealthcare.com";
+      process.env.NODE_ENV = "production";
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => undefined as never);
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      await import("../src/config/env.js");
+
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(errorSpy.mock.calls.flat().join("\n")).toContain(
+        `${key} has no safe default in production`,
+      );
+      exitSpy.mockRestore();
+      errorSpy.mockRestore();
+    },
+  );
+
+  it.each(["APP_URL", "CORS_ORIGIN"] as const)(
+    "still honors an explicit %s value in production",
+    async (key) => {
+      vi.resetModules();
+      const sibling = key === "APP_URL" ? "CORS_ORIGIN" : "APP_URL";
+      process.env[key] = "https://embrhealthcare.com";
+      process.env[sibling] = "https://embrhealthcare.com";
+      process.env.NODE_ENV = "production";
+
+      const { env } = await import("../src/config/env.js");
+      expect(env[key]).toBe("https://embrhealthcare.com");
+    },
+  );
+
+  it.each(["APP_URL", "CORS_ORIGIN"] as const)(
+    "still defaults to localhost outside production when %s is unset",
+    async (key) => {
+      vi.resetModules();
+      delete process.env[key];
+      process.env.NODE_ENV = "development";
+
+      const { env } = await import("../src/config/env.js");
+      expect(env[key]).toBe("http://localhost:3000");
+    },
+  );
 });

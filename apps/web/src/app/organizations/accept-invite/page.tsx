@@ -86,17 +86,17 @@ function AcceptInviteScreen() {
   }, [loading, user, token, t]);
 
   if (loading) {
-    return <p className="text-navy/50">{tCommon("loading")}</p>;
+    return <p className="text-foreground/50">{tCommon("loading")}</p>;
   }
 
   if (!token) {
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">{t("couldntAccept")}</h1>
-        <p className="mt-3 text-sm text-red-600">{t("missingToken")}</p>
+        <h1 className="font-display text-heading-xl text-foreground">{t("couldntAccept")}</h1>
+        <p className="mt-3 text-sm font-medium text-foreground">{t("missingToken")}</p>
         <Link
           href="/dashboard"
-          className="mt-6 inline-block text-sm font-medium text-teal underline underline-offset-2"
+          className="mt-6 inline-block text-sm font-medium text-foreground underline underline-offset-2"
         >
           {t("goToDashboard")}
         </Link>
@@ -109,8 +109,8 @@ function AcceptInviteScreen() {
     const encoded = encodeURIComponent(returnTo);
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">{t("youveBeenInvited")}</h1>
-        <p className="mt-3 text-sm text-navy/60">{t("loginPrompt")}</p>
+        <h1 className="font-display text-heading-xl text-foreground">{t("youveBeenInvited")}</h1>
+        <p className="mt-3 text-sm text-foreground/60">{t("loginPrompt")}</p>
         <div className="mt-6 flex flex-col gap-3">
           <Button className="w-full" onClick={() => router.push(`/login?redirect=${encoded}`)}>
             {t("logIn")}
@@ -128,22 +128,22 @@ function AcceptInviteScreen() {
   }
 
   if (status === "checking" || status === "accepting") {
-    return <p className="text-navy/50">{tCommon("loading")}</p>;
+    return <p className="text-foreground/50">{tCommon("loading")}</p>;
   }
 
   if (status === "accepted") {
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">{t("youreIn")}</h1>
-        <p className="mt-3 text-sm text-navy/60">
+        <h1 className="font-display text-heading-xl text-foreground">{t("youreIn")}</h1>
+        <p className="mt-3 text-sm text-foreground/60">
           {orgName
             ? t.rich("joinedNamed", {
                 orgName,
-                strong: (chunks) => <span className="font-medium text-navy">{chunks}</span>,
+                strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
               })
             : t("joinedUnnamed")}
         </p>
-        <p className="mt-4 rounded border border-teal/20 bg-teal/5 p-3 text-left text-sm text-navy/70">
+        <p className="mt-4 rounded border border-accent bg-accent p-3 text-left text-sm text-foreground/70">
           {t("privacyNote")}
         </p>
         <Button className="mt-6" onClick={() => router.push("/organization")}>
@@ -156,8 +156,8 @@ function AcceptInviteScreen() {
   if (status === "already-member") {
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">{t("alreadyMember")}</h1>
-        <p className="mt-3 text-sm text-navy/60">{t("alreadyMemberBody")}</p>
+        <h1 className="font-display text-heading-xl text-foreground">{t("alreadyMember")}</h1>
+        <p className="mt-3 text-sm text-foreground/60">{t("alreadyMemberBody")}</p>
         <Button className="mt-6" onClick={() => router.push("/organization")}>
           {t("goToOrganization")}
         </Button>
@@ -181,11 +181,11 @@ function AcceptInviteScreen() {
 
     return (
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-2xl text-navy">{t("wrongAccount")}</h1>
-        <p className="mt-3 text-sm text-navy/60">
+        <h1 className="font-display text-heading-xl text-foreground">{t("wrongAccount")}</h1>
+        <p className="mt-3 text-sm text-foreground/60">
           {t.rich("wrongAccountBody", {
             email: user?.email ?? "",
-            strong: (chunks) => <span className="font-medium text-navy">{chunks}</span>,
+            strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
           })}
         </p>
         <Button className="mt-6 w-full" disabled={loggingOut} onClick={() => void logOutAndRetry()}>
@@ -193,7 +193,7 @@ function AcceptInviteScreen() {
         </Button>
         <Link
           href="/dashboard"
-          className="mt-4 inline-block text-sm font-medium text-teal underline underline-offset-2"
+          className="mt-4 inline-block text-sm font-medium text-foreground underline underline-offset-2"
         >
           {t("stayAndGoToDashboard")}
         </Link>
@@ -203,11 +203,13 @@ function AcceptInviteScreen() {
 
   return (
     <div className="w-full max-w-sm text-center">
-      <h1 className="font-display text-2xl text-navy">{t("couldntAccept")}</h1>
-      <p className="mt-3 text-sm text-red-600">{errorMessage}</p>
+      <h1 className="font-display text-heading-xl text-foreground">{t("couldntAccept")}</h1>
+      <p role="alert" className="mt-3 text-sm font-medium text-foreground">
+        {errorMessage}
+      </p>
       <Link
         href="/dashboard"
-        className="mt-6 inline-block text-sm font-medium text-teal underline underline-offset-2"
+        className="mt-6 inline-block text-sm font-medium text-foreground underline underline-offset-2"
       >
         {t("goToDashboard")}
       </Link>
@@ -219,7 +221,7 @@ export default function AcceptInvitePage() {
   const t = useTranslations("Common");
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <Suspense fallback={<p className="text-navy/50">{t("loading")}</p>}>
+      <Suspense fallback={<p className="text-foreground/50">{t("loading")}</p>}>
         <AcceptInviteScreen />
       </Suspense>
     </main>

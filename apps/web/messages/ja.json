@@ -34,7 +34,7 @@
     "checkEmailBody": "<strong>{email}</strong> 宛に確認用リンクを送信しました。確認後、こちらに戻ってログインしてください。",
     "goToLogin": "ログインへ進む",
     "title": "アカウントを作成",
-    "subtitle": "症状や周期を、あなたのペースで、非公開を基本として記録できます。",
+    "subtitle": "起きていることを、確かな記録に変える。あなたのペースで、非公開を基本として。",
     "emailLabel": "メールアドレス",
     "passwordLabel": "パスワード",
     "passwordHint": "12文字以上で、大文字・小文字・数字をそれぞれ1つ以上含めてください。",
@@ -90,7 +90,7 @@
   "Onboarding": {
     "skipToDashboard": "ダッシュボードへスキップ",
     "welcome": {
-      "headline": "あなたに実際に起きていることを、記録しておく場所。",
+      "headline": "あなたに実際に起きていることを、目に見える形に。",
       "body": "EMBRは、あなたが経験していることを、あとで振り返り、理解し、いずれ担当医との会話に役立てられる形にします。診断をしたり、担当医の代わりになったりすることはありません。あなた自身のペースで、あなた自身の記録を整理する手助けをします。",
       "getStarted": "はじめる"
     },
@@ -207,6 +207,7 @@
     "save": "保存",
     "saving": "保存中…",
     "logConfirmation": "記録しました。",
+    "logError": "保存できませんでした。通信状態を確認して、もう一度お試しください。",
     "todaysCycleEntry": "今日の周期記録",
     "flowLabel": "経血量",
     "flowNone": "なし",
@@ -224,11 +225,36 @@
       "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
       "keepRecord": "長期的な記録を始めましょう。",
       "notSure": "記録を続けると見えてくるものがあります。"
-    }
+    },
+    "todayLabel": "今日",
+    "todayLoggedSummary": "{count, plural, other {今日の記録: #件}}",
+    "todayEmptyTitle": "今日はまだ記録がありません。",
+    "todayEmptyHint": "ホットフラッシュが起きたらすぐに記録するか、下から別の症状を記録してください。",
+    "yourRecordLabel": "あなたの記録",
+    "patternsLabel": "パターン",
+    "patternsBody": "今週記録された内容です。すべての詳細はパターンページでご覧いただけます。",
+    "viewPatterns": "パターンを見る",
+    "evidenceLabel": "あなたのエビデンス",
+    "evidenceBody": "Clinical Briefは、あなたの記録の履歴を、診察での会話に使える簡潔な文書にまとめます。",
+    "viewClinicalBrief": "Clinical Briefを見る",
+    "generateFirstBrief": "最初のClinical Briefを作成する"
+  },
+  "Nav": {
+    "navigationLabel": "メインナビゲーション",
+    "home": "ホーム",
+    "patterns": "パターン",
+    "clinicalBrief": "Clinical Brief",
+    "settings": "設定",
+    "more": "その他",
+    "menu": "メニュー",
+    "treatments": "治療",
+    "export": "エクスポート",
+    "organization": "組織",
+    "logout": "ログアウト"
   },
   "Trends": {
-    "title": "Trends",
-    "backToDashboard": "← ダッシュボード",
+    "title": "パターン",
+    "reportedDataLabel": "報告されたデータ",
     "symptomsHeader": "過去{days}日間の症状",
     "noSymptomsYet": "まだこの期間の記録がありません。記録が増えると、ここにパターンが表示されます。",
     "cycleLengthHeader": "過去{days}日間の周期の長さ",
@@ -238,9 +264,12 @@
     "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
   },
   "CoOccurrence": {
+    "observedPatternLabel": "観察されたパターン",
     "heading": "一緒に記録されたもの",
     "message": "{categoryA}は{categoryB}とともに、{days, plural, other {#日}}記録されています。",
-    "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。"
+    "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。",
+    "emptyTitle": "パターンを表示するには、まだ記録が十分ではありません。",
+    "emptyBody": "記録が増えるほど、ここでの情報は充実していきます。記録を続けていただくと、十分なデータが集まった時点でEMBRがここに表示します。"
   },
   "Organization": {
     "title": "組織",
@@ -310,7 +339,6 @@
   },
   "Settings": {
     "title": "設定",
-    "backToDashboard": "← ダッシュボード",
     "accountTitle": "アカウント",
     "emailVerified": "メールアドレスは確認済みです。",
     "emailNotVerified": "メールアドレスがまだ確認されていません。",
@@ -348,8 +376,7 @@
   },
   "Brief": {
     "title": "EMBR BRIEF",
-    "backToDashboard": "← ダッシュボード",
-    "description": "記録した症状と周期データの要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、診断や医学的アドバイスではありません。",
+    "description": "あなたの記録を整理した要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、診断や医学的アドバイスではありません。",
     "fromLabel": "開始日",
     "toLabel": "終了日",
     "generate": "BRIEFを作成",
@@ -366,6 +393,8 @@
     "generatedOn": "作成日: {date}",
     "pdf": "PDF",
     "delete": "削除",
+    "briefDetailError": "BRIEFを読み込めませんでした。もう一度お試しください。",
+    "deleteError": "BRIEFを削除できませんでした。もう一度お試しください。",
     "questionsForGp": "担当医への質問",
     "symptomFrequency": "症状の頻度",
     "occurrenceCount": "{count, plural, other {#回}}",

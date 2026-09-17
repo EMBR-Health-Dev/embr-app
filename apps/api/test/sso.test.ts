@@ -105,8 +105,11 @@ vi.mock("../src/modules/auth/mailer.js", () => ({
   sendOrganizationInviteEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../src/lib/prisma.js", () => ({
-  prisma: {
+vi.mock("../src/lib/prisma.js", () => {
+  // The mock's own shape (below) is exactly `typeof mockPrisma`; typing it
+  // precisely here would just restate the object literal a second time.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockPrisma: any = {
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
         const found = state.users.find((u) => u.email === where.email || u.id === where.id);
@@ -266,8 +269,22 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
-  },
-}));
+  };
+  // `handleCallback`'s user/membership provisioning runs inside a real
+  // prisma.$transaction now (see sso.service.ts) — this fake has no
+  // actual transaction/rollback semantics (the in-memory `state`
+  // arrays above are mutated directly either way), so the callback is
+  // simply invoked with the same mock client. `$queryRaw` only backs
+  // the seat-limit row lock (`SELECT "seatLimit" FROM "organizations"
+  // WHERE "id" = $1 FOR UPDATE`) — the mock reads the org's seatLimit
+  // straight out of `state.organizations` instead of parsing SQL.
+  mockPrisma.$transaction = vi.fn((callback: (tx: unknown) => unknown) => callback(mockPrisma));
+  mockPrisma.$queryRaw = vi.fn((_strings: TemplateStringsArray, organizationId: string) => {
+    const org = state.organizations.find((o) => o.id === organizationId);
+    return Promise.resolve(org ? [{ seatLimit: org.seatLimit }] : []);
+  });
+  return { prisma: mockPrisma };
+});
 
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 

@@ -380,8 +380,12 @@ model OrganizationInvite {
   email          String
   role           OrgRole      @default(ORG_MEMBER)
   tokenHash      String       @unique
-  invitedByUserId String
-  invitedBy      User         @relation(fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  // Nullable + SetNull, same pattern as AuditLog.userId: deleting the
+  // inviting admin's account must not cascade-delete invitations still
+  // pending for other people. The invite (and the seat it reserves)
+  // survives; only the record of who sent it is lost.
+  invitedByUserId String?
+  invitedBy      User?        @relation(fields: [invitedByUserId], references: [id], onDelete: SetNull)
   expiresAt      DateTime
   consumedAt     DateTime?
   createdAt      DateTime     @default(now())

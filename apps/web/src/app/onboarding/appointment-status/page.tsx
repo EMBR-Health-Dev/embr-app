@@ -30,21 +30,21 @@ export default function AppointmentStatusScreen() {
 
   return (
     <OnboardingScreen step="APPOINTMENT_STATUS">
-      <p className="font-display text-2xl text-navy">{t("headline")}</p>
-      <p className="mt-3 text-sm text-navy/60">{t("hint")}</p>
+      <p className="font-display text-heading-xl text-foreground">{t("headline")}</p>
+      <p className="mt-3 text-sm text-foreground/60">{t("hint")}</p>
       <div className="mt-8 flex flex-col">
         {OPTION_VALUES.map((value) => (
           <button
             key={value}
             onClick={() => void handleSelect(value)}
-            className={`flex items-center justify-between border-b border-navy/10 py-4 text-left text-[15px] transition-colors ${
-              selected === value ? "text-navy" : "text-navy/75 hover:text-navy"
+            className={`flex items-center justify-between border-b border-border-subtle py-4 text-left text-[15px] transition-colors ${
+              selected === value ? "text-foreground" : "text-foreground/75 hover:text-foreground"
             }`}
           >
             <span>{t(OPTION_KEYS[value])}</span>
             <span
               className={`ml-4 h-1.5 w-1.5 shrink-0 rounded-full transition-opacity ${
-                selected === value ? "bg-brass opacity-100" : "opacity-0"
+                selected === value ? "bg-primary opacity-100" : "opacity-0"
               }`}
               aria-hidden="true"
             />

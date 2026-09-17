@@ -23,3 +23,32 @@ export function toIsoDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Converts a `<input type="date">` value ("YYYY-MM-DD") into the ISO
+ * instant for local midnight at the start of that day.
+ *
+ * `new Date(dateStr)` on a bare date-only string is parsed as UTC
+ * midnight (per the ECMA-262 date-only-string rule), not local
+ * midnight — the opposite bug from the one toIsoDate's own comment
+ * above describes, but with a worse consequence here: appending a
+ * bare time component (no "Z"/offset suffix) makes the Date
+ * constructor parse it as local time instead, which is what a picked
+ * calendar date actually means. Used wherever a range's `from` needs
+ * to become a precise instant for the API (brief generation, export).
+ */
+export function startOfLocalDay(dateStr: string): string {
+  return new Date(`${dateStr}T00:00:00`).toISOString();
+}
+
+/**
+ * The end-of-day counterpart to startOfLocalDay — local 23:59:59.999
+ * on the given date, not UTC midnight. Without this, a range's `to`
+ * sent as a bare date string (or as local midnight) would exclude
+ * nearly the entire final day: the API's from/to filters are instant
+ * comparisons, and "to = today" has to mean "through the end of
+ * today," not "up to the first instant of today."
+ */
+export function endOfLocalDay(dateStr: string): string {
+  return new Date(`${dateStr}T23:59:59.999`).toISOString();
+}
