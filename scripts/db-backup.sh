@@ -69,7 +69,12 @@ if [[ -n "${BACKUP_S3_BUCKET:-}" ]]; then
   aws s3 cp "${ENCRYPTED_FILE}" "${BACKUP_S3_BUCKET}/$(basename "${ENCRYPTED_FILE}")"
 
   echo "==> Pruning remote backups older than ${RETENTION_DAYS} days"
-  cutoff_epoch=$(date -u -d "-${RETENTION_DAYS} days" +%s)
+  # `date -d "-N days"` is GNU-only — BusyBox date (Alpine, e.g. the
+  # embr-db-backup Railway cron service) doesn't support relative-date
+  # strings and errors on it. Plain arithmetic on `date +%s` (which both
+  # support) works everywhere this script runs: GitHub Actions'
+  # ubuntu-latest and Alpine alike.
+  cutoff_epoch=$(( $(date -u +%s) - RETENTION_DAYS * 86400 ))
   aws s3 ls "${BACKUP_S3_BUCKET}/" | while read -r line; do
     file_date=$(echo "$line" | awk '{print $1}')
     file_name=$(echo "$line" | awk '{print $4}')
