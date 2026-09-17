@@ -27,7 +27,8 @@ RUN chmod +x ./db-backup.sh
 # without needing a second image build or exposing secrets outside
 # Railway's own variable-reference resolution.
 COPY scripts/db-restore-test.sh ./db-restore-test.sh
-RUN chmod +x ./db-restore-test.sh
+COPY scripts/backup/restore-drill.sh ./restore-drill.sh
+RUN chmod +x ./db-restore-test.sh ./restore-drill.sh
 
 # Railway cron: runs this command on the schedule, expects it to exit
 # when done — db-backup.sh already does, unchanged.
