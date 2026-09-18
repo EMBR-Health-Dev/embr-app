@@ -3,6 +3,7 @@ import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { briefAi } from "../src/modules/briefs/brief.ai.js";
+import { briefService } from "../src/modules/briefs/brief.service.js";
 import { buildClinicalBriefPdf } from "../src/modules/briefs/brief.pdf.js";
 import { prisma } from "../src/lib/prisma.js";
 
@@ -115,8 +116,39 @@ vi.mock("../src/modules/briefs/brief.pdf.js", async (importOriginal) => {
   };
 });
 
+// Faithful-enough fake of the two Redis primitives brief.service.ts's
+// lock actually uses (SET key val PX ttl NX, and a compare-and-delete
+// EVAL for release) — not just stubs returning fixed values, so tests
+// below exercise the real acquire/release semantics (a second SET
+// against an already-held key genuinely fails, a release only
+// succeeds for the token that set it).
+const { lockState } = vi.hoisted(() => ({
+  lockState: {
+    held: new Map<string, string>(),
+    acquireShouldThrow: false,
+  },
+}));
+
 vi.mock("../src/lib/redis.js", () => ({
-  redis: { ping: vi.fn().mockResolvedValue("PONG"), quit: vi.fn() },
+  redis: {
+    ping: vi.fn().mockResolvedValue("PONG"),
+    quit: vi.fn(),
+    set: vi.fn(async (key: string, value: string) => {
+      if (lockState.acquireShouldThrow) {
+        throw new Error("simulated redis connection error");
+      }
+      if (lockState.held.has(key)) return null;
+      lockState.held.set(key, value);
+      return "OK";
+    }),
+    eval: vi.fn(async (_script: string, _numKeys: number, key: string, token: string) => {
+      if (lockState.held.get(key) === token) {
+        lockState.held.delete(key);
+        return 1;
+      }
+      return 0;
+    }),
+  },
 }));
 
 vi.mock("../src/modules/auth/mailer.js", () => ({
@@ -261,7 +293,28 @@ vi.mock("../src/lib/prisma.js", () => ({
       ),
     },
     clinicalBrief: {
+      // Mirrors the real @@unique([userId, fromDate, toDate]) index —
+      // a second create() for the same triple throws the same
+      // P2002-shaped error Prisma's client would, so
+      // brief.repository.ts's own catch-and-return-existing handling
+      // is exercised for real, not assumed.
       create: vi.fn(({ data }: { data: Record<string, unknown> }) => {
+        const { userId, fromDate, toDate } = data as {
+          userId: string;
+          fromDate: Date;
+          toDate: Date;
+        };
+        const duplicate = state.briefs.find(
+          (b) =>
+            b.userId === userId &&
+            b.fromDate.getTime() === fromDate.getTime() &&
+            b.toDate.getTime() === toDate.getTime(),
+        );
+        if (duplicate) {
+          return Promise.reject(
+            Object.assign(new Error("Unique constraint failed"), { code: "P2002" }),
+          );
+        }
         const brief = { id: nextId(), createdAt: now(), ...data } as (typeof state.briefs)[number];
         state.briefs.push(brief);
         return Promise.resolve(brief);
@@ -278,10 +331,27 @@ vi.mock("../src/lib/prisma.js", () => ({
       count: vi.fn(({ where }: { where: { userId: string } }) =>
         Promise.resolve(state.briefs.filter((b) => b.userId === where.userId).length),
       ),
-      findFirst: vi.fn(({ where }: { where: { id: string; userId: string } }) => {
-        const found = state.briefs.find((b) => b.id === where.id && b.userId === where.userId);
-        return Promise.resolve(found ?? null);
-      }),
+      findFirst: vi.fn(
+        ({
+          where,
+        }: {
+          where: { id: string; userId: string } | { userId: string; fromDate: Date; toDate: Date };
+        }) => {
+          if ("id" in where) {
+            const found = state.briefs.find((b) => b.id === where.id && b.userId === where.userId);
+            return Promise.resolve(found ?? null);
+          }
+          const matches = state.briefs
+            .filter(
+              (b) =>
+                b.userId === where.userId &&
+                b.fromDate.getTime() === where.fromDate.getTime() &&
+                b.toDate.getTime() === where.toDate.getTime(),
+            )
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+          return Promise.resolve(matches[0] ?? null);
+        },
+      ),
       deleteMany: vi.fn(({ where }: { where: { id: string; userId: string } }) => {
         const before = state.briefs.length;
         state.briefs = state.briefs.filter(
@@ -354,6 +424,8 @@ beforeEach(() => {
   state.briefs = [];
   aiState.nextResponse = null;
   aiState.shouldThrow = false;
+  lockState.held.clear();
+  lockState.acquireShouldThrow = false;
 });
 
 const RANGE = { fromDate: "2026-01-01", toDate: "2026-02-01" };
@@ -468,6 +540,129 @@ describe("POST /briefs", () => {
 
     expect(res.status).toBeGreaterThanOrEqual(500);
     expect(state.briefs).toHaveLength(0);
+  });
+});
+
+// Regression coverage for the Day 2 finding: generation performs a
+// paid AI call before anything is persisted, so two requests for the
+// same (userId, fromDate, toDate) racing each other could previously
+// both reach that call and both create a row. brief.service.ts now
+// wraps generation in a Redis lock (see lib/redis-lock.ts), with
+// brief.repository.ts's @@unique([userId, fromDate, toDate]) handling
+// as the data-layer backstop for whenever the lock itself doesn't
+// prevent it (Redis unavailable, or a generation that outlives the
+// lock's TTL).
+describe("POST /briefs — concurrency and locking", () => {
+  // Calls briefService.generate directly rather than through two HTTP
+  // requests: supertest serializes requests made through the same
+  // agent (one full round trip completes before the next is sent), so
+  // two "concurrent" agent.post() calls never actually race — by the
+  // time the second reaches the lock, the first has already released
+  // it. Invoking the service function twice via Promise.all has no
+  // such serialization and genuinely interleaves at each await, which
+  // is what this needs to prove.
+  it("returns a CONFLICT error for the loser and calls the AI exactly once when two generate() calls race for the same range", async () => {
+    const userId = nextId();
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+    const aiCallsBefore = vi.mocked(briefAi.generate).mock.calls.length;
+
+    const results = await Promise.allSettled([
+      briefService.generate(userId, new Date(RANGE.fromDate), new Date(RANGE.toDate)),
+      briefService.generate(userId, new Date(RANGE.fromDate), new Date(RANGE.toDate)),
+    ]);
+
+    const fulfilled = results.filter(
+      (r): r is PromiseFulfilledResult<unknown> => r.status === "fulfilled",
+    );
+    const rejected = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]!.reason).toMatchObject({ code: "CONFLICT", statusCode: 409 });
+    expect(vi.mocked(briefAi.generate).mock.calls.length - aiCallsBefore).toBe(1);
+    expect(state.briefs).toHaveLength(1);
+  });
+
+  it("does not block a *different* date range for the same user while one generation is in flight", async () => {
+    const userId = nextId();
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+
+    const results = await Promise.allSettled([
+      briefService.generate(userId, new Date(RANGE.fromDate), new Date(RANGE.toDate)),
+      briefService.generate(userId, new Date("2026-03-01"), new Date("2026-04-01")),
+    ]);
+
+    expect(results.every((r) => r.status === "fulfilled")).toBe(true);
+    expect(state.briefs).toHaveLength(2);
+  });
+
+  it("releases the lock after a failed generation so a later request for the same range can still succeed", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-lock-release-ai@embr.health");
+
+    aiState.shouldThrow = true;
+    const failed = await agent.post("/briefs").send(RANGE);
+    expect(failed.status).toBeGreaterThanOrEqual(500);
+
+    aiState.shouldThrow = false;
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+    const succeeded = await agent.post("/briefs").send(RANGE);
+
+    expect(succeeded.status).toBe(201);
+    expect(state.briefs).toHaveLength(1);
+  });
+
+  it("releases the lock after a database write failure so a later request for the same range can still succeed", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-lock-release-db@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+
+    vi.mocked(prisma.clinicalBrief.create).mockRejectedValueOnce(new Error("connection lost"));
+    const failed = await agent.post("/briefs").send(RANGE);
+    expect(failed.status).toBeGreaterThanOrEqual(500);
+    expect(state.briefs).toHaveLength(0);
+
+    const succeeded = await agent.post("/briefs").send(RANGE);
+    expect(succeeded.status).toBe(201);
+    expect(state.briefs).toHaveLength(1);
+  });
+
+  it("proceeds without a lock and still succeeds when Redis is unavailable", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-redis-down@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+    lockState.acquireShouldThrow = true;
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(state.briefs).toHaveLength(1);
+  });
+
+  it("falls back to the database unique constraint (not an error) when Redis is unavailable for both concurrent requests", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-double-fallback@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+    lockState.acquireShouldThrow = true;
+
+    const [resA, resB] = await Promise.all([
+      agent.post("/briefs").send(RANGE),
+      agent.post("/briefs").send(RANGE),
+    ]);
+
+    // With no lock coordinating them, both requests generated (a real,
+    // accepted cost of a Redis outage — see redis-lock.ts's own doc
+    // comment) — but only one row was ever persisted: the second
+    // create() hit the unique constraint and brief.repository.ts
+    // returned the first row back instead of erroring, so neither
+    // request-level response is an error.
+    expect(resA.status).toBe(201);
+    expect(resB.status).toBe(201);
+    expect(resA.body.data.id).toBe(resB.body.data.id);
+    expect(state.briefs).toHaveLength(1);
   });
 });
 

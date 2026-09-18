@@ -556,6 +556,16 @@ model ClinicalBrief {
 
   createdAt DateTime @default(now())
 
+  /// Second line of defense against double-generation for the same
+  /// period — the primary guard is a Redis lock around the whole
+  /// generate() flow (see brief.service.ts), which is best-effort
+  /// (fails open on a Redis outage, bounded by a TTL rather than
+  /// held forever). This is what actually makes a duplicate
+  /// impossible at the data layer regardless of why the lock didn't
+  /// prevent it; brief.repository.ts's create() catches the
+  /// resulting P2002 and returns the existing row instead of
+  /// erroring.
+  @@unique([userId, fromDate, toDate])
   @@index([userId, createdAt])
   @@map("clinical_briefs")
 }
