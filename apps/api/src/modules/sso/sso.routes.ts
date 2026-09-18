@@ -87,7 +87,10 @@ router.get(
           ? "sso_not_configured"
           : "sso_start_failed";
       if (!(err instanceof AppError)) {
-        logger.error({ err }, "unexpected error starting SSO login");
+        logger.error(
+          { err, requestId: req.requestId, path: req.path },
+          "unexpected error starting SSO login",
+        );
       }
       res.redirect(302, `${env.APP_URL}/login?ssoError=${reason}`);
     }
@@ -106,7 +109,10 @@ router.get("/auth/sso/callback", async (req, res) => {
     res.redirect(302, `${env.APP_URL}${redirectTo ?? "/dashboard"}`);
   } catch (err) {
     if (!(err instanceof AppError)) {
-      logger.error({ err }, "unexpected error completing SSO login");
+      logger.error(
+        { err, requestId: req.requestId, path: req.path },
+        "unexpected error completing SSO login",
+      );
     }
     res.redirect(302, `${env.APP_URL}/login?ssoError=sso_callback_failed`);
   }
