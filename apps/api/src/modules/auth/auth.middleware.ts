@@ -121,3 +121,46 @@ declare global {
     }
   }
 }
+
+/**
+ * Must run after requireAuth(). Gates a specific sensitive action on
+ * the caller's email being confirmed — never used app-wide (login,
+ * the dashboard, symptom tracking, and history all stay reachable
+ * unverified; see schema.prisma's emailVerifiedAt doc comment for the
+ * exact list of routes this actually guards).
+ *
+ * Deliberately re-reads emailVerifiedAt from the database on every
+ * call rather than trusting the access token: AccessTokenPayload is
+ * kept intentionally thin (see tokens.ts's own doc comment — "anything
+ * that can change mid-session... is re-checked, not trusted forever
+ * from the token alone"), the same reasoning requireOrgRole already
+ * applies to membership/role. Baking verification status into the JWT
+ * would mean a user who verifies mid-session stays locked out of a
+ * gated action until their token naturally expires; a fresh read means
+ * their very next request after verifying succeeds, with no
+ * re-login required.
+ */
+export function requireVerifiedEmail() {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    void (async () => {
+      try {
+        if (!req.user) {
+          return next(AppError.unauthorized());
+        }
+        const user = await prisma.user.findUnique({
+          where: { id: req.user.sub },
+          select: { emailVerifiedAt: true },
+        });
+        if (!user) {
+          return next(AppError.unauthorized());
+        }
+        if (!user.emailVerifiedAt) {
+          return next(AppError.emailNotVerified());
+        }
+        next();
+      } catch (err) {
+        next(err);
+      }
+    })();
+  };
+}

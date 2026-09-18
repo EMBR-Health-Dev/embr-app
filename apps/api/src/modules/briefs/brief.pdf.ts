@@ -118,7 +118,7 @@ export function buildClinicalBriefPdf(
     .fillColor(INK_MUTED)
     .text(
       "This is a structured summary of self-tracked data, generated to help a conversation with a" +
-        " GP — not a diagnosis, and not medical advice.",
+        " GP. Not a diagnosis, and not medical advice.",
     );
 
   doc.moveDown(1);
@@ -363,7 +363,7 @@ export function buildClinicalBriefPdf(
     .fillColor(INK_MUTED)
     .text(
       "Everything above reflects what was reported and, where noted, patterns observed in that" +
-        " reported data. None of it is a clinical interpretation or a diagnosis — that judgment" +
+        " reported data. None of it is a clinical interpretation or a diagnosis. That judgment" +
         " belongs to the clinician reading this alongside you.",
     );
 

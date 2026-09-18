@@ -6,6 +6,7 @@ import { briefAi } from "../src/modules/briefs/brief.ai.js";
 import { briefService } from "../src/modules/briefs/brief.service.js";
 import { buildClinicalBriefPdf } from "../src/modules/briefs/brief.pdf.js";
 import { prisma } from "../src/lib/prisma.js";
+import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -61,6 +62,14 @@ const { state, nextId } = vi.hoisted(() => {
         citedPatternIds: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
+        createdAt: Date;
+      }>,
+      emailVerificationTokens: [] as Array<{
+        id: string;
+        userId: string;
+        tokenHash: string;
+        expiresAt: Date;
+        consumedAt: Date | null;
         createdAt: Date;
       }>,
     },
@@ -208,11 +217,60 @@ vi.mock("../src/lib/prisma.js", () => ({
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       findMany: vi.fn().mockResolvedValue([]),
     },
+    // Real, stateful mock (not a static stub) — see auth.test.ts's own
+    // doc comment on this exact shape: a static findFirst-returns-null
+    // stub would make it impossible for registerAndLogin below to
+    // actually verify an account through the real endpoint.
     emailVerificationToken: {
-      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
-      create: vi.fn().mockResolvedValue({ id: nextId() }),
-      findFirst: vi.fn().mockResolvedValue(null),
-      update: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { userId: string; consumedAt: null };
+          data: { consumedAt: Date };
+        }) => {
+          const matched = state.emailVerificationTokens.filter(
+            (t) => t.userId === where.userId && t.consumedAt === where.consumedAt,
+          );
+          matched.forEach((t) => Object.assign(t, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
+      create: vi.fn(
+        ({
+          data,
+        }: {
+          data: Omit<
+            (typeof state.emailVerificationTokens)[number],
+            "id" | "createdAt" | "consumedAt"
+          >;
+        }) => {
+          const token = { id: nextId(), createdAt: now(), consumedAt: null, ...data };
+          state.emailVerificationTokens.push(token);
+          return Promise.resolve(token);
+        },
+      ),
+      findFirst: vi.fn(
+        ({
+          where,
+        }: {
+          where: { tokenHash: string; consumedAt: null; expiresAt: { gt: Date } };
+        }) => {
+          const found = state.emailVerificationTokens.find(
+            (t) =>
+              t.tokenHash === where.tokenHash &&
+              t.consumedAt === where.consumedAt &&
+              t.expiresAt.getTime() > where.expiresAt.gt.getTime(),
+          );
+          return Promise.resolve(found ?? null);
+        },
+      ),
+      update: vi.fn(({ where, data }: { where: { id: string }; data: { consumedAt: Date } }) => {
+        const token = state.emailVerificationTokens.find((t) => t.id === where.id)!;
+        Object.assign(token, data);
+        return Promise.resolve(token);
+      }),
     },
     passwordResetToken: {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -365,8 +423,26 @@ vi.mock("../src/lib/prisma.js", () => ({
 
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
+function lastVerificationToken(): string {
+  const calls = vi.mocked(sendVerificationEmail).mock.calls;
+  const lastCall = calls[calls.length - 1];
+  if (!lastCall) throw new Error("sendVerificationEmail was never called");
+  return lastCall[1];
+}
+
+/**
+ * Registers, verifies the email through the real POST /auth/verify-email
+ * endpoint (not a shortcut into state — same reasoning as
+ * auth.test.ts's own verify-email tests), then logs in. Every existing
+ * test in this file predates the Clinical Brief verified-email gate
+ * (see brief.routes.ts) and is about brief content/mechanics, not
+ * about the gate itself — verifying here keeps them exercising exactly
+ * what they did before that gate existed. Tests for the gate itself
+ * use registerAndLoginUnverified below instead.
+ */
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
   const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  await agent.post("/auth/verify-email").send({ token: lastVerificationToken() });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   // Mirrors what a real browser does automatically: read the CSRF
   // cookie the login response just set and echo it back as a header
@@ -374,6 +450,21 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
   // default header applied to every future request issued through
   // this same agent, not just the next one — one place to satisfy
   // requireCsrfToken() rather than every individual mutating call.
+  const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+    c.startsWith("embr_csrf="),
+  );
+  if (csrfCookie) {
+    const token = csrfCookie.split(";")[0]!.split("=")[1]!;
+    agent.set("x-csrf-token", token);
+  }
+  return register.body.data.id as string;
+}
+
+/** Same as registerAndLogin, minus the verify-email step — for tests
+ * of the verified-email gate itself. */
+async function registerAndLoginUnverified(agent: ReturnType<typeof request.agent>, email: string) {
+  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
     c.startsWith("embr_csrf="),
   );
@@ -422,10 +513,12 @@ beforeEach(() => {
   state.cycleEntries = [];
   state.treatments = [];
   state.briefs = [];
+  state.emailVerificationTokens = [];
   aiState.nextResponse = null;
   aiState.shouldThrow = false;
   lockState.held.clear();
   lockState.acquireShouldThrow = false;
+  vi.mocked(sendVerificationEmail).mockClear();
 });
 
 const RANGE = { fromDate: "2026-01-01", toDate: "2026-02-01" };
@@ -435,6 +528,30 @@ describe("POST /briefs", () => {
     const app = createApp();
     const res = await request(app).post("/briefs").send(RANGE);
     expect(res.status).toBe(401);
+  });
+
+  it("blocks an unverified account with 403 EMAIL_NOT_VERIFIED, and never calls the AI", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLoginUnverified(agent, "brief-unverified@embr.health");
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("EMAIL_NOT_VERIFIED");
+    expect(briefAi.generate).not.toHaveBeenCalled();
+    expect(state.briefs).toHaveLength(0);
+  });
+
+  it("allows a verified account to generate", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-verified@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
   });
 
   it("rejects fromDate >= toDate", async () => {
@@ -2024,6 +2141,40 @@ describe("GET/DELETE /briefs — access control", () => {
     const res = await agent.get(`/briefs/${briefId}/pdf`);
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("application/pdf");
+  });
+
+  it("blocks an unverified account from downloading, even a brief that already exists for them", async () => {
+    // Simulates the retroactive case (requirement: applies to existing
+    // accounts too) — a brief already exists (e.g. from before this
+    // gate existed) for a user whose emailVerifiedAt is still null, not
+    // one created through this test's own POST /briefs flow, since
+    // that flow itself now requires verification.
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLoginUnverified(agent, "pdf-unverified@embr.health");
+    const brief = {
+      id: nextId(),
+      userId,
+      fromDate: new Date(RANGE.fromDate),
+      toDate: new Date(RANGE.toDate),
+      symptomSummary: [],
+      cycleSummary: { averageCycleLengthDays: null, cycleCount: 0, periodDaysLogged: 0 },
+      treatmentSummary: [],
+      frequencyComparison: null,
+      coOccurrence: null,
+      treatmentImpact: null,
+      persistentSymptoms: null,
+      interpretation: null,
+      citedPatternIds: null,
+      aiNarrative: "n",
+      aiDiscussionTopics: ["t"],
+      createdAt: now(),
+    };
+    state.briefs.push(brief);
+
+    const res = await agent.get(`/briefs/${brief.id}/pdf`);
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("EMAIL_NOT_VERIFIED");
   });
 
   it("GET /briefs/:id/pdf 404s (and never returns PDF bytes) for another user's brief", async () => {

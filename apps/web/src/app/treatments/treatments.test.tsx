@@ -195,7 +195,7 @@ describe("Treatments page — impact section", () => {
     await user.click(screen.getByText("See impact"));
 
     await waitFor(() =>
-      expect(screen.getByText("Couldn't load this — try again in a moment.")).toBeInTheDocument(),
+      expect(screen.getByText("Couldn't load this. Try again in a moment.")).toBeInTheDocument(),
     );
   });
 

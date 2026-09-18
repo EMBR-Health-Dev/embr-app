@@ -52,11 +52,13 @@ export default function TheLoopScreen() {
   return (
     <OnboardingScreen step="THE_LOOP">
       <p className="font-display text-heading-xl text-foreground">{t("headline")}</p>
+      <p className="mt-3 text-sm text-foreground/60">{t("subhead")}</p>
 
       <div className="relative mt-10 flex flex-col">
         <div className="absolute bottom-4 left-[5px] top-4 w-px bg-muted" aria-hidden="true" />
 
         <LoopStage label={t("trackLabel")} title={trackLabel}>
+          <p className="mt-2 text-sm text-foreground/60">{t("trackDescription")}</p>
           <p className="mt-2 text-xs text-foreground/50">{t("trackTreatmentsHint")}</p>
         </LoopStage>
         <LoopStage label={t("patternsLabel")} title={t("patternsTitle")}>
@@ -71,7 +73,9 @@ export default function TheLoopScreen() {
         </LoopStage>
       </div>
 
-      <div className="mt-10 flex flex-col gap-3">
+      <p className="mt-8 text-sm text-foreground/60">{t("controlNote")}</p>
+
+      <div className="mt-8 flex flex-col gap-3">
         <Button onClick={handleLogFirstEntry} disabled={finishing}>
           {finishing ? "…" : t("logFirstEntry")}
         </Button>

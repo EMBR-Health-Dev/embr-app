@@ -1,6 +1,7 @@
 {
   "Login": {
     "title": "おかえりなさい",
+    "subtitle": "あなたの記録は、そのままここにあります。",
     "passwordChanged": "パスワードを変更しました。新しいパスワードでログインしてください。",
     "ssoError": {
       "sso_not_configured": "そのメールアドレスのドメインにはSSO連携が設定されていません。",
@@ -115,7 +116,7 @@
     },
     "appointmentStatus": {
       "headline": "近々、診察の予定はありますか?",
-      "hint": "正確な日付はまだ不要です。BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
+      "hint": "正確な日付はまだ不要です。Clinical Briefをすぐ使える状態にしておくかどうかの参考にします。",
       "withinMonth": "はい、1か月以内にあります",
       "unsureWhen": "はい、ただしいつかは未定です",
       "no": "いいえ",
@@ -123,7 +124,9 @@
     },
     "theLoop": {
       "headline": "EMBRの仕組みをご紹介します。",
+      "subhead": "記録をつけてから、診察に持っていくまでの流れを簡単にご紹介します。",
       "trackFallback": "睡眠 · エネルギー · 気分",
+      "trackDescription": "一度でも、毎回でも構いません。記録するたびに、あなたのデータが積み重なっていきます。",
       "trackTreatmentsHint": "HRT、サプリメント、薬など、試している治療もここで記録できます。",
       "patternsLabel": "パターン",
       "patternsTitle": "数週間記録を続けると、例えばこのように見えてくることがあります:",
@@ -136,6 +139,7 @@
       "conversationLabel": "診察での会話",
       "conversationTitle": "次回の診察に持っていける、具体的な材料になります。",
       "conversationBody": "完全に任意で、あなただけのものです。",
+      "controlNote": "何を記録するか、Clinical Briefに何を含めるか、誰に共有するかは、すべてあなたが決められます。",
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
     }
@@ -337,6 +341,14 @@
     "leaving": "退出中…",
     "leaveError": "組織を退出できませんでした。もう一度お試しください。"
   },
+  "EmailVerification": {
+    "title": "続けるにはメールアドレスの確認が必要です",
+    "body": "この操作にはメールアドレスの確認が必要です。",
+    "resend": "確認メールを再送信",
+    "resendSubmitting": "送信中…",
+    "resendSuccess": "受信箱をご確認ください。新しい確認メールをお送りしました。",
+    "genericError": "問題が発生しました。もう一度お試しください。"
+  },
   "Settings": {
     "title": "設定",
     "accountTitle": "アカウント",
@@ -417,7 +429,7 @@
     "groundedInTitle": "データに基づく根拠",
     "trendsTitle": "最近の傾向",
     "trendsAcrossBriefs": "直近{count}件のブリーフについて",
-    "trendsCategoryLine": "{category} — {total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
+    "trendsCategoryLine": "{category}は{total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
     "longitudinalPatternsTitle": "ブリーフ全体で継続している傾向",
     "longitudinalPatternsLine": "{category}は直近{total}件のブリーフすべてで報告されています。"
   },

@@ -323,7 +323,7 @@ describe("Brief page — Your recent trends", () => {
     expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
     expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
     expect(
-      screen.getByText("Hot Flash — reported in 3 of 3 briefs, marked persistent in 2."),
+      screen.getByText("Hot Flash: reported in 3 of 3 briefs, marked persistent in 2."),
     ).toBeInTheDocument();
   });
 
@@ -427,7 +427,7 @@ describe("Brief page — severity breakdown", () => {
     // over ["3 Mild", "2 Moderate", "1 Severe"] — computed directly
     // via Node before writing this assertion, not assumed.
     expect(
-      await screen.findByText("Hot Flash — 6 occurrences (3 Mild, 2 Moderate, 1 Severe)"),
+      await screen.findByText("Hot Flash: 6 occurrences (3 Mild, 2 Moderate, 1 Severe)"),
     ).toBeInTheDocument();
   });
 });
@@ -489,7 +489,7 @@ describe("Brief page — deterministic evidence sections", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     expect(
-      await screen.findByText("Hot Flash — 6 occurrences (4 Moderate, 2 Severe)"),
+      await screen.findByText("Hot Flash: 6 occurrences (4 Moderate, 2 Severe)"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -503,7 +503,7 @@ describe("Brief page — deterministic evidence sections", () => {
     expect(
       screen.getByText("Average cycle length: 28 days (3 cycles recorded)"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Estradiol patch — HRT, 2026-01-10 – Ongoing")).toBeInTheDocument();
+    expect(screen.getByText("Estradiol patch: HRT, 2026-01-10 – Ongoing")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Estradiol patch: 2 symptom logs in the 14 days before starting, compared with 5 symptom logs in the 14 days after.",
@@ -583,10 +583,10 @@ describe("Brief page — multiple items", () => {
     renderWithIntl(<BriefPage />);
 
     expect(
-      await screen.findByText("Hot Flash — reported in 4 of 4 briefs, marked persistent in 3."),
+      await screen.findByText("Hot Flash: reported in 4 of 4 briefs, marked persistent in 3."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Fatigue — reported in 2 of 4 briefs, marked persistent in 0."),
+      screen.getByText("Fatigue: reported in 2 of 4 briefs, marked persistent in 0."),
     ).toBeInTheDocument();
   });
 });
@@ -709,9 +709,7 @@ describe("Brief page — clinician summary download", () => {
     const button = await screen.findByRole("button", { name: "Download clinician summary" });
     await user.click(button);
 
-    expect(
-      await screen.findByText("Couldn't prepare the summary — try again."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't prepare the summary. Try again.")).toBeInTheDocument();
   });
 });
 
@@ -775,7 +773,7 @@ describe("Brief page — history", () => {
 
     // Previously this left openBriefId set with the detail never
     // fetched — a "loading…" placeholder that never resolved.
-    expect(await screen.findByText("Couldn't load that brief — try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't load that brief. Try again.")).toBeInTheDocument();
     expect(screen.queryByText("loading…")).not.toBeInTheDocument();
   });
 
@@ -831,7 +829,7 @@ describe("Brief page — history", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
-    expect(await screen.findByText("Couldn't delete that brief — try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't delete that brief. Try again.")).toBeInTheDocument();
     expect(screen.getByText("2026-01-01 to 2026-02-01")).toBeInTheDocument();
   });
 

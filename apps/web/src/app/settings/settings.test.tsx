@@ -214,7 +214,7 @@ describe("Settings — email verification status", () => {
     mockUser.emailVerified = false;
     const { ApiError } = await import("../../lib/api-client");
     resendVerificationMock.mockRejectedValue(
-      new ApiError(429, "RATE_LIMITED", "Too many requests — please try again later"),
+      new ApiError(429, "RATE_LIMITED", "Too many requests. Please try again later"),
     );
     const user = userEvent.setup();
     const { default: SettingsPage } = await import("./page");
@@ -224,7 +224,7 @@ describe("Settings — email verification status", () => {
     await user.click(screen.getByText("Resend verification email"));
 
     await waitFor(() =>
-      expect(screen.getByText("Too many requests — please try again later")).toBeInTheDocument(),
+      expect(screen.getByText("Too many requests. Please try again later")).toBeInTheDocument(),
     );
     // Still offers the resend action again rather than getting stuck.
     expect(screen.getByText("Resend verification email")).toBeInTheDocument();

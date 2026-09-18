@@ -44,6 +44,10 @@ export class AppError extends Error {
     return new AppError({ code: ErrorCode.FORBIDDEN, message });
   }
 
+  static emailNotVerified(message = "Please verify your email address to use this feature") {
+    return new AppError({ code: ErrorCode.EMAIL_NOT_VERIFIED, message });
+  }
+
   static notFound(resource: string) {
     return new AppError({ code: ErrorCode.NOT_FOUND, message: `${resource} not found` });
   }

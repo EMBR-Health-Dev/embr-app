@@ -286,7 +286,7 @@ describe("Organization billing — checkout flow", () => {
     billingGetMock.mockResolvedValue(NO_SUBSCRIPTION_STATUS);
     const { ApiError } = await import("../../lib/api-client");
     checkoutMock.mockRejectedValue(
-      new ApiError(429, "RATE_LIMITED", "Too many requests — please try again later"),
+      new ApiError(429, "RATE_LIMITED", "Too many requests. Please try again later"),
     );
     const user = userEvent.setup();
     await renderOrgPage();
@@ -297,7 +297,7 @@ describe("Organization billing — checkout flow", () => {
     await user.click(screen.getByRole("button", { name: "Start subscription" }));
 
     await waitFor(() =>
-      expect(screen.getByText("Too many requests — please try again later")).toBeInTheDocument(),
+      expect(screen.getByText("Too many requests. Please try again later")).toBeInTheDocument(),
     );
     expect(screen.getByRole("button", { name: "Start subscription" })).not.toBeDisabled();
   });

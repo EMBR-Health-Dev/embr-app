@@ -267,7 +267,7 @@ describe("Screen 5 — the loop", () => {
 
     expect(
       screen.getByText(
-        "Treatments you try — HRT, supplements, medication, anything else — can be tracked here too.",
+        "Treatments you try, including HRT, supplements, medication, and anything else, can be tracked here too.",
       ),
     ).toBeInTheDocument();
   });

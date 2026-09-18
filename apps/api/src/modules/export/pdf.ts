@@ -71,7 +71,7 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
   const brass = "#b8974f";
   const navy = "#0f1b2d";
 
-  doc.fillColor(navy).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR — Health Summary");
+  doc.fillColor(navy).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR Health Summary");
   doc.moveDown(0.3);
   doc
     .fontSize(10)
@@ -87,7 +87,7 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
     .fontSize(9)
     .fillColor("#888888")
     .text(
-      "This is a personal tracking record, not a diagnosis — for discussion with your provider.",
+      "This is a personal tracking record, not a diagnosis. For discussion with your provider.",
     );
 
   doc.moveDown(1.2);

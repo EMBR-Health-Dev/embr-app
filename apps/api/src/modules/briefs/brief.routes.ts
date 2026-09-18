@@ -4,7 +4,7 @@ import type { GenerateBriefInput, PaginationQuery } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
-import { requireAuth } from "../auth/auth.middleware.js";
+import { requireAuth, requireVerifiedEmail } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { briefGenerationLimiter } from "./brief-rate-limiter.js";
@@ -17,6 +17,10 @@ router.use("/briefs", requireAuth());
 
 router.post(
   "/briefs",
+  // Before the rate limiter deliberately: a blocked-for-verification
+  // attempt shouldn't spend any of the 10/hr generation budget the
+  // limiter exists to protect.
+  requireVerifiedEmail(),
   briefGenerationLimiter,
   requireCsrfToken(),
   validate(generateBriefSchema),
@@ -66,6 +70,7 @@ router.get(
 
 router.get(
   "/briefs/:id/pdf",
+  requireVerifiedEmail(),
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     const brief = await briefService.get(requireParam(req, "id"), req.user!.sub);

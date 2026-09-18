@@ -194,7 +194,7 @@ describe("Dashboard — symptom log form error handling", () => {
     // Previously this failure was swallowed entirely — no error, no
     // feedback, the form just sat there having silently done nothing.
     expect(
-      await screen.findByText("Couldn't save that — check your connection and try again."),
+      await screen.findByText("Couldn't save that. Check your connection and try again."),
     ).toBeInTheDocument();
     // The form must still be open and usable, not collapsed as if the
     // (failed) submission had succeeded.

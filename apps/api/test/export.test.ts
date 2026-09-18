@@ -3,6 +3,7 @@ import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { buildClinicianSummaryPdf } from "../src/modules/export/pdf.js";
+import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
 
 vi.mock("../src/modules/export/pdf.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/modules/export/pdf.js")>();
@@ -65,6 +66,14 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      emailVerificationTokens: [] as Array<{
+        id: string;
+        userId: string;
+        tokenHash: string;
+        expiresAt: Date;
+        consumedAt: Date | null;
+        createdAt: Date;
+      }>,
     },
     nextId: () => randomUUID(),
   };
@@ -122,11 +131,58 @@ vi.mock("../src/lib/prisma.js", () => ({
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       findMany: vi.fn().mockResolvedValue([]),
     },
+    // Real, stateful mock — see brief.test.ts's identical shape for why
+    // a static stub can't exercise a real verify cycle.
     emailVerificationToken: {
-      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
-      create: vi.fn().mockResolvedValue({ id: nextId() }),
-      findFirst: vi.fn().mockResolvedValue(null),
-      update: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { userId: string; consumedAt: null };
+          data: { consumedAt: Date };
+        }) => {
+          const matched = state.emailVerificationTokens.filter(
+            (t) => t.userId === where.userId && t.consumedAt === where.consumedAt,
+          );
+          matched.forEach((t) => Object.assign(t, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
+      create: vi.fn(
+        ({
+          data,
+        }: {
+          data: Omit<
+            (typeof state.emailVerificationTokens)[number],
+            "id" | "createdAt" | "consumedAt"
+          >;
+        }) => {
+          const token = { id: nextId(), createdAt: now(), consumedAt: null, ...data };
+          state.emailVerificationTokens.push(token);
+          return Promise.resolve(token);
+        },
+      ),
+      findFirst: vi.fn(
+        ({
+          where,
+        }: {
+          where: { tokenHash: string; consumedAt: null; expiresAt: { gt: Date } };
+        }) => {
+          const found = state.emailVerificationTokens.find(
+            (t) =>
+              t.tokenHash === where.tokenHash &&
+              t.consumedAt === where.consumedAt &&
+              t.expiresAt.getTime() > where.expiresAt.gt.getTime(),
+          );
+          return Promise.resolve(found ?? null);
+        },
+      ),
+      update: vi.fn(({ where, data }: { where: { id: string }; data: { consumedAt: Date } }) => {
+        const token = state.emailVerificationTokens.find((t) => t.id === where.id)!;
+        Object.assign(token, data);
+        return Promise.resolve(token);
+      }),
     },
     passwordResetToken: {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -247,12 +303,37 @@ vi.mock("../src/lib/prisma.js", () => ({
 
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
+function lastVerificationToken(): string {
+  const calls = vi.mocked(sendVerificationEmail).mock.calls;
+  const lastCall = calls[calls.length - 1];
+  if (!lastCall) throw new Error("sendVerificationEmail was never called");
+  return lastCall[1];
+}
+
+/** Registers, verifies via the real endpoint, then logs in — every
+ * existing test in this file predates the verified-email gate on
+ * /export/* (see export.routes.ts) and is about export content, not
+ * the gate itself. See registerAndLoginUnverified for gate tests. */
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
   await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  await agent.post("/auth/verify-email").send({ token: lastVerificationToken() });
   const res = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   // Mirrors what a real browser does automatically: read the CSRF
   // cookie the login response just set and echo it back as a header
   // on every subsequent request this agent makes.
+  const csrfCookie = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+    c.startsWith("embr_csrf="),
+  );
+  if (csrfCookie) {
+    const token = csrfCookie.split(";")[0]!.split("=")[1]!;
+    agent.set("x-csrf-token", token);
+  }
+  return res;
+}
+
+async function registerAndLoginUnverified(agent: ReturnType<typeof request.agent>, email: string) {
+  await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const res = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
     c.startsWith("embr_csrf="),
   );
@@ -268,7 +349,35 @@ beforeEach(() => {
   state.logs = [];
   state.entries = [];
   state.treatments = [];
+  state.emailVerificationTokens = [];
   vi.mocked(buildClinicianSummaryPdf).mockClear();
+  vi.mocked(sendVerificationEmail).mockClear();
+});
+
+describe("GET /export/* — email verification gate", () => {
+  // One representative route stands in for all four — they share the
+  // same router.use("/export", requireAuth(), requireVerifiedEmail())
+  // gate (export.routes.ts), not four separate checks.
+  it("blocks an unverified account with 403 EMAIL_NOT_VERIFIED", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLoginUnverified(agent, "export-unverified@embr.health");
+
+    const res = await agent.get("/export/symptom-logs.csv");
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("EMAIL_NOT_VERIFIED");
+  });
+
+  it("allows a verified account", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "export-verified@embr.health");
+
+    const res = await agent.get("/export/symptom-logs.csv");
+
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("GET /export/symptom-logs.csv", () => {

@@ -2,13 +2,17 @@ import { Router, type Router as ExpressRouter } from "express";
 import { exportQuerySchema, type ExportQuery } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
-import { requireAuth } from "../auth/auth.middleware.js";
+import { requireAuth, requireVerifiedEmail } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { exportService } from "./export.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/export", requireAuth());
+// Every route below hands the caller's own data to them as a
+// download — this is exactly the "sends or shares user data
+// externally" category, gated at the router level since all four
+// routes qualify, not per-route.
+router.use("/export", requireAuth(), requireVerifiedEmail());
 
 router.get(
   "/export/symptom-logs.csv",

@@ -154,7 +154,7 @@ describe("ReflectionsSection", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "A count of what you've logged during this treatment — not a measure of how well it's working.",
+        "A count of what you've logged during this treatment, not a measure of how well it's working.",
       ),
     ).toBeInTheDocument();
   });
