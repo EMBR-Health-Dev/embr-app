@@ -12,6 +12,7 @@ import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { AppNav } from "../../components/app-nav";
+import { formatDeviceLabel } from "../../lib/user-agent";
 
 export default function SettingsPage() {
   const t = useTranslations("Settings");
@@ -263,7 +264,7 @@ export default function SettingsPage() {
                 <li key={s.id} className="flex items-center justify-between py-3 text-sm">
                   <div>
                     <p className="text-foreground">
-                      {s.userAgent ?? t("unknownDevice")}
+                      {formatDeviceLabel(s.userAgent) ?? t("unknownDevice")}
                       {s.current && (
                         <span className="ml-2 rounded-sm bg-accent px-1.5 py-0.5 text-xs font-medium text-accent-foreground">
                           {t("thisDevice")}

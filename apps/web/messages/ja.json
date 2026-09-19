@@ -117,10 +117,10 @@
     "appointmentStatus": {
       "headline": "近々、診察の予定はありますか?",
       "hint": "正確な日付はまだ不要です。Clinical Briefをすぐ使える状態にしておくかどうかの参考にします。",
-      "withinMonth": "はい、1か月以内にあります",
-      "unsureWhen": "はい、ただしいつかは未定です",
-      "no": "いいえ",
-      "unsure": "まだわかりません"
+      "withinMonth": "1か月以内",
+      "withinThreeMonthsOrLonger": "3か月以内、またはそれ以降",
+      "waitingToSchedule": "まだ予約していません",
+      "notNow": "今は予定なし"
     },
     "theLoop": {
       "headline": "EMBRの仕組みをご紹介します。",
@@ -221,6 +221,8 @@
     "saved": "保存しました ✓",
     "recentSymptoms": "最近の症状",
     "noLogsYet": "まだ記録がありません。何かあれば上のボタンから記録してください。",
+    "loadMore": "もっと見る",
+    "loadMoreError": "続きを読み込めませんでした。もう一度お試しください。",
     "thisWeek": "{count, plural, other {今週の記録: #件}}",
     "mostCommon": "最も多い症状: {category}",
     "startingPoint": {
@@ -482,6 +484,7 @@
     "notesPlaceholder": "メモ(任意)",
     "fillRequiredFields": "名前と開始日を入力してください。",
     "pickEndDate": "終了日を選択するか、継続中のままにしてください。",
+    "invalidEndDate": "終了日は開始日より前にできません。",
     "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
     "saving": "保存中…",
     "addTreatment": "治療を追加",

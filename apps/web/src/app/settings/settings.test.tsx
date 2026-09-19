@@ -230,3 +230,66 @@ describe("Settings — email verification status", () => {
     expect(screen.getByText("Resend verification email")).toBeInTheDocument();
   });
 });
+
+describe("Settings — device list presentation", () => {
+  it("shows a human-readable device label, never the raw User-Agent string", async () => {
+    const rawUserAgent =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+    sessionsListMock.mockResolvedValue([
+      {
+        id: "s1",
+        userAgent: rawUserAgent,
+        ipAddress: "203.0.113.5",
+        createdAt: "2026-01-01T00:00:00Z",
+        expiresAt: "2026-02-01T00:00:00Z",
+        current: true,
+      },
+    ]);
+
+    const { default: SettingsPage } = await import("./page");
+    renderWithIntl(<SettingsPage />);
+
+    expect(await screen.findByText("Chrome on Mac")).toBeInTheDocument();
+    expect(screen.queryByText(rawUserAgent)).not.toBeInTheDocument();
+    // The rest of the row's existing behavior is unaffected — this is
+    // a presentation-only change to the label text, nothing else.
+    expect(screen.getByText("This device")).toBeInTheDocument();
+  });
+
+  it("falls back to 'Unknown device' rather than showing nothing or a raw string", async () => {
+    sessionsListMock.mockResolvedValue([
+      {
+        id: "s1",
+        userAgent: null,
+        ipAddress: "203.0.113.5",
+        createdAt: "2026-01-01T00:00:00Z",
+        expiresAt: "2026-02-01T00:00:00Z",
+        current: false,
+      },
+    ]);
+
+    const { default: SettingsPage } = await import("./page");
+    renderWithIntl(<SettingsPage />);
+
+    expect(await screen.findByText("Unknown device")).toBeInTheDocument();
+  });
+
+  it("still offers Revoke for a non-current session, unchanged", async () => {
+    sessionsListMock.mockResolvedValue([
+      {
+        id: "s1",
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0.0.0",
+        ipAddress: "203.0.113.5",
+        createdAt: "2026-01-01T00:00:00Z",
+        expiresAt: "2026-02-01T00:00:00Z",
+        current: false,
+      },
+    ]);
+
+    const { default: SettingsPage } = await import("./page");
+    renderWithIntl(<SettingsPage />);
+
+    expect(await screen.findByText("Chrome on Windows")).toBeInTheDocument();
+    expect(screen.getByText("Revoke")).toBeInTheDocument();
+  });
+});

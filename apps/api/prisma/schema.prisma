@@ -615,11 +615,14 @@ enum OnboardingArea {
 /// Coarse enough that no appointment date is ever collected during
 /// onboarding — see docs/MILESTONES.md's Milestone 18 entry for why an
 /// exact date was deliberately deferred to a future "Appointment Mode."
+/// Refined post-audit from an earlier four-option set (WITHIN_MONTH /
+/// UNSURE_WHEN / NO / UNSURE) to this one — see this migration's own
+/// data-remapping comment for how existing rows carried over.
 enum OnboardingAppointmentStatus {
   WITHIN_MONTH
-  UNSURE_WHEN
-  NO
-  UNSURE
+  WITHIN_THREE_MONTHS_OR_LONGER
+  WAITING_TO_SCHEDULE
+  NOT_NOW
 }
 
 /// Which of the five onboarding screens the person last reached —

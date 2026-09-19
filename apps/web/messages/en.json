@@ -117,10 +117,10 @@
     "appointmentStatus": {
       "headline": "Do you have a healthcare appointment coming up?",
       "hint": "No need for the exact date yet. Just helps us know whether to keep a Clinical Brief close at hand.",
-      "withinMonth": "Yes, within the next month",
-      "unsureWhen": "Yes, but I'm not sure when",
-      "no": "No",
-      "unsure": "I'm not sure yet"
+      "withinMonth": "Within the next month",
+      "withinThreeMonthsOrLonger": "Within the next 3 months or longer",
+      "waitingToSchedule": "Waiting to schedule",
+      "notNow": "Not now"
     },
     "theLoop": {
       "headline": "Here's how EMBR works.",
@@ -221,6 +221,8 @@
     "saved": "Saved ✓",
     "recentSymptoms": "Recent symptoms",
     "noLogsYet": "Nothing recorded yet. Use the button above whenever something happens.",
+    "loadMore": "Load more",
+    "loadMoreError": "Couldn't load more entries. Try again.",
     "thisWeek": "{count, plural, one {# log this week} other {# logs this week}}",
     "mostCommon": "Most common: {category}",
     "startingPoint": {
@@ -482,6 +484,7 @@
     "notesPlaceholder": "Notes (optional)",
     "fillRequiredFields": "Add a name and start date first.",
     "pickEndDate": "Pick an end date, or leave it marked as ongoing.",
+    "invalidEndDate": "End date can't be before the start date.",
     "genericError": "Something went wrong. Try again in a moment.",
     "saving": "Saving…",
     "addTreatment": "Add treatment",

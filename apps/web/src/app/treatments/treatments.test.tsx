@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { TreatmentDto, TreatmentImpactDto } from "@embr/types";
+import { ApiError } from "../../lib/api-client";
 import messages from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 
@@ -45,13 +46,14 @@ const listMock = vi.fn().mockResolvedValue({
   totalPages: 1,
 });
 const impactMock = vi.fn();
+const createMock = vi.fn().mockResolvedValue(treatment);
 
 vi.mock("../../lib/api", () => ({
   api: {
     treatments: {
       list: (...args: unknown[]) => listMock(...args),
       impact: (...args: unknown[]) => impactMock(...args),
-      create: vi.fn(),
+      create: (...args: unknown[]) => createMock(...args),
       update: vi.fn(),
       delete: vi.fn(),
     },
@@ -80,6 +82,7 @@ function populatedImpact(overrides: Partial<TreatmentImpactDto> = {}): Treatment
 beforeEach(() => {
   listMock.mockClear();
   impactMock.mockReset();
+  createMock.mockReset().mockResolvedValue(treatment);
 });
 
 describe("Treatments page — impact section", () => {
@@ -214,5 +217,87 @@ describe("Treatments page — impact section", () => {
     expect(
       screen.getByText("症状を記録した回数であり、治療の効果を示すものではありません。"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Treatments page — add-treatment date validation", () => {
+  // <input type="date"> only ever accepts a real ISO "YYYY-MM-DD"
+  // value (anything else is silently rejected by the DOM itself), and
+  // jsdom doesn't implement a real browser's segmented date-picker
+  // keystroke handling, so this sets the value directly rather than
+  // simulating keystrokes the way userEvent.type would for a text
+  // field.
+  async function fillValidNameAndDates(
+    user: ReturnType<typeof userEvent.setup>,
+    { startDate, endDate }: { startDate: string; endDate: string },
+  ) {
+    await user.type(screen.getByLabelText("Name (e.g. Estradiol patch)"), "Black cohosh");
+    await user.click(screen.getByLabelText("Ongoing"));
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: startDate } });
+    const endInput = await screen.findByLabelText("End date");
+    fireEvent.change(endInput, { target: { value: endDate } });
+  }
+
+  it("rejects an end date before the start date client-side, without ever calling the API", async () => {
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await fillValidNameAndDates(user, { startDate: "2026-09-18", endDate: "2026-09-10" });
+    await user.click(screen.getByRole("button", { name: "Add treatment" }));
+
+    expect(await screen.findByText("End date can't be before the start date.")).toBeInTheDocument();
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts an end date on or after the start date", async () => {
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await fillValidNameAndDates(user, { startDate: "2026-09-01", endDate: "2026-09-10" });
+    await user.click(screen.getByRole("button", { name: "Add treatment" }));
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText("End date can't be before the start date.")).not.toBeInTheDocument();
+  });
+
+  it("prefers the API's specific validation detail over the generic top-level message", async () => {
+    // Simulates the one shape the client-side check above can't fully
+    // rule out (see the code comment on that check) — the server is
+    // still the authority, and this is what a real 400 from
+    // createTreatmentSchema's refinement looks like.
+    createMock.mockRejectedValue(
+      new ApiError(400, "VALIDATION_ERROR", "Request validation failed", [
+        { field: "endDate", message: "endDate cannot be before startDate" },
+      ]),
+    );
+
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await fillValidNameAndDates(user, { startDate: "2026-09-01", endDate: "2026-09-10" });
+    await user.click(screen.getByRole("button", { name: "Add treatment" }));
+
+    expect(await screen.findByText("endDate cannot be before startDate")).toBeInTheDocument();
+    expect(screen.queryByText("Request validation failed")).not.toBeInTheDocument();
+  });
+
+  it("falls back to the generic message when the API error carries no details", async () => {
+    createMock.mockRejectedValue(new ApiError(500, "INTERNAL", "Something broke"));
+
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await fillValidNameAndDates(user, { startDate: "2026-09-01", endDate: "2026-09-10" });
+    await user.click(screen.getByRole("button", { name: "Add treatment" }));
+
+    expect(await screen.findByText("Something broke")).toBeInTheDocument();
   });
 });

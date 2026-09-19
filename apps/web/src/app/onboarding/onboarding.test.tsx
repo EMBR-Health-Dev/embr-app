@@ -185,11 +185,30 @@ describe("Screen 4 — appointment status", () => {
     const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
 
     renderWithIntl(<AppointmentStatusScreen />);
-    await user.click(screen.getByText("Yes, within the next month"));
+    await user.click(screen.getByText("Within the next month"));
 
     await waitFor(() =>
       expect(onboardingPatch).toHaveBeenCalledWith({
         appointmentStatus: "WITHIN_MONTH",
+        currentStep: "THE_LOOP",
+      }),
+    );
+  });
+
+  it.each([
+    ["Within the next 3 months or longer", "WITHIN_THREE_MONTHS_OR_LONGER"],
+    ["Waiting to schedule", "WAITING_TO_SCHEDULE"],
+    ["Not now", "NOT_NOW"],
+  ])("persists %s as %s", async (label, value) => {
+    const user = userEvent.setup();
+    const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
+
+    renderWithIntl(<AppointmentStatusScreen />);
+    await user.click(screen.getByText(label));
+
+    await waitFor(() =>
+      expect(onboardingPatch).toHaveBeenCalledWith({
+        appointmentStatus: value,
         currentStep: "THE_LOOP",
       }),
     );

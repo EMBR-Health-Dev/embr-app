@@ -39,6 +39,7 @@ const CATEGORIES = [
 
 const SEVERITIES = ["MILD", "MODERATE", "SEVERE"] as const;
 const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
+const LOGS_PAGE_SIZE = 10;
 
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
   return value !== null && (CATEGORIES as readonly string[]).includes(value);
@@ -55,6 +56,10 @@ function DashboardContent() {
 
   const [logs, setLogs] = useState<SymptomLogDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsTotalPages, setLogsTotalPages] = useState(1);
+  const [loadingMoreLogs, setLoadingMoreLogs] = useState(false);
+  const [loadMoreLogsError, setLoadMoreLogsError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const [loggingHotFlash, setLoggingHotFlash] = useState(false);
   const [logSubmitError, setLogSubmitError] = useState<string | null>(null);
@@ -111,13 +116,39 @@ function DashboardContent() {
     }
   }, [user]);
 
+  // Always resets back to the first page of 10 — the right behavior
+  // both on initial mount and after logging something new, since a
+  // fresh entry means "what's most recent" changed and any earlier
+  // "Load more" expansion is no longer the most useful view.
   async function loadLogs() {
     setLogsLoading(true);
+    setLoadMoreLogsError(null);
     try {
-      const page = await api.symptomLogs.list({ pageSize: 10 });
+      const page = await api.symptomLogs.list({ page: 1, pageSize: LOGS_PAGE_SIZE });
       setLogs(page.items);
+      setLogsPage(1);
+      setLogsTotalPages(page.totalPages);
     } finally {
       setLogsLoading(false);
+    }
+  }
+
+  // Fetches the next page from the server and appends it — the full
+  // history genuinely lives server-side (see symptom.routes.ts's
+  // pagination), this never just reveals something already fetched.
+  async function loadMoreLogs() {
+    setLoadingMoreLogs(true);
+    setLoadMoreLogsError(null);
+    try {
+      const nextPage = logsPage + 1;
+      const page = await api.symptomLogs.list({ page: nextPage, pageSize: LOGS_PAGE_SIZE });
+      setLogs((prev) => [...prev, ...page.items]);
+      setLogsPage(nextPage);
+      setLogsTotalPages(page.totalPages);
+    } catch (err) {
+      setLoadMoreLogsError(err instanceof ApiError ? err.message : t("loadMoreError"));
+    } finally {
+      setLoadingMoreLogs(false);
     }
   }
 
@@ -490,6 +521,20 @@ function DashboardContent() {
                   </li>
                 ))}
               </ul>
+            )}
+            {!logsLoading && logs.length > 0 && logsPage < logsTotalPages && (
+              <button
+                onClick={() => void loadMoreLogs()}
+                disabled={loadingMoreLogs}
+                className="mt-3 text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50"
+              >
+                {loadingMoreLogs ? tCommon("loading") : t("loadMore")}
+              </button>
+            )}
+            {loadMoreLogsError && (
+              <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                {loadMoreLogsError}
+              </p>
             )}
           </div>
         </section>

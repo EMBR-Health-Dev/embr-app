@@ -404,9 +404,9 @@ export const onboardingAreaSchema = z.enum(["SLEEP", "ENERGY", "MOOD", "BODY", "
 
 export const onboardingAppointmentStatusSchema = z.enum([
   "WITHIN_MONTH",
-  "UNSURE_WHEN",
-  "NO",
-  "UNSURE",
+  "WITHIN_THREE_MONTHS_OR_LONGER",
+  "WAITING_TO_SCHEDULE",
+  "NOT_NOW",
 ]);
 
 export const onboardingStepSchema = z.enum([
