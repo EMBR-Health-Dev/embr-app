@@ -51,23 +51,23 @@ export default function TheLoopScreen() {
 
   return (
     <OnboardingScreen step="THE_LOOP">
-      <p className="font-display text-2xl text-navy">{t("headline")}</p>
+      <p className="font-display text-heading-xl text-foreground">{t("headline")}</p>
 
       <div className="relative mt-10 flex flex-col">
-        <div className="absolute bottom-4 left-[5px] top-4 w-px bg-navy/15" aria-hidden="true" />
+        <div className="absolute bottom-4 left-[5px] top-4 w-px bg-muted" aria-hidden="true" />
 
         <LoopStage label={t("trackLabel")} title={trackLabel}>
-          <p className="mt-2 text-xs text-navy/50">{t("trackTreatmentsHint")}</p>
+          <p className="mt-2 text-xs text-foreground/50">{t("trackTreatmentsHint")}</p>
         </LoopStage>
         <LoopStage label={t("patternsLabel")} title={t("patternsTitle")}>
-          <p className="mt-2 font-display italic text-navy/90">{t("patternsExample")}</p>
-          <p className="mt-2 text-xs text-navy/50">{t("patternsCaveat")}</p>
+          <p className="mt-2 font-display italic text-foreground/90">{t("patternsExample")}</p>
+          <p className="mt-2 text-xs text-foreground/50">{t("patternsCaveat")}</p>
         </LoopStage>
         <LoopStage label={t("briefLabel")} title={t("briefTitle")}>
-          <p className="mt-2 text-sm text-navy/60">{t("briefBody")}</p>
+          <p className="mt-2 text-sm text-foreground/60">{t("briefBody")}</p>
         </LoopStage>
         <LoopStage label={t("conversationLabel")} title={t("conversationTitle")} last>
-          <p className="mt-2 text-sm text-navy/60">{t("conversationBody")}</p>
+          <p className="mt-2 text-sm text-foreground/60">{t("conversationBody")}</p>
         </LoopStage>
       </div>
 
@@ -78,7 +78,7 @@ export default function TheLoopScreen() {
         <button
           onClick={() => void finishAndGo("/dashboard")}
           disabled={finishing}
-          className="text-sm text-navy/60 underline underline-offset-2 hover:text-navy disabled:opacity-50"
+          className="text-sm text-foreground/60 underline underline-offset-2 hover:text-foreground disabled:opacity-50"
         >
           {t("goToDashboard")}
         </button>
@@ -101,11 +101,11 @@ function LoopStage({
   return (
     <div className={`relative pl-7 ${last ? "" : "pb-8"}`}>
       <span
-        className="absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-brass bg-bone"
+        className="absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-primary bg-background"
         aria-hidden="true"
       />
-      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-brass">{label}</p>
-      <p className="mt-1 text-[15px] text-navy">{title}</p>
+      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-primary">{label}</p>
+      <p className="mt-1 text-[15px] text-foreground">{title}</p>
       {children}
     </div>
   );

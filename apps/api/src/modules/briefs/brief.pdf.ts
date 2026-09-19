@@ -17,12 +17,55 @@ function treatmentCategoryLabel(category: string): string {
   return categoryLabel(category);
 }
 
+// EMBR Brand Guidelines v1.0 palette (see docs/design-tokens.md) — the
+// same graphite/lilac values apps/web's Tailwind tokens resolve to,
+// hardcoded here as hex because PDFKit has no CSS custom property
+// support. Kept to the same restrained roles the web semantic tokens
+// use: graphite-900 for primary text/headings, graphite-500 for
+// secondary/muted text, graphite-300 for hairline rules, lilac-500 as
+// the single, sparingly-used accent — never a second competing color.
+const INK = "#2A1F39"; // graphite-900 — headings, primary text
+const INK_MUTED = "#746B82"; // graphite-500 — secondary/meta text
+const INK_FAINT = "#B8B2C1"; // graphite-300 — hairline rules
+const ACCENT = "#A888B6"; // lilac-500 — the one accent color, used sparingly
+
+// The recurring "signal" mark from the brand's visual language — a
+// single point, not a bullet character — set immediately before every
+// section label. Purely a typographic/layout device: it carries no
+// data-dependent meaning and never varies by what a section contains,
+// so it can't be read as flagging or scoring anything.
+const SIGNAL_DOT_RADIUS = 2;
+const LEFT_MARGIN = 50;
+const RIGHT_MARGIN = 545;
+
+function sectionHeading(doc: PDFKit.PDFDocument, label: string): void {
+  const y = doc.y;
+  doc
+    .fillColor(ACCENT)
+    .circle(LEFT_MARGIN + SIGNAL_DOT_RADIUS, y + 5, SIGNAL_DOT_RADIUS)
+    .fill();
+  doc
+    .fillColor(INK)
+    .fontSize(11)
+    .font(EMBR_PDF_HEADING_FONT)
+    .text(label.toUpperCase(), LEFT_MARGIN + 10, y, {
+      characterSpacing: 0.8,
+    });
+  doc.moveDown(0.6);
+}
+
 /**
  * Renders a previously-generated ClinicalBrief exactly as it was
  * generated — every value here comes from the stored DTO, nothing is
  * recomputed from live symptom/cycle data and nothing calls the AI
  * again. Re-downloading a brief a year later must reproduce the same
  * document, even if the underlying logs have since been edited.
+ *
+ * Visual language only: every disclaimer, every "not a diagnosis" /
+ * "does not assess whether a treatment is working" caveat, and every
+ * conditional (which sections render, and when) is unchanged from
+ * before this pass — see brief.pdf.test.ts, which asserts on this
+ * exact text and passes unmodified against this file.
  */
 export function buildClinicalBriefPdf(
   brief: ClinicalBriefDto,
@@ -30,40 +73,69 @@ export function buildClinicalBriefPdf(
 ): PDFKit.PDFDocument {
   const doc = new PDFDocument({ margin: 50, size: "A4" });
   registerEmbrPdfFonts(doc);
-  const brass = "#b8974f";
-  const navy = "#0f1b2d";
 
-  doc.fillColor(navy).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR BRIEF");
-  doc.moveDown(0.3);
+  // ---- Masthead ----
+  // "EMBR" as a small, letter-spaced eyebrow above the actual document
+  // title — the same relationship the wordmark has to a section label
+  // elsewhere in this file — rather than one undifferentiated heading
+  // line, so the document reads as an instrument with its own
+  // identity, not a generic report with a logo pasted on top.
   doc
-    .fontSize(10)
+    .fillColor(INK_MUTED)
+    .fontSize(9)
+    .font(EMBR_PDF_HEADING_FONT)
+    .text("EMBR", { characterSpacing: 2 });
+  doc.moveDown(0.15);
+  doc.fillColor(INK).fontSize(22).font(EMBR_PDF_HEADING_FONT).text("Clinical Brief");
+  doc.moveDown(0.8);
+
+  doc
+    .fillColor(INK_MUTED)
+    .fontSize(8)
+    .font(EMBR_PDF_HEADING_FONT)
+    .text("OBSERVATION PERIOD", { characterSpacing: 0.8 });
+  doc.moveDown(0.15);
+  doc
+    .fillColor(INK)
+    .fontSize(12)
     .font(EMBR_PDF_BODY_FONT)
-    .fillColor("#555555")
-    .text(`Prepared for ${userEmail}`)
-    .text(`Range: ${brief.fromDate} to ${brief.toDate}`)
+    .text(`${brief.fromDate}  →  ${brief.toDate}`);
+  doc.moveDown(0.6);
+
+  doc
+    .fontSize(9)
+    .font(EMBR_PDF_BODY_FONT)
+    .fillColor(INK_MUTED)
     .text(
-      `Generated ${new Date(brief.createdAt).toISOString().slice(0, 16).replace("T", " ")} UTC`,
+      `Prepared for ${userEmail}  ·  Generated ${new Date(brief.createdAt)
+        .toISOString()
+        .slice(0, 16)
+        .replace("T", " ")} UTC`,
     );
   doc
-    .moveDown(0.5)
+    .moveDown(0.4)
     .fontSize(9)
-    .fillColor("#888888")
+    .fillColor(INK_MUTED)
     .text(
       "This is a structured summary of self-tracked data, generated to help a conversation with a" +
         " GP — not a diagnosis, and not medical advice.",
     );
 
-  doc.moveDown(1.2);
-  doc.strokeColor(brass).lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  doc.moveDown(1);
+  doc
+    .strokeColor(ACCENT)
+    .lineWidth(1)
+    .moveTo(LEFT_MARGIN, doc.y)
+    .lineTo(RIGHT_MARGIN, doc.y)
+    .stroke();
   doc.moveDown(1);
 
   // ---- AI narrative ----
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Summary");
-  doc.moveDown(0.4);
+  sectionHeading(doc, "Summary");
   doc
     .fontSize(10)
     .font(EMBR_PDF_BODY_FONT)
-    .fillColor("#333333")
+    .fillColor(INK)
     .text(brief.aiNarrative, { align: "left" });
   doc.moveDown(1);
 
@@ -75,9 +147,8 @@ export function buildClinicalBriefPdf(
   // observation/association text the web and mobile "Grounded in your
   // data" section does — never re-derived or reworded here.
   if (brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation) {
-    doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Grounded in your data");
-    doc.moveDown(0.4);
-    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor("#333333");
+    sectionHeading(doc, "Grounded in your data");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
     for (const id of brief.citedPatternIds) {
       const pattern = brief.interpretation.patterns.find((entry) => entry.id === id);
       // Should always resolve — see the same reasoning in page.tsx/
@@ -94,13 +165,8 @@ export function buildClinicalBriefPdf(
   }
 
   // ---- Discussion topics ----
-  doc
-    .fillColor(navy)
-    .fontSize(14)
-    .font(EMBR_PDF_HEADING_FONT)
-    .text("Questions to bring to your GP");
-  doc.moveDown(0.4);
-  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor("#333333");
+  sectionHeading(doc, "Questions to bring to your GP");
+  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
   for (const topic of brief.aiDiscussionTopics) {
     doc.text(`•  ${topic}`, { indent: 0 });
     doc.moveDown(0.2);
@@ -108,13 +174,16 @@ export function buildClinicalBriefPdf(
   doc.moveDown(0.8);
 
   // ---- Symptom frequency ----
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Symptom frequency");
-  doc.moveDown(0.4);
+  // Labeled "Symptom Signals" — the same "signal" vocabulary the rest
+  // of the product already uses for logged data (see apps/web's
+  // copy) — this section's content and computation are unchanged, only
+  // the heading text.
+  sectionHeading(doc, "Symptom Signals");
   if (brief.symptomSummary.length === 0) {
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#555555")
+      .fillColor(INK_MUTED)
       .text("No symptoms logged in this range.");
   } else {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
@@ -122,9 +191,9 @@ export function buildClinicalBriefPdf(
       const bySeverity = Object.entries(severityBreakdown)
         .map(([severity, n]) => `${n} ${severity.toLowerCase()}`)
         .join(", ");
-      doc.fillColor(navy).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
+      doc.fillColor(INK).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
       doc
-        .fillColor("#555555")
+        .fillColor(INK_MUTED)
         .text(`  ${count} occurrence${count === 1 ? "" : "s"} (${bySeverity})`);
     }
   }
@@ -138,17 +207,12 @@ export function buildClinicalBriefPdf(
   // and found nothing to report), and neither older briefs nor a
   // genuinely-empty comparison need a PDF section for it.
   if (brief.frequencyComparison && brief.frequencyComparison.length > 0) {
-    doc
-      .fillColor(navy)
-      .fontSize(14)
-      .font(EMBR_PDF_HEADING_FONT)
-      .text("Compared with the previous period");
-    doc.moveDown(0.4);
+    sectionHeading(doc, "Compared with the previous period");
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, currentCount, previousCount } of brief.frequencyComparison) {
-      doc.fillColor(navy).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
+      doc.fillColor(INK).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
       doc
-        .fillColor("#555555")
+        .fillColor(INK_MUTED)
         .text(
           `  Reported on ${currentCount} day${currentCount === 1 ? "" : "s"}, compared with` +
             ` ${previousCount} day${previousCount === 1 ? "" : "s"} in the previous period.`,
@@ -166,9 +230,8 @@ export function buildClinicalBriefPdf(
   // interpretation framing every other deterministic section here
   // uses.
   if (brief.persistentSymptoms && brief.persistentSymptoms.length > 0) {
-    doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Ongoing symptoms");
-    doc.moveDown(0.4);
-    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor("#333333");
+    sectionHeading(doc, "Ongoing symptoms");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
     for (const category of brief.persistentSymptoms) {
       doc.text(`${categoryLabel(category)} remained present across both periods.`);
     }
@@ -184,12 +247,11 @@ export function buildClinicalBriefPdf(
   // same observation-not-causation framing web and mobile use.
   if (brief.coOccurrence) {
     const { categoryA, categoryB, days } = brief.coOccurrence;
-    doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Patterns noticed");
-    doc.moveDown(0.4);
+    sectionHeading(doc, "Patterns noticed");
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#333333")
+      .fillColor(INK)
       .text(
         `${categoryLabel(categoryA)} and ${categoryLabel(categoryB)} were both reported on the` +
           ` same day on ${days} occasion${days === 1 ? "" : "s"}.`,
@@ -198,10 +260,9 @@ export function buildClinicalBriefPdf(
   }
 
   // ---- Cycle summary ----
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Cycle summary");
-  doc.moveDown(0.4);
+  sectionHeading(doc, "Cycle summary");
   const { averageCycleLengthDays, cycleCount, periodDaysLogged } = brief.cycleSummary;
-  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(navy);
+  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
   if (averageCycleLengthDays === null) {
     doc.text("Not enough period-start entries in this range to compute cycle length.");
   } else {
@@ -210,37 +271,32 @@ export function buildClinicalBriefPdf(
     );
   }
   doc
-    .fillColor("#555555")
+    .fillColor(INK_MUTED)
     .text(`${periodDaysLogged} period day${periodDaysLogged === 1 ? "" : "s"} logged`);
 
   doc.moveDown(1);
 
   // ---- Treatments (deterministic snapshot, no AI involvement) ----
-  doc
-    .fillColor(navy)
-    .fontSize(14)
-    .font(EMBR_PDF_HEADING_FONT)
-    .text("Treatments logged during this period");
-  doc.moveDown(0.4);
+  sectionHeading(doc, "Treatments logged during this period");
   if (brief.treatmentSummary.length === 0) {
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#555555")
+      .fillColor(INK_MUTED)
       .text("No treatments logged in this range.");
   } else {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { name, category, startDate, endDate } of brief.treatmentSummary) {
       const dateRange = `${startDate} – ${endDate ?? "Ongoing"}`;
-      doc.fillColor(navy).text(`${name}`, { continued: true, width: 300 });
-      doc.fillColor("#555555").text(`  ${treatmentCategoryLabel(category)}, ${dateRange}`);
+      doc.fillColor(INK).text(`${name}`, { continued: true, width: 300 });
+      doc.fillColor(INK_MUTED).text(`  ${treatmentCategoryLabel(category)}, ${dateRange}`);
     }
   }
   doc.moveDown(0.4);
   doc
     .fontSize(9)
     .font(EMBR_PDF_BODY_FONT)
-    .fillColor("#888888")
+    .fillColor(INK_MUTED)
     .text(
       "This reflects what you've logged. It does not assess whether a treatment is working or" +
         " make treatment recommendations.",
@@ -257,22 +313,17 @@ export function buildClinicalBriefPdf(
   // of scope here.
   if (brief.treatmentImpact && brief.treatmentImpact.length > 0) {
     doc.moveDown(1);
-    doc
-      .fillColor(navy)
-      .fontSize(14)
-      .font(EMBR_PDF_HEADING_FONT)
-      .text("Observed changes after starting treatment");
-    doc.moveDown(0.4);
+    sectionHeading(doc, "Observed changes after starting treatment");
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { name, before, after, insufficientData } of brief.treatmentImpact) {
-      doc.fillColor(navy).text(name);
+      doc.fillColor(INK).text(name);
       if (insufficientData) {
         doc
-          .fillColor("#555555")
+          .fillColor(INK_MUTED)
           .text("  Not enough time has passed since starting to compare yet.");
       } else {
         doc
-          .fillColor("#555555")
+          .fillColor(INK_MUTED)
           .text(
             `  ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} in the` +
               ` ${before.days} days before starting, compared with ${after.logCount} symptom` +
@@ -284,12 +335,37 @@ export function buildClinicalBriefPdf(
     doc
       .fontSize(9)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#888888")
+      .fillColor(INK_MUTED)
       .text(
         "This reflects what you've logged. It does not assess whether a treatment is working or" +
           " make treatment recommendations.",
       );
   }
+
+  // ---- Fine print: what this document is and isn't ----
+  // A single, restrained closing line reinforcing the masthead's own
+  // disclaimer — the same three-way distinction (reported data vs.
+  // observed pattern vs. clinical interpretation) the brand direction
+  // asks this document to make clearer, stated once more at the point
+  // a reader is most likely to be deciding what to do with the
+  // document, not just at the top before they've read it.
+  doc.moveDown(1.2);
+  doc
+    .strokeColor(INK_FAINT)
+    .lineWidth(0.5)
+    .moveTo(LEFT_MARGIN, doc.y)
+    .lineTo(RIGHT_MARGIN, doc.y)
+    .stroke();
+  doc.moveDown(0.6);
+  doc
+    .fontSize(8)
+    .font(EMBR_PDF_BODY_FONT)
+    .fillColor(INK_MUTED)
+    .text(
+      "Everything above reflects what was reported and, where noted, patterns observed in that" +
+        " reported data. None of it is a clinical interpretation or a diagnosis — that judgment" +
+        " belongs to the clinician reading this alongside you.",
+    );
 
   return doc;
 }

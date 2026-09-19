@@ -35,15 +35,19 @@ describe("CoOccurrenceCard", () => {
     await waitFor(() => expect(mockCoOccurrence).toHaveBeenCalled());
   });
 
-  it("renders nothing when there is no qualifying pattern — not an empty card, no card at all", async () => {
+  it("shows an elegant empty state — not a blank card, not an error — when no pair has qualified yet", async () => {
     mockCoOccurrence.mockResolvedValue(null);
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
-    const { container } = renderWithIntl(<CoOccurrenceCard />);
+    renderWithIntl(<CoOccurrenceCard />);
 
     await waitFor(() => expect(mockCoOccurrence).toHaveBeenCalled());
-    await waitFor(() => expect(container.querySelector('[aria-busy="true"]')).toBeNull());
-    expect(container.textContent).toBe("");
+    expect(
+      await screen.findByText("Not enough logged yet to show a pattern here."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/This becomes more informative as your record grows/),
+    ).toBeInTheDocument();
   });
 
   it("renders nothing on an API error — fails gracefully, no error banner", async () => {

@@ -47,12 +47,12 @@ function ResendVerificationForm() {
   }
 
   if (done) {
-    return <p className="mt-6 text-sm text-teal">{t("resendCheckEmail")}</p>;
+    return <p className="mt-6 text-sm text-foreground">{t("resendCheckEmail")}</p>;
   }
 
   return (
     <div className="mt-6 w-full max-w-sm">
-      <p className="text-sm text-navy/60">{t("resendPrompt")}</p>
+      <p className="text-sm text-foreground/60">{t("resendPrompt")}</p>
       <div className="mt-3 flex flex-col gap-3">
         <Field
           label={t("emailLabel")}
@@ -62,7 +62,11 @@ function ResendVerificationForm() {
           onChange={(e) => setEmail(e.target.value)}
           error={fieldError}
         />
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
+        {formError && (
+          <p role="alert" className="text-sm font-medium text-foreground">
+            {formError}
+          </p>
+        )}
         <Button onClick={handleResend} disabled={submitting} className="self-start">
           {submitting ? t("resendSubmitting") : t("resendButton")}
         </Button>
@@ -100,7 +104,7 @@ function VerifyEmailContent() {
   if (status === "verifying") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-navy/50">{t("verifying")}</p>
+        <p className="text-foreground/50">{t("verifying")}</p>
       </main>
     );
   }
@@ -108,9 +112,12 @@ function VerifyEmailContent() {
   if (status === "success") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <h1 className="font-display text-3xl text-navy">{t("successTitle")}</h1>
-        <p className="max-w-sm text-navy/70">{t("successBody")}</p>
-        <Link href="/login" className="text-sm font-medium text-teal underline underline-offset-2">
+        <h1 className="font-display text-display-m text-foreground">{t("successTitle")}</h1>
+        <p className="max-w-sm text-foreground/70">{t("successBody")}</p>
+        <Link
+          href="/login"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
+        >
           {t("goToLogin")}
         </Link>
       </main>
@@ -124,10 +131,13 @@ function VerifyEmailContent() {
   // specific to tell the person either way.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-      <h1 className="font-display text-3xl text-navy">{t("invalidLinkTitle")}</h1>
-      <p className="max-w-sm text-navy/70">{errorMessage ?? t("invalidLinkBody")}</p>
+      <h1 className="font-display text-display-m text-foreground">{t("invalidLinkTitle")}</h1>
+      <p className="max-w-sm text-foreground/70">{errorMessage ?? t("invalidLinkBody")}</p>
       <ResendVerificationForm />
-      <Link href="/login" className="text-sm font-medium text-teal underline underline-offset-2">
+      <Link
+        href="/login"
+        className="text-sm font-medium text-foreground underline underline-offset-2"
+      >
         {t("backToLogin")}
       </Link>
     </main>

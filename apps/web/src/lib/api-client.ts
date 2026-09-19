@@ -55,6 +55,30 @@ function clearHadSession(): void {
 }
 export { clearHadSession };
 
+// No request this app makes is expected to take longer than this —
+// including AI-backed brief generation, the slowest call it makes.
+// Without a timeout, a hung connection (a dead proxy, a backend that
+// accepted the connection but never responds) leaves whatever
+// submitting/generating state is gated on the promise true forever —
+// a real infinite-spinner risk, not merely a slow one. On abort this
+// throws the browser's own AbortError, deliberately NOT wrapped in
+// ApiError: every caller in this app already falls back to a
+// localized generic message when the error isn't an ApiError (e.g.
+// `err instanceof ApiError ? err.message : t("logError")`), so an
+// abort gets a real, translated message for free rather than a
+// hardcoded English one.
+const REQUEST_TIMEOUT_MS = 30_000;
+
+async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function readCookie(name: string): string | undefined {
   if (typeof document === "undefined") return undefined;
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -120,7 +144,7 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
     headers["x-csrf-token"] = await ensureCsrfToken();
   }
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method,
     headers,
     credentials: "same-origin",
@@ -241,7 +265,7 @@ export async function apiFetchBlob(
   const queryString = searchParams.toString();
   const url = `/api${path}${queryString ? `?${queryString}` : ""}`;
 
-  const res = await fetch(url, { credentials: "same-origin" });
+  const res = await fetchWithTimeout(url, { credentials: "same-origin" });
 
   if (!res.ok) {
     const json = await res.json().catch(() => null);

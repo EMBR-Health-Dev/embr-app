@@ -1,50 +1,80 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
 
 /**
- * Single shared transport. In dev/test this points at MailHog (see
- * docker-compose.yml) so verification/reset links can be inspected in a
- * browser without a real mail provider; swap SMTP_* for a real provider
- * (SES, Postmark, ...) in production — the calling code never changes.
+ * Resend's HTTPS API — replaces the previous Nodemailer/SMTP transport
+ * entirely (see git history). Railway blocks outbound SMTP on all ports
+ * below its Pro plan, and recommends HTTPS-API email providers even
+ * where SMTP is available; there's deliberately no SMTP fallback here —
+ * an HTTPS-only path doesn't depend on Railway's plan tier or outbound
+ * port policy at all, which is the whole reason this migration exists.
  *
- * `auth` is only included when both SMTP_USER and SMTP_PASS are set —
- * MailHog accepts unauthenticated connections, so local dev/test never
- * sets these. Before this, the transport had no auth option at all,
- * meaning it could never actually authenticate with any real provider
- * regardless of what credentials were supplied via env vars — every
- * one of them requires SMTP auth to send anything.
+ * `resend` is null when RESEND_API_KEY is unset (local dev/CI without a
+ * real Resend account) — sendMail() logs and no-ops in that case, the
+ * same "never break the caller" contract the old SMTP transport had.
  */
-const auth =
-  env.SMTP_USER && env.SMTP_PASS ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined;
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-const transport = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_SECURE,
-  requireTLS: env.SMTP_REQUIRE_TLS,
-  auth,
-});
+// Resend's SDK has no documented request-timeout option (checked its
+// shipped typings directly — ResendOptions only takes baseUrl/
+// userAgent), so a stuck HTTPS request would otherwise hang however
+// long fetch/the socket allows. This bounds it the same way the old
+// SMTP transport's connectionTimeout/socketTimeout did, for the same
+// reason: an external mail dependency should never be able to hang a
+// registration/reset/invite request indefinitely.
+const SEND_TIMEOUT_MS = 10_000;
 
-/** Verifies the transport can actually connect and (if configured)
- * authenticate — used by the /health/ready check so a broken SMTP
- * config is visible before a real user's verification email silently
- * fails to send. Deliberately not part of the readiness check's
- * overall pass/fail status (see health.ts) — email being down
- * shouldn't pull an otherwise-healthy API instance out of a load
- * balancer's rotation. */
-export async function verifyMailTransport(): Promise<void> {
-  await transport.verify();
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_resolve, reject) => {
+      setTimeout(() => reject(new Error(`Resend request timed out after ${ms}ms`)), ms);
+    }),
+  ]);
+}
+
+/**
+ * Whether a Resend API key is configured — used by /health/ready to
+ * report email configuration without making a live API call. Resend has
+ * no bare "verify these credentials" endpoint; the closest admin
+ * endpoints (listing API keys/domains) require broader-than-sending
+ * permissions, so probing one of those would falsely report "down" for
+ * a correctly configured, least-privilege sending-only key — the right
+ * key type for this exact use case. A presence check has no such
+ * false-negative risk, and (like the SMTP check it replaces) is not on
+ * the critical path: see health.ts, this never affects overall
+ * readiness status.
+ */
+export function isEmailConfigured(): boolean {
+  return resend !== null;
 }
 
 async function sendMail(to: string, subject: string, html: string, text: string) {
+  if (!resend) {
+    logger.warn({ to, subject }, "RESEND_API_KEY not configured — skipping email send");
+    return;
+  }
+
   try {
-    await transport.sendMail({ from: env.SMTP_FROM, to, subject, html, text });
+    const { error } = await withTimeout(
+      resend.emails.send({ from: env.EMAIL_FROM, to, subject, html, text }),
+      SEND_TIMEOUT_MS,
+    );
+
+    if (error) {
+      // Resend's SDK returns failures as { data: null, error }, it
+      // doesn't throw for them — this is the "log loudly, never break
+      // the caller" branch for that response shape. The catch below
+      // covers the separate case of the request itself failing (network
+      // error, our own timeout above).
+      logger.error({ error, to, subject }, "failed to send email via Resend");
+    }
   } catch (err) {
     // Email delivery failure should never crash a registration/reset
     // flow that otherwise succeeded server-side — log loudly and let
     // the user request a resend instead.
-    logger.error({ err, to, subject }, "failed to send email");
+    logger.error({ err, to, subject }, "failed to send email via Resend");
   }
 }
 

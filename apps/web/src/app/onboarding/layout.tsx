@@ -15,8 +15,8 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
 
   if (loading || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-bone">
-        <p className="text-navy/50">Loading…</p>
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-foreground/50">Loading…</p>
       </main>
     );
   }

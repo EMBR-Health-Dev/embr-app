@@ -265,7 +265,11 @@ export const api = {
     // Not a JSON call — this is a full-page navigation, so the caller
     // sets window.location.href to this rather than awaiting a
     // response. Exposed as a plain URL builder for that reason.
-    startUrl: (email: string) => `/api/auth/sso/start?email=${encodeURIComponent(email)}`,
+    startUrl: (email: string, redirect?: string) => {
+      const params = new URLSearchParams({ email });
+      if (redirect) params.set("redirect", redirect);
+      return `/api/auth/sso/start?${params.toString()}`;
+    },
   },
 
   onboarding: {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "../../../messages/en.json";
@@ -8,6 +8,7 @@ import ja from "../../../messages/ja.json";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/dashboard",
 }));
 
 // A stable object reference (not a fresh literal per call) — several
@@ -33,19 +34,24 @@ vi.mock("../../lib/auth-context", () => ({
 }));
 
 const symptomFrequency = vi.fn().mockResolvedValue([]);
+const symptomLogsList = vi.fn().mockResolvedValue({ items: [] });
+const symptomLogsCreate = vi.fn();
 
 vi.mock("../../lib/api", () => ({
   api: {
-    symptomLogs: { list: vi.fn().mockResolvedValue({ items: [] }) },
+    symptomLogs: { list: symptomLogsList, create: symptomLogsCreate },
     onboarding: { get: vi.fn().mockResolvedValue({ jobToBeDone: null }) },
     organizations: { mine: vi.fn().mockResolvedValue([]) },
     trends: { symptomFrequency },
     reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
+    briefs: { list: vi.fn().mockResolvedValue({ items: [] }) },
   },
 }));
 
 beforeEach(() => {
   symptomFrequency.mockReset().mockResolvedValue([]);
+  symptomLogsList.mockReset().mockResolvedValue({ items: [] });
+  symptomLogsCreate.mockReset();
 });
 
 function renderWithIntl(ui: React.ReactElement, locale: "en" | "ja" = "en") {
@@ -62,8 +68,13 @@ describe("Dashboard — translation", () => {
     renderWithIntl(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
-    expect(screen.getByText("Trends")).toBeInTheDocument();
-    expect(screen.getByText("BRIEF")).toBeInTheDocument();
+    // Scoped to the desktop nav variant specifically: AppNav renders both
+    // a desktop row and a mobile menu with the same links (only one is
+    // visually shown at a time via a CSS breakpoint, which jsdom doesn't
+    // evaluate), so an unscoped query would match each link twice.
+    const desktopNav = screen.getByTestId("app-nav-desktop");
+    expect(within(desktopNav).getByRole("link", { name: "Patterns" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "Clinical Brief" })).toBeInTheDocument();
     expect(screen.getByText("Today's cycle entry")).toBeInTheDocument();
     expect(screen.getByText("Having a hot flash right now?")).toBeInTheDocument();
   });
@@ -73,7 +84,9 @@ describe("Dashboard — translation", () => {
     renderWithIntl(<DashboardPage />, "ja");
 
     await waitFor(() => expect(screen.getByText("最近の症状")).toBeInTheDocument());
-    expect(screen.getByText("設定")).toBeInTheDocument();
+    const desktopNav = screen.getByTestId("app-nav-desktop");
+    expect(within(desktopNav).getByRole("link", { name: "パターン" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "設定" })).toBeInTheDocument();
     expect(screen.getByText("今日の周期記録")).toBeInTheDocument();
     expect(screen.getByText("今、ホットフラッシュが起きていますか?")).toBeInTheDocument();
   });
@@ -130,5 +143,61 @@ describe("Dashboard — weekly reflection", () => {
         screen.getByText("今週の記録: 1件 · 最も多い症状: ホットフラッシュ"),
       ).toBeInTheDocument(),
     );
+  });
+});
+
+describe("Dashboard — hot-flash quick-log duplicate-submission guard", () => {
+  it("disables the button while a log is in flight and ignores a second tap before the first resolves", async () => {
+    const user = userEvent.setup();
+    let resolveCreate!: () => void;
+    symptomLogsCreate.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const button = await screen.findByRole("button", {
+      name: "Log a hot flash happening right now",
+    });
+
+    await user.click(button);
+    expect(button).toBeDisabled();
+
+    // A second tap while the first request is still in flight must not
+    // issue a second create call — there's no server-side idempotency
+    // guard for symptom logs, so this button is the only thing
+    // standing between a double-tap and two duplicate records.
+    await user.click(button);
+    expect(symptomLogsCreate).toHaveBeenCalledTimes(1);
+
+    resolveCreate();
+    await waitFor(() => expect(button).not.toBeDisabled());
+  });
+});
+
+describe("Dashboard — symptom log form error handling", () => {
+  it("shows a real error message next to the form, and keeps it open, when the API call fails", async () => {
+    const user = userEvent.setup();
+    symptomLogsCreate.mockRejectedValue(new Error("network down"));
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Log a different symptom")).toBeInTheDocument());
+    await user.click(screen.getByText("Log a different symptom"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Previously this failure was swallowed entirely — no error, no
+    // feedback, the form just sat there having silently done nothing.
+    expect(
+      await screen.findByText("Couldn't save that — check your connection and try again."),
+    ).toBeInTheDocument();
+    // The form must still be open and usable, not collapsed as if the
+    // (failed) submission had succeeded.
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 });

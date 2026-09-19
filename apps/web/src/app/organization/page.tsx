@@ -305,7 +305,7 @@ export default function OrganizationPage() {
   if (loading || !user || memberships === null) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">{tCommon("loading")}</p>
+        <p className="text-foreground/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -316,15 +316,15 @@ export default function OrganizationPage() {
     return (
       <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
         <header className="flex items-center justify-between">
-          <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
+          <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
           <Link
             href="/dashboard"
-            className="text-sm font-medium text-teal underline underline-offset-2"
+            className="text-sm font-medium text-foreground underline underline-offset-2"
           >
             {t("backToDashboard")}
           </Link>
         </header>
-        <p className="mt-8 text-sm text-navy/60">
+        <p className="mt-8 text-sm text-foreground/60">
           {memberships.length === 0 ? t("notAMember") : t("notAnAdmin")}
         </p>
       </main>
@@ -334,10 +334,10 @@ export default function OrganizationPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
+        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <Link
           href="/dashboard"
-          className="text-sm font-medium text-teal underline underline-offset-2"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
         >
           {t("backToDashboard")}
         </Link>
@@ -345,11 +345,11 @@ export default function OrganizationPage() {
 
       {adminOrgs.length > 1 && (
         <label className="mt-6 flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">{t("managingLabel")}</span>
+          <span className="font-medium text-foreground">{t("managingLabel")}</span>
           <select
             value={selectedOrgId ?? ""}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
           >
             {adminOrgs.map((m) => (
               <option key={m.organizationId} value={m.organizationId}>
@@ -361,9 +361,9 @@ export default function OrganizationPage() {
       )}
 
       <section className="mt-8">
-        <h2 className="font-display text-lg text-navy">{org?.name ?? "…"}</h2>
+        <h2 className="font-display text-heading-m text-foreground">{org?.name ?? "…"}</h2>
         {org && (
-          <p className="mt-1 text-sm text-navy/60">
+          <p className="mt-1 text-sm text-foreground/60">
             {t("memberCount", { count: org.memberCount })}
             {org.seatLimit !== null && t("ofSeats", { count: org.seatLimit })} ·{" "}
             <code>{org.slug}</code>
@@ -372,37 +372,39 @@ export default function OrganizationPage() {
       </section>
 
       {/* Billing. */}
-      <section className="mt-8 rounded border border-navy/10 p-5">
-        <h2 className="font-display text-lg text-navy">{t("billing.title")}</h2>
+      <section className="mt-8 rounded border border-border-subtle p-5">
+        <h2 className="font-display text-heading-m text-foreground">{t("billing.title")}</h2>
 
         {billingLoading ? (
-          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : !billing ? (
-          <p className="mt-3 text-sm text-red-600">{billingLoadError ?? t("billing.loadError")}</p>
+          <p className="mt-3 text-sm font-medium text-foreground">
+            {billingLoadError ?? t("billing.loadError")}
+          </p>
         ) : !billing.billingEnabled ? (
-          <p className="mt-3 text-sm text-navy/60">{t("billing.notConfigured")}</p>
+          <p className="mt-3 text-sm text-foreground/60">{t("billing.notConfigured")}</p>
         ) : (
           <>
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-navy/50">{t("billing.statusLabel")}</dt>
-                <dd className="font-medium text-navy">
+                <dt className="text-foreground/50">{t("billing.statusLabel")}</dt>
+                <dd className="font-medium text-foreground">
                   {billing.subscriptionStatus
                     ? tEnum(`subscriptionStatus.${billing.subscriptionStatus}`)
                     : t("billing.noSubscription")}
                 </dd>
               </div>
               <div>
-                <dt className="text-navy/50">{t("billing.seatsLabel")}</dt>
-                <dd className="font-medium text-navy">
+                <dt className="text-foreground/50">{t("billing.seatsLabel")}</dt>
+                <dd className="font-medium text-foreground">
                   {billing.seatsUsed}
                   {billing.seatLimit !== null && ` / ${billing.seatLimit}`}
                 </dd>
               </div>
               {billing.currentPeriodEnd && (
                 <div>
-                  <dt className="text-navy/50">{t("billing.renewsLabel")}</dt>
-                  <dd className="font-medium text-navy">
+                  <dt className="text-foreground/50">{t("billing.renewsLabel")}</dt>
+                  <dd className="font-medium text-foreground">
                     {new Date(billing.currentPeriodEnd).toLocaleDateString()}
                   </dd>
                 </div>
@@ -410,12 +412,14 @@ export default function OrganizationPage() {
             </dl>
 
             {billing.subscriptionStatus === "PAST_DUE" && (
-              <p className="mt-3 text-sm text-red-600">{t("billing.pastDueWarning")}</p>
+              <p className="mt-3 text-sm font-medium text-foreground">
+                {t("billing.pastDueWarning")}
+              </p>
             )}
 
             {!hasLiveSubscription(billing.subscriptionStatus) && (
               <div className="mt-5">
-                <p className="text-sm text-navy/60">{t("billing.startDescription")}</p>
+                <p className="text-sm text-foreground/60">{t("billing.startDescription")}</p>
                 <div className="mt-3 flex flex-wrap items-end gap-3">
                   <Field
                     label={t("billing.seatsInputLabel")}
@@ -433,13 +437,17 @@ export default function OrganizationPage() {
                     {checkingOut ? t("billing.startingCheckout") : t("billing.startSubscription")}
                   </Button>
                 </div>
-                {checkoutError && <p className="mt-2 text-sm text-red-600">{checkoutError}</p>}
+                {checkoutError && (
+                  <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                    {checkoutError}
+                  </p>
+                )}
               </div>
             )}
 
             {billing.hasStripeCustomer && (
               <div className="mt-5">
-                <p className="text-sm text-navy/60">{t("billing.manageDescription")}</p>
+                <p className="text-sm text-foreground/60">{t("billing.manageDescription")}</p>
                 <Button
                   variant="ghost"
                   onClick={openPortal}
@@ -448,7 +456,11 @@ export default function OrganizationPage() {
                 >
                   {openingPortal ? t("billing.opening") : t("billing.manageBilling")}
                 </Button>
-                {portalError && <p className="mt-2 text-sm text-red-600">{portalError}</p>}
+                {portalError && (
+                  <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                    {portalError}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -456,8 +468,8 @@ export default function OrganizationPage() {
       </section>
 
       {/* Invite. */}
-      <section className="mt-8 rounded border border-navy/10 p-5">
-        <h2 className="font-display text-lg text-navy">{t("inviteSomeone")}</h2>
+      <section className="mt-8 rounded border border-border-subtle p-5">
+        <h2 className="font-display text-heading-m text-foreground">{t("inviteSomeone")}</h2>
         <form onSubmit={sendInvite} className="mt-4 flex flex-col gap-4" noValidate>
           <Field
             label={t("emailLabel")}
@@ -468,7 +480,7 @@ export default function OrganizationPage() {
             required
           />
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-navy">{t("roleLabel")}</span>
+            <span className="font-medium text-foreground">{t("roleLabel")}</span>
             <div className="flex gap-2">
               {(["ORG_MEMBER", "ORG_ADMIN"] as const).map((r) => (
                 <button
@@ -476,7 +488,9 @@ export default function OrganizationPage() {
                   type="button"
                   onClick={() => setInviteRole(r)}
                   className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
-                    inviteRole === r ? "border-navy bg-navy text-bone" : "border-navy/20 text-navy"
+                    inviteRole === r
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-foreground"
                   }`}
                 >
                   {r === "ORG_ADMIN" ? t("roleAdmin") : t("roleMember")}
@@ -484,8 +498,16 @@ export default function OrganizationPage() {
               ))}
             </div>
           </label>
-          {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
-          {inviteSuccess && <p className="text-sm font-medium text-teal">{inviteSuccess}</p>}
+          {inviteError && (
+            <p role="alert" className="text-sm font-medium text-foreground">
+              {inviteError}
+            </p>
+          )}
+          {inviteSuccess && (
+            <p role="status" className="text-sm font-medium text-foreground">
+              {inviteSuccess}
+            </p>
+          )}
           <Button type="submit" disabled={inviting} className="self-start">
             {inviting ? t("sending") : t("sendInvite")}
           </Button>
@@ -494,25 +516,25 @@ export default function OrganizationPage() {
 
       {/* Roster. */}
       <section className="mt-8">
-        <h2 className="font-display text-lg text-navy">{t("members")}</h2>
+        <h2 className="font-display text-heading-m text-foreground">{t("members")}</h2>
         {rosterLoading ? (
-          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : roster.length === 0 ? (
-          <p className="mt-3 text-sm text-navy/50">{t("noMembersYet")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{t("noMembersYet")}</p>
         ) : (
-          <ul className="mt-4 divide-y divide-navy/10">
+          <ul className="mt-4 divide-y divide-border-subtle">
             {roster.map((m) => (
               <li key={m.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
-                  <p className="text-navy">
+                  <p className="text-foreground">
                     {m.email}
                     {m.userId === user.id && (
-                      <span className="ml-2 rounded-sm bg-teal/10 px-1.5 py-0.5 text-xs font-medium text-teal">
+                      <span className="ml-2 rounded-sm bg-accent px-1.5 py-0.5 text-xs font-medium text-accent-foreground">
                         {t("you")}
                       </span>
                     )}
                   </p>
-                  <p className="text-navy/50">
+                  <p className="text-foreground/50">
                     {m.role === "ORG_ADMIN" ? t("roleAdmin") : t("roleMember")} · {t("joined")}{" "}
                     {new Date(m.joinedAt).toLocaleDateString()}
                   </p>
@@ -521,37 +543,39 @@ export default function OrganizationPage() {
                   <button
                     onClick={() => revokeMember(m.userId)}
                     disabled={revokingUserId === m.userId}
-                    className="text-red-600 underline underline-offset-2 disabled:opacity-50"
+                    className="text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
                   >
                     {revokingUserId === m.userId ? t("revoking") : t("revoke")}
                   </button>
                 ) : !leaveConfirming ? (
                   <button
                     onClick={() => setLeaveConfirming(true)}
-                    className="text-red-600 underline underline-offset-2"
+                    className="text-foreground underline decoration-destructive underline-offset-2"
                   >
                     {t("leaveOrganization")}
                   </button>
                 ) : (
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-navy/60">{t("leaveConfirmPrompt")}</span>
+                      <span className="text-foreground/60">{t("leaveConfirmPrompt")}</span>
                       <button
                         onClick={leaveOrganization}
                         disabled={leaving}
-                        className="font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+                        className="font-medium text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
                       >
                         {leaving ? t("leaving") : t("leaveConfirmYes")}
                       </button>
                       <button
                         onClick={() => setLeaveConfirming(false)}
                         disabled={leaving}
-                        className="text-navy/60 underline underline-offset-2 disabled:opacity-50"
+                        className="text-foreground/60 underline underline-offset-2 disabled:opacity-50"
                       >
                         {t("cancel")}
                       </button>
                     </div>
-                    {leaveError && <p className="text-xs text-red-600">{leaveError}</p>}
+                    {leaveError && (
+                      <p className="text-xs font-medium text-foreground">{leaveError}</p>
+                    )}
                   </div>
                 )}
               </li>
@@ -561,12 +585,12 @@ export default function OrganizationPage() {
       </section>
 
       {/* Single sign-on. */}
-      <section className="mt-8 rounded border border-navy/10 p-5">
-        <h2 className="font-display text-lg text-navy">{t("sso")}</h2>
-        <p className="mt-1 text-sm text-navy/60">{t("ssoDescription")}</p>
+      <section className="mt-8 rounded border border-border-subtle p-5">
+        <h2 className="font-display text-heading-m text-foreground">{t("sso")}</h2>
+        <p className="mt-1 text-sm text-foreground/60">{t("ssoDescription")}</p>
 
         {ssoLoading ? (
-          <p className="mt-4 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-4 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : (
           <form onSubmit={saveSso} className="mt-4 flex flex-col gap-4" noValidate>
             <Field
@@ -598,18 +622,26 @@ export default function OrganizationPage() {
               onChange={(e) => setSsoDomain(e.target.value)}
               required
             />
-            <label className="flex items-center gap-2 text-sm text-navy">
+            <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
                 checked={ssoEnabled}
                 onChange={(e) => setSsoEnabled(e.target.checked)}
-                className="h-4 w-4 rounded-sm border-navy/30"
+                className="h-4 w-4 rounded-sm border-border"
               />
               {t("enabledLabel")}
             </label>
 
-            {ssoError && <p className="text-sm text-red-600">{ssoError}</p>}
-            {ssoSuccess && <p className="text-sm font-medium text-teal">{ssoSuccess}</p>}
+            {ssoError && (
+              <p role="alert" className="text-sm font-medium text-foreground">
+                {ssoError}
+              </p>
+            )}
+            {ssoSuccess && (
+              <p role="status" className="text-sm font-medium text-foreground">
+                {ssoSuccess}
+              </p>
+            )}
 
             <Button type="submit" disabled={ssoSaving} className="self-start">
               {ssoSaving
@@ -624,19 +656,19 @@ export default function OrganizationPage() {
 
       {/* Aggregate trends — anonymized, cohort-level only. */}
       <section className="mt-10">
-        <h2 className="font-display text-lg text-navy">
+        <h2 className="font-display text-heading-m text-foreground">
           {t("symptomTrendsHeader", { days: TRENDS_WINDOW_DAYS })}
         </h2>
-        <p className="mt-1 text-sm text-navy/60">{t("trendsAnonymizedNote")}</p>
+        <p className="mt-1 text-sm text-foreground/60">{t("trendsAnonymizedNote")}</p>
         {trendsLoading ? (
-          <p className="mt-3 text-sm text-navy/50">{tCommon("loading")}</p>
+          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
         ) : !frequency || frequency.suppressed ? (
-          <p className="mt-4 text-sm text-navy/50">{t("trendsSuppressed")}</p>
+          <p className="mt-4 text-sm text-foreground/50">{t("trendsSuppressed")}</p>
         ) : frequency.categories.length === 0 ? (
-          <p className="mt-4 text-sm text-navy/50">{t("trendsEmpty")}</p>
+          <p className="mt-4 text-sm text-foreground/50">{t("trendsEmpty")}</p>
         ) : (
           <>
-            <p className="mt-3 text-xs text-navy/40">
+            <p className="mt-3 text-xs text-foreground/40">
               {t("basedOnCohort", { count: frequency.cohortSize })}
             </p>
             <ul className="mt-4 flex flex-col gap-2">
@@ -644,14 +676,16 @@ export default function OrganizationPage() {
                 const maxCount = frequency.categories[0]?.count ?? 1;
                 return frequency.categories.map(({ category, count }) => (
                   <li key={category} className="flex items-center gap-3 text-sm">
-                    <span className="w-36 shrink-0 text-navy">{tEnum(`category.${category}`)}</span>
-                    <div className="h-2.5 flex-1 rounded-full bg-navy/5">
+                    <span className="w-36 shrink-0 text-foreground">
+                      {tEnum(`category.${category}`)}
+                    </span>
+                    <div className="h-2.5 flex-1 rounded-full bg-muted">
                       <div
-                        className="h-2.5 rounded-full bg-brass"
+                        className="h-2.5 rounded-full bg-primary"
                         style={{ width: `${Math.max(6, (count / maxCount) * 100)}%` }}
                       />
                     </div>
-                    <span className="w-6 text-right text-navy/50">{count}</span>
+                    <span className="w-6 text-right text-foreground/50">{count}</span>
                   </li>
                 ));
               })()}

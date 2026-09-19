@@ -2,15 +2,36 @@
 
 ## What exists
 
+Production Postgres is intentionally private — no public access, no TCP
+proxy (see `docs/DEPLOYMENT.md`). That means the backup job has to run
+somewhere with reach to Railway's private network, not on a GitHub-hosted
+runner. The active mechanism is:
+
+- **`embr-db-backup`** — a Railway service (`scripts/backup/Dockerfile`,
+  `postgres:18-alpine` base so `pg_dump`'s version matches the production
+  server) on a daily cron schedule (`0 3 * * *`, UTC). It runs
+  `scripts/db-backup.sh` **unchanged in its dump/encrypt/upload logic**
+  against Postgres over the private network (`${{Postgres.DATABASE_URL}}`
+  — never a public endpoint) and uploads the encrypted dump to the
+  **`embr-backups`** Railway Bucket (private, S3-compatible, encrypted at
+  rest, reached only via its own bucket credentials).
 - `scripts/db-backup.sh` — dumps Postgres (`pg_dump -Fc`), encrypts the
   dump with AES256 (gpg symmetric), optionally uploads to S3-compatible
   storage, and prunes anything older than the retention window (default
   30 days).
 - `scripts/db-restore-test.sh` — decrypts a backup and restores it into a
   scratch database, then sanity-checks that it actually contains data.
-- `.github/workflows/backup.yml` — runs `db-backup.sh` daily at 03:00 UTC,
-  and runs a fresh backup + `db-restore-test.sh` weekly (Mondays, 04:00
-  UTC) against a disposable Postgres service container.
+  Not yet wired into an automated schedule — see "What this doesn't cover"
+  below.
+- `.github/workflows/backup.yml` — **disabled from its daily/weekly
+  schedule, `workflow_dispatch`-only now.** It predates the
+  private-Postgres discovery: a GitHub-hosted runner has no route to
+  `postgres.railway.internal`, so `PRODUCTION_DATABASE_URL` was never
+  actually reachable from it — every scheduled run failed immediately,
+  every day, for a reason no secret could fix. Left runnable manually
+  (for a future environment where the target really is reachable from a
+  runner) rather than deleted, but the schedule that produced daily
+  false-failure noise is gone.
 
 ## Why encryption isn't optional here
 
@@ -21,30 +42,40 @@ the app's authentication/authorization in front of it. `BACKUP_ENCRYPTION_KEY`
 being a real, unique secret (not a placeholder) matters as much as any
 other production credential in this repo.
 
-## Setup checklist (before this runs against real production data)
+## `embr-db-backup` configuration (already done — recorded for reference)
 
-1. Generate the encryption key once and store it in GitHub Actions
-   Secrets, never in this repo:
-   ```bash
-   openssl rand -base64 32
-   ```
-2. Set these repo secrets (Settings → Secrets and variables → Actions):
-   - `PRODUCTION_DATABASE_URL`
-   - `BACKUP_ENCRYPTION_KEY`
-   - `BACKUP_S3_BUCKET` (optional — e.g. `s3://embr-backups`; without
-     this the encrypted dump stays local to the CI runner's `backups/`
-     dir and is discarded when the job ends, which is not durable — set
-     this before relying on the daily job for real recovery)
-   - `BACKUP_AWS_ACCESS_KEY_ID` / `BACKUP_AWS_SECRET_ACCESS_KEY` /
-     `BACKUP_AWS_REGION` (only if using S3)
-3. Confirm the bucket (if used) has its own retention/versioning policy
-   as a second layer — `db-backup.sh`'s pruning is a convenience, not a
+The service's variables, all set directly on it in Railway (not in this
+repo):
+
+| Variable                                                                                  | Value                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                            | `${{Postgres.DATABASE_URL}}` — private network reference, never a public endpoint                                                                       |
+| `BACKUP_ENCRYPTION_KEY`                                                                   | a real, unique secret generated with `openssl rand -base64 32` — **losing this makes every backup taken with it unrecoverable; it exists nowhere else** |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION` / `AWS_ENDPOINT_URL` | references to the `embr-backups` Railway Bucket's own credentials                                                                                       |
+| `BACKUP_S3_BUCKET`                                                                        | `s3://${{embr-backups.BUCKET}}`                                                                                                                         |
+
+Cron schedule: `0 3 * * *` (daily, UTC), `restartPolicyType: NEVER` — a
+failed run is not retried until the next scheduled tick, so it can't
+retry-loop.
+
+If this service is ever recreated, redo this list — Railway Bucket
+credentials are per-bucket and not something to copy from elsewhere.
+
+## Setup checklist for the manual-only GitHub Actions path (`backup.yml`)
+
+Only relevant if that workflow is ever repurposed instead of removed —
+see the note above. It would still need:
+
+1. Repo secrets (Settings → Secrets and variables → Actions):
+   `PRODUCTION_DATABASE_URL` (would need to be reachable from a
+   GitHub-hosted runner — it currently isn't), `BACKUP_ENCRYPTION_KEY`,
+   `BACKUP_S3_BUCKET`, `BACKUP_AWS_ACCESS_KEY_ID` /
+   `BACKUP_AWS_SECRET_ACCESS_KEY` / `BACKUP_AWS_REGION`.
+2. Confirm the target bucket has its own retention/versioning policy as
+   a second layer — `db-backup.sh`'s pruning is a convenience, not a
    substitute for the storage provider's own lifecycle rules.
-4. Run the weekly restore-verify job manually once via
-   `workflow_dispatch` before trusting the schedule — confirms the whole
-   chain (dump → encrypt → decrypt → restore → sanity check) actually
-   works end to end in this environment before waiting a week to find
-   out.
+3. Run the weekly restore-verify job manually once via
+   `workflow_dispatch` before trusting the schedule.
 
 ## Restoring in a real incident
 

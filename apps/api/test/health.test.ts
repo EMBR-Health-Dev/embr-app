@@ -9,11 +9,11 @@ vi.mock("../src/lib/redis.js", () => ({
   redis: { ping: vi.fn().mockResolvedValue("PONG") },
 }));
 
-const { mockVerifyMailTransport } = vi.hoisted(() => ({
-  mockVerifyMailTransport: vi.fn().mockResolvedValue(undefined),
+const { mockIsEmailConfigured } = vi.hoisted(() => ({
+  mockIsEmailConfigured: vi.fn().mockReturnValue(true),
 }));
 vi.mock("../src/modules/auth/mailer.js", () => ({
-  verifyMailTransport: mockVerifyMailTransport,
+  isEmailConfigured: mockIsEmailConfigured,
   sendVerificationEmail: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
   sendOrganizationInviteEmail: vi.fn(),
@@ -38,22 +38,22 @@ describe("GET /health/ready", () => {
     expect(res.body.checks.redis.status).toBe("ok");
   });
 
-  it("reports smtp as ok when the mail transport verifies successfully", async () => {
-    mockVerifyMailTransport.mockResolvedValueOnce(undefined);
+  it("reports email as ok when a Resend API key is configured", async () => {
+    mockIsEmailConfigured.mockReturnValueOnce(true);
     const app = createApp();
     const res = await request(app).get("/health/ready");
-    expect(res.body.checks.smtp.status).toBe("ok");
+    expect(res.body.checks.email.status).toBe("ok");
   });
 
-  it("reports smtp as down without affecting overall status — email is not on the critical path", async () => {
-    mockVerifyMailTransport.mockRejectedValueOnce(new Error("SMTP auth failed"));
+  it("reports email as down without affecting overall status when RESEND_API_KEY is unset — email is not on the critical path", async () => {
+    mockIsEmailConfigured.mockReturnValueOnce(false);
     const app = createApp();
     const res = await request(app).get("/health/ready");
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("ok");
-    expect(res.body.checks.smtp.status).toBe("down");
-    expect(res.body.checks.smtp.message).toContain("SMTP auth failed");
+    expect(res.body.checks.email.status).toBe("down");
+    expect(res.body.checks.email.message).toContain("RESEND_API_KEY");
     // Database/Redis remaining healthy is what actually keeps the
     // overall status "ok" — confirms this isn't just an oversight.
     expect(res.body.checks.database.status).toBe("ok");

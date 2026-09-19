@@ -4,12 +4,13 @@ import type { UpsertSsoConnectionInput } from "@embr/validation";
 import type { SsoConnectionDto } from "@embr/types";
 import { env } from "../../config/env.js";
 import { redis } from "../../lib/redis.js";
+import { prisma } from "../../lib/prisma.js";
+import type { Prisma } from "../../generated/prisma/index.js";
 import { ssoRepository } from "./sso.repository.js";
 import { toSsoConnectionDto } from "./sso.mappers.js";
 import { encryptClientSecret, decryptClientSecret } from "./sso.crypto.js";
 import { ssoOidc } from "./sso.oidc.js";
 import { organizationRepository } from "../organizations/organization.repository.js";
-import { authRepository } from "../auth/auth.repository.js";
 import { hashPassword } from "../auth/password.js";
 import { generateOpaqueToken } from "../auth/tokens.js";
 import { issueSession } from "../auth/auth.service.js";
@@ -37,6 +38,21 @@ interface PendingState {
   connectionId: string;
   codeVerifier: string;
   nonce: string;
+  redirectTo?: string;
+}
+
+/** Same same-origin-only rule apps/web's safeRedirect enforces —
+ * duplicated rather than shared cross-package because it's three
+ * lines and the two call sites (deciding what to embed in the OIDC
+ * state, and here) have different failure behavior (null vs. a
+ * hardcoded fallback). A redirect target that fails this check is
+ * dropped, not rejected — an untrusted string riding through Redis
+ * state is not a reason to fail someone's whole SSO login, just a
+ * reason not to honor it. */
+function safeRedirectPath(path: string | undefined): string | undefined {
+  if (!path) return undefined;
+  if (!path.startsWith("/") || path.startsWith("//")) return undefined;
+  return path;
 }
 
 export const ssoService = {
@@ -92,7 +108,7 @@ export const ssoService = {
    * login — the caller (the route layer) decides how to present that
    * to a browser mid-navigation.
    */
-  async startLogin(email: string): Promise<string> {
+  async startLogin(email: string, redirectTo?: string): Promise<string> {
     const domain = domainOf(email);
     if (!domain) throw AppError.validation("Invalid email address");
 
@@ -109,6 +125,7 @@ export const ssoService = {
       connectionId: connection.id,
       codeVerifier: pending.codeVerifier,
       nonce: pending.nonce,
+      redirectTo: safeRedirectPath(redirectTo),
     };
     await redis.setex(stateKey(pending.state), env.SSO_STATE_TTL_SECONDS, JSON.stringify(record));
 
@@ -128,7 +145,7 @@ export const ssoService = {
   async handleCallback(
     req: Request,
     callbackUrl: URL,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string; redirectTo?: string }> {
     const state = callbackUrl.searchParams.get("state");
     if (!state) {
       await writeAuditLog(req, "SSO_LOGIN_FAILED", null, { reason: "missing_state" });
@@ -194,65 +211,117 @@ export const ssoService = {
       );
     }
 
-    let user = await authRepository.findUserByEmail(identity.email);
-    if (!user) {
-      // JIT provisioning. The password hash is a random value never
-      // presented anywhere — this account has no password login path
-      // unless the person separately completes forgot-password later
-      // (see Milestone 15's remaining-work note on that gap).
-      const unusablePassword = await hashPassword(generateOpaqueToken());
-      user = await authRepository.createUser({
-        email: identity.email,
-        passwordHash: unusablePassword,
+    // Everything below — find-or-create the user, verify their email,
+    // and (if needed) create their org membership under a seat-limit
+    // check — happens in one transaction. Previously these were
+    // separate, unwrapped calls: a crash between user creation and
+    // membership creation left a User row provisioned via SSO with no
+    // organization membership at all, defeating the entire point of
+    // JIT provisioning. The seat-limit check also had no lock, so two
+    // concurrent SSO logins near the seat ceiling could both pass the
+    // count check and both create memberships, exceeding seatLimit —
+    // the same race `organization.repository.ts`'s `revokeMembership`
+    // already guards against for a different operation, via the same
+    // `SELECT ... FOR UPDATE` technique (locking the organization row
+    // itself here, since the seat count spans two different tables —
+    // memberships and pending invites — that a single-table lock
+    // can't cover).
+    const provisionResult = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      let txUser = await tx.user.findUnique({ where: { email: identity.email } });
+      let created = false;
+      if (!txUser) {
+        // JIT provisioning. The password hash is a random value never
+        // presented anywhere — this account has no password login path
+        // unless the person separately completes forgot-password later
+        // (see Milestone 15's remaining-work note on that gap).
+        const unusablePassword = await hashPassword(generateOpaqueToken());
+        txUser = await tx.user.create({
+          data: { email: identity.email, passwordHash: unusablePassword },
+        });
+        created = true;
+      }
+
+      if (!txUser.emailVerifiedAt) {
+        // The IdP vouching for this identity is at least as strong
+        // evidence of email ownership as our own unclicked verification
+        // link would be.
+        txUser = await tx.user.update({
+          where: { id: txUser.id },
+          data: { emailVerifiedAt: new Date() },
+        });
+      }
+
+      const existingMembership = await tx.organizationMembership.findUnique({
+        where: {
+          organizationId_userId: { organizationId: connection.organizationId, userId: txUser.id },
+        },
       });
-      await writeAuditLog(req, "SSO_USER_PROVISIONED", user.id, { connectionId: connection.id });
-    }
 
-    if (!user.emailVerifiedAt) {
-      // The IdP vouching for this identity is at least as strong
-      // evidence of email ownership as our own unclicked verification
-      // link would be.
-      user = await authRepository.markEmailVerified(user.id);
-    }
+      let membershipCreated = false;
+      let seatLimitReached = false;
+      if (!existingMembership) {
+        // Same seatLimit enforcement invite creation uses (see
+        // organization.service.ts's inviteMember) — JIT provisioning is
+        // a second, completely independent path onto the same
+        // organization, and without this check it bypasses seatLimit
+        // entirely: any employee with a verified @<allowedEmailDomain>
+        // address can join just by authenticating via the configured
+        // IdP, with no admin action and no relation to how many seats
+        // were actually paid for. Counting pending invites too, not
+        // just members, for the same reason inviteMember does — a seat
+        // already reserved for a specific invitee shouldn't be
+        // claimable by a different, unrelated person joining via SSO.
+        const lockedOrg = await tx.$queryRaw<Array<{ seatLimit: number | null }>>`
+          SELECT "seatLimit" FROM "organizations" WHERE "id" = ${connection.organizationId} FOR UPDATE
+        `;
+        const seatLimit = lockedOrg[0]?.seatLimit ?? null;
+        if (seatLimit != null) {
+          const [memberCount, pendingInviteCount] = await Promise.all([
+            tx.organizationMembership.count({
+              where: { organizationId: connection.organizationId },
+            }),
+            tx.organizationInvite.count({
+              where: {
+                organizationId: connection.organizationId,
+                consumedAt: null,
+                expiresAt: { gt: new Date() },
+              },
+            }),
+          ]);
+          if (memberCount + pendingInviteCount >= seatLimit) {
+            seatLimitReached = true;
+          }
+        }
 
-    const existingMembership = await organizationRepository.findMembership(
-      connection.organizationId,
-      user.id,
-    );
-    if (!existingMembership) {
-      // Same seatLimit enforcement invite creation uses (see
-      // organization.service.ts's inviteMember) — JIT provisioning is
-      // a second, completely independent path onto the same
-      // organization, and without this check it bypasses seatLimit
-      // entirely: any employee with a verified @<allowedEmailDomain>
-      // address can join just by authenticating via the configured
-      // IdP, with no admin action and no relation to how many seats
-      // were actually paid for. Counting pending invites too, not
-      // just members, for the same reason inviteMember does — a seat
-      // already reserved for a specific invitee shouldn't be
-      // claimable by a different, unrelated person joining via SSO.
-      const org = await organizationRepository.findOrganizationById(connection.organizationId);
-      if (org?.seatLimit != null) {
-        const [memberCount, pendingInviteCount] = await Promise.all([
-          organizationRepository.countMembers(connection.organizationId),
-          organizationRepository.countPendingInvites(connection.organizationId),
-        ]);
-        if (memberCount + pendingInviteCount >= org.seatLimit) {
-          await writeAuditLog(req, "SSO_LOGIN_FAILED", user.id, {
-            reason: "seat_limit_reached",
-            connectionId: connection.id,
+        if (!seatLimitReached) {
+          await tx.organizationMembership.create({
+            data: {
+              organizationId: connection.organizationId,
+              userId: txUser.id,
+              role: "ORG_MEMBER",
+            },
           });
-          throw AppError.conflict(
-            "This organization has no remaining seats — contact your administrator",
-          );
+          membershipCreated = true;
         }
       }
 
-      await organizationRepository.createMembership(
-        connection.organizationId,
-        user.id,
-        "ORG_MEMBER",
+      return { user: txUser, created, membershipCreated, seatLimitReached };
+    });
+
+    const user = provisionResult.user;
+    if (provisionResult.created) {
+      await writeAuditLog(req, "SSO_USER_PROVISIONED", user.id, { connectionId: connection.id });
+    }
+    if (provisionResult.seatLimitReached) {
+      await writeAuditLog(req, "SSO_LOGIN_FAILED", user.id, {
+        reason: "seat_limit_reached",
+        connectionId: connection.id,
+      });
+      throw AppError.conflict(
+        "This organization has no remaining seats — contact your administrator",
       );
+    }
+    if (provisionResult.membershipCreated) {
       await writeAuditLog(req, "ORG_MEMBER_JOINED", user.id, {
         organizationId: connection.organizationId,
         via: "sso",
@@ -262,6 +331,6 @@ export const ssoService = {
     const session = await issueSession(req, user);
     await writeAuditLog(req, "SSO_LOGIN_SUCCEEDED", user.id, { connectionId: connection.id });
 
-    return session;
+    return { ...session, redirectTo: pending.redirectTo };
   },
 };

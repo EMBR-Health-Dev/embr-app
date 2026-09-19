@@ -1,18 +1,31 @@
-name: Database Backup
+name: Database Backup (manual — see note)
 
-# Runs daily at 03:00 UTC — chosen to land outside typical daytime usage
-# for a Singapore/Tokyo-based user base without needing per-region tuning.
+# The scheduled triggers that used to run this daily/weekly are removed.
+# Production Postgres is private (no public endpoint, no TCP proxy —
+# see docs/DEPLOYMENT.md) and GitHub-hosted runners have no route to
+# Railway's private network, so PRODUCTION_DATABASE_URL was never
+# actually reachable from here: every scheduled run failed immediately
+# for that reason, not a transient one, generating daily noise with no
+# corresponding backup ever actually taken from this workflow.
+#
+# The real, working backup mechanism is the `embr-db-backup` Railway
+# cron service (0 3 * * * UTC), which runs inside Railway's private
+# network and reaches Postgres directly — see docs/BACKUPS.md. This
+# workflow is kept, manual-only, for one narrow case: running
+# db-backup.sh / db-restore-test.sh against a database this runner CAN
+# reach (e.g. a local/staging Postgres you tunnel to, or a future
+# environment where PRODUCTION_DATABASE_URL is genuinely reachable) —
+# supply your own secrets via workflow_dispatch inputs or repo secrets
+# at that point. Do not re-add a `schedule:` trigger here without first
+# confirming DATABASE_URL is actually reachable from a GitHub-hosted
+# runner, or this regresses to the same silent-failure state.
 on:
-  schedule:
-    - cron: "0 3 * * *" # daily backup, 03:00 UTC
-    - cron: "0 4 * * 1" # weekly restore verification, Mondays 04:00 UTC
-  workflow_dispatch: {} # manual trigger, e.g. right before a risky migration
+  workflow_dispatch: {}
 
 jobs:
   backup:
     name: Backup production database
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 3 * * *'
     steps:
       - uses: actions/checkout@v7
 
@@ -48,7 +61,6 @@ jobs:
   verify-restore:
     name: Verify a fresh backup restores cleanly
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 4 * * 1'
     services:
       scratch-postgres:
         image: postgres:16-alpine

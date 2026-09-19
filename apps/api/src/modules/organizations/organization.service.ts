@@ -139,8 +139,12 @@ export const organizationService = {
       throw AppError.conflict("You are already a member of this organization");
     }
 
-    await organizationRepository.createMembership(invite.organizationId, userId, invite.role);
-    await organizationRepository.consumeInvite(invite.id);
+    await organizationRepository.createMembershipAndConsumeInvite(
+      invite.organizationId,
+      userId,
+      invite.role,
+      invite.id,
+    );
   },
 
   /**

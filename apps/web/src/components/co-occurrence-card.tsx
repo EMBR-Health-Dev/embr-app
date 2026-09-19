@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { SymptomCoOccurrenceDto } from "@embr/types";
 import { api } from "../lib/api";
+import { SectionLabel } from "./section-label";
 
 export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
   const t = useTranslations("CoOccurrence");
@@ -46,32 +47,50 @@ export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
 
   if (loading) {
     return (
-      <section className="mt-8 rounded border border-navy/10 p-5" aria-busy="true">
-        <div className="h-4 w-40 animate-pulse rounded bg-navy/10" />
+      <section className="mt-8 rounded border border-border-subtle p-5" aria-busy="true">
+        <div className="h-4 w-40 animate-pulse rounded bg-muted" />
       </section>
     );
   }
 
-  // Errored, or nothing qualified — both render nothing. A person
-  // shouldn't see a broken-looking card for what's an optional,
-  // supplementary insight; the rest of Trends still works either way.
-  if (errored || !result) return null;
+  // A real fetch failure renders nothing — this is a nice-to-have
+  // insight, not core functionality, and there's nothing useful to
+  // tell someone about a transient network error on a supplementary
+  // card. "No pair has qualified yet" (errored === false, result ===
+  // null) is a different, expected, common case — see the empty
+  // state below, not folded into this silent branch.
+  if (errored) return null;
+
+  if (!result) {
+    return (
+      <section
+        className="mt-8 rounded border border-border-subtle p-5"
+        role="region"
+        aria-label={t("heading")}
+      >
+        <SectionLabel>{t("observedPatternLabel")}</SectionLabel>
+        <p className="mt-2 text-sm font-medium text-foreground">{t("emptyTitle")}</p>
+        <p className="mt-1 text-sm text-foreground/60">{t("emptyBody")}</p>
+      </section>
+    );
+  }
 
   return (
     <section
-      className="mt-8 rounded border border-brass/40 bg-brass/5 p-5"
+      className="mt-8 rounded border border-primary bg-primary/5 p-5"
       role="region"
       aria-label={t("heading")}
     >
-      <h2 className="font-display text-lg text-navy">{t("heading")}</h2>
-      <p className="mt-2 text-[15px] text-navy/80">
+      <SectionLabel>{t("observedPatternLabel")}</SectionLabel>
+      <h2 className="mt-2 font-display text-heading-m text-foreground">{t("heading")}</h2>
+      <p className="mt-2 text-sm text-foreground/80">
         {t("message", {
           categoryA: tEnum(`category.${result.categoryA}`),
           categoryB: tEnum(`category.${result.categoryB}`),
           days: result.days,
         })}
       </p>
-      <p className="mt-2 text-xs text-navy/50">{t("caveat")}</p>
+      <p className="mt-2 text-xs text-foreground/50">{t("caveat")}</p>
     </section>
   );
 }

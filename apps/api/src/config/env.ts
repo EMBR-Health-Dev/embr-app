@@ -24,28 +24,61 @@ function booleanEnvVar() {
   }, z.boolean());
 }
 
+/**
+ * A plain `.default("http://localhost:3000")` is convenient for local
+ * dev but a real production risk for a var like APP_URL/CORS_ORIGIN:
+ * forgetting to set it doesn't crash, it silently bakes localhost into
+ * real password-reset/verification/org-invite email links, SSO
+ * redirect URLs, and Stripe Checkout return URLs (APP_URL), or makes
+ * the API reject every real browser origin (CORS_ORIGIN) — both are
+ * "looks fine at boot, breaks for actual users" failure modes, the
+ * opposite of this file's "fail fast on bad config" rule (see
+ * docs/ARCHITECTURE.md). Outside production, the dev default still
+ * applies unchanged.
+ */
+function requiredInProduction(name: string, devDefault: string) {
+  return z.preprocess(
+    (value) => {
+      if (typeof value === "string" && value.trim().length > 0) return value;
+      if (process.env.NODE_ENV === "production") return undefined;
+      return devDefault;
+    },
+    z
+      .string({
+        required_error: `${name} has no safe default in production and must be set explicitly`,
+      })
+      .min(1),
+  );
+}
+
 const apiEnvSchema = z.object({
-  API_PORT: z.coerce.number().int().positive().default(4000),
+  // Railway (and most PaaS hosts) assign the listen port dynamically via
+  // `PORT` and route their own healthcheck at it — a hardcoded API_PORT
+  // ignores that, so the app binds to 4000 while the platform's
+  // healthcheck connects to whatever it assigned, and times out. `PORT`
+  // wins when present; local dev (where it's unset) keeps using
+  // API_PORT, defaulting to 4000 as before.
+  API_PORT: z.preprocess(
+    (val) => process.env.PORT ?? val,
+    z.coerce.number().int().positive().default(4000),
+  ),
   API_HOST: z.string().default("0.0.0.0"),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
-  SMTP_HOST: z.string().default("localhost"),
-  SMTP_PORT: z.coerce.number().int().positive().default(1025),
-  SMTP_FROM: z.string().default("no-reply@embr.health"),
-  // Optional: local dev/test points at MailHog (see docker-compose.yml),
-  // which accepts unauthenticated connections, so these have no
-  // default and are simply omitted from the transport config when
-  // unset. Any real provider (SES, Postmark, SendGrid, ...) requires
-  // both — see mailer.ts's doc comment for what was actually missing
-  // here before this.
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  // Defaults match MailHog's plaintext-friendly local setup. A real
-  // deployment should set SMTP_REQUIRE_TLS=true explicitly — this is
-  // never inferred from SMTP_USER/SMTP_PASS being present, since
-  // that's a decision worth making deliberately, not guessing at.
-  SMTP_SECURE: booleanEnvVar().default(false),
-  SMTP_REQUIRE_TLS: booleanEnvVar().default(false),
+
+  // ---- Email (Resend) ----
+  // Optional, matching SENTRY_DSN/STRIPE_SECRET_KEY's precedent below:
+  // the mailer stays fully inert (logs and skips sending — see
+  // mailer.ts) rather than every environment without a real Resend
+  // account (local dev, CI) failing to boot. Railway blocks outbound
+  // SMTP entirely below its Pro plan, which is why this replaced the
+  // previous Nodemailer/SMTP transport outright — Resend's HTTPS API
+  // isn't affected by that restriction.
+  RESEND_API_KEY: z.string().optional(),
+  // Not a secret — the visible "From" address on every transactional
+  // email. Same env-var-with-a-real-default pattern the old SMTP_FROM
+  // used, just renamed since it's no longer SMTP-specific.
+  EMAIL_FROM: z.string().default("no-reply@embrhealthcare.com"),
 
   // ---- Retention (closed-beta minimum) ----
   // Applies only to already-dead rows (expired tokens, expired/revoked
@@ -60,10 +93,10 @@ const apiEnvSchema = z.object({
   // from the separate landing-page repo without loosening anything
   // else — every other route still requires a session cookie those
   // requests will never carry anyway, cross-origin.
-  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  CORS_ORIGIN: requiredInProduction("CORS_ORIGIN", "http://localhost:3000"),
 
   // ---- Auth (Milestone 2) ----
-  APP_URL: z.string().default("http://localhost:3000"),
+  APP_URL: requiredInProduction("APP_URL", "http://localhost:3000"),
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce

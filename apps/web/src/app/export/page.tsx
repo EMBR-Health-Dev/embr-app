@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
+import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 function buildExportUrl(path: string, from: string, to: string): string {
   const params = new URLSearchParams();
-  if (from) params.set("from", new Date(from).toISOString());
-  if (to) params.set("to", new Date(to).toISOString());
+  // `<input type="date">` gives a bare "YYYY-MM-DD" — `new Date(from)`
+  // parses that as UTC midnight, not local midnight, which for `to`
+  // in particular would exclude nearly the entire final day from the
+  // export (see date-format.ts's startOfLocalDay/endOfLocalDay).
+  if (from) params.set("from", startOfLocalDay(from));
+  if (to) params.set("to", endOfLocalDay(to));
   const query = params.toString();
   return `/api/export/${path}${query ? `?${query}` : ""}`;
 }
@@ -29,7 +34,7 @@ export default function ExportPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-navy/50">{tCommon("loading")}</p>
+        <p className="text-foreground/50">{tCommon("loading")}</p>
       </main>
     );
   }
@@ -60,34 +65,34 @@ export default function ExportPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-navy">{t("title")}</h1>
+        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <Link
           href="/dashboard"
-          className="text-sm font-medium text-teal underline underline-offset-2"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
         >
           {t("backToDashboard")}
         </Link>
       </header>
 
-      <p className="mt-3 text-sm text-navy/60">{t("description")}</p>
+      <p className="mt-3 text-sm text-foreground/60">{t("description")}</p>
 
       <section className="mt-8 flex flex-wrap gap-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">{t("fromLabel")}</span>
+          <span className="font-medium text-foreground">{t("fromLabel")}</span>
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-navy">{t("toLabel")}</span>
+          <span className="font-medium text-foreground">{t("toLabel")}</span>
           <input
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="rounded-sm border border-navy/20 bg-bone px-3 py-2 text-navy"
+            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
           />
         </label>
       </section>
@@ -97,10 +102,10 @@ export default function ExportPage() {
           <a
             key={d.path}
             href={d.path}
-            className="flex flex-col gap-1 rounded border border-navy/10 p-4 transition-colors hover:border-brass hover:bg-brass/5"
+            className="flex flex-col gap-1 rounded border border-border-subtle p-4 transition-colors hover:border-primary hover:bg-primary/5"
           >
-            <span className="font-medium text-navy">{d.label}</span>
-            <span className="text-sm text-navy/60">{d.description}</span>
+            <span className="font-medium text-foreground">{d.label}</span>
+            <span className="text-sm text-foreground/60">{d.description}</span>
           </a>
         ))}
       </section>

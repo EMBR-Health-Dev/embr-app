@@ -27,6 +27,7 @@ WORKDIR /repo
 COPY --from=build /repo/pnpm-workspace.yaml /repo/package.json ./
 COPY --from=deps /repo/node_modules ./node_modules
 COPY --from=build /repo/packages ./packages
+COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
 COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /repo/apps/api/prisma ./apps/api/prisma
@@ -35,6 +36,6 @@ COPY docs ./docs
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://localhost:4000/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://localhost:'+(process.env.PORT||process.env.API_PORT||4000)+'/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "apps/api/dist/server.js"]

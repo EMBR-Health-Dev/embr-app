@@ -53,9 +53,12 @@ export default function ForgotPasswordPage() {
   if (done) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <h1 className="font-display text-3xl text-navy">{t("checkEmailTitle")}</h1>
-        <p className="max-w-sm text-navy/70">{t("checkEmailBody")}</p>
-        <Link href="/login" className="text-sm font-medium text-teal underline underline-offset-2">
+        <h1 className="font-display text-display-m text-foreground">{t("checkEmailTitle")}</h1>
+        <p className="max-w-sm text-foreground/70">{t("checkEmailBody")}</p>
+        <Link
+          href="/login"
+          className="text-sm font-medium text-foreground underline underline-offset-2"
+        >
           {t("backToLogin")}
         </Link>
       </main>
@@ -65,8 +68,8 @@ export default function ForgotPasswordPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl text-navy">{t("title")}</h1>
-        <p className="mt-2 text-sm text-navy/60">{t("subtitle")}</p>
+        <h1 className="font-display text-display-m text-foreground">{t("title")}</h1>
+        <p className="mt-2 text-sm text-foreground/60">{t("subtitle")}</p>
 
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" noValidate>
           <Field
@@ -78,15 +81,19 @@ export default function ForgotPasswordPage() {
             error={fieldErrors.email}
           />
 
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          {formError && (
+            <p role="alert" className="text-sm font-medium text-foreground">
+              {formError}
+            </p>
+          )}
 
           <Button type="submit" disabled={submitting} className="mt-2">
             {submitting ? t("submitting") : t("submit")}
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-navy/60">
-          <Link href="/login" className="font-medium text-teal underline underline-offset-2">
+        <p className="mt-6 text-center text-sm text-foreground/60">
+          <Link href="/login" className="font-medium text-primary underline underline-offset-2">
             {t("backToLogin")}
           </Link>
         </p>
