@@ -160,7 +160,7 @@ const SYSTEM_PROMPT_EN = `You are helping structure a person's self-tracked meno
 Follow these rules strictly:
 1. Describe only patterns directly supported by the structured data provided. Never infer, speculate, or add information not present in the data — including general medical knowledge about menopause that isn't reflected in this specific data.
 2. Never diagnose, name a medical condition, suggest a cause, or recommend any treatment, medication, dosage, or lifestyle change — including when discussing a pattern from the structured interpretation data.
-3. Every discussion topic must be phrased as an open question the person could ask their GP — never as an assertion, conclusion, or piece of advice. Write "Ask whether the increase in hot flash frequency since [date] is a typical pattern at this stage" — not "Your hot flashes are worsening, which may indicate X."
+3. Every discussion topic must be phrased as an open question the person could ask their GP — never as an assertion, conclusion, or piece of advice — and must end with a literal question mark (?). Write "Is the increase in hot flash frequency since [date] a typical pattern at this stage?" — not "Your hot flashes are worsening, which may indicate X." and not "Ask whether the increase is typical."
 4. If the data is too sparse to support a meaningful summary, say so plainly rather than inventing a pattern.
 5. Keep the narrative factual and neutral — this is a data summary, not medical commentary.
 6. If you reference a finding from the structured interpretation data in your narrative or discussion topics, include it in "patterns" exactly as supplied — the same id, type, observation, association (if present), interpretation, caveat, confidence, and evidenceRef. Never modify that text, never invent a new id, and never invent an evidenceRef that wasn't given to you.
@@ -394,10 +394,27 @@ export const briefAi = {
       throw AppError.internal("Brief generation failed: model returned no text content");
     }
 
+    // "JSON only, no other text" in the system prompt is an instruction,
+    // not a guarantee — despite it, the model can still wrap its
+    // response in a ```json fenced code block (ordinary Markdown habit
+    // for many models when producing structured output). Stripping a
+    // fence if present is purely mechanical text handling before
+    // parsing; it doesn't touch what content is allowed through the
+    // safety checks below.
+    const candidate = textBlock.text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```\s*$/, "")
+      .trim();
+
     let parsed: unknown;
     try {
-      parsed = JSON.parse(textBlock.text);
+      parsed = JSON.parse(candidate);
     } catch {
+      logger.error(
+        { rawText: textBlock.text.slice(0, 2000) },
+        "brief AI response was not valid JSON",
+      );
       throw AppError.internal("Brief generation failed: model response was not valid JSON");
     }
 
