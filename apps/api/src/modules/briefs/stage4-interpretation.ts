@@ -49,6 +49,30 @@ export type { Stage4PatternType, Stage4EvidenceRef, Stage4Pattern, Stage4Result 
 export const INTERPRETATION_VERSION = "1.0";
 
 /**
+ * Upper bound on how many patterns buildStage4Interpretation() returns.
+ * Nothing before this bounded the count: one entry per symptom
+ * category with a qualifying frequency change (up to all 14
+ * categories), plus one co-occurrence pattern, plus one per treatment
+ * with sufficient before/after data — for an account with several
+ * newly-elevated categories (trivially true against a sparse or empty
+ * comparison period), that's enough patterns for Stage 5's AI
+ * narration to legitimately exceed any fixed max_tokens budget, since
+ * the prompt requires every referenced pattern echoed back verbatim
+ * (see brief.ai.ts's SYSTEM_PROMPT_EN rule 6). Confirmed in production.
+ *
+ * No existing significance/priority ranking exists to select which 6
+ * matter most — compareSymptomFrequency's own doc comment is explicit
+ * that its alphabetical sort is deliberately not by magnitude of
+ * change, since that would need a tie-break this codebase has no
+ * clinical basis for making. This cap therefore keeps
+ * buildStage4Interpretation's existing deterministic order (frequency
+ * entries alphabetically, then co-occurrence, then treatment entries
+ * in their given order) and simply takes the first 6, rather than
+ * inventing a new ranking.
+ */
+export const MAX_BRIEF_PATTERNS = 6;
+
+/**
  * Deliberately only the three Stage 3 evidence shapes that map to one
  * of the four approved pattern types — not symptomSummary,
  * cycleSummary, treatmentSummary, or persistentSymptoms, none of
@@ -231,7 +255,9 @@ function buildTreatmentWindowPattern(
  * output, in the same order (frequencyComparison's own order, which
  * is itself alphabetical by category — see period-comparison.ts —
  * then the single co-occurrence pattern if any, then treatmentImpact
- * in its own given order).
+ * in its own given order), capped at MAX_BRIEF_PATTERNS. The cap keeps
+ * this same order and just takes the first N — see MAX_BRIEF_PATTERNS'
+ * own doc comment for why nothing here re-ranks by significance.
  */
 export function buildStage4Interpretation(
   input: Stage4Input,
@@ -253,5 +279,8 @@ export function buildStage4Interpretation(
     if (pattern) patterns.push(pattern);
   }
 
-  return { interpretationVersion: INTERPRETATION_VERSION, patterns };
+  return {
+    interpretationVersion: INTERPRETATION_VERSION,
+    patterns: patterns.slice(0, MAX_BRIEF_PATTERNS),
+  };
 }
