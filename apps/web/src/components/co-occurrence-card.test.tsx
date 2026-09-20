@@ -42,11 +42,22 @@ describe("CoOccurrenceCard", () => {
     renderWithIntl(<CoOccurrenceCard />);
 
     await waitFor(() => expect(mockCoOccurrence).toHaveBeenCalled());
+    expect(await screen.findByText("Your record is still taking shape.")).toBeInTheDocument();
     expect(
-      await screen.findByText("Not enough logged yet to show a pattern here."),
+      screen.getByText(/EMBR needs more observations before it can surface a recurring pattern/),
     ).toBeInTheDocument();
+  });
+
+  it("shows the persistent section description in both the empty and populated states", async () => {
+    mockCoOccurrence.mockResolvedValue(null);
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
     expect(
-      screen.getByText(/This becomes more informative as your record grows/),
+      await screen.findByText(
+        "What EMBR can surface from your record once there's enough to show a pattern.",
+      ),
     ).toBeInTheDocument();
   });
 

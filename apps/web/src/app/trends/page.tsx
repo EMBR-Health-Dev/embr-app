@@ -93,6 +93,7 @@ export default function TrendsPage() {
 
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
+        <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
 
         {dataLoading ? (
           <p className="mt-8 text-sm text-foreground/50">{tCommon("loading")}</p>
@@ -100,11 +101,15 @@ export default function TrendsPage() {
           <>
             <section className="mt-10">
               <SectionLabel>{t("reportedDataLabel")}</SectionLabel>
-              <h2 className="mt-2 font-display text-heading-m text-foreground">
+              <p className="mt-2 text-sm text-foreground/60">{t("reportedDataDescription")}</p>
+              <h2 className="mt-4 font-display text-heading-m text-foreground">
                 {t("symptomsHeader", { days: WINDOW_DAYS })}
               </h2>
               {frequency.length === 0 ? (
-                <p className="mt-3 text-sm text-foreground/50">{t("noSymptomsYet")}</p>
+                <>
+                  <p className="mt-3 text-sm font-medium text-foreground">{t("noSymptomsYet")}</p>
+                  <p className="mt-1 text-sm text-foreground/60">{t("noSymptomsBody")}</p>
+                </>
               ) : (
                 <ul className="mt-4 flex flex-col gap-2">
                   {frequency.map(({ category, count }) => (
@@ -128,11 +133,16 @@ export default function TrendsPage() {
             <CoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
 
             <section className="mt-10">
-              <h2 className="font-display text-heading-m text-foreground">
+              <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>
+              <p className="mt-2 text-sm text-foreground/60">{t("cycleHistoryDescription")}</p>
+              <h2 className="mt-4 font-display text-heading-m text-foreground">
                 {t("cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
               </h2>
               {lengths.length === 0 ? (
-                <p className="mt-3 text-sm text-foreground/50">{t("noCycleDataYet")}</p>
+                <>
+                  <p className="mt-3 text-sm text-foreground/60">{t("noCycleDataYet")}</p>
+                  <p className="mt-1 text-xs text-foreground/40">{t("noCycleDataCaveat")}</p>
+                </>
               ) : (
                 <>
                   {averageCycleLength !== null && (

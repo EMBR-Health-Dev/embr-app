@@ -268,22 +268,29 @@
   },
   "Trends": {
     "title": "Patterns",
-    "reportedDataLabel": "Reported data",
+    "subtitle": "See what your record is beginning to show over time.",
+    "reportedDataLabel": "Your record",
+    "reportedDataDescription": "Reported data",
     "symptomsHeader": "Symptoms, last {days} days",
-    "noSymptomsYet": "Nothing logged in this window yet. Patterns will show up here as you go.",
+    "noSymptomsYet": "No symptom entries yet",
+    "noSymptomsBody": "Start logging to build your record. As your history grows, EMBR will organize your reported symptoms here.",
+    "cycleHistoryLabel": "Cycle history",
+    "cycleHistoryDescription": "Recorded cycle information.",
     "cycleLengthHeader": "Cycle length, last {days} days",
-    "noCycleDataYet": "Log at least two period-start days to see cycle lengths here. Irregular or absent cycles are common in perimenopause. This is a record for you and your provider, not a diagnosis.",
+    "noCycleDataYet": "Add at least two period-start dates to see your recorded cycle lengths here.",
+    "noCycleDataCaveat": "Irregular or absent cycles are common in perimenopause. This is a record for you and your provider, not a diagnosis.",
     "averagingDays": "Averaging <strong>{days} days</strong> between period starts over this window.",
     "daysUnit": "days",
     "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem."
   },
   "CoOccurrence": {
     "observedPatternLabel": "Observed pattern",
+    "observedPatternDescription": "What EMBR can surface from your record once there's enough to show a pattern.",
     "heading": "What you've logged together",
     "message": "{categoryA} appeared alongside {categoryB} on {days, plural, one {# day} other {# days}}.",
     "caveat": "A description of what you've logged: not a diagnosis, and not a claim about cause.",
-    "emptyTitle": "Not enough logged yet to show a pattern here.",
-    "emptyBody": "This becomes more informative as your record grows. Keep logging, and EMBR will surface it here once there's enough to see."
+    "emptyTitle": "Your record is still taking shape.",
+    "emptyBody": "EMBR needs more observations before it can surface a recurring pattern. Keep logging over time; this section will update as your record grows."
   },
   "Organization": {
     "title": "Organization",
