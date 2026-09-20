@@ -560,6 +560,26 @@ model ClinicalBrief {
   /// constraint (questions to ask, never assertions or suggestions).
   aiDiscussionTopics Json
 
+  /// The language aiNarrative/aiDiscussionTopics and every persisted
+  /// interpretation.patterns string were actually generated in —
+  /// resolved once at generation time from the request's
+  /// Accept-Language header (see brief.routes.ts, lib/locale.ts) and
+  /// fixed here permanently, the same point-in-time-snapshot
+  /// reasoning every other field on this model already follows. A
+  /// brief's language cannot be re-derived later from "whatever
+  /// locale the current viewer happens to be in" — re-downloading an
+  /// English brief a year later from a session now set to Japanese
+  /// must still render the English document that was actually
+  /// generated, with its own English static labels, not a mismatched
+  /// English-narrative-inside-a-Japanese-shell. Lowercase values
+  /// (en/ja), not this schema's usual uppercase enum convention —
+  /// deliberately the exact same values apps/web's and apps/mobile's
+  /// own Locale types already use, so nothing converts case at any
+  /// boundary between "the browser's selected language" and "what's
+  /// stored here." Defaults to en for every row that predates this
+  /// field.
+  locale BriefLocale @default(en)
+
   createdAt DateTime @default(now())
 
   /// Second line of defense against double-generation for the same
@@ -574,6 +594,15 @@ model ClinicalBrief {
   @@unique([userId, fromDate, toDate])
   @@index([userId, createdAt])
   @@map("clinical_briefs")
+}
+
+/// Lowercase, matching apps/web's and apps/mobile's own Locale type
+/// values exactly — see ClinicalBrief.locale's own doc comment for why
+/// this is the one enum in this schema that deliberately doesn't
+/// follow the uppercase convention every other enum here uses.
+enum BriefLocale {
+  en
+  ja
 }
 
 // ---- Onboarding (Milestone 18) ----

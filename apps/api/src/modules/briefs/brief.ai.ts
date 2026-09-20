@@ -4,6 +4,7 @@ import { AppError } from "@embr/shared";
 import { symptomCategorySchema } from "@embr/validation";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
 import type { Stage4Pattern, Stage4Result } from "./stage4-interpretation.js";
 
 export interface BriefInput {
@@ -154,7 +155,7 @@ const rawResponseSchema = z.object({
  * minimization and a way to keep the model's input (and therefore its
  * output) tightly scoped to what this feature is actually for.
  */
-const SYSTEM_PROMPT = `You are helping structure a person's self-tracked menopause symptom and cycle data into a summary for their upcoming GP appointment.
+const SYSTEM_PROMPT_EN = `You are helping structure a person's self-tracked menopause symptom and cycle data into a summary for their upcoming GP appointment.
 
 Follow these rules strictly:
 1. Describe only patterns directly supported by the structured data provided. Never infer, speculate, or add information not present in the data — including general medical knowledge about menopause that isn't reflected in this specific data.
@@ -170,6 +171,46 @@ Follow these rules strictly:
 
 Respond with JSON only, no other text, in exactly this shape:
 {"narrative": "...", "discussionTopics": [{"text": "...", "patternIds": ["..."]}], "patterns": [{"id": "...", "type": "...", "observation": "...", "association": "...", "interpretation": "...", "caveat": "...", "confidence": "descriptive", "evidenceRef": {}}]}`;
+
+/**
+ * Same 10 rules as SYSTEM_PROMPT_EN, translated — not a lighter or
+ * stricter version. Checked rule-by-rule against the English prompt to
+ * confirm every safety boundary carries over exactly: rule 2's ban on
+ * diagnosis/cause/treatment, rule 3's question-only framing, rules 6-9's
+ * verbatim-echo-only citation discipline, rule 8's no-new-relationships
+ * rule. The one addition (an unnumbered opening instruction) asks for
+ * natural, professional Japanese suitable for a patient-authored
+ * document meant to be shown to a clinician — a register instruction,
+ * not a content or scope change. The response format block is left in
+ * English on purpose: those are wire-format JSON keys this code parses
+ * (see rawResponseSchema below), not prose for a person to read, so
+ * translating them would break parsing without making the document any
+ * more Japanese.
+ */
+const SYSTEM_PROMPT_JA = `あなたは、更年期症状と周期の自己記録データを、次回の診察のための要約として整理する手伝いをしています。
+
+出力は自然で専門的な日本語で書いてください。この文書は本人が作成し、担当医と共有することを想定した患者作成資料です。読みやすく、誠実で、臨床文書として適切な、丁寧な言葉遣いにしてください。
+
+以下のルールを厳密に守ってください。
+1. 提供された構造化データによって直接裏付けられるパターンのみを記述してください。データに含まれていない情報を推測したり、補ったりしないでください。このデータに反映されていない、更年期に関する一般的な医学知識を含めることも禁止です。
+2. 診断をしたり、病名を挙げたり、原因を示唆したり、治療・薬剤・用量・生活習慣の変更を推奨したりしないでください。構造化された解釈データにあるパターンについて述べる場合も同様です。
+3. すべてのdiscussion topicは、本人が担当医に尋ねることができる開かれた質問として表現してください。断定、結論、助言としては書かないでください。「[日付]以降のホットフラッシュの頻度増加は、この時期によくあるパターンですか？」と尋ねる形にしてください。「あなたのホットフラッシュは悪化しており、Xを示している可能性があります」のような書き方はしないでください。
+4. データが乏しく意味のある要約を作成できない場合は、パターンを作り出すのではなく、その旨をそのまま伝えてください。
+5. narrativeは事実に基づき、中立的な文体を保ってください。これはデータの要約であり、医学的な論評ではありません。
+6. narrativeまたはdiscussion topicsで構造化された解釈データの内容を参照する場合は、その内容を"patterns"に、提供されたとおり正確に含めてください。同じid、type、observation、association(存在する場合)、interpretation、caveat、confidence、evidenceRefを使用してください。そのテキストを書き換えたり、新しいidを作ったり、与えられていないevidenceRefを作り出したりしないでください。
+7. narrativeまたはdiscussion topicsで実際に参照したパターンのみを"patterns"に含めてください。提供されたパターンの中に関連するものがない場合、またはパターンが提供されなかった場合、"patterns"は空の配列にしてください。
+8. 2つの症状の間、または症状と治療の間の関連性は、その組み合わせを明示的に扱うパターンが提供されている場合を除き、断定しないでください。関連する2つの事実がデータの別の箇所にそれぞれ存在しているというだけでは、それらを自分で結び付けてよい理由にはなりません。
+9. すべてのパターンの"confidence"は常に正確に"descriptive"としてください。変更しないでください。
+10. 各discussion topicはオブジェクトです: {"text": "...", "patternIds": [...]}。特定の所見(頻度の変化、併発、治療期間など)を参照するトピックの場合、その"patternIds"には該当するパターンのidを列挙し、それらのidは"patterns"にも含まれている必要があります。特定の所見を参照しない一般的な質問の場合、"patternIds"は空の配列にしてください。架空のidを使わないでください。
+
+discussionTopicsの各要素の"text"は、日本語の疑問文として「？」で終わるようにしてください。
+
+JSON形式のみで、他の文章を含めずに、必ず次の形で応答してください:
+{"narrative": "...", "discussionTopics": [{"text": "...", "patternIds": ["..."]}], "patterns": [{"id": "...", "type": "...", "observation": "...", "association": "...", "interpretation": "...", "caveat": "...", "confidence": "descriptive", "evidenceRef": {}}]}`;
+
+function systemPrompt(locale: Locale): string {
+  return locale === "ja" ? SYSTEM_PROMPT_JA : SYSTEM_PROMPT_EN;
+}
 
 /**
  * Defense-in-depth, not the primary safety mechanism — the system
@@ -205,17 +246,71 @@ Respond with JSON only, no other text, in exactly this shape:
  * validation) — this is only the same deny-list scan already applied
  * to the rest of the response, applied consistently to the new field
  * too.
+ *
+ * Locale-keyed, not a single English-only list run against every
+ * response regardless of language — an English regex run against
+ * Japanese output would never match Japanese diagnostic/directive
+ * language at all (silently *weaker* coverage for Japanese, not
+ * neutral), and would produce false positives against ordinary
+ * Japanese prose that happens to contain a Latin substring the regex
+ * was never meant to catch there. Each locale's list is built the
+ * same way and checked against the same four failure modes the
+ * English list targets — a diagnostic word, a treatment directive, an
+ * explicit recommendation, a dosage-shaped number — not a looser or
+ * stricter standard for either language:
+ *  - ja: "診断" (diagnosis) as a substring, the same "any occurrence
+ *    is worth failing closed on" reasoning as the English word-stem
+ *    match, since it's a specific compound word with no other
+ *    reading in this context.
+ *  - ja: べき (should) combined with a treatment-action verb stem
+ *    (服用/開始/中止/試す/やめる — take/start/stop/try/quit), narrowly
+ *    mirroring "you should take/start/stop/try" rather than
+ *    してください alone, which is an ordinary polite request particle
+ *    used throughout this app's own benign copy (e.g. "ask your
+ *    doctor") and would be a false-positive machine if deny-listed on
+ *    its own.
+ *  - ja: おすすめします/お勧めします/推奨します ("I recommend," three
+ *    common surface forms).
+ *  - Dosage: the English mg/mcg/ml unit regex is left active for
+ *    Japanese output too (medication units are conventionally written
+ *    in Latin script in Japanese text as well, not transliterated),
+ *    plus 錠 ("tablet(s)") — a genuinely dosage-specific counter word
+ *    with no other use in this feature's vocabulary. Deliberately
+ *    does NOT deny-list 回 ("times/occasions") even combined with a
+ *    number: that's the ordinary counter this feature's own
+ *    deterministic templates use throughout for occurrence counts
+ *    (see brief-locale.ts), so blocking it would fail closed on
+ *    completely benign, expected output.
  */
-const PROHIBITED_PATTERNS = [
-  /\bdiagnos(is|ed|e|es|ing)?\b/i,
-  /\byou should (take|start|stop|try)\b/i,
-  /\bi recommend\b/i,
-  /\b\d+\s?(mg|mcg|ml|milligrams?)\b/i,
-];
+const PROHIBITED_PATTERNS: Record<Locale, RegExp[]> = {
+  en: [
+    /\bdiagnos(is|ed|e|es|ing)?\b/i,
+    /\byou should (take|start|stop|try)\b/i,
+    /\bi recommend\b/i,
+    /\b\d+\s?(mg|mcg|ml|milligrams?)\b/i,
+  ],
+  ja: [
+    /診断/,
+    /(服用|開始|中止|試す|やめる)\s*べき/,
+    /(おすすめ|お勧め|推奨)します/,
+    /\b\d+\s?(mg|mcg|ml|ミリグラム)\b/i,
+    /\d+\s?錠/,
+  ],
+};
 
-function failsContentSafety(content: BriefContent): string | null {
+/** "?" for English, "？" (full-width) for Japanese — the JA system
+ * prompt explicitly asks discussion topics to end in the full-width
+ * mark, matching ordinary Japanese punctuation conventions, so this
+ * checks for either rather than only the ASCII one the English prompt
+ * produces. */
+function endsAsQuestion(text: string): boolean {
+  const trimmed = text.trim();
+  return trimmed.endsWith("?") || trimmed.endsWith("？");
+}
+
+function failsContentSafety(content: BriefContent, locale: Locale): string | null {
   for (const topic of content.discussionTopics) {
-    if (!topic.trim().endsWith("?")) {
+    if (!endsAsQuestion(topic)) {
       return `Discussion topic was not phrased as a question: "${topic}"`;
     }
   }
@@ -226,7 +321,7 @@ function failsContentSafety(content: BriefContent): string | null {
     ),
   );
   const combinedText = [content.narrative, ...content.discussionTopics, ...patternText].join(" ");
-  for (const pattern of PROHIBITED_PATTERNS) {
+  for (const pattern of PROHIBITED_PATTERNS[locale]) {
     if (pattern.test(combinedText)) {
       return `Output matched a prohibited pattern: ${pattern}`;
     }
@@ -236,7 +331,7 @@ function failsContentSafety(content: BriefContent): string | null {
 }
 
 export const briefAi = {
-  async generate(input: BriefInput): Promise<BriefContent> {
+  async generate(input: BriefInput, locale: Locale = DEFAULT_LOCALE): Promise<BriefContent> {
     const client = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
       // Explicit, reviewed values — not the SDK's own defaults (a
@@ -262,7 +357,7 @@ export const briefAi = {
       message = await client.messages.create({
         model: env.ANTHROPIC_BRIEF_MODEL,
         max_tokens: 1024,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt(locale),
         messages: [
           {
             role: "user",
@@ -345,7 +440,7 @@ export const briefAi = {
       patterns: result.data.patterns,
     };
 
-    const safetyFailure = failsContentSafety(content);
+    const safetyFailure = failsContentSafety(content, locale);
     if (safetyFailure) {
       // Fail closed, same as every other validation failure above --
       // brief.service.ts awaits this call before ever persisting

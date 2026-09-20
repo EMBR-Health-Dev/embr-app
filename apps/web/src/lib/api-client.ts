@@ -1,3 +1,5 @@
+import { LOCALE_COOKIE } from "../i18n/locale";
+
 export class ApiError extends Error {
   code: string;
   status: number;
@@ -140,6 +142,18 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
 
   const headers: Record<string, string> = {};
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
+  // The API has no cookie of its own to read the person's selected
+  // language from — EMBR_LOCALE is scoped to this app's own origin, set
+  // by next-intl's own setLocale() (see i18n/actions.ts), and the
+  // browser sends it here as an ordinary first-party cookie, but the
+  // rewrite proxy (next.config.ts) forwards it to the API's origin
+  // unchanged as a *cookie*, not the standard header the API actually
+  // reads it from (see apps/api/src/lib/locale.ts). Mirroring the same
+  // already-selected value into Accept-Language here is the one place
+  // that gap needs bridging — not a second, independent locale system,
+  // the same EMBR_LOCALE value next-intl itself resolves.
+  const locale = readCookie(LOCALE_COOKIE);
+  if (locale) headers["Accept-Language"] = locale;
   if (MUTATING_METHODS.has(method)) {
     headers["x-csrf-token"] = await ensureCsrfToken();
   }

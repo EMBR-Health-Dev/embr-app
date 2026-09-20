@@ -361,3 +361,73 @@ describe("buildStage4Interpretation — deterministic pattern IDs", () => {
     expect(hotFlash.id).not.toBe(fatigue.id);
   });
 });
+
+describe("buildStage4Interpretation — Japanese locale", () => {
+  it("produces Japanese observation/interpretation text with a localized category label, not the raw English enum value", () => {
+    const comparison = compareSymptomFrequency(
+      [{ category: "HOT_FLASH", count: 6 }],
+      [{ category: "HOT_FLASH", count: 4 }],
+    );
+    const result = buildStage4Interpretation(emptyInput({ frequencyComparison: comparison }), "ja");
+
+    expect(result.patterns).toHaveLength(1);
+    const pattern = result.patterns[0]!;
+    expect(pattern.type).toBe("frequency_increased");
+    expect(pattern.observation).toContain("ホットフラッシュ");
+    expect(pattern.observation).not.toContain("HOT_FLASH");
+    expect(pattern.interpretation).toContain("ホットフラッシュ");
+    // Same id regardless of locale — the id is built from `type` and
+    // `evidenceRef` only (see buildPatternId), never from rendered
+    // text, so citation validation isn't locale-sensitive.
+    expect(pattern.id).toBe("frequency_increased:HOT_FLASH");
+  });
+
+  it("Japanese interpretation and caveat text never assert causality either — exact contract per pattern type", () => {
+    const comparison = compareSymptomFrequency(
+      [{ category: "HOT_FLASH", count: 6 }],
+      [{ category: "HOT_FLASH", count: 4 }],
+    );
+    const result = buildStage4Interpretation(
+      emptyInput({
+        frequencyComparison: comparison,
+        coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 },
+        treatmentImpact: [treatmentImpact()],
+      }),
+      "ja",
+    );
+
+    const byType = Object.fromEntries(result.patterns.map((p) => [p.type, p]));
+    // Same "does not establish/示すものではありません" boundary present
+    // in every English caveat/interpretation above, checked in
+    // Japanese: never "原因です" (is the cause), only ever the negated
+    // "原因であることを示すものではありません" (does not show it's the
+    // cause) framing.
+    expect(byType.co_occurrence_detected!.caveat).toBe(
+      "これは時間的な関連性を示すものにすぎず、因果関係を示すものではありません。",
+    );
+    expect(byType.co_occurrence_detected!.interpretation).toContain(
+      "一方が他方の原因であることを示すものではありません",
+    );
+    expect(byType.treatment_window_changed!.caveat).toBe(
+      "これは時間経過による観察された変化であり、その治療が原因であることを示す根拠ではありません。",
+    );
+    expect(byType.treatment_window_changed!.interpretation).toContain(
+      "治療が変化の原因であるかどうかを示すものではありません",
+    );
+    // ブレインフォグ (BRAIN_FOG) and ホットフラッシュ (HOT_FLASH) — both
+    // localized category labels, not raw enum values, in the
+    // co-occurrence observation.
+    expect(byType.co_occurrence_detected!.observation).toContain("ブレインフォグ");
+    expect(byType.co_occurrence_detected!.observation).toContain("ホットフラッシュ");
+  });
+
+  it("defaults to English when no locale argument is given", () => {
+    const comparison = compareSymptomFrequency(
+      [{ category: "HOT_FLASH", count: 6 }],
+      [{ category: "HOT_FLASH", count: 4 }],
+    );
+    const result = buildStage4Interpretation(emptyInput({ frequencyComparison: comparison }));
+
+    expect(result.patterns[0]!.observation).toContain("HOT_FLASH");
+  });
+});

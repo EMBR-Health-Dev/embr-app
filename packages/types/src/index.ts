@@ -635,6 +635,16 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   citedPatternIds: string[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
+  /** The language aiNarrative/aiDiscussionTopics and every persisted
+   * interpretation.patterns string were actually generated in —
+   * resolved once at generation time from the request's
+   * Accept-Language header and fixed permanently on the row (see
+   * apps/api/prisma/schema.prisma's ClinicalBrief.locale doc comment).
+   * Drives which language buildClinicalBriefPdf renders its own
+   * static labels in too, so a re-download later always matches the
+   * language the content was actually written in, regardless of the
+   * downloading session's current locale. */
+  locale: "en" | "ja";
 }
 
 /** Cross-brief evidence aggregation, not a new clinical inference —

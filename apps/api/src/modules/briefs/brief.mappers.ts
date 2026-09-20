@@ -54,5 +54,6 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     citedPatternIds: brief.citedPatternIds as unknown as string[] | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
+    locale: brief.locale,
   };
 }

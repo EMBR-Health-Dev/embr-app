@@ -7,6 +7,8 @@ import type {
   SymptomCategory,
   SymptomCoOccurrenceDto,
 } from "@embr/types";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
+import { categoryLabel } from "./brief-locale.js";
 import type { SymptomFrequencyComparisonEntry } from "./period-comparison.js";
 
 /**
@@ -61,13 +63,36 @@ export interface Stage4Input {
   treatmentImpact: BriefTreatmentImpactEntryDto[];
 }
 
-const FREQUENCY_CAVEAT =
-  "This reflects self-reported logging frequency only. It does not indicate severity, cause, or clinical significance.";
+/**
+ * Every observation/interpretation/caveat string below is now built per
+ * locale rather than fixed English — these are the same fixed
+ * *templates* Stage 4's own doc comment describes (parameterized only
+ * by evidence values), just with a Japanese template alongside the
+ * English one, not a translation of already-generated English text.
+ * This is the layer the task's own "do not translate the AI's output
+ * after generation as a workaround" instruction doesn't apply to:
+ * nothing here is AI-generated, so there is no English output to
+ * translate — locale is simply one more parameter this deterministic
+ * composition takes, exactly like `type` and `evidenceRef` already are.
+ * Both locales are checked line-by-line against each other to confirm
+ * neither adds, drops, strengthens, or weakens a clinical claim: every
+ * "does not establish/indicate" boundary present in English is present
+ * in Japanese too.
+ */
+const FREQUENCY_CAVEAT: Record<Locale, string> = {
+  en: "This reflects self-reported logging frequency only. It does not indicate severity, cause, or clinical significance.",
+  ja: "これは自己申告による記録頻度のみを反映しています。重症度、原因、臨床的な意義を示すものではありません。",
+};
 
-const CO_OCCURRENCE_CAVEAT = "This is a temporal association only, not a causal relationship.";
+const CO_OCCURRENCE_CAVEAT: Record<Locale, string> = {
+  en: "This is a temporal association only, not a causal relationship.",
+  ja: "これは時間的な関連性を示すものにすぎず、因果関係を示すものではありません。",
+};
 
-const TREATMENT_WINDOW_CAVEAT =
-  "This is an observed change over time, not evidence that the treatment caused it.";
+const TREATMENT_WINDOW_CAVEAT: Record<Locale, string> = {
+  en: "This is an observed change over time, not evidence that the treatment caused it.",
+  ja: "これは時間経過による観察された変化であり、その治療が原因であることを示す根拠ではありません。",
+};
 
 /**
  * Deterministic by construction: a pure function of `type` and
@@ -91,66 +116,97 @@ function buildPatternId(type: Stage4PatternType, evidenceRef: Stage4EvidenceRef)
   return `${type}:${evidenceRef.treatmentId}`;
 }
 
-function buildFrequencyPattern(entry: SymptomFrequencyComparisonEntry): Stage4Pattern | null {
+function buildFrequencyPattern(
+  entry: SymptomFrequencyComparisonEntry,
+  locale: Locale,
+): Stage4Pattern | null {
   if (entry.direction === "unchanged") return null;
 
+  const category = categoryLabel(entry.category, locale);
   const observation =
-    `${entry.category} was reported on ${entry.currentCount} day` +
-    `${entry.currentCount === 1 ? "" : "s"} during the current period, compared with` +
-    ` ${entry.previousCount} during the previous period.`;
+    locale === "ja"
+      ? `${category}は今回の期間に${entry.currentCount}日報告され、前回の期間は` +
+        `${entry.previousCount}日でした。`
+      : `${entry.category} was reported on ${entry.currentCount} day` +
+        `${entry.currentCount === 1 ? "" : "s"} during the current period, compared with` +
+        ` ${entry.previousCount} during the previous period.`;
 
   const type: Stage4PatternType =
     entry.direction === "increased" ? "frequency_increased" : "frequency_decreased";
   const evidenceRef: Stage4EvidenceRef = { category: entry.category as SymptomCategory };
+  const increased = type === "frequency_increased";
 
-  if (type === "frequency_increased") {
-    return {
-      id: buildPatternId(type, evidenceRef),
-      type,
-      observation,
-      interpretation: `This represents an increase in how often ${entry.category} was reported, relative to the previous period.`,
-      caveat: FREQUENCY_CAVEAT,
-      confidence: "descriptive",
-      evidenceRef,
-    };
-  }
+  const interpretation =
+    locale === "ja"
+      ? `これは、前回の期間と比較して${category}の報告頻度が${increased ? "増加" : "減少"}している` +
+        `ことを示しています。`
+      : increased
+        ? `This represents an increase in how often ${entry.category} was reported, relative to the previous period.`
+        : `This represents a decrease in how often ${entry.category} was reported, relative to the previous period.`;
 
   return {
     id: buildPatternId(type, evidenceRef),
     type,
     observation,
-    interpretation: `This represents a decrease in how often ${entry.category} was reported, relative to the previous period.`,
-    caveat: FREQUENCY_CAVEAT,
+    interpretation,
+    caveat: FREQUENCY_CAVEAT[locale],
     confidence: "descriptive",
     evidenceRef,
   };
 }
 
-function buildCoOccurrencePattern(coOccurrence: SymptomCoOccurrenceDto): Stage4Pattern {
+function buildCoOccurrencePattern(
+  coOccurrence: SymptomCoOccurrenceDto,
+  locale: Locale,
+): Stage4Pattern {
   const { categoryA, categoryB, days } = coOccurrence;
   const type: Stage4PatternType = "co_occurrence_detected";
   const evidenceRef: Stage4EvidenceRef = { categoryA, categoryB };
+  const labelA = categoryLabel(categoryA, locale);
+  const labelB = categoryLabel(categoryB, locale);
+
   return {
     id: buildPatternId(type, evidenceRef),
     type,
-    observation: `${categoryA} and ${categoryB} were both reported during this period.`,
-    association: `They were both reported on the same day on ${days} occasion${days === 1 ? "" : "s"}.`,
+    observation:
+      locale === "ja"
+        ? `${labelA}と${labelB}は、この期間中にどちらも報告されました。`
+        : `${categoryA} and ${categoryB} were both reported during this period.`,
+    association:
+      locale === "ja"
+        ? `同じ日に報告されたのは${days}日です。`
+        : `They were both reported on the same day on ${days} occasion${days === 1 ? "" : "s"}.`,
     interpretation:
-      "This indicates the two symptoms tend to occur on the same days. It does not establish that one causes the other.",
-    caveat: CO_OCCURRENCE_CAVEAT,
+      locale === "ja"
+        ? "これは、2つの症状が同じ日に起こる傾向があることを示しています。一方が他方の原因であること" +
+          "を示すものではありません。"
+        : "This indicates the two symptoms tend to occur on the same days. It does not establish that one causes the other.",
+    caveat: CO_OCCURRENCE_CAVEAT[locale],
     confidence: "descriptive",
     evidenceRef,
   };
 }
 
-function buildTreatmentWindowPattern(entry: BriefTreatmentImpactEntryDto): Stage4Pattern | null {
+function buildTreatmentWindowPattern(
+  entry: BriefTreatmentImpactEntryDto,
+  locale: Locale,
+): Stage4Pattern | null {
   if (entry.insufficientData) return null;
 
   const { before, after } = entry;
   const observation =
-    `${entry.name} — ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} were` +
-    ` reported in the ${before.days} days before starting, compared with ${after.logCount}` +
-    ` in the ${after.days} days after starting.`;
+    locale === "ja"
+      ? `${entry.name}: 開始前${before.days}日間で${before.logCount}件の症状記録があり、開始後` +
+        `${after.days}日間で${after.logCount}件でした。`
+      : // Colon, not the em dash this template used before — see this
+        // file's own doc comment on why this one English string is the
+        // sole content edit in this pass: it's user-facing text (PDF
+        // and, once cited, the AI narrative) that predates and
+        // violates EMBR's standing no-em-dash copy rule, not a
+        // rewording of wording this task otherwise leaves untouched.
+        `${entry.name}: ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} were` +
+        ` reported in the ${before.days} days before starting, compared with ${after.logCount}` +
+        ` in the ${after.days} days after starting.`;
 
   const type: Stage4PatternType = "treatment_window_changed";
   const evidenceRef: Stage4EvidenceRef = { treatmentId: entry.treatmentId };
@@ -160,8 +216,11 @@ function buildTreatmentWindowPattern(entry: BriefTreatmentImpactEntryDto): Stage
     type,
     observation,
     interpretation:
-      "This reflects the number of symptom logs recorded before and after this treatment began. It does not establish whether the treatment caused any change.",
-    caveat: TREATMENT_WINDOW_CAVEAT,
+      locale === "ja"
+        ? "これは、この治療を開始する前後に記録された症状ログの件数を示しています。治療が変化の原因で" +
+          "あるかどうかを示すものではありません。"
+        : "This reflects the number of symptom logs recorded before and after this treatment began. It does not establish whether the treatment caused any change.",
+    caveat: TREATMENT_WINDOW_CAVEAT[locale],
     confidence: "descriptive",
     evidenceRef,
   };
@@ -174,20 +233,23 @@ function buildTreatmentWindowPattern(entry: BriefTreatmentImpactEntryDto): Stage
  * then the single co-occurrence pattern if any, then treatmentImpact
  * in its own given order).
  */
-export function buildStage4Interpretation(input: Stage4Input): Stage4Result {
+export function buildStage4Interpretation(
+  input: Stage4Input,
+  locale: Locale = DEFAULT_LOCALE,
+): Stage4Result {
   const patterns: Stage4Pattern[] = [];
 
   for (const entry of input.frequencyComparison) {
-    const pattern = buildFrequencyPattern(entry);
+    const pattern = buildFrequencyPattern(entry, locale);
     if (pattern) patterns.push(pattern);
   }
 
   if (input.coOccurrence) {
-    patterns.push(buildCoOccurrencePattern(input.coOccurrence));
+    patterns.push(buildCoOccurrencePattern(input.coOccurrence, locale));
   }
 
   for (const entry of input.treatmentImpact) {
-    const pattern = buildTreatmentWindowPattern(entry);
+    const pattern = buildTreatmentWindowPattern(entry, locale);
     if (pattern) patterns.push(pattern);
   }
 

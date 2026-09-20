@@ -1,3 +1,4 @@
+import { i18n } from "./i18n";
 import { tokenStorage } from "./token-storage";
 
 export class ApiError extends Error {
@@ -112,6 +113,14 @@ async function rawFetch<T>(path: string, options: RequestOptions, accessToken?: 
   const headers: Record<string, string> = { Accept: "application/json" };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+  // Unlike apps/web (a cookie the API can read directly, once forwarded
+  // through the rewrite proxy — see that file's own doc comment), a
+  // mobile client has no cookies at all: i18next's own already-resolved
+  // language (device locale, or a stored override — see
+  // lib/i18n/locale.ts) is the one thing to mirror into the standard
+  // header the API reads locale from (apps/api/src/lib/locale.ts), not
+  // a second, independently-tracked value.
+  if (i18n.language) headers["Accept-Language"] = i18n.language;
 
   const res = await fetchWithTimeout(buildUrl(path, options.query), {
     method,

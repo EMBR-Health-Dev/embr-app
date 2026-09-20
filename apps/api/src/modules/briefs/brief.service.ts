@@ -13,6 +13,7 @@ import type {
   Treatment,
   ClinicalBrief,
 } from "../../generated/prisma/index.js";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
 import { paginate } from "../../lib/pagination.js";
 import { acquireLock } from "../../lib/redis-lock.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
@@ -79,6 +80,7 @@ async function generateBriefContent(
   userId: string,
   fromDate: Date,
   toDate: Date,
+  locale: Locale,
 ): Promise<ClinicalBriefDto> {
   const query = {
     from: fromDate,
@@ -172,11 +174,14 @@ async function generateBriefContent(
   // persistence (next step) and as the source of truth for
   // provenance validation below. Never sent to the AI directly; see
   // aiInput's own comment for the AI-safe projection built from it.
-  const interpretation = buildStage4Interpretation({
-    frequencyComparison,
-    coOccurrence,
-    treatmentImpact,
-  });
+  const interpretation = buildStage4Interpretation(
+    {
+      frequencyComparison,
+      coOccurrence,
+      treatmentImpact,
+    },
+    locale,
+  );
 
   const aiInput: BriefInput = {
     fromDate: fromDate.toISOString().slice(0, 10),
@@ -200,10 +205,10 @@ async function generateBriefContent(
     // choice for UI/PDF rendering), but that was never an approved
     // exception to the existing "treatment data and free-text notes
     // are not sent to the AI" invariant.
-    interpretation: buildAiSafeStage4Interpretation(interpretation, treatmentImpact),
+    interpretation: buildAiSafeStage4Interpretation(interpretation, treatmentImpact, locale),
   };
 
-  const { narrative, discussionTopics, patterns } = await briefAi.generate(aiInput);
+  const { narrative, discussionTopics, patterns } = await briefAi.generate(aiInput, locale);
 
   // Citation integrity: every pattern the AI echoed back must
   // resolve to one this step actually supplied, unaltered. Validated
@@ -256,6 +261,7 @@ async function generateBriefContent(
     citedPatternIds: citedPatterns.map((pattern) => pattern.id),
     aiNarrative: narrative,
     aiDiscussionTopics: discussionTopics,
+    locale,
   });
 
   return {
@@ -265,7 +271,12 @@ async function generateBriefContent(
 }
 
 export const briefService = {
-  async generate(userId: string, fromDate: Date, toDate: Date): Promise<ClinicalBriefDto> {
+  async generate(
+    userId: string,
+    fromDate: Date,
+    toDate: Date,
+    locale: Locale = DEFAULT_LOCALE,
+  ): Promise<ClinicalBriefDto> {
     if (fromDate >= toDate) {
       throw AppError.validation("fromDate must be before toDate");
     }
@@ -304,7 +315,7 @@ export const briefService = {
     }
 
     try {
-      return await generateBriefContent(userId, fromDate, toDate);
+      return await generateBriefContent(userId, fromDate, toDate, locale);
     } finally {
       if (lock.status === "acquired") {
         await lock.release();
