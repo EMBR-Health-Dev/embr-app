@@ -4,6 +4,7 @@ import type { GenerateBriefInput, PaginationQuery } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
+import { resolveLocaleFromAcceptLanguage } from "../../lib/locale.js";
 import { requireAuth, requireVerifiedEmail } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
@@ -26,7 +27,15 @@ router.post(
   validate(generateBriefSchema),
   asyncHandler(async (req, res) => {
     const { fromDate, toDate } = req.body as GenerateBriefInput;
-    const brief = await briefService.generate(req.user!.sub, fromDate, toDate);
+    // Resolved once, here, and persisted on the brief itself (see
+    // ClinicalBrief.locale's own doc comment) — never re-resolved from
+    // whatever locale a later request happens to be in. GET .../pdf
+    // below deliberately does NOT call this: it renders in the locale
+    // the brief was actually generated in, read back off the brief
+    // itself via briefService.get(), not the downloading session's
+    // current language.
+    const locale = resolveLocaleFromAcceptLanguage(req.headers["accept-language"]);
+    const brief = await briefService.generate(req.user!.sub, fromDate, toDate, locale);
     await writeAuditLog(req, "CLINICAL_BRIEF_GENERATED", req.user!.sub, {
       briefId: brief.id,
       fromDate: brief.fromDate,

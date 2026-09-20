@@ -1,4 +1,5 @@
 import type { BriefTreatmentImpactEntryDto } from "@embr/types";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
 import type { Stage4Pattern, Stage4Result } from "./stage4-interpretation.js";
 
 /**
@@ -40,6 +41,7 @@ import type { Stage4Pattern, Stage4Result } from "./stage4-interpretation.js";
 export function buildAiSafeStage4Interpretation(
   interpretation: Stage4Result,
   treatmentImpact: BriefTreatmentImpactEntryDto[],
+  locale: Locale = DEFAULT_LOCALE,
 ): Stage4Result {
   const treatmentImpactById = new Map(treatmentImpact.map((entry) => [entry.treatmentId, entry]));
 
@@ -47,7 +49,7 @@ export function buildAiSafeStage4Interpretation(
     interpretationVersion: interpretation.interpretationVersion,
     patterns: interpretation.patterns.map((pattern) =>
       pattern.type === "treatment_window_changed"
-        ? projectTreatmentPattern(pattern, treatmentImpactById)
+        ? projectTreatmentPattern(pattern, treatmentImpactById, locale)
         : pattern,
     ),
   };
@@ -56,6 +58,7 @@ export function buildAiSafeStage4Interpretation(
 function projectTreatmentPattern(
   pattern: Stage4Pattern,
   treatmentImpactById: Map<string, BriefTreatmentImpactEntryDto>,
+  locale: Locale,
 ): Stage4Pattern {
   // evidenceRef is guaranteed to be the {treatmentId} shape here —
   // buildTreatmentWindowPattern is the only producer of
@@ -74,11 +77,21 @@ function projectTreatmentPattern(
   }
 
   const { before, after } = entry;
+  // Not validated for exact equality against anything (see
+  // stage4-validation.ts's own doc comment: observation text is
+  // deliberately never compared for treatment_window_changed patterns,
+  // since this projection and the canonical one are expected to
+  // differ) — still localized for the same reason every other string
+  // the model receives is: the AI should never have to read an English
+  // sentence while writing a Japanese narrative around it.
   return {
     ...pattern,
     observation:
-      `A treatment window showed ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"}` +
-      ` in the ${before.days} days before starting, compared with ${after.logCount} symptom` +
-      ` log${after.logCount === 1 ? "" : "s"} in the ${after.days} days after starting.`,
+      locale === "ja"
+        ? `治療期間の記録では、開始前${before.days}日間で症状ログが${before.logCount}件、開始後` +
+          `${after.days}日間で${after.logCount}件でした。`
+        : `A treatment window showed ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"}` +
+          ` in the ${before.days} days before starting, compared with ${after.logCount} symptom` +
+          ` log${after.logCount === 1 ? "" : "s"} in the ${after.days} days after starting.`,
   };
 }

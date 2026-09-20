@@ -66,7 +66,7 @@ describe("brief.ai", () => {
       ),
     );
 
-    const result = await briefAi.generate(VALID_INPUT);
+    const result = await briefAi.generate(VALID_INPUT, "en");
     expect(result).toEqual({
       narrative: "Some narrative.",
       discussionTopics: ["A question?"],
@@ -76,7 +76,7 @@ describe("brief.ai", () => {
 
   it("rejects a response that isn't valid JSON", async () => {
     mockCreate.mockResolvedValue(textResponse("Sorry, here's your summary: ..."));
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("not valid JSON");
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("not valid JSON");
   });
 
   it("rejects a response missing required fields", async () => {
@@ -84,19 +84,19 @@ describe("brief.ai", () => {
     // Message deliberately no longer includes the raw Zod error detail
     // (see classifyAnthropicError's doc comment on not leaking internals) —
     // just confirms it's classified as our own bug, not a client error.
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("unexpected response shape");
   });
 
   it("rejects an empty discussionTopics array", async () => {
     mockCreate.mockResolvedValue(
       textResponse(JSON.stringify({ narrative: "n", discussionTopics: [], patterns: [] })),
     );
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow();
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow();
   });
 
   it("rejects a response with no text content block", async () => {
     mockCreate.mockResolvedValue({ content: [] });
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("no text content");
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("no text content");
   });
 
   it("sends only the structured summary, never raw notes, in the user message", async () => {
@@ -110,7 +110,7 @@ describe("brief.ai", () => {
       ),
     );
 
-    await briefAi.generate(VALID_INPUT);
+    await briefAi.generate(VALID_INPUT, "en");
 
     const call = mockCreate.mock.calls[0][0];
     const sentContent = JSON.parse(call.messages[0].content);
@@ -135,7 +135,7 @@ describe("brief.ai", () => {
       ),
     );
 
-    await briefAi.generate(VALID_INPUT);
+    await briefAi.generate(VALID_INPUT, "en");
 
     const call = mockCreate.mock.calls[0][0];
     expect(call.system).toContain("Never diagnose");
@@ -151,7 +151,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await briefAi.generate(VALID_INPUT);
+      await briefAi.generate(VALID_INPUT, "en");
 
       expect(constructorCalls).toHaveLength(1);
       const options = constructorCalls[0] as { timeout?: number; maxRetries?: number };
@@ -171,7 +171,7 @@ describe("brief.ai", () => {
       const upstreamError = Object.assign(new Error("Invalid API key provided"), { status: 401 });
       mockCreate.mockRejectedValue(upstreamError);
 
-      const promise = briefAi.generate(VALID_INPUT);
+      const promise = briefAi.generate(VALID_INPUT, "en");
       await expect(promise).rejects.toBeInstanceOf(AppError);
 
       const thrown = await promise.catch((e: unknown) => e as AppError);
@@ -186,7 +186,7 @@ describe("brief.ai", () => {
     it("wraps a network/connection failure the same safe way", async () => {
       mockCreate.mockRejectedValue(new Error("connect ECONNREFUSED"));
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toMatchObject({
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
         statusCode: 500,
       });
     });
@@ -203,7 +203,9 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("not phrased as a question");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "not phrased as a question",
+      );
     });
 
     it("rejects output containing the word 'diagnos-' in any form", async () => {
@@ -216,7 +218,7 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("prohibited pattern");
     });
 
     it("rejects output recommending a specific action ('you should take/start/stop/try')", async () => {
@@ -229,7 +231,7 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("prohibited pattern");
     });
 
     it("rejects output containing 'I recommend'", async () => {
@@ -242,7 +244,7 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("prohibited pattern");
     });
 
     it("rejects output containing a dosage-shaped figure", async () => {
@@ -255,7 +257,7 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("prohibited pattern");
     });
 
     it("does not false-positive on ordinary, compliant output", async () => {
@@ -270,7 +272,7 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).resolves.toBeDefined();
+      await expect(briefAi.generate(VALID_INPUT, "en")).resolves.toBeDefined();
     });
 
     it("no ClinicalBrief-relevant data escapes when the safety check fails — the promise rejects, nothing is returned", async () => {
@@ -283,7 +285,123 @@ describe("brief.ai", () => {
           }),
         ),
       );
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow();
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow();
+    });
+  });
+
+  describe("output content safety — Japanese locale", () => {
+    it("uses the Japanese system prompt when locale is ja", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [dt("質問？")],
+            patterns: [],
+          }),
+        ),
+      );
+
+      await briefAi.generate(VALID_INPUT, "ja");
+
+      const call = mockCreate.mock.calls[0][0];
+      expect(call.system).toContain("自然で専門的な日本語");
+      expect(call.system).toContain("診断をしたり");
+    });
+
+    it("accepts a discussion topic ending in a full-width question mark", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "ホットフラッシュは今回の期間に3日報告されました。",
+            discussionTopics: [dt("頻度の変化について尋ねてもいいですか？")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).resolves.toBeDefined();
+    });
+
+    it("rejects a Japanese discussion topic not phrased as a question", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [dt("これは断定文です。")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).rejects.toThrow(
+        "not phrased as a question",
+      );
+    });
+
+    it("rejects Japanese output containing 診断 (diagnosis)", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "このパターンは何らかの診断を示している可能性があります。",
+            discussionTopics: [dt("質問？")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects Japanese output recommending a specific action (verb + べき)", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "マグネシウムのサプリメントを試すべきです。",
+            discussionTopics: [dt("質問？")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects Japanese output containing おすすめします (I recommend)", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "専門医の受診をおすすめします。",
+            discussionTopics: [dt("質問？")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects Japanese output containing a dosage-shaped tablet count", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "1日2錠を服用しています。",
+            discussionTopics: [dt("質問？")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("does not false-positive on ordinary Japanese output using 回 (times/occasions)", async () => {
+      // 回 is the counter this feature's own deterministic templates use
+      // throughout for occurrence counts (see brief-locale.ts) — must
+      // never trip the dosage/tablet-count deny-list on its own.
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "ホットフラッシュは今回の期間に3回報告され、前回の期間は1回でした。",
+            discussionTopics: [dt("この頻度の変化はこの時期によくあるパターンですか？")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "ja")).resolves.toBeDefined();
     });
   });
 
@@ -314,7 +432,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      const result = await briefAi.generate(VALID_INPUT);
+      const result = await briefAi.generate(VALID_INPUT, "en");
       expect(result.patterns).toEqual([VALID_PATTERN]);
     });
 
@@ -325,7 +443,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({ patterns: [] });
+      await expect(briefAi.generate(VALID_INPUT, "en")).resolves.toMatchObject({ patterns: [] });
     });
 
     it("rejects a pattern with an invalid confidence value", async () => {
@@ -339,7 +457,9 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "unexpected response shape",
+      );
     });
 
     it("rejects a pattern whose evidenceRef doesn't match any of the three known shapes", async () => {
@@ -353,7 +473,9 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "unexpected response shape",
+      );
     });
 
     // PR #105 hardening. Distinct from the "doesn't match any of the
@@ -377,7 +499,9 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "unexpected response shape",
+      );
     });
 
     it("rejects a pattern whose evidenceRef is null rather than omitted or a valid object", async () => {
@@ -391,7 +515,9 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "unexpected response shape",
+      );
     });
 
     it("rejects a response where patterns is null rather than an array", async () => {
@@ -401,7 +527,9 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "unexpected response shape",
+      );
     });
 
     it("rejects a pattern whose evidenceRef category isn't a real SymptomCategory", async () => {
@@ -415,7 +543,9 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("unexpected response shape");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
+        "unexpected response shape",
+      );
     });
 
     it("rejects pattern text containing an existing prohibited safety pattern — exercised through generate(), not by exporting failsContentSafety", async () => {
@@ -431,7 +561,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow("prohibited pattern");
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("prohibited pattern");
     });
   });
 
@@ -457,7 +587,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
+      await expect(briefAi.generate(VALID_INPUT, "en")).resolves.toMatchObject({
         discussionTopics: ["A general question with no specific finding?"],
       });
     });
@@ -486,7 +616,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
+      await expect(briefAi.generate(VALID_INPUT, "en")).resolves.toMatchObject({
         discussionTopics: ["Ask whether the increase in hot flashes is typical?"],
         patterns: [pattern],
       });
@@ -523,7 +653,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).resolves.toMatchObject({
+      await expect(briefAi.generate(VALID_INPUT, "en")).resolves.toMatchObject({
         discussionTopics: ["Ask about this twice-cited finding?"],
       });
     });
@@ -544,7 +674,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow(
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
         "discussion topic cited a pattern id not present in patterns",
       );
     });
@@ -575,7 +705,7 @@ describe("brief.ai", () => {
       // Not a partial success dropping only the bad topic — the entire
       // generation attempt fails, same as every other validation
       // failure in this file.
-      await expect(briefAi.generate(VALID_INPUT)).rejects.toThrow(
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow(
         "discussion topic cited a pattern id not present in patterns",
       );
     });
@@ -602,7 +732,7 @@ describe("brief.ai", () => {
         ),
       );
 
-      const result = await briefAi.generate(VALID_INPUT);
+      const result = await briefAi.generate(VALID_INPUT, "en");
       expect(result.discussionTopics).toEqual(["Ask about the hot flash increase?"]);
       // Not an array of objects — a real string, not something that
       // merely looks like one when logged.
@@ -630,11 +760,11 @@ describe("brief.ai Anthropic error classification", () => {
     );
     mockCreate.mockRejectedValue(err);
 
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toMatchObject({
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
       code: "SERVICE_UNAVAILABLE",
     });
     try {
-      await briefAi.generate(VALID_INPUT);
+      await briefAi.generate(VALID_INPUT, "en");
     } catch (thrown) {
       expect((thrown as Error).message).not.toContain("secret-account-detail");
     }
@@ -649,9 +779,11 @@ describe("brief.ai Anthropic error classification", () => {
     );
     mockCreate.mockRejectedValue(err);
 
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
+      code: "INTERNAL_ERROR",
+    });
     try {
-      await briefAi.generate(VALID_INPUT);
+      await briefAi.generate(VALID_INPUT, "en");
     } catch (thrown) {
       expect((thrown as Error).message).not.toContain("invalid x-api-key");
     }
@@ -666,12 +798,14 @@ describe("brief.ai Anthropic error classification", () => {
     );
     mockCreate.mockRejectedValue(err);
 
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
+      code: "INTERNAL_ERROR",
+    });
   });
 
   it("classifies an APIConnectionError (network failure) as SERVICE_UNAVAILABLE", async () => {
     mockCreate.mockRejectedValue(new Anthropic.APIConnectionError({ message: "network down" }));
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toMatchObject({
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
       code: "SERVICE_UNAVAILABLE",
     });
   });
@@ -685,7 +819,7 @@ describe("brief.ai Anthropic error classification", () => {
         new Headers(),
       ),
     );
-    await expect(briefAi.generate(VALID_INPUT)).rejects.toMatchObject({
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
       code: "SERVICE_UNAVAILABLE",
     });
   });

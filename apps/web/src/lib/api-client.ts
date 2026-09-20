@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, LOCALE_COOKIE } from "../i18n/locale";
+
 export class ApiError extends Error {
   code: string;
   status: number;
@@ -140,6 +142,31 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
 
   const headers: Record<string, string> = {};
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
+  // The API has no cookie of its own to read the person's selected
+  // language from — EMBR_LOCALE is scoped to this app's own origin, set
+  // by next-intl's own setLocale() (see i18n/actions.ts), and the
+  // browser sends it here as an ordinary first-party cookie, but the
+  // rewrite proxy (next.config.ts) forwards it to the API's origin
+  // unchanged as a *cookie*, not the standard header the API actually
+  // reads it from (see apps/api/src/lib/locale.ts). Mirroring the same
+  // already-selected value into Accept-Language here is the one place
+  // that gap needs bridging — not a second, independent locale system,
+  // the same EMBR_LOCALE value next-intl itself resolves.
+  //
+  // Explicitly defaulted to DEFAULT_LOCALE, not omitted, when the
+  // cookie is absent (a first-time visitor who hasn't set a language
+  // yet) — next-intl's own getRequestConfig (i18n/request.ts) falls
+  // back to that exact same default for the exact same reason. Without
+  // this, fetch() would fall through to the browser's own automatic
+  // Accept-Language header (from OS/browser settings) for that one
+  // request, which could easily disagree with the English UI the
+  // person is actually looking at — a Japanese-OS visitor who has
+  // never touched the language switcher would see an English page but
+  // get a Japanese brief. This keeps generation locked to the same
+  // resolution next-intl itself already performs, never the browser's
+  // independent guess.
+  const locale = readCookie(LOCALE_COOKIE) ?? DEFAULT_LOCALE;
+  headers["Accept-Language"] = locale;
   if (MUTATING_METHODS.has(method)) {
     headers["x-csrf-token"] = await ensureCsrfToken();
   }

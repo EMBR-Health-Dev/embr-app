@@ -802,6 +802,113 @@ describe("POST /briefs — concurrency and locking", () => {
   });
 });
 
+describe("POST /briefs — locale", () => {
+  it("defaults to English when no Accept-Language header is sent", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-default@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.locale).toBe("en");
+  });
+
+  it("resolves ja from an Accept-Language: ja header", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-ja@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").set("Accept-Language", "ja").send(RANGE);
+
+    expect(res.body.data.locale).toBe("ja");
+  });
+
+  it("resolves ja from a full browser-style Accept-Language header, not just a bare 'ja'", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-ja-full@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent
+      .post("/briefs")
+      .set("Accept-Language", "ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7")
+      .send(RANGE);
+
+    expect(res.body.data.locale).toBe("ja");
+  });
+
+  it("falls back to English for an unsupported Accept-Language", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-fr@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").set("Accept-Language", "fr").send(RANGE);
+
+    expect(res.body.data.locale).toBe("en");
+  });
+
+  it("passes the resolved locale through to briefAi.generate", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-passthrough@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    await agent.post("/briefs").set("Accept-Language", "ja").send(RANGE);
+
+    const lastCall = vi.mocked(briefAi.generate).mock.calls.at(-1)!;
+    expect(lastCall[1]).toBe("ja");
+  });
+
+  it("persists Stage 4 pattern text in Japanese, with a localized category label, when generated with a Japanese locale", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "locale-ja-patterns@embr.health");
+
+    // Same increase-producing setup as the frequency-comparison describe
+    // block above, just requested in Japanese.
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-20") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2025-12-15") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").set("Accept-Language", "ja").send(RANGE);
+
+    expect(res.status).toBe(201);
+    const pattern = res.body.data.interpretation.patterns.find(
+      (p: { type: string }) => p.type === "frequency_increased",
+    );
+    expect(pattern).toBeDefined();
+    expect(pattern.observation).toContain("ホットフラッシュ");
+    expect(pattern.observation).not.toContain("HOT_FLASH");
+  });
+
+  it("renders the downloaded PDF in the locale the brief was generated in, not the downloading request's own locale", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-pdf@embr.health");
+    aiState.nextResponse = {
+      narrative: "日本語のナラティブ。",
+      discussionTopics: ["質問はありますか？"],
+    };
+
+    const generateRes = await agent.post("/briefs").set("Accept-Language", "ja").send(RANGE);
+    const briefId = generateRes.body.data.id as string;
+
+    // Downloaded with English as *this request's* language — must not
+    // change what language the PDF renders in, since the brief itself
+    // was generated (and its content permanently written) in Japanese.
+    const pdfRes = await agent.get(`/briefs/${briefId}/pdf`).set("Accept-Language", "en");
+
+    expect(pdfRes.status).toBe(200);
+    const pdfCalls = vi.mocked(buildClinicalBriefPdf).mock.calls;
+    const lastPdfCall = pdfCalls.at(-1)!;
+    expect(lastPdfCall[0].locale).toBe("ja");
+  });
+});
+
 // Integration coverage only — the comparison arithmetic itself
 // (increase/decrease/zero-denominator/etc.) is already exhaustively
 // covered in period-comparison.test.ts. These tests exist to prove

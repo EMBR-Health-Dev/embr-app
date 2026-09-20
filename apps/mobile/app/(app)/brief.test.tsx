@@ -140,6 +140,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     citedPatternIds: [],
     aiNarrative: "A narrative.",
     aiDiscussionTopics: ["A question?"],
+    locale: "en",
     ...overrides,
   };
 }

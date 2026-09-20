@@ -1,21 +1,16 @@
 import PDFDocument from "pdfkit";
 import type { ClinicalBriefDto } from "@embr/types";
-import { categoryLabel } from "../export/pdf.js";
 import {
   EMBR_PDF_BODY_FONT,
   EMBR_PDF_HEADING_FONT,
   registerEmbrPdfFonts,
 } from "../../lib/pdf-fonts.js";
-
-/** categoryLabel (above) does a generic underscore-to-title-case
- * transform, which is correct for symptom categories but would render
- * "HRT" as "Hrt" — a real acronym, not a word to title-case. Small and
- * local to this file rather than changing the shared helper, which is
- * also used for symptom categories and out of scope here. */
-function treatmentCategoryLabel(category: string): string {
-  if (category === "HRT") return "HRT";
-  return categoryLabel(category);
-}
+import {
+  categoryLabel,
+  pdfStrings,
+  severityLabel,
+  treatmentCategoryLabel,
+} from "./brief-locale.js";
 
 // EMBR Brand Guidelines v1.0 palette (see docs/design-tokens.md) — the
 // same graphite/lilac values apps/web's Tailwind tokens resolve to,
@@ -61,16 +56,32 @@ function sectionHeading(doc: PDFKit.PDFDocument, label: string): void {
  * again. Re-downloading a brief a year later must reproduce the same
  * document, even if the underlying logs have since been edited.
  *
+ * Renders in `brief.locale` — the language it was actually generated
+ * in (see ClinicalBriefDto's own doc comment on that field) — never in
+ * whatever locale the downloading request happens to be in. Every
+ * static label below comes from brief-locale.ts's pdfStrings(locale),
+ * not a literal string in this file, so a missing translation for
+ * either locale is a compile error here, not a silently-English label
+ * in a Japanese document. brief.aiNarrative, brief.aiDiscussionTopics,
+ * and brief.interpretation.patterns' observation/association text are
+ * NOT looked up here — they were already generated/composed in
+ * brief.locale at generation time (see brief.ai.ts and
+ * stage4-interpretation.ts) and are rendered exactly as stored, same
+ * as before this pass.
+ *
  * Visual language only: every disclaimer, every "not a diagnosis" /
  * "does not assess whether a treatment is working" caveat, and every
  * conditional (which sections render, and when) is unchanged from
- * before this pass — see brief.pdf.test.ts, which asserts on this
- * exact text and passes unmodified against this file.
+ * before this pass for English output specifically — see
+ * brief.pdf.test.ts, which asserts on this exact English text and
+ * passes unmodified against this file.
  */
 export function buildClinicalBriefPdf(
   brief: ClinicalBriefDto,
   userEmail: string,
 ): PDFKit.PDFDocument {
+  const locale = brief.locale ?? "en";
+  const t = pdfStrings(locale);
   const doc = new PDFDocument({ margin: 50, size: "A4" });
   registerEmbrPdfFonts(doc);
 
@@ -79,21 +90,23 @@ export function buildClinicalBriefPdf(
   // title — the same relationship the wordmark has to a section label
   // elsewhere in this file — rather than one undifferentiated heading
   // line, so the document reads as an instrument with its own
-  // identity, not a generic report with a logo pasted on top.
+  // identity, not a generic report with a logo pasted on top. "EMBR"
+  // itself is never translated, in either locale — the same brand-name
+  // treatment the rest of the product already uses.
   doc
     .fillColor(INK_MUTED)
     .fontSize(9)
     .font(EMBR_PDF_HEADING_FONT)
     .text("EMBR", { characterSpacing: 2 });
   doc.moveDown(0.15);
-  doc.fillColor(INK).fontSize(22).font(EMBR_PDF_HEADING_FONT).text("Clinical Brief");
+  doc.fillColor(INK).fontSize(22).font(EMBR_PDF_HEADING_FONT).text(t.documentTitle);
   doc.moveDown(0.8);
 
   doc
     .fillColor(INK_MUTED)
     .fontSize(8)
     .font(EMBR_PDF_HEADING_FONT)
-    .text("OBSERVATION PERIOD", { characterSpacing: 0.8 });
+    .text(t.observationPeriodLabel, { characterSpacing: 0.8 });
   doc.moveDown(0.15);
   doc
     .fillColor(INK)
@@ -102,24 +115,13 @@ export function buildClinicalBriefPdf(
     .text(`${brief.fromDate}  →  ${brief.toDate}`);
   doc.moveDown(0.6);
 
+  const generatedAtUtc = new Date(brief.createdAt).toISOString().slice(0, 16).replace("T", " ");
   doc
     .fontSize(9)
     .font(EMBR_PDF_BODY_FONT)
     .fillColor(INK_MUTED)
-    .text(
-      `Prepared for ${userEmail}  ·  Generated ${new Date(brief.createdAt)
-        .toISOString()
-        .slice(0, 16)
-        .replace("T", " ")} UTC`,
-    );
-  doc
-    .moveDown(0.4)
-    .fontSize(9)
-    .fillColor(INK_MUTED)
-    .text(
-      "This is a structured summary of self-tracked data, generated to help a conversation with a" +
-        " GP. Not a diagnosis, and not medical advice.",
-    );
+    .text(`${t.preparedFor(userEmail)}  ·  ${t.generatedAt(generatedAtUtc)}`);
+  doc.moveDown(0.4).fontSize(9).fillColor(INK_MUTED).text(t.topDisclaimer);
 
   doc.moveDown(1);
   doc
@@ -131,7 +133,9 @@ export function buildClinicalBriefPdf(
   doc.moveDown(1);
 
   // ---- AI narrative ----
-  sectionHeading(doc, "Summary");
+  // brief.aiNarrative was generated in `locale` at generation time —
+  // rendered exactly as stored, not re-localized here.
+  sectionHeading(doc, t.summaryHeading);
   doc
     .fontSize(10)
     .font(EMBR_PDF_BODY_FONT)
@@ -145,9 +149,10 @@ export function buildClinicalBriefPdf(
   // empty array (the AI cited nothing) is a real, distinct fact from
   // null (a brief predating this field). Renders the same
   // observation/association text the web and mobile "Grounded in your
-  // data" section does — never re-derived or reworded here.
+  // data" section does — never re-derived or reworded here. Already in
+  // `locale` — see stage4-interpretation.ts.
   if (brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation) {
-    sectionHeading(doc, "Grounded in your data");
+    sectionHeading(doc, t.groundedInHeading);
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
     for (const id of brief.citedPatternIds) {
       const pattern = brief.interpretation.patterns.find((entry) => entry.id === id);
@@ -165,7 +170,9 @@ export function buildClinicalBriefPdf(
   }
 
   // ---- Discussion topics ----
-  sectionHeading(doc, "Questions to bring to your GP");
+  // brief.aiDiscussionTopics was generated in `locale` — rendered as
+  // stored.
+  sectionHeading(doc, t.questionsHeading);
   doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
   for (const topic of brief.aiDiscussionTopics) {
     doc.text(`•  ${topic}`, { indent: 0 });
@@ -174,27 +181,30 @@ export function buildClinicalBriefPdf(
   doc.moveDown(0.8);
 
   // ---- Symptom frequency ----
-  // Labeled "Symptom Signals" — the same "signal" vocabulary the rest
-  // of the product already uses for logged data (see apps/web's
-  // copy) — this section's content and computation are unchanged, only
-  // the heading text.
-  sectionHeading(doc, "Symptom Signals");
+  // Labeled "Symptom Signals" in English — the same "signal"
+  // vocabulary the rest of the product already uses for logged data
+  // (see apps/web's copy) — this section's content and computation are
+  // unchanged, only the heading text. See brief-locale.ts's own doc
+  // comment on why the Japanese heading instead reuses
+  // Brief.symptomFrequency's already-established "症状の頻度" rather
+  // than a literal, less natural translation of "Signals."
+  sectionHeading(doc, t.symptomSignalsHeading);
   if (brief.symptomSummary.length === 0) {
-    doc
-      .fontSize(10)
-      .font(EMBR_PDF_BODY_FONT)
-      .fillColor(INK_MUTED)
-      .text("No symptoms logged in this range.");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.noSymptomsText);
   } else {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, count, severityBreakdown } of brief.symptomSummary) {
       const bySeverity = Object.entries(severityBreakdown)
-        .map(([severity, n]) => `${n} ${severity.toLowerCase()}`)
-        .join(", ");
-      doc.fillColor(INK).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
+        .map(([severity, n]) =>
+          locale === "ja"
+            ? `${severityLabel(severity, locale)}${n}件`
+            : `${n} ${severityLabel(severity, locale)}`,
+        )
+        .join(locale === "ja" ? "、" : ", ");
       doc
-        .fillColor(INK_MUTED)
-        .text(`  ${count} occurrence${count === 1 ? "" : "s"} (${bySeverity})`);
+        .fillColor(INK)
+        .text(`${categoryLabel(category, locale)}`, { continued: true, width: 300 });
+      doc.fillColor(INK_MUTED).text(`  ${t.occurrenceLine(count, bySeverity)}`);
     }
   }
 
@@ -207,16 +217,13 @@ export function buildClinicalBriefPdf(
   // and found nothing to report), and neither older briefs nor a
   // genuinely-empty comparison need a PDF section for it.
   if (brief.frequencyComparison && brief.frequencyComparison.length > 0) {
-    sectionHeading(doc, "Compared with the previous period");
+    sectionHeading(doc, t.comparedWithPreviousHeading);
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, currentCount, previousCount } of brief.frequencyComparison) {
-      doc.fillColor(INK).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
       doc
-        .fillColor(INK_MUTED)
-        .text(
-          `  Reported on ${currentCount} day${currentCount === 1 ? "" : "s"}, compared with` +
-            ` ${previousCount} day${previousCount === 1 ? "" : "s"} in the previous period.`,
-        );
+        .fillColor(INK)
+        .text(`${categoryLabel(category, locale)}`, { continued: true, width: 300 });
+      doc.fillColor(INK_MUTED).text(`  ${t.frequencyComparisonLine(currentCount, previousCount)}`);
     }
     doc.moveDown(1);
   }
@@ -228,12 +235,12 @@ export function buildClinicalBriefPdf(
   // Descriptive only: "remained present," never "your X problem is
   // persistent and requires treatment" — the same observation-not-
   // interpretation framing every other deterministic section here
-  // uses.
+  // uses, in both locales.
   if (brief.persistentSymptoms && brief.persistentSymptoms.length > 0) {
-    sectionHeading(doc, "Ongoing symptoms");
+    sectionHeading(doc, t.ongoingSymptomsHeading);
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
     for (const category of brief.persistentSymptoms) {
-      doc.text(`${categoryLabel(category)} remained present across both periods.`);
+      doc.text(t.persistentSymptomLine(categoryLabel(category, locale)));
     }
     doc.moveDown(1);
   }
@@ -244,63 +251,52 @@ export function buildClinicalBriefPdf(
   // existing threshold; see ClinicalBriefDto's own doc comment for
   // why those two cases aren't distinguished here. Descriptive only:
   // "reported on the same day," never "triggers" or "causes" — the
-  // same observation-not-causation framing web and mobile use.
+  // same observation-not-causation framing web and mobile use, in both
+  // locales.
   if (brief.coOccurrence) {
     const { categoryA, categoryB, days } = brief.coOccurrence;
-    sectionHeading(doc, "Patterns noticed");
+    sectionHeading(doc, t.patternsNoticedHeading);
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
       .fillColor(INK)
       .text(
-        `${categoryLabel(categoryA)} and ${categoryLabel(categoryB)} were both reported on the` +
-          ` same day on ${days} occasion${days === 1 ? "" : "s"}.`,
+        t.coOccurrenceLine(
+          categoryLabel(categoryA, locale),
+          categoryLabel(categoryB, locale),
+          days,
+        ),
       );
     doc.moveDown(1);
   }
 
   // ---- Cycle summary ----
-  sectionHeading(doc, "Cycle summary");
+  sectionHeading(doc, t.cycleSummaryHeading);
   const { averageCycleLengthDays, cycleCount, periodDaysLogged } = brief.cycleSummary;
   doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
   if (averageCycleLengthDays === null) {
-    doc.text("Not enough period-start entries in this range to compute cycle length.");
+    doc.text(t.notEnoughCycleDataText);
   } else {
-    doc.text(
-      `Average cycle length: ${averageCycleLengthDays} days (${cycleCount} cycles recorded)`,
-    );
+    doc.text(t.averageCycleLengthLine(averageCycleLengthDays, cycleCount));
   }
-  doc
-    .fillColor(INK_MUTED)
-    .text(`${periodDaysLogged} period day${periodDaysLogged === 1 ? "" : "s"} logged`);
+  doc.fillColor(INK_MUTED).text(t.periodDaysLoggedLine(periodDaysLogged));
 
   doc.moveDown(1);
 
   // ---- Treatments (deterministic snapshot, no AI involvement) ----
-  sectionHeading(doc, "Treatments logged during this period");
+  sectionHeading(doc, t.treatmentsHeading);
   if (brief.treatmentSummary.length === 0) {
-    doc
-      .fontSize(10)
-      .font(EMBR_PDF_BODY_FONT)
-      .fillColor(INK_MUTED)
-      .text("No treatments logged in this range.");
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.noTreatmentsText);
   } else {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { name, category, startDate, endDate } of brief.treatmentSummary) {
-      const dateRange = `${startDate} – ${endDate ?? "Ongoing"}`;
+      const dateRange = `${startDate} – ${endDate ?? t.ongoingLabel}`;
       doc.fillColor(INK).text(`${name}`, { continued: true, width: 300 });
-      doc.fillColor(INK_MUTED).text(`  ${treatmentCategoryLabel(category)}, ${dateRange}`);
+      doc.fillColor(INK_MUTED).text(`  ${treatmentCategoryLabel(category, locale)}, ${dateRange}`);
     }
   }
   doc.moveDown(0.4);
-  doc
-    .fontSize(9)
-    .font(EMBR_PDF_BODY_FONT)
-    .fillColor(INK_MUTED)
-    .text(
-      "This reflects what you've logged. It does not assess whether a treatment is working or" +
-        " make treatment recommendations.",
-    );
+  doc.fontSize(9).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.treatmentSafetyNote);
 
   // ---- Observed changes after starting treatment (deterministic, no AI involvement) ----
   // Only rendered when non-null and non-empty — unlike coOccurrence,
@@ -310,36 +306,25 @@ export function buildClinicalBriefPdf(
   // comment. Observational only: "X logs before, Y after," never
   // "the treatment reduced symptoms" — see treatment-impact.ts's own
   // doc comment on why any efficacy-claim language is explicitly out
-  // of scope here.
+  // of scope here, in both locales.
   if (brief.treatmentImpact && brief.treatmentImpact.length > 0) {
     doc.moveDown(1);
-    sectionHeading(doc, "Observed changes after starting treatment");
+    sectionHeading(doc, t.treatmentImpactHeading);
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { name, before, after, insufficientData } of brief.treatmentImpact) {
       doc.fillColor(INK).text(name);
       if (insufficientData) {
-        doc
-          .fillColor(INK_MUTED)
-          .text("  Not enough time has passed since starting to compare yet.");
+        doc.fillColor(INK_MUTED).text(`  ${t.treatmentImpactInsufficientText}`);
       } else {
         doc
           .fillColor(INK_MUTED)
           .text(
-            `  ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} in the` +
-              ` ${before.days} days before starting, compared with ${after.logCount} symptom` +
-              ` log${after.logCount === 1 ? "" : "s"} in the ${after.days} days after.`,
+            `  ${t.treatmentImpactLine(before.logCount, before.days, after.logCount, after.days)}`,
           );
       }
     }
     doc.moveDown(0.4);
-    doc
-      .fontSize(9)
-      .font(EMBR_PDF_BODY_FONT)
-      .fillColor(INK_MUTED)
-      .text(
-        "This reflects what you've logged. It does not assess whether a treatment is working or" +
-          " make treatment recommendations.",
-      );
+    doc.fontSize(9).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.treatmentSafetyNote);
   }
 
   // ---- Fine print: what this document is and isn't ----
@@ -348,7 +333,10 @@ export function buildClinicalBriefPdf(
   // observed pattern vs. clinical interpretation) the brand direction
   // asks this document to make clearer, stated once more at the point
   // a reader is most likely to be deciding what to do with the
-  // document, not just at the top before they've read it.
+  // document, not just at the top before they've read it. Same
+  // distinction, same absolute "that judgment belongs to the
+  // clinician" framing, in both locales — see brief-locale.ts's own
+  // doc comment on this specific translation.
   doc.moveDown(1.2);
   doc
     .strokeColor(INK_FAINT)
@@ -357,15 +345,7 @@ export function buildClinicalBriefPdf(
     .lineTo(RIGHT_MARGIN, doc.y)
     .stroke();
   doc.moveDown(0.6);
-  doc
-    .fontSize(8)
-    .font(EMBR_PDF_BODY_FONT)
-    .fillColor(INK_MUTED)
-    .text(
-      "Everything above reflects what was reported and, where noted, patterns observed in that" +
-        " reported data. None of it is a clinical interpretation or a diagnosis. That judgment" +
-        " belongs to the clinician reading this alongside you.",
-    );
+  doc.fontSize(8).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.closingDisclaimer);
 
   return doc;
 }

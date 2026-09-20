@@ -3,6 +3,7 @@ import { prisma, Prisma } from "../../lib/prisma.js";
 import { toSkipTake } from "../../lib/pagination.js";
 
 import type { PaginationQuery } from "@embr/validation";
+import type { Locale } from "../../lib/locale.js";
 
 export const briefRepository = {
   /**
@@ -32,6 +33,7 @@ export const briefRepository = {
     citedPatternIds: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: Prisma.InputJsonValue;
+    locale: Locale;
   }) {
     try {
       return await prisma.clinicalBrief.create({
