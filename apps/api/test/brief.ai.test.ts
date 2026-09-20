@@ -105,6 +105,28 @@ describe("brief.ai", () => {
     await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("no text content");
   });
 
+  it("explicitly disables extended thinking on the Anthropic request", async () => {
+    mockCreate.mockResolvedValue(
+      textResponse(
+        JSON.stringify({
+          narrative: "n",
+          discussionTopics: [dt("Ask your GP about this?")],
+          patterns: [],
+        }),
+      ),
+    );
+
+    await briefAi.generate(VALID_INPUT, "en");
+
+    const call = mockCreate.mock.calls[0][0];
+    // claude-sonnet-5 defaults to adaptive extended thinking when this
+    // is omitted, which draws from the same max_tokens budget as the
+    // final response — confirmed in production to consume the entire
+    // budget on thinking and leave none for the required JSON text.
+    expect(call.thinking).toEqual({ type: "disabled" });
+    expect(call.max_tokens).toBe(1024);
+  });
+
   describe("diagnostic logging when the model returns no text block", () => {
     // Deliberately checks only response metadata (stop_reason, content
     // block types, usage, model, timing) — never symptomSummary/
