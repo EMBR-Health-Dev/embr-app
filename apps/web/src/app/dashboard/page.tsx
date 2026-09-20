@@ -306,6 +306,7 @@ function DashboardContent() {
           <SectionLabel as="h1">
             {t("todayLabel")} · {todayLabel}
           </SectionLabel>
+          <p className="mt-2 text-sm text-foreground/60">{t("todayDescription")}</p>
 
           <div className="mt-6 flex flex-col items-center gap-3 rounded border border-primary bg-primary/5 py-12 text-center">
             {/* Signature interaction: one tap, no form, for the moment
@@ -346,6 +347,7 @@ function DashboardContent() {
         {/* ---- YOUR RECORD ---- */}
         <section className="mt-14">
           <SectionLabel>{t("yourRecordLabel")}</SectionLabel>
+          <p className="mt-2 text-sm text-foreground/60">{t("recordDescription")}</p>
 
           <div className="mt-6">
             <button
@@ -436,49 +438,57 @@ function DashboardContent() {
           {/* Cycle quick-log for today. */}
           <div className="mt-6 rounded border border-border-subtle p-5">
             <h3 className="font-display text-body-l text-foreground">{t("todaysCycleEntry")}</h3>
-            <div className="mt-3 flex flex-wrap items-center gap-4">
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">{t("flowLabel")}</span>
-                <select
-                  value={flow}
-                  onChange={(e) => {
-                    setFlow(e.target.value as (typeof FLOWS)[number] | "");
-                    setCycleSaved(false);
-                  }}
-                  className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
-                >
-                  <option value="">{t("flowNone")}</option>
-                  {FLOWS.map((f) => (
-                    <option key={f} value={f}>
-                      {tEnum(`flow.${f}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={periodStart}
-                  onChange={(e) => {
-                    setPeriodStart(e.target.checked);
-                    setCycleSaved(false);
-                  }}
-                />
-                {t("periodStartedToday")}
-              </label>
+            <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <span className="font-medium text-foreground">{t("flowLabel")}</span>
+              <select
+                value={flow}
+                onChange={(e) => {
+                  setFlow(e.target.value as (typeof FLOWS)[number] | "");
+                  setCycleSaved(false);
+                }}
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("flowNone")}</option>
+                {FLOWS.map((f) => (
+                  <option key={f} value={f}>
+                    {tEnum(`flow.${f}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={periodEnd}
-                  onChange={(e) => {
-                    setPeriodEnd(e.target.checked);
-                    setCycleSaved(false);
-                  }}
-                />
-                {t("periodEndedToday")}
-              </label>
+            {/* Its own labeled group, visually separated from Flow above —
+                flow describes an ongoing quality, while these are the
+                cycle's own start/end boundary events, not variations of
+                the same field. */}
+            <div className="mt-4 border-t border-border-subtle pt-4">
+              <span className="text-sm font-medium text-foreground">{t("periodLabel")}</span>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={periodStart}
+                    onChange={(e) => {
+                      setPeriodStart(e.target.checked);
+                      setCycleSaved(false);
+                    }}
+                  />
+                  {t("periodStartedToday")}
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={periodEnd}
+                    onChange={(e) => {
+                      setPeriodEnd(e.target.checked);
+                      setCycleSaved(false);
+                    }}
+                  />
+                  {t("periodEndedToday")}
+                </label>
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -572,6 +582,19 @@ function DashboardContent() {
         <section className="mb-16 mt-14 rounded border border-border bg-surface p-6">
           <SectionLabel>{t("evidenceLabel")}</SectionLabel>
           <p className="mt-3 max-w-md text-sm text-foreground/70">{t("evidenceBody")}</p>
+          {latestBrief && (
+            <p className="mt-3 text-xs text-foreground/50">
+              {t("evidenceLatestMeta", {
+                from: latestBrief.fromDate,
+                to: latestBrief.toDate,
+                date: new Intl.DateTimeFormat(locale, {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                }).format(new Date(latestBrief.createdAt)),
+              })}
+            </p>
+          )}
           <Link href="/brief" className="mt-5 inline-block">
             <Button>{latestBrief ? t("viewClinicalBrief") : t("generateFirstBrief")}</Button>
           </Link>
