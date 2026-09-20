@@ -610,6 +610,8 @@ enum OnboardingArea {
   MOOD
   BODY
   FOCUS
+  CYCLE
+  OTHER
 }
 
 /// Coarse enough that no appointment date is ever collected during

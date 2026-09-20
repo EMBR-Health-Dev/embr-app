@@ -400,7 +400,15 @@ export const onboardingJobToBeDoneSchema = z.enum([
 
 // Broad, non-clinical buckets — see schema.prisma's OnboardingArea doc
 // comment for why this is deliberately not SymptomCategory.
-export const onboardingAreaSchema = z.enum(["SLEEP", "ENERGY", "MOOD", "BODY", "FOCUS"]);
+export const onboardingAreaSchema = z.enum([
+  "SLEEP",
+  "ENERGY",
+  "MOOD",
+  "BODY",
+  "FOCUS",
+  "CYCLE",
+  "OTHER",
+]);
 
 export const onboardingAppointmentStatusSchema = z.enum([
   "WITHIN_MONTH",

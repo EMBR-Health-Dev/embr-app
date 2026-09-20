@@ -175,7 +175,55 @@ describe("Screen 3 — what's going on", () => {
 
     renderWithIntl(<WhatsGoingOnScreen />);
 
-    await waitFor(() => expect(screen.getByText("Focus")).toHaveAttribute("aria-pressed", "true"));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^Focus/ })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+  });
+
+  it("offers Cycle and Something else alongside the original five areas", async () => {
+    const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
+
+    renderWithIntl(<WhatsGoingOnScreen />);
+
+    expect(screen.getByRole("button", { name: /^Cycle/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Something else/ })).toBeInTheDocument();
+  });
+
+  it("shows a few concrete examples under each area, not a second selectable list", async () => {
+    const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
+
+    renderWithIntl(<WhatsGoingOnScreen />);
+
+    expect(
+      screen.getByText(
+        "Trouble falling asleep · Waking during the night · Night sweats · Waking tired",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Timing · Flow · Spotting · Premenstrual changes")).toBeInTheDocument();
+    // Exactly 7 toggles (the areas) — the examples are plain supporting
+    // text, not additional buttons a person could select individually.
+    expect(
+      screen.getAllByRole("button", { name: /Sleep|Energy|Mood|Body|Focus|Cycle|Something else/ }),
+    ).toHaveLength(7);
+  });
+
+  it("persists CYCLE when it's the one selected", async () => {
+    const user = userEvent.setup();
+    const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
+
+    renderWithIntl(<WhatsGoingOnScreen />);
+    await user.click(screen.getByRole("button", { name: /^Cycle/ }));
+    await user.click(screen.getByText("Continue"));
+
+    await waitFor(() =>
+      expect(onboardingPatch).toHaveBeenCalledWith({
+        noticedAreas: ["CYCLE"],
+        currentStep: "APPOINTMENT_STATUS",
+      }),
+    );
   });
 });
 
@@ -256,9 +304,11 @@ describe("Screen 5 — the loop", () => {
     renderWithIntl(<TheLoopScreen />);
 
     expect(
-      screen.getByText('"Your sleep disruption appeared alongside lower energy on 6 days."'),
+      screen.getByText('"On 6 days, lower energy appeared alongside disrupted sleep."'),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Descriptive, not diagnostic/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/These are patterns in your records, not diagnoses/),
+    ).toBeInTheDocument();
   });
 
   it("uses the user's noticed areas for the TRACK stage when present", async () => {
@@ -268,6 +318,15 @@ describe("Screen 5 — the loop", () => {
     renderWithIntl(<TheLoopScreen />);
 
     expect(screen.getByText("Mood · Focus")).toBeInTheDocument();
+  });
+
+  it("translates the newer Cycle and Something else areas too, not just the original five", async () => {
+    onboardingProfile = emptyProfile({ noticedAreas: ["CYCLE", "OTHER"] });
+    const { default: TheLoopScreen } = await import("./the-loop/page");
+
+    renderWithIntl(<TheLoopScreen />);
+
+    expect(screen.getByText("Cycle · Something else")).toBeInTheDocument();
   });
 
   it("falls back to the generic example when nothing was selected", async () => {
@@ -286,7 +345,7 @@ describe("Screen 5 — the loop", () => {
 
     expect(
       screen.getByText(
-        "Treatments you try, including HRT, supplements, medication, and anything else, can be tracked here too.",
+        "You can also keep track of treatments you try, including HRT, supplements, medication, or anything else you want to remember.",
       ),
     ).toBeInTheDocument();
   });
