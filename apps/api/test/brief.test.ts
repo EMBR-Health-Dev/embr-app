@@ -563,6 +563,25 @@ describe("POST /briefs", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a range longer than 366 days", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "toolong@embr.health");
+
+    const res = await agent.post("/briefs").send({ fromDate: "2024-01-01", toDate: "2026-01-02" });
+    expect(res.status).toBe(400);
+  });
+
+  it("allows a range of exactly 366 days", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "exactlymax@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+
+    const res = await agent.post("/briefs").send({ fromDate: "2025-01-01", toDate: "2026-01-02" });
+    expect(res.status).toBe(201);
+  });
+
   it("computes the structured summary correctly and persists it alongside the AI content", async () => {
     const app = createApp();
     const agent = request.agent(app);

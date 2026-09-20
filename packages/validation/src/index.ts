@@ -377,6 +377,8 @@ export type UpsertSsoConnectionInput = z.infer<typeof upsertSsoConnectionSchema>
 // product decision than requiring the person to pick a range (and
 // doesn't map to how GP-visit prep actually works: "since my last
 // visit," not "ever").
+const MAX_BRIEF_RANGE_DAYS = 366;
+
 export const generateBriefSchema = z
   .object({
     fromDate: z.coerce.date(),
@@ -384,6 +386,18 @@ export const generateBriefSchema = z
   })
   .refine((v) => v.fromDate < v.toDate, {
     message: "fromDate must be before toDate",
+    path: ["toDate"],
+  })
+  // A brief has no per-request size limit otherwise: symptomLogs and
+  // cycleEntries for the whole range are fetched and aggregated in
+  // memory, and period-comparison.ts's own previous-period window
+  // mirrors whatever span is requested here immediately before it —
+  // so a multi-year range doubles into a multi-year comparison query
+  // too. This is a cost/latency bound, not a product one: 366 days is
+  // already far past "since my last visit," so nothing a real GP-prep
+  // use case needs is cut off by it.
+  .refine((v) => (v.toDate.getTime() - v.fromDate.getTime()) / 86_400_000 <= MAX_BRIEF_RANGE_DAYS, {
+    message: `Date range cannot exceed ${MAX_BRIEF_RANGE_DAYS} days`,
     path: ["toDate"],
   });
 export type GenerateBriefInput = z.infer<typeof generateBriefSchema>;
