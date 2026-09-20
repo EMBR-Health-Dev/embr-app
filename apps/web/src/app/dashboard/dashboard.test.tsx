@@ -38,6 +38,7 @@ const symptomLogsList = vi
   .fn()
   .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
 const symptomLogsCreate = vi.fn();
+const briefsList = vi.fn().mockResolvedValue({ items: [] });
 
 vi.mock("../../lib/api", () => ({
   api: {
@@ -46,7 +47,7 @@ vi.mock("../../lib/api", () => ({
     organizations: { mine: vi.fn().mockResolvedValue([]) },
     trends: { symptomFrequency },
     reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
-    briefs: { list: vi.fn().mockResolvedValue({ items: [] }) },
+    briefs: { list: briefsList },
   },
 }));
 
@@ -56,6 +57,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
   symptomLogsCreate.mockReset();
+  briefsList.mockReset().mockResolvedValue({ items: [] });
 });
 
 function makeLog(id: string, category = "HOT_FLASH") {
@@ -315,5 +317,71 @@ describe("Dashboard — recent symptoms pagination", () => {
     await waitFor(() =>
       expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 1, pageSize: 10 }),
     );
+  });
+});
+
+describe("Dashboard — evidence-infrastructure hierarchy", () => {
+  it("shows the Today, Your record, and Evidence framing lines, and the clearer today-empty copy", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(await screen.findByText("Log what you're noticing.")).toBeInTheDocument();
+    expect(screen.getByText("Nothing recorded today yet.")).toBeInTheDocument();
+    expect(screen.getByText("Everything you log becomes part of this record.")).toBeInTheDocument();
+  });
+
+  it("shows the same framing lines in Japanese", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />, "ja");
+
+    expect(await screen.findByText("気づいたことを記録しましょう。")).toBeInTheDocument();
+    expect(screen.getByText("今日はまだ何も記録されていません。")).toBeInTheDocument();
+    expect(
+      screen.getByText("記録した内容はすべて、この記録の一部になります。"),
+    ).toBeInTheDocument();
+  });
+
+  it("visually separates Flow from the period-boundary checkboxes under their own labeled group", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's cycle entry")).toBeInTheDocument());
+    expect(screen.getByText("Flow")).toBeInTheDocument();
+    expect(screen.getByText("Period")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Period started today/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Period ended today/)).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — Clinical Brief as an evidence artifact", () => {
+  it("shows no artifact metadata when no brief has ever been generated", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(
+      await screen.findByRole("button", { name: "Generate your first Clinical Brief" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/generated/)).not.toBeInTheDocument();
+  });
+
+  it("shows the latest brief's real date range and generation date as artifact metadata", async () => {
+    briefsList.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+    });
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(await screen.findByRole("button", { name: "View Clinical Brief" })).toBeInTheDocument();
+    expect(
+      screen.getByText("2026-01-01 → 2026-02-01 · generated February 1, 2026"),
+    ).toBeInTheDocument();
   });
 });
