@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildStage4Interpretation,
   INTERPRETATION_VERSION,
+  MAX_BRIEF_PATTERNS,
   type Stage4Input,
 } from "../src/modules/briefs/stage4-interpretation.js";
 import { compareSymptomFrequency } from "../src/modules/briefs/period-comparison.js";
@@ -359,6 +360,124 @@ describe("buildStage4Interpretation — deterministic pattern IDs", () => {
     ).patterns[0]!;
 
     expect(hotFlash.id).not.toBe(fatigue.id);
+  });
+});
+
+describe("buildStage4Interpretation — MAX_BRIEF_PATTERNS cap", () => {
+  it("MAX_BRIEF_PATTERNS is 6", () => {
+    expect(MAX_BRIEF_PATTERNS).toBe(6);
+  });
+
+  it("caps at 6 patterns when more than 6 categories qualify — the real production failure mode", () => {
+    // 8 categories, all increased against an empty previous period —
+    // exactly the shape a sparse/new comparison period produces, and
+    // exactly what caused unbounded AI output in production.
+    const current = [
+      { category: "ANXIETY", count: 2 },
+      { category: "BRAIN_FOG", count: 1 },
+      { category: "FATIGUE", count: 3 },
+      { category: "HEADACHE", count: 1 },
+      { category: "HOT_FLASH", count: 4 },
+      { category: "IRREGULAR_HEARTBEAT", count: 1 },
+      { category: "JOINT_PAIN", count: 2 },
+      { category: "LIBIDO_CHANGE", count: 1 },
+    ];
+    const comparison = compareSymptomFrequency(
+      current,
+      current.map((c) => ({ category: c.category, count: 0 })),
+    );
+    expect(comparison).toHaveLength(8); // sanity: all 8 genuinely qualify
+
+    const result = buildStage4Interpretation(emptyInput({ frequencyComparison: comparison }));
+
+    expect(result.patterns).toHaveLength(6);
+  });
+
+  it("preserves the existing deterministic order for the patterns it keeps — the first 6 alphabetically, not a re-ranking", () => {
+    const current = [
+      { category: "ANXIETY", count: 2 },
+      { category: "BRAIN_FOG", count: 1 },
+      { category: "FATIGUE", count: 3 },
+      { category: "HEADACHE", count: 1 },
+      { category: "HOT_FLASH", count: 4 },
+      { category: "IRREGULAR_HEARTBEAT", count: 1 },
+      { category: "JOINT_PAIN", count: 2 },
+      { category: "LIBIDO_CHANGE", count: 1 },
+    ];
+    const comparison = compareSymptomFrequency(
+      current,
+      current.map((c) => ({ category: c.category, count: 0 })),
+    );
+    const uncapped = comparison.map((_, i) =>
+      buildStage4Interpretation(emptyInput({ frequencyComparison: comparison.slice(0, i + 1) })),
+    );
+    const result = buildStage4Interpretation(emptyInput({ frequencyComparison: comparison }));
+
+    // The 6 kept patterns are exactly the first 6 alphabetical
+    // categories' ids, in that same order — JOINT_PAIN and
+    // LIBIDO_CHANGE (7th and 8th alphabetically) are dropped, not
+    // reordered in ahead of an earlier category.
+    expect(result.patterns.map((p) => p.id)).toEqual([
+      "frequency_increased:ANXIETY",
+      "frequency_increased:BRAIN_FOG",
+      "frequency_increased:FATIGUE",
+      "frequency_increased:HEADACHE",
+      "frequency_increased:HOT_FLASH",
+      "frequency_increased:IRREGULAR_HEARTBEAT",
+    ]);
+    // Each kept pattern is byte-identical to what building it alone
+    // (uncapped, at its own position) produces — the cap only slices
+    // the array, it does not alter how any individual pattern is
+    // constructed.
+    expect(result.patterns[0]).toEqual(uncapped[0]!.patterns[0]);
+    expect(result.patterns[5]).toEqual(uncapped[5]!.patterns[5]);
+  });
+
+  it("applies the cap across pattern types in their combined push order — co-occurrence and treatment patterns are dropped, not frequency ones, when frequency alone already fills the cap", () => {
+    const current = [
+      { category: "ANXIETY", count: 2 },
+      { category: "BRAIN_FOG", count: 1 },
+      { category: "FATIGUE", count: 3 },
+      { category: "HEADACHE", count: 1 },
+      { category: "HOT_FLASH", count: 4 },
+      { category: "IRREGULAR_HEARTBEAT", count: 1 },
+    ];
+    const comparison = compareSymptomFrequency(
+      current,
+      current.map((c) => ({ category: c.category, count: 0 })),
+    );
+    expect(comparison).toHaveLength(6); // sanity: exactly 6, saturating the cap on its own
+
+    const result = buildStage4Interpretation(
+      emptyInput({
+        frequencyComparison: comparison,
+        coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 },
+        treatmentImpact: [treatmentImpact()],
+      }),
+    );
+
+    expect(result.patterns).toHaveLength(6);
+    expect(result.patterns.every((p) => p.type.startsWith("frequency_"))).toBe(true);
+    expect(result.patterns.some((p) => p.type === "co_occurrence_detected")).toBe(false);
+    expect(result.patterns.some((p) => p.type === "treatment_window_changed")).toBe(false);
+  });
+
+  it("does not cap when 6 or fewer patterns qualify — existing sparse/empty behavior is unchanged", () => {
+    const emptyResult = buildStage4Interpretation(emptyInput());
+    expect(emptyResult.patterns).toEqual([]);
+
+    const comparison = compareSymptomFrequency(
+      [{ category: "HOT_FLASH", count: 6 }],
+      [{ category: "HOT_FLASH", count: 4 }],
+    );
+    const sparseResult = buildStage4Interpretation(
+      emptyInput({
+        frequencyComparison: comparison,
+        coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 },
+        treatmentImpact: [treatmentImpact()],
+      }),
+    );
+    expect(sparseResult.patterns).toHaveLength(3); // well under the cap — nothing dropped
   });
 });
 

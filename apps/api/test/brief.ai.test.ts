@@ -571,6 +571,54 @@ describe("brief.ai", () => {
       expect(result.patterns).toEqual([VALID_PATTERN]);
     });
 
+    it("accepts a realistic multi-pattern response at MAX_BRIEF_PATTERNS' cap — every prior fixture here used 0-1 trivial patterns", async () => {
+      // Matches the real production shape (post Stage 4's own cap):
+      // several categories, each with a full-length observation/
+      // interpretation/caveat, each cited by its own discussion topic —
+      // the actual size driver behind the real "not valid JSON"
+      // failures, not the one-word narrative/single-pattern fixtures
+      // every other test in this file uses.
+      const categories = [
+        "ANXIETY",
+        "BRAIN_FOG",
+        "FATIGUE",
+        "HEADACHE",
+        "HOT_FLASH",
+        "IRREGULAR_HEARTBEAT",
+      ];
+      const patterns = categories.map((category) => ({
+        id: `frequency_increased:${category}`,
+        type: "frequency_increased",
+        observation: `${category} was reported more often during the current period than the previous period, based on the logged entries in this window.`,
+        interpretation: `This represents an increase in how often ${category} was reported, relative to the previous period.`,
+        caveat: "This is a descriptive pattern in the logged data and does not establish a cause.",
+        confidence: "descriptive",
+        evidenceRef: { category },
+      }));
+      const discussionTopics = categories.map((category) =>
+        dt(`Is the increase in how often ${category} was reported worth discussing further?`, [
+          `frequency_increased:${category}`,
+        ]),
+      );
+      const narrative =
+        "This summary covers self-reported symptom logs from the selected period. " +
+        categories
+          .map((category) => `${category} was reported more often than in the previous period.`)
+          .join(" ");
+
+      mockCreate.mockResolvedValue(
+        textResponse(JSON.stringify({ narrative, discussionTopics, patterns })),
+      );
+
+      const result = await briefAi.generate(VALID_INPUT, "en");
+
+      expect(result.patterns).toHaveLength(6);
+      expect(result.discussionTopics).toHaveLength(6);
+      expect(result.patterns.map((p) => p.evidenceRef)).toEqual(
+        categories.map((category) => ({ category })),
+      );
+    });
+
     it("accepts an empty patterns array", async () => {
       mockCreate.mockResolvedValue(
         textResponse(
