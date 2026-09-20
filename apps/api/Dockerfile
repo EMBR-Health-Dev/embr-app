@@ -31,6 +31,7 @@ COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
 COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /repo/apps/api/prisma ./apps/api/prisma
+COPY --from=build /repo/apps/api/assets ./apps/api/assets
 COPY docs ./docs
 
 USER node
