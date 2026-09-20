@@ -69,7 +69,8 @@ export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
         aria-label={t("heading")}
       >
         <SectionLabel>{t("observedPatternLabel")}</SectionLabel>
-        <p className="mt-2 text-sm font-medium text-foreground">{t("emptyTitle")}</p>
+        <p className="mt-2 text-sm text-foreground/60">{t("observedPatternDescription")}</p>
+        <p className="mt-3 text-sm font-medium text-foreground">{t("emptyTitle")}</p>
         <p className="mt-1 text-sm text-foreground/60">{t("emptyBody")}</p>
       </section>
     );
@@ -82,7 +83,8 @@ export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
       aria-label={t("heading")}
     >
       <SectionLabel>{t("observedPatternLabel")}</SectionLabel>
-      <h2 className="mt-2 font-display text-heading-m text-foreground">{t("heading")}</h2>
+      <p className="mt-2 text-sm text-foreground/60">{t("observedPatternDescription")}</p>
+      <h2 className="mt-3 font-display text-heading-m text-foreground">{t("heading")}</h2>
       <p className="mt-2 text-sm text-foreground/80">
         {t("message", {
           categoryA: tEnum(`category.${result.categoryA}`),
