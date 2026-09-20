@@ -96,13 +96,22 @@
     },
     "whatsGoingOn": {
       "headline": "What have you noticed lately?",
-      "hint": "Pick anything that's felt different. This isn't a log yet. It just helps your first check-in feel like it already knows you.",
+      "hint": "Pick anything that's felt different recently. This is just a starting point. Your first check-in will build from what you notice here.",
       "continue": "Continue",
       "sleep": "Sleep",
+      "sleepExamples": "Trouble falling asleep · Waking during the night · Night sweats · Waking tired",
       "energy": "Energy",
+      "energyExamples": "Lower energy · Sudden tiredness · Needing more rest · Energy changes",
       "mood": "Mood",
+      "moodExamples": "Irritability · Feeling emotional · Anxiety · Feeling low · Mood changes",
       "body": "Body",
-      "focus": "Focus"
+      "bodyExamples": "Hot flashes · Headaches · Aches · Bloating · Skin · Hair · Temperature",
+      "focus": "Focus",
+      "focusExamples": "Brain fog · Concentration · Forgetfulness · Finding words · Mental fatigue",
+      "cycle": "Cycle",
+      "cycleExamples": "Timing · Flow · Spotting · Premenstrual changes",
+      "somethingElse": "Something else",
+      "somethingElseExamples": "Digestion · Libido · Vaginal or urinary changes · Stress · Exercise · Treatments"
     },
     "appointmentStatus": {
       "headline": "Do you have a healthcare appointment coming up?",

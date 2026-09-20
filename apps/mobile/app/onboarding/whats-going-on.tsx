@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
-import { Chip } from "../../components/chip";
 import { theme } from "../../lib/theme";
 import { STEP_ROUTES } from "../../lib/onboarding-steps";
 import { ONBOARDING_AREA_LABELS } from "../../lib/onboarding-areas";
@@ -16,6 +15,22 @@ const AREA_KEYS: Record<string, string> = {
   MOOD: "mood",
   BODY: "body",
   FOCUS: "focus",
+  CYCLE: "cycle",
+  OTHER: "somethingElse",
+};
+// A few concrete, recognizable examples per area, shown as quiet
+// supporting text under the toggle — not a second layer of selectable
+// options. Ported from apps/web/src/app/onboarding/whats-going-on/page.tsx
+// alongside the same row layout, so the two platforms offer identical
+// choices with identical example text.
+const EXAMPLE_KEYS: Record<string, string> = {
+  SLEEP: "sleepExamples",
+  ENERGY: "energyExamples",
+  MOOD: "moodExamples",
+  BODY: "bodyExamples",
+  FOCUS: "focusExamples",
+  CYCLE: "cycleExamples",
+  OTHER: "somethingElseExamples",
 };
 
 export default function WhatsGoingOnScreen() {
@@ -60,15 +75,26 @@ export default function WhatsGoingOnScreen() {
     <OnboardingScreen step="WHATS_GOING_ON">
       <Text style={styles.headline}>{t("onboarding.whatsGoingOn.headline")}</Text>
       <Text style={styles.hint}>{t("onboarding.whatsGoingOn.hint")}</Text>
-      <View style={styles.chips}>
-        {AREAS.map((value) => (
-          <Chip
-            key={value}
-            label={t(`onboarding.whatsGoingOn.${AREA_KEYS[value]}`)}
-            selected={selected.includes(value)}
-            onPress={() => toggle(value)}
-          />
-        ))}
+      <View style={styles.rows}>
+        {AREAS.map((value) => {
+          const isSelected = selected.includes(value);
+          return (
+            <Pressable
+              key={value}
+              onPress={() => toggle(value)}
+              style={[styles.row, isSelected && styles.rowSelected]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+            >
+              <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>
+                {t(`onboarding.whatsGoingOn.${AREA_KEYS[value]}`)}
+              </Text>
+              <Text style={styles.rowExamples}>
+                {t(`onboarding.whatsGoingOn.${EXAMPLE_KEYS[value]}`)}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
       <Pressable
         onPress={() => void handleContinue()}
@@ -86,7 +112,21 @@ export default function WhatsGoingOnScreen() {
 const styles = StyleSheet.create({
   headline: { fontSize: 22, fontWeight: "500", color: theme.colors.textPrimary },
   hint: { marginTop: 8, fontSize: 14, color: theme.colors.textSecondary },
-  chips: { marginTop: 28, flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  rows: { marginTop: 28, gap: 8 },
+  row: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  rowSelected: {
+    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.accentSoft,
+  },
+  rowLabel: { fontSize: 14, fontWeight: "500", color: theme.colors.textPrimary },
+  rowLabelSelected: { color: theme.colors.accent },
+  rowExamples: { marginTop: 2, fontSize: 12, color: theme.colors.textMuted },
   button: {
     marginTop: 32,
     alignSelf: "flex-start",
