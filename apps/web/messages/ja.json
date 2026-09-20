@@ -260,6 +260,7 @@
   "Nav": {
     "navigationLabel": "メインナビゲーション",
     "home": "ホーム",
+    "timeline": "タイムライン",
     "patterns": "パターン",
     "clinicalBrief": "Clinical Brief",
     "settings": "設定",
@@ -269,6 +270,26 @@
     "export": "エクスポート",
     "organization": "組織",
     "logout": "ログアウト"
+  },
+  "Timeline": {
+    "title": "タイムライン",
+    "subtitle": "あなたの記録を、時系列ですべて確認できます。",
+    "filterGroupLabel": "表示する項目を選択",
+    "filter": {
+      "symptoms": "症状",
+      "cycle": "周期",
+      "treatments": "治療"
+    },
+    "cycleLabel": "周期",
+    "periodStarted": "生理開始",
+    "periodEnded": "生理終了",
+    "treatmentStarted": "{name}を開始",
+    "treatmentEnded": "{name}を終了",
+    "emptyTitle": "まだ記録がありません。",
+    "emptyBody": "症状、周期、治療を記録すると、日付順にここに表示されます。",
+    "filteredEmptyTitle": "この条件に一致する記録はありません。",
+    "filteredEmptyBody": "上の項目を追加で選択してみてください。",
+    "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。"
   },
   "Trends": {
     "title": "パターン",
