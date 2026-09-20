@@ -14,6 +14,8 @@ const AREA_KEYS: Record<string, string> = {
   MOOD: "Onboarding.whatsGoingOn.mood",
   BODY: "Onboarding.whatsGoingOn.body",
   FOCUS: "Onboarding.whatsGoingOn.focus",
+  CYCLE: "Onboarding.whatsGoingOn.cycle",
+  OTHER: "Onboarding.whatsGoingOn.somethingElse",
 };
 
 export default function TheLoopScreen() {
@@ -53,18 +55,20 @@ export default function TheLoopScreen() {
     <OnboardingScreen step="THE_LOOP">
       <p className="font-display text-heading-xl text-foreground">{t("headline")}</p>
 
-      <div className="relative mt-10 flex flex-col">
+      <div className="relative mt-8 flex flex-col">
         <div className="absolute bottom-4 left-[5px] top-4 w-px bg-muted" aria-hidden="true" />
 
         <LoopStage label={t("trackLabel")} title={trackLabel}>
-          <p className="mt-2 text-xs text-foreground/50">{t("trackTreatmentsHint")}</p>
+          <p className="mt-2 text-sm text-foreground/60">{t("trackTreatmentsHint")}</p>
         </LoopStage>
         <LoopStage label={t("patternsLabel")} title={t("patternsTitle")}>
-          <p className="mt-2 font-display italic text-foreground/90">{t("patternsExample")}</p>
+          <p className="mt-3 text-sm text-foreground/60">{t("patternsExampleLabel")}</p>
+          <p className="mt-1 font-display italic text-foreground/90">{t("patternsExample")}</p>
           <p className="mt-2 text-xs text-foreground/50">{t("patternsCaveat")}</p>
         </LoopStage>
         <LoopStage label={t("briefLabel")} title={t("briefTitle")}>
           <p className="mt-2 text-sm text-foreground/60">{t("briefBody")}</p>
+          <p className="mt-2 text-xs text-foreground/50">{t("briefControlNote")}</p>
         </LoopStage>
         <LoopStage label={t("conversationLabel")} title={t("conversationTitle")} last>
           <p className="mt-2 text-sm text-foreground/60">{t("conversationBody")}</p>

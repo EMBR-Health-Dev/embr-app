@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { organizationService } from "../src/modules/organizations/organization.service.js";
 import { prisma } from "../src/lib/prisma.js";
+import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -47,6 +48,14 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
       }>,
       auditLogEntries: [] as Array<{ action: string; userId: string | null; metadata?: unknown }>,
+      emailVerificationTokens: [] as Array<{
+        id: string;
+        userId: string;
+        tokenHash: string;
+        expiresAt: Date;
+        consumedAt: Date | null;
+        createdAt: Date;
+      }>,
     },
     nextId: () => randomUUID(),
   };
@@ -147,11 +156,58 @@ vi.mock("../src/lib/prisma.js", () => {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       findMany: vi.fn().mockResolvedValue([]),
     },
+    // Real, stateful mock — see brief.test.ts's identical shape for why
+    // a static stub can't exercise a real verify cycle.
     emailVerificationToken: {
-      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
-      create: vi.fn().mockResolvedValue({ id: nextId() }),
-      findFirst: vi.fn().mockResolvedValue(null),
-      update: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { userId: string; consumedAt: null };
+          data: { consumedAt: Date };
+        }) => {
+          const matched = state.emailVerificationTokens.filter(
+            (t) => t.userId === where.userId && t.consumedAt === where.consumedAt,
+          );
+          matched.forEach((t) => Object.assign(t, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
+      create: vi.fn(
+        ({
+          data,
+        }: {
+          data: Omit<
+            (typeof state.emailVerificationTokens)[number],
+            "id" | "createdAt" | "consumedAt"
+          >;
+        }) => {
+          const token = { id: nextId(), createdAt: now(), consumedAt: null, ...data };
+          state.emailVerificationTokens.push(token);
+          return Promise.resolve(token);
+        },
+      ),
+      findFirst: vi.fn(
+        ({
+          where,
+        }: {
+          where: { tokenHash: string; consumedAt: null; expiresAt: { gt: Date } };
+        }) => {
+          const found = state.emailVerificationTokens.find(
+            (t) =>
+              t.tokenHash === where.tokenHash &&
+              t.consumedAt === where.consumedAt &&
+              t.expiresAt.getTime() > where.expiresAt.gt.getTime(),
+          );
+          return Promise.resolve(found ?? null);
+        },
+      ),
+      update: vi.fn(({ where, data }: { where: { id: string }; data: { consumedAt: Date } }) => {
+        const token = state.emailVerificationTokens.find((t) => t.id === where.id)!;
+        Object.assign(token, data);
+        return Promise.resolve(token);
+      }),
     },
     passwordResetToken: {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -427,12 +483,37 @@ vi.mock("../src/lib/prisma.js", () => {
 
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
+function lastVerificationToken(): string {
+  const calls = vi.mocked(sendVerificationEmail).mock.calls;
+  const lastCall = calls[calls.length - 1];
+  if (!lastCall) throw new Error("sendVerificationEmail was never called");
+  return lastCall[1];
+}
+
+/** Registers, verifies via the real endpoint, then logs in — every
+ * existing test in this file predates the verified-email gate on
+ * invite creation (see organization.routes.ts) and isn't testing the
+ * gate itself. See registerAndLoginUnverified for that. */
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
   const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  await agent.post("/auth/verify-email").send({ token: lastVerificationToken() });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   // Mirrors what a real browser does automatically: read the CSRF
   // cookie the login response just set and echo it back as a header
   // on every subsequent request this agent makes.
+  const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+    c.startsWith("embr_csrf="),
+  );
+  if (csrfCookie) {
+    const token = csrfCookie.split(";")[0]!.split("=")[1]!;
+    agent.set("x-csrf-token", token);
+  }
+  return register.body.data.id as string;
+}
+
+async function registerAndLoginUnverified(agent: ReturnType<typeof request.agent>, email: string) {
+  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
     c.startsWith("embr_csrf="),
   );
@@ -493,7 +574,9 @@ beforeEach(() => {
   state.memberships = [];
   state.invites = [];
   state.auditLogEntries = [];
+  state.emailVerificationTokens = [];
   sentInvites.length = 0;
+  vi.mocked(sendVerificationEmail).mockClear();
 });
 
 describe("POST /organizations", () => {
@@ -553,6 +636,32 @@ describe("org invite + accept flow", () => {
       .post(`/organizations/${organizationId}/invites`)
       .send({ email: "invitee@embr.health" });
     expect(res.status).toBe(403);
+  });
+
+  it("blocks an unverified ORG_ADMIN with 403 EMAIL_NOT_VERIFIED, and never sends the invite", async () => {
+    const app = createApp();
+    const platformAdminAgent = request.agent(app);
+    await registerAndLogin(platformAdminAgent, "ops-unverified@embr.health");
+    await promoteToAdminAndRelogin(platformAdminAgent, "ops-unverified@embr.health");
+    const orgRes = await platformAdminAgent
+      .post("/organizations")
+      .send({ name: "Acme", slug: "acme-unverified" });
+    const organizationId = orgRes.body.data.id as string;
+
+    const orgAdminAgent = request.agent(app);
+    const orgAdminId = await registerAndLoginUnverified(
+      orgAdminAgent,
+      "orgadmin-unverified@embr.health",
+    );
+    addMembership(organizationId, orgAdminId, "ORG_ADMIN");
+
+    const res = await orgAdminAgent
+      .post(`/organizations/${organizationId}/invites`)
+      .send({ email: "invitee-unverified@embr.health" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("EMAIL_NOT_VERIFIED");
+    expect(sentInvites).toHaveLength(0);
   });
 
   it("an ORG_ADMIN can invite, and the invited user can accept", async () => {

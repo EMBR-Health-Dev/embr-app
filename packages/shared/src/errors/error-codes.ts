@@ -12,6 +12,11 @@ export enum ErrorCode {
   RATE_LIMITED = "RATE_LIMITED",
   INTERNAL_ERROR = "INTERNAL_ERROR",
   SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE",
+  /** Authenticated, but the account's email isn't confirmed yet —
+   * distinct from FORBIDDEN (which never resolves by the caller doing
+   * anything) so a client can branch on this one code to show a
+   * verification prompt instead of a generic access-denied message. */
+  EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED",
 }
 
 export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
@@ -23,4 +28,5 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   [ErrorCode.RATE_LIMITED]: 429,
   [ErrorCode.INTERNAL_ERROR]: 500,
   [ErrorCode.SERVICE_UNAVAILABLE]: 503,
+  [ErrorCode.EMAIL_NOT_VERIFIED]: 403,
 };

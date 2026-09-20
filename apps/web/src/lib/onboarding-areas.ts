@@ -9,8 +9,16 @@ export const ONBOARDING_AREA_LABELS: Record<string, string> = {
   MOOD: "Mood",
   BODY: "Body",
   FOCUS: "Focus",
+  CYCLE: "Cycle",
+  OTHER: "Something else",
 };
 
+// CYCLE and OTHER are deliberately absent below, not mapped to an empty
+// array — cycle changes are tracked through the separate CycleEntry
+// flow on the dashboard (flow/period start/end), not a SymptomCategory
+// at all, and OTHER is too broad to suggest any one category. Both
+// fall through firstSuggestedCategory's own `?.[0]` to the generic
+// "log something" entry point instead of a wrong or invented category.
 export const ONBOARDING_AREA_TO_CATEGORIES: Record<string, string[]> = {
   SLEEP: ["SLEEP_DISTURBANCE", "NIGHT_SWEATS"],
   ENERGY: ["FATIGUE"],

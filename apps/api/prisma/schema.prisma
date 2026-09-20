@@ -35,8 +35,14 @@ enum Role {
 }
 
 /// A registered account. Passwords are never stored in plaintext — only
-/// an argon2id hash. `emailVerifiedAt` gates access to features that
-/// require a confirmed email (see requireVerifiedEmail middleware).
+/// an argon2id hash. `emailVerifiedAt` does NOT gate login, the
+/// dashboard, symptom tracking, or history — an unverified account has
+/// full access to those. It gates only actions that send or share this
+/// user's data externally: Clinical Brief generation/download
+/// (POST /briefs, GET /briefs/:id/pdf), data export (GET /export/*),
+/// and organization invites (POST /organizations/:id/invites) — see
+/// the `requireVerifiedEmail` middleware (auth.middleware.ts) applied
+/// on exactly those routes.
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
@@ -604,16 +610,21 @@ enum OnboardingArea {
   MOOD
   BODY
   FOCUS
+  CYCLE
+  OTHER
 }
 
 /// Coarse enough that no appointment date is ever collected during
 /// onboarding — see docs/MILESTONES.md's Milestone 18 entry for why an
 /// exact date was deliberately deferred to a future "Appointment Mode."
+/// Refined post-audit from an earlier four-option set (WITHIN_MONTH /
+/// UNSURE_WHEN / NO / UNSURE) to this one — see this migration's own
+/// data-remapping comment for how existing rows carried over.
 enum OnboardingAppointmentStatus {
   WITHIN_MONTH
-  UNSURE_WHEN
-  NO
-  UNSURE
+  WITHIN_THREE_MONTHS_OR_LONGER
+  WAITING_TO_SCHEDULE
+  NOT_NOW
 }
 
 /// Which of the five onboarding screens the person last reached —

@@ -10,6 +10,7 @@ import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { AppNav } from "../../components/app-nav";
+import { EmailVerificationRequired } from "../../components/email-verification-required";
 import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 export default function BriefPage() {
@@ -24,6 +25,7 @@ export default function BriefPage() {
   const [toDate, setToDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateNeedsVerification, setGenerateNeedsVerification] = useState(false);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
 
   const [history, setHistory] = useState<ClinicalBriefListItemDto[] | null>(null);
@@ -35,6 +37,7 @@ export default function BriefPage() {
   const [trends, setTrends] = useState<BriefTrendsDto | null>(null);
   const [downloadingSummary, setDownloadingSummary] = useState(false);
   const [summaryDownloadError, setSummaryDownloadError] = useState<string | null>(null);
+  const [summaryNeedsVerification, setSummaryNeedsVerification] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -66,6 +69,7 @@ export default function BriefPage() {
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setGenerateError(null);
+    setGenerateNeedsVerification(false);
 
     if (!fromDate || !toDate) {
       setGenerateError(t("pickDates"));
@@ -82,7 +86,11 @@ export default function BriefPage() {
       loadHistory();
       api.briefs.trends().then(setTrends);
     } catch (err) {
-      setGenerateError(err instanceof ApiError ? err.message : t("generateError"));
+      if (err instanceof ApiError && err.code === "EMAIL_NOT_VERIFIED") {
+        setGenerateNeedsVerification(true);
+      } else {
+        setGenerateError(err instanceof ApiError ? err.message : t("generateError"));
+      }
     } finally {
       setGenerating(false);
     }
@@ -96,6 +104,7 @@ export default function BriefPage() {
   // the separate /export page.
   async function handleDownloadSummary(brief: ClinicalBriefDto) {
     setSummaryDownloadError(null);
+    setSummaryNeedsVerification(false);
     setDownloadingSummary(true);
     try {
       const blob = await api.export.clinicianSummaryPdf({ from: brief.fromDate, to: brief.toDate });
@@ -108,7 +117,11 @@ export default function BriefPage() {
       link.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setSummaryDownloadError(err instanceof ApiError ? err.message : t("downloadSummaryError"));
+      if (err instanceof ApiError && err.code === "EMAIL_NOT_VERIFIED") {
+        setSummaryNeedsVerification(true);
+      } else {
+        setSummaryDownloadError(err instanceof ApiError ? err.message : t("downloadSummaryError"));
+      }
     } finally {
       setDownloadingSummary(false);
     }
@@ -196,6 +209,7 @@ export default function BriefPage() {
             {generateError}
           </p>
         )}
+        {generateNeedsVerification && <EmailVerificationRequired email={user.email} />}
 
         {justGenerated && (
           <section className="mt-8 rounded border border-primary bg-primary/5 p-5">
@@ -221,6 +235,7 @@ export default function BriefPage() {
                 {summaryDownloadError}
               </p>
             )}
+            {summaryNeedsVerification && <EmailVerificationRequired email={user.email} />}
           </section>
         )}
 
@@ -395,7 +410,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         <ul className="mt-1 text-foreground/70">
           {brief.symptomSummary.map((entry) => (
             <li key={entry.category}>
-              {tEnum(`category.${entry.category}`)} — {t("occurrenceCount", { count: entry.count })}{" "}
+              {tEnum(`category.${entry.category}`)}: {t("occurrenceCount", { count: entry.count })}{" "}
               ({formatSeverityBreakdown(entry.severityBreakdown, tEnum, locale)})
             </li>
           ))}
@@ -465,7 +480,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
           <ul className="mt-1 text-foreground/70">
             {brief.treatmentSummary.map((entry, i) => (
               <li key={i}>
-                {entry.name} — {tEnum(`treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
+                {entry.name}: {tEnum(`treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
                 {entry.endDate ?? t("ongoing")}
               </li>
             ))}

@@ -16,7 +16,12 @@ import {
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
-import { requireAuth, requireOrgRole, requireRole } from "../auth/auth.middleware.js";
+import {
+  requireAuth,
+  requireOrgRole,
+  requireRole,
+  requireVerifiedEmail,
+} from "../auth/auth.middleware.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { writeAuditLog } from "../auth/audit.js";
 import type { Organization } from "../../generated/prisma/index.js";
@@ -140,6 +145,7 @@ router.get(
 router.post(
   "/organizations/:organizationId/invites",
   requireOrgRole("ORG_ADMIN"),
+  requireVerifiedEmail(),
   requireCsrfToken(),
   validate(inviteMemberSchema),
   asyncHandler(async (req, res) => {

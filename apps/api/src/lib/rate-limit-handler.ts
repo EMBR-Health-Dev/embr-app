@@ -15,7 +15,7 @@ export function rateLimitExceededHandler(_req: Request, _res: Response, next: Ne
   next(
     new AppError({
       code: ErrorCode.RATE_LIMITED,
-      message: "Too many requests — please try again later",
+      message: "Too many requests. Please try again later",
     }),
   );
 }

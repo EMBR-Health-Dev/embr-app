@@ -18,6 +18,7 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { EmailVerificationRequired } from "../../components/email-verification-required";
 
 const TRENDS_WINDOW_DAYS = 90;
 // Mirrors createCheckoutSessionSchema's own z.number().int().positive().max(100000)
@@ -74,6 +75,7 @@ export default function OrganizationPage() {
   const [inviteRole, setInviteRole] = useState<"ORG_ADMIN" | "ORG_MEMBER">("ORG_MEMBER");
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [inviteNeedsVerification, setInviteNeedsVerification] = useState(false);
   const [inviting, setInviting] = useState(false);
 
   const [ssoConnection, setSsoConnection] = useState<SsoConnectionDto | null>(null);
@@ -210,6 +212,7 @@ export default function OrganizationPage() {
     if (!selectedOrgId) return;
     setInviteError(null);
     setInviteSuccess(null);
+    setInviteNeedsVerification(false);
     setInviting(true);
     try {
       const invite = await api.organizations.invites.create(selectedOrgId, {
@@ -220,7 +223,11 @@ export default function OrganizationPage() {
       setInviteEmail("");
       setInviteRole("ORG_MEMBER");
     } catch (err) {
-      setInviteError(err instanceof ApiError ? err.message : t("inviteError"));
+      if (err instanceof ApiError && err.code === "EMAIL_NOT_VERIFIED") {
+        setInviteNeedsVerification(true);
+      } else {
+        setInviteError(err instanceof ApiError ? err.message : t("inviteError"));
+      }
     } finally {
       setInviting(false);
     }
@@ -503,6 +510,7 @@ export default function OrganizationPage() {
               {inviteError}
             </p>
           )}
+          {inviteNeedsVerification && <EmailVerificationRequired email={user.email} />}
           {inviteSuccess && (
             <p role="status" className="text-sm font-medium text-foreground">
               {inviteSuccess}

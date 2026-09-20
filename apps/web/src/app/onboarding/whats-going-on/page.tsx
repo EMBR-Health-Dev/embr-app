@@ -16,6 +16,23 @@ const AREA_KEYS: Record<string, string> = {
   MOOD: "mood",
   BODY: "body",
   FOCUS: "focus",
+  CYCLE: "cycle",
+  OTHER: "somethingElse",
+};
+// A few concrete, recognizable examples per area, shown as quiet
+// supporting text under the toggle — not a second layer of selectable
+// options. The point is recognition ("oh, that's what this is"), not
+// a longer checklist: see this screen's own hint copy and
+// onboarding-areas.ts's doc comment for why noticedAreas itself stays
+// exactly this coarse, whatever specific examples are shown here.
+const EXAMPLE_KEYS: Record<string, string> = {
+  SLEEP: "sleepExamples",
+  ENERGY: "energyExamples",
+  MOOD: "moodExamples",
+  BODY: "bodyExamples",
+  FOCUS: "focusExamples",
+  CYCLE: "cycleExamples",
+  OTHER: "somethingElseExamples",
 };
 
 export default function WhatsGoingOnScreen() {
@@ -73,7 +90,7 @@ export default function WhatsGoingOnScreen() {
     <OnboardingScreen step="WHATS_GOING_ON">
       <p className="font-display text-heading-xl text-foreground">{t("headline")}</p>
       <p className="mt-3 text-sm text-foreground/60">{t("hint")}</p>
-      <div className="mt-8 flex flex-wrap gap-2.5">
+      <div className="mt-8 flex flex-col gap-2">
         {AREAS.map((value) => {
           const isSelected = selected.includes(value);
           return (
@@ -81,13 +98,20 @@ export default function WhatsGoingOnScreen() {
               key={value}
               onClick={() => toggle(value)}
               aria-pressed={isSelected}
-              className={`rounded-sm border px-4 py-2 text-sm transition-colors ${
+              className={`rounded-sm border px-4 py-3 text-left transition-colors ${
                 isSelected
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-foreground/75 hover:border-border"
+                  ? "border-primary bg-primary/10"
+                  : "border-border-subtle hover:border-border"
               }`}
             >
-              {t(AREA_KEYS[value])}
+              <span
+                className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"}`}
+              >
+                {t(AREA_KEYS[value])}
+              </span>
+              <span className="mt-0.5 block text-xs text-foreground/50">
+                {t(EXAMPLE_KEYS[value])}
+              </span>
             </button>
           );
         })}

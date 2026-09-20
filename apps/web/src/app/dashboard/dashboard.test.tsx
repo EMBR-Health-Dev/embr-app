@@ -34,7 +34,9 @@ vi.mock("../../lib/auth-context", () => ({
 }));
 
 const symptomFrequency = vi.fn().mockResolvedValue([]);
-const symptomLogsList = vi.fn().mockResolvedValue({ items: [] });
+const symptomLogsList = vi
+  .fn()
+  .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
 const symptomLogsCreate = vi.fn();
 
 vi.mock("../../lib/api", () => ({
@@ -50,9 +52,23 @@ vi.mock("../../lib/api", () => ({
 
 beforeEach(() => {
   symptomFrequency.mockReset().mockResolvedValue([]);
-  symptomLogsList.mockReset().mockResolvedValue({ items: [] });
+  symptomLogsList
+    .mockReset()
+    .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
   symptomLogsCreate.mockReset();
 });
+
+function makeLog(id: string, category = "HOT_FLASH") {
+  return {
+    id,
+    category,
+    severity: "MODERATE",
+    occurredAt: "2026-01-01T00:00:00Z",
+    notes: null,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
+  };
+}
 
 function renderWithIntl(ui: React.ReactElement, locale: "en" | "ja" = "en") {
   return render(
@@ -194,10 +210,110 @@ describe("Dashboard — symptom log form error handling", () => {
     // Previously this failure was swallowed entirely — no error, no
     // feedback, the form just sat there having silently done nothing.
     expect(
-      await screen.findByText("Couldn't save that — check your connection and try again."),
+      await screen.findByText("Couldn't save that. Check your connection and try again."),
     ).toBeInTheDocument();
     // The form must still be open and usable, not collapsed as if the
     // (failed) submission had succeeded.
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — recent symptoms pagination", () => {
+  it("does not show Load more when everything already fits on one page", async () => {
+    symptomLogsList.mockResolvedValue({
+      items: [makeLog("1")],
+      page: 1,
+      pageSize: 10,
+      total: 1,
+      totalPages: 1,
+    });
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Recent symptoms")).toBeInTheDocument());
+    expect(screen.queryByText("Load more")).not.toBeInTheDocument();
+  });
+
+  it("fetches and appends the next page from the server, rather than hiding items already in memory", async () => {
+    const user = userEvent.setup();
+    symptomLogsList.mockResolvedValueOnce({
+      items: [makeLog("1", "HOT_FLASH")],
+      page: 1,
+      pageSize: 10,
+      total: 2,
+      totalPages: 2,
+    });
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const loadMore = await screen.findByText("Load more");
+    symptomLogsList.mockResolvedValueOnce({
+      items: [makeLog("2", "BRAIN_FOG")],
+      page: 2,
+      pageSize: 10,
+      total: 2,
+      totalPages: 2,
+    });
+
+    await user.click(loadMore);
+
+    // The second page's item must come from a real second server call
+    // (page: 2), not from data client-side pagination would already
+    // have had in memory.
+    expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 2, pageSize: 10 });
+    await waitFor(() => expect(screen.getByText("Brain Fog")).toBeInTheDocument());
+    // The first page's item is still there — appended, not replaced.
+    expect(screen.getByText("Hot Flash")).toBeInTheDocument();
+    // Both pages now fetched, so the button is gone.
+    expect(screen.queryByText("Load more")).not.toBeInTheDocument();
+  });
+
+  it("shows a real error and keeps the button usable when loading more fails", async () => {
+    const user = userEvent.setup();
+    symptomLogsList.mockResolvedValueOnce({
+      items: [makeLog("1")],
+      page: 1,
+      pageSize: 10,
+      total: 2,
+      totalPages: 2,
+    });
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const loadMore = await screen.findByText("Load more");
+    symptomLogsList.mockRejectedValueOnce(new Error("network down"));
+
+    await user.click(loadMore);
+
+    expect(await screen.findByText("Couldn't load more entries. Try again.")).toBeInTheDocument();
+    // Still there to retry — not stuck disabled or removed.
+    expect(screen.getByText("Load more")).toBeInTheDocument();
+  });
+
+  it("resets back to the first page after logging something new", async () => {
+    const user = userEvent.setup();
+    symptomLogsList.mockResolvedValue({
+      items: [makeLog("1")],
+      page: 1,
+      pageSize: 10,
+      total: 11,
+      totalPages: 2,
+    });
+    symptomLogsCreate.mockResolvedValue(makeLog("new"));
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const button = await screen.findByRole("button", {
+      name: "Log a hot flash happening right now",
+    });
+    await user.click(button);
+
+    await waitFor(() =>
+      expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 1, pageSize: 10 }),
+    );
   });
 });

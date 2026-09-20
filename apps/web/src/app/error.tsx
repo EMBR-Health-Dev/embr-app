@@ -12,13 +12,13 @@ import { Button } from "../components/button";
 const COPY = {
   en: {
     title: "Something went wrong",
-    body: "This page hit an unexpected error. Your data is safe — nothing here was saved or lost because of this.",
+    body: "This page hit an unexpected error. Your data is safe: nothing here was saved or lost because of this.",
     retry: "Try again",
     home: "Go to dashboard",
   },
   ja: {
     title: "問題が発生しました",
-    body: "このページで予期しないエラーが発生しました。データは保護されています — この件によって保存や消失が起きたわけではありません。",
+    body: "このページで予期しないエラーが発生しました。データは保護されています。この件によって保存や消失が起きたわけではありません。",
     retry: "再試行",
     home: "ダッシュボードへ",
   },

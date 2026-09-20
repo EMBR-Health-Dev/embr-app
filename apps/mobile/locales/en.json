@@ -107,10 +107,10 @@
     "appointmentStatus": {
       "headline": "Do you have a healthcare appointment coming up?",
       "hint": "No need for the exact date yet. Just helps us know whether to keep BRIEF close at hand.",
-      "withinMonth": "Yes, within the next month",
-      "unsureWhen": "Yes, but I'm not sure when",
-      "no": "No",
-      "unsure": "I'm not sure yet"
+      "withinMonth": "Within the next month",
+      "withinThreeMonthsOrLonger": "Within the next 3 months or longer",
+      "waitingToSchedule": "Waiting to schedule",
+      "notNow": "Not now"
     },
     "theLoop": {
       "headline": "Here's how EMBR works.",
@@ -353,7 +353,8 @@
   },
   "appointmentCard": {
     "withinMonth": "You mentioned a healthcare appointment coming up soon — a BRIEF can help you walk in with something concrete.",
-    "unsureWhen": "You mentioned a healthcare appointment might be coming up — a BRIEF is ready whenever you are.",
+    "withinThreeMonthsOrLonger": "You mentioned a healthcare appointment in the next few months. A BRIEF is ready whenever you are.",
+    "waitingToSchedule": "You mentioned you're waiting to schedule a healthcare appointment. A BRIEF is ready whenever you are.",
     "generateBrief": "Generate a BRIEF"
   },
   "coOccurrence": {

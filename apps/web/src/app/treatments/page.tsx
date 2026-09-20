@@ -72,6 +72,16 @@ export default function TreatmentsPage() {
       setFormError(t("pickEndDate"));
       return;
     }
+    // The date input's own `min={startDate}` (below) steers the native
+    // picker away from this, but it isn't a hard guarantee across every
+    // browser and mobile date picker, and it does nothing at all if a
+    // value ever gets set programmatically. Catching it here means the
+    // request is never sent for the one shape the API is guaranteed to
+    // reject (see createTreatmentSchema's endDate>=startDate refinement).
+    if (!ongoing && endDate && endDate < startDate) {
+      setFormError(t("invalidEndDate"));
+      return;
+    }
 
     setSaving(true);
     try {
@@ -90,7 +100,15 @@ export default function TreatmentsPage() {
       setNotes("");
       await loadTreatments();
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : t("genericError"));
+      // Prefer the specific field-level reason the API validated
+      // against (e.g. "endDate cannot be before startDate") over the
+      // generic "Request validation failed" wrapper every Zod failure
+      // gets normalized to (see error-handler.ts's normalizeError) —
+      // the top-level message alone told a real user nothing about
+      // what to actually fix.
+      setFormError(
+        err instanceof ApiError ? (err.details?.[0]?.message ?? err.message) : t("genericError"),
+      );
     } finally {
       setSaving(false);
     }

@@ -1,6 +1,7 @@
 {
   "Login": {
     "title": "おかえりなさい",
+    "subtitle": "あなたの記録は、そのままここにあります。",
     "passwordChanged": "パスワードを変更しました。新しいパスワードでログインしてください。",
     "ssoError": {
       "sso_not_configured": "そのメールアドレスのドメインにはSSO連携が設定されていません。",
@@ -105,37 +106,48 @@
     },
     "whatsGoingOn": {
       "headline": "最近、何か気になることはありましたか?",
-      "hint": "変化を感じたものを選んでください。まだ記録にはなりません。最初のチェックインが、あなたのことをすでに知っているように感じられるための準備です。",
+      "hint": "最近、変化を感じたものを選んでください。これは出発点です。最初のチェックインは、ここで選んだことから始まります。",
       "continue": "次へ",
       "sleep": "睡眠",
+      "sleepExamples": "寝つきが悪い · 夜中に目が覚める · 寝汗 · 疲れが取れない",
       "energy": "エネルギー",
+      "energyExamples": "エネルギー低下 · 急な疲労感 · 休息が必要 · 時間帯による変化",
       "mood": "気分",
+      "moodExamples": "イライラ · 感情の起伏 · 不安 · 気分の落ち込み · 気分の変化",
       "body": "身体",
-      "focus": "集中力"
+      "bodyExamples": "ホットフラッシュ · 頭痛 · 体の痛み · 膨満感 · 肌 · 髪 · 体温の変化",
+      "focus": "集中力",
+      "focusExamples": "ブレインフォグ · 集中しづらい · 物忘れ · 言葉が出てこない · 頭が働かない感じ",
+      "cycle": "周期",
+      "cycleExamples": "周期のタイミング · 経血量 · 不正出血 · 生理前の変化",
+      "somethingElse": "その他",
+      "somethingElseExamples": "消化 · 性欲 · 膣や排尿の変化 · ストレス · 運動 · 治療による変化"
     },
     "appointmentStatus": {
       "headline": "近々、診察の予定はありますか?",
-      "hint": "正確な日付はまだ不要です。BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
-      "withinMonth": "はい、1か月以内にあります",
-      "unsureWhen": "はい、ただしいつかは未定です",
-      "no": "いいえ",
-      "unsure": "まだわかりません"
+      "hint": "正確な日付はまだ不要です。Clinical Briefをすぐ使える状態にしておくかどうかの参考にします。",
+      "withinMonth": "1か月以内",
+      "withinThreeMonthsOrLonger": "3か月以内、またはそれ以降",
+      "waitingToSchedule": "まだ予約していません",
+      "notNow": "今は予定なし"
     },
     "theLoop": {
       "headline": "EMBRの仕組みをご紹介します。",
       "trackFallback": "睡眠 · エネルギー · 気分",
-      "trackTreatmentsHint": "HRT、サプリメント、薬など、試している治療もここで記録できます。",
+      "trackTreatmentsHint": "HRT、サプリメント、薬など、試している治療も記録できます。",
       "patternsLabel": "パターン",
-      "patternsTitle": "数週間記録を続けると、例えばこのように見えてくることがあります:",
-      "patternsExample": "「睡眠の乱れは、エネルギー低下とともに6日間見られました。」",
-      "patternsCaveat": "これは記述であり、診断ではありません。EMBRが原因を特定することはありません。",
+      "patternsTitle": "数週間記録を続けると、EMBRは同じ時期に起きていたことを振り返る手助けをします。",
+      "patternsExampleLabel": "例えば:",
+      "patternsExample": "「6日間、エネルギー低下とともに睡眠の乱れが見られました。」",
+      "patternsCaveat": "これはあなたの記録の中のパターンであり、診断ではありません。EMBRは症状の原因を教えるものではありません。",
       "trackLabel": "記録",
       "briefLabel": "BRIEF",
       "briefTitle": "エビデンス · パターン · 質問",
-      "briefBody": "準備ができたときに作成される、あなたの記録の要約です。自動では作成されません。",
+      "briefBody": "必要なときに、EMBRはあなたの記録をもとに、診察に持っていけるシンプルな要約を作成します。",
+      "briefControlNote": "作成するタイミングはあなたが決めます。自動で作成されることはありません。",
       "conversationLabel": "診察での会話",
-      "conversationTitle": "次回の診察に持っていける、具体的な材料になります。",
-      "conversationBody": "完全に任意で、あなただけのものです。",
+      "conversationTitle": "Briefを使うと、経験してきたこと、時間の経過とともに気づいたこと、聞きたいことを説明しやすくなります。",
+      "conversationBody": "もちろん、自分のためだけにEMBRを使い続けることもできます。",
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
     }
@@ -217,6 +229,8 @@
     "saved": "保存しました ✓",
     "recentSymptoms": "最近の症状",
     "noLogsYet": "まだ記録がありません。何かあれば上のボタンから記録してください。",
+    "loadMore": "もっと見る",
+    "loadMoreError": "続きを読み込めませんでした。もう一度お試しください。",
     "thisWeek": "{count, plural, other {今週の記録: #件}}",
     "mostCommon": "最も多い症状: {category}",
     "startingPoint": {
@@ -337,6 +351,14 @@
     "leaving": "退出中…",
     "leaveError": "組織を退出できませんでした。もう一度お試しください。"
   },
+  "EmailVerification": {
+    "title": "続けるにはメールアドレスの確認が必要です",
+    "body": "この操作にはメールアドレスの確認が必要です。",
+    "resend": "確認メールを再送信",
+    "resendSubmitting": "送信中…",
+    "resendSuccess": "受信箱をご確認ください。新しい確認メールをお送りしました。",
+    "genericError": "問題が発生しました。もう一度お試しください。"
+  },
   "Settings": {
     "title": "設定",
     "accountTitle": "アカウント",
@@ -417,7 +439,7 @@
     "groundedInTitle": "データに基づく根拠",
     "trendsTitle": "最近の傾向",
     "trendsAcrossBriefs": "直近{count}件のブリーフについて",
-    "trendsCategoryLine": "{category} — {total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
+    "trendsCategoryLine": "{category}は{total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
     "longitudinalPatternsTitle": "ブリーフ全体で継続している傾向",
     "longitudinalPatternsLine": "{category}は直近{total}件のブリーフすべてで報告されています。"
   },
@@ -470,6 +492,7 @@
     "notesPlaceholder": "メモ(任意)",
     "fillRequiredFields": "名前と開始日を入力してください。",
     "pickEndDate": "終了日を選択するか、継続中のままにしてください。",
+    "invalidEndDate": "終了日は開始日より前にできません。",
     "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
     "saving": "保存中…",
     "addTreatment": "治療を追加",

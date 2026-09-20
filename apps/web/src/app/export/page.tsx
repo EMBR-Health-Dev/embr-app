@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
 import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
+import { EmailVerificationRequired } from "../../components/email-verification-required";
 
 function buildExportUrl(path: string, from: string, to: string): string {
   const params = new URLSearchParams();
@@ -75,6 +76,8 @@ export default function ExportPage() {
       </header>
 
       <p className="mt-3 text-sm text-foreground/60">{t("description")}</p>
+
+      {!user.emailVerified && <EmailVerificationRequired email={user.email} />}
 
       <section className="mt-8 flex flex-wrap gap-4">
         <label className="flex flex-col gap-1.5 text-sm">

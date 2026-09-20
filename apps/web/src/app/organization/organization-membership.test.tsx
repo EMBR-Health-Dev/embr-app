@@ -178,7 +178,7 @@ describe("Organization page — leave organization", () => {
     fireEvent.click(screen.getByText("Yes, leave"));
 
     expect(
-      await screen.findByText("Couldn't leave the organization — try again."),
+      await screen.findByText("Couldn't leave the organization. Try again."),
     ).toBeInTheDocument();
     expect(routerReplace).not.toHaveBeenCalled();
   });

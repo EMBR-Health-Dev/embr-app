@@ -100,6 +100,7 @@ function LoginForm() {
       </div>
 
       <h1 className="font-display text-display-m text-foreground">{t("title")}</h1>
+      <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
 
       {reason === "password-changed" && (
         <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
@@ -122,7 +123,7 @@ function LoginForm() {
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-5" noValidate>
         <Field
           label={t("emailLabel")}
           type="email"
@@ -153,12 +154,12 @@ function LoginForm() {
           </p>
         )}
 
-        <Button type="submit" disabled={submitting} className="mt-2">
+        <Button type="submit" disabled={submitting} className="mt-4">
           {submitting ? t("submitting") : t("submit")}
         </Button>
       </form>
 
-      <div className="mt-6 flex items-center gap-3 text-xs uppercase tracking-wide text-foreground/40">
+      <div className="mt-8 flex items-center gap-3 text-xs uppercase tracking-wide text-foreground/40">
         <span className="h-px flex-1 bg-muted" />
         {t("or")}
         <span className="h-px flex-1 bg-muted" />

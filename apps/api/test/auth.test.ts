@@ -425,6 +425,21 @@ describe("POST /auth/login", () => {
     expect(cookies.some((c) => c.startsWith("embr_csrf="))).toBe(true);
   });
 
+  it("allows a never-verified account to log in — email verification never gates login", async () => {
+    const app = createApp();
+    await request(app)
+      .post("/auth/register")
+      .send({ email: "unverified-login@embr.health", password: VALID_PASSWORD });
+
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "unverified-login@embr.health", password: VALID_PASSWORD });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.emailVerified).toBe(false);
+    expect(res.body.data.accessToken).toBeTruthy();
+  });
+
   it("returns 401 for a wrong password without revealing whether the account exists", async () => {
     const app = createApp();
     await request(app)
@@ -465,6 +480,53 @@ describe("GET /auth/me", () => {
     const res = await agent.get("/auth/me");
     expect(res.status).toBe(200);
     expect(res.body.data.email).toBe("me@embr.health");
+  });
+
+  it("an unverified account can access their own profile — dashboard-equivalent access isn't gated", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "unverified-dashboard@embr.health");
+    expect(state.users[0]!.emailVerifiedAt).toBeNull();
+
+    const res = await agent.get("/auth/me");
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.emailVerified).toBe(false);
+  });
+
+  it("treats an account seeded directly (standing in for one that predates this app's own registration flow) exactly like a freshly-registered one — no exemption by how the row came to exist", async () => {
+    // The gate itself (requireVerifiedEmail, exercised end to end in
+    // brief.test.ts / export.test.ts / organization.test.ts) reads
+    // emailVerifiedAt fresh from the database on every call — there is
+    // no "registered before this date" flag or special case anywhere
+    // in that check. This test proves the other half: a row this
+    // file's own mock never saw go through POST /auth/register is
+    // still reported and treated as unverified, not silently
+    // grandfathered in by some other field (createdAt, an implicit
+    // default, etc.).
+    const app = createApp();
+    const agent = request.agent(app);
+    const preexistingUser = {
+      id: nextId(),
+      email: "preexisting@embr.health",
+      passwordHash: await (
+        await import("../src/modules/auth/password.js")
+      ).hashPassword(VALID_PASSWORD),
+      role: "MEMBER" as const,
+      emailVerifiedAt: null,
+      createdAt: new Date("2020-01-01"),
+      updatedAt: new Date("2020-01-01"),
+    };
+    state.users.push(preexistingUser);
+
+    const login = await agent
+      .post("/auth/login")
+      .send({ email: "preexisting@embr.health", password: VALID_PASSWORD });
+    expect(login.status).toBe(200);
+
+    const res = await agent.get("/auth/me");
+    expect(res.status).toBe(200);
+    expect(res.body.data.emailVerified).toBe(false);
   });
 });
 

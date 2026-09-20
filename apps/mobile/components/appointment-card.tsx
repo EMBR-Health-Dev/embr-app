@@ -4,14 +4,15 @@ import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../lib/theme";
 
-// Only WITHIN_MONTH and UNSURE_WHEN carry a real "yes, something is
-// coming" signal from onboarding's appointmentStatus question — NO and
-// UNSURE (the person doesn't currently have or expect one) have
-// nothing here worth nudging toward, so this renders nothing for
-// those, not an empty/awkward card.
+// WITHIN_MONTH, WITHIN_THREE_MONTHS_OR_LONGER, and WAITING_TO_SCHEDULE
+// all carry a real "yes, something is coming" signal from onboarding's
+// appointmentStatus question — NOT_NOW (the person doesn't currently
+// have or expect one) has nothing here worth nudging toward, so this
+// renders nothing for that, not an empty/awkward card.
 const MESSAGE_KEYS: Record<string, string> = {
   WITHIN_MONTH: "appointmentCard.withinMonth",
-  UNSURE_WHEN: "appointmentCard.unsureWhen",
+  WITHIN_THREE_MONTHS_OR_LONGER: "appointmentCard.withinThreeMonthsOrLonger",
+  WAITING_TO_SCHEDULE: "appointmentCard.waitingToSchedule",
 };
 
 export function AppointmentCard({ appointmentStatus }: { appointmentStatus: string | null }) {

@@ -107,10 +107,10 @@
     "appointmentStatus": {
       "headline": "近々、診察の予定はありますか?",
       "hint": "正確な日付はまだ不要です。BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
-      "withinMonth": "はい、1か月以内にあります",
-      "unsureWhen": "はい、ただしいつかは未定です",
-      "no": "いいえ",
-      "unsure": "まだわかりません"
+      "withinMonth": "1か月以内",
+      "withinThreeMonthsOrLonger": "3か月以内、またはそれ以降",
+      "waitingToSchedule": "まだ予約していません",
+      "notNow": "今は予定なし"
     },
     "theLoop": {
       "headline": "EMBRの仕組みをご紹介します。",
@@ -345,7 +345,8 @@
   },
   "appointmentCard": {
     "withinMonth": "近々、診察の予定があるとのことでしたね。BRIEFがあれば、具体的な材料を持って診察に臨めます。",
-    "unsureWhen": "診察の予定があるかもしれないとのことでしたね。BRIEFはいつでも作成できます。",
+    "withinThreeMonthsOrLonger": "数か月以内に診察の予定があるとのことでしたね。BRIEFはいつでも作成できます。",
+    "waitingToSchedule": "診察の予約はまだとのことでしたね。BRIEFはいつでも作成できます。",
     "generateBrief": "BRIEFを作成する"
   },
   "coOccurrence": {

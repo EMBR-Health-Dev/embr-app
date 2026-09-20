@@ -7,12 +7,17 @@ import { useOnboarding } from "../../../lib/onboarding-context";
 import { OnboardingScreen } from "../../../components/onboarding-screen";
 import { STEP_ROUTES } from "../../../lib/onboarding-steps";
 
-const OPTION_VALUES = ["WITHIN_MONTH", "UNSURE_WHEN", "NO", "UNSURE"] as const;
+const OPTION_VALUES = [
+  "WITHIN_MONTH",
+  "WITHIN_THREE_MONTHS_OR_LONGER",
+  "WAITING_TO_SCHEDULE",
+  "NOT_NOW",
+] as const;
 const OPTION_KEYS: Record<(typeof OPTION_VALUES)[number], string> = {
   WITHIN_MONTH: "withinMonth",
-  UNSURE_WHEN: "unsureWhen",
-  NO: "no",
-  UNSURE: "unsure",
+  WITHIN_THREE_MONTHS_OR_LONGER: "withinThreeMonthsOrLonger",
+  WAITING_TO_SCHEDULE: "waitingToSchedule",
+  NOT_NOW: "notNow",
 };
 
 export default function AppointmentStatusScreen() {

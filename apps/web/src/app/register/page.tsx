@@ -79,9 +79,9 @@ function RegisterForm() {
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
         <h1 className="font-display text-display-m text-foreground">{t("title")}</h1>
-        <p className="mt-2 text-sm text-foreground/60">{t("subtitle")}</p>
+        <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
 
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" noValidate>
+        <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-5" noValidate>
           <Field
             label={t("emailLabel")}
             type="email"
@@ -106,7 +106,7 @@ function RegisterForm() {
             </p>
           )}
 
-          <Button type="submit" disabled={submitting} className="mt-2">
+          <Button type="submit" disabled={submitting} className="mt-4">
             {submitting ? t("submitting") : t("submit")}
           </Button>
         </form>
