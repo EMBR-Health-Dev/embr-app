@@ -158,6 +158,12 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
 
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
 
+    // Dates are plain ISO strings, not localized further (see
+    // brief-locale.ts's own scope note) — confirmed unmangled here,
+    // not just assumed, since this is the one piece of every Japanese
+    // section that isn't itself Japanese text.
+    expect(text).toContain(`${brief.fromDate}`);
+    expect(text).toContain(`${brief.toDate}`);
     // Document identity — "EMBR BRIEF," not a fresh "Clinical Brief"
     // translation (see brief-locale.ts's own doc comment on why).
     expect(text).toContain("EMBR BRIEF");
@@ -256,6 +262,11 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
     // English-locale test above already exercises, confirmed intact
     // here too, not just for ASCII-labeled documents.
     expect(text).toContain("エストラジオール貼付剤");
+    // The treatment's start date, embedded directly inside an
+    // otherwise-Japanese line — confirms dates stay intact and
+    // unmangled when surrounded by Japanese text, not just at the
+    // top-level masthead.
+    expect(text).toContain("2026-01-10");
     // Section headings.
     expect(text).toContain("前回の期間との比較");
     expect(text).toContain("継続している症状");

@@ -1,4 +1,4 @@
-import { LOCALE_COOKIE } from "../i18n/locale";
+import { DEFAULT_LOCALE, LOCALE_COOKIE } from "../i18n/locale";
 
 export class ApiError extends Error {
   code: string;
@@ -152,8 +152,21 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
   // already-selected value into Accept-Language here is the one place
   // that gap needs bridging — not a second, independent locale system,
   // the same EMBR_LOCALE value next-intl itself resolves.
-  const locale = readCookie(LOCALE_COOKIE);
-  if (locale) headers["Accept-Language"] = locale;
+  //
+  // Explicitly defaulted to DEFAULT_LOCALE, not omitted, when the
+  // cookie is absent (a first-time visitor who hasn't set a language
+  // yet) — next-intl's own getRequestConfig (i18n/request.ts) falls
+  // back to that exact same default for the exact same reason. Without
+  // this, fetch() would fall through to the browser's own automatic
+  // Accept-Language header (from OS/browser settings) for that one
+  // request, which could easily disagree with the English UI the
+  // person is actually looking at — a Japanese-OS visitor who has
+  // never touched the language switcher would see an English page but
+  // get a Japanese brief. This keeps generation locked to the same
+  // resolution next-intl itself already performs, never the browser's
+  // independent guess.
+  const locale = readCookie(LOCALE_COOKIE) ?? DEFAULT_LOCALE;
+  headers["Accept-Language"] = locale;
   if (MUTATING_METHODS.has(method)) {
     headers["x-csrf-token"] = await ensureCsrfToken();
   }
