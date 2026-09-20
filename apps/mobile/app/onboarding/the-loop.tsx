@@ -57,6 +57,7 @@ export default function TheLoopScreen() {
           label={t("onboarding.theLoop.patternsLabel")}
           title={t("onboarding.theLoop.patternsTitle")}
         >
+          <Text style={styles.stageBody}>{t("onboarding.theLoop.patternsExampleLabel")}</Text>
           <Text style={styles.exampleQuote}>{t("onboarding.theLoop.patternsExample")}</Text>
           <Text style={styles.caveat}>{t("onboarding.theLoop.patternsCaveat")}</Text>
         </LoopStage>
@@ -65,6 +66,7 @@ export default function TheLoopScreen() {
           title={t("onboarding.theLoop.briefTitle")}
         >
           <Text style={styles.stageBody}>{t("onboarding.theLoop.briefBody")}</Text>
+          <Text style={styles.caveat}>{t("onboarding.theLoop.briefControlNote")}</Text>
         </LoopStage>
         <LoopStage
           label={t("onboarding.theLoop.conversationLabel")}

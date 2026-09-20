@@ -322,7 +322,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       ) : (
         brief.symptomSummary.map((entry) => (
           <Text key={entry.category} style={styles.summaryLine}>
-            {t(`enums.category.${entry.category}`)} —{" "}
+            {t(`enums.category.${entry.category}`)}:{" "}
             {t("brief.occurrenceCount", { count: entry.count })} (
             {formatSeverityBreakdown(entry.severityBreakdown, t, i18n.language)})
           </Text>
@@ -402,7 +402,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       ) : (
         brief.treatmentSummary.map((entry, i) => (
           <Text key={i} style={styles.summaryLine}>
-            {entry.name} — {t(`enums.treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
+            {entry.name}: {t(`enums.treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
             {entry.endDate ?? t("brief.ongoing")}
           </Text>
         ))

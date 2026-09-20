@@ -438,7 +438,7 @@ describe("Brief screen — Your recent trends", () => {
     expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
     expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
     expect(
-      screen.getByText("Hot Flash — reported in 3 of 3 briefs, marked persistent in 2."),
+      screen.getByText("Hot Flash: reported in 3 of 3 briefs, marked persistent in 2."),
     ).toBeInTheDocument();
   });
 
@@ -552,7 +552,7 @@ describe("Brief screen — severity breakdown", () => {
     // over ["3 Mild", "2 Moderate", "1 Severe"] — computed directly
     // via Node before writing this assertion, not assumed.
     expect(
-      await screen.findByText("Hot Flash — 6 occurrences (3 Mild, 2 Moderate, 1 Severe)"),
+      await screen.findByText("Hot Flash: 6 occurrences (3 Mild, 2 Moderate, 1 Severe)"),
     ).toBeInTheDocument();
   });
 });
@@ -609,7 +609,7 @@ describe("Brief screen — deterministic evidence sections", () => {
     await renderAndExpandBrief();
 
     expect(
-      await screen.findByText("Hot Flash — 6 occurrences (4 Moderate, 2 Severe)"),
+      await screen.findByText("Hot Flash: 6 occurrences (4 Moderate, 2 Severe)"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -623,7 +623,7 @@ describe("Brief screen — deterministic evidence sections", () => {
     expect(
       screen.getByText("Average cycle length: 28 days (3 cycles recorded)"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Estradiol patch — HRT, 2026-01-10 – Ongoing")).toBeInTheDocument();
+    expect(screen.getByText("Estradiol patch: HRT, 2026-01-10 – Ongoing")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Estradiol patch: 2 symptom logs in the 14 days before starting, compared with 5 symptom logs in the 14 days after.",
@@ -698,10 +698,10 @@ describe("Brief screen — multiple items", () => {
     );
 
     expect(
-      await screen.findByText("Hot Flash — reported in 4 of 4 briefs, marked persistent in 3."),
+      await screen.findByText("Hot Flash: reported in 4 of 4 briefs, marked persistent in 3."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Fatigue — reported in 2 of 4 briefs, marked persistent in 0."),
+      screen.getByText("Fatigue: reported in 2 of 4 briefs, marked persistent in 0."),
     ).toBeInTheDocument();
   });
 });
@@ -856,7 +856,7 @@ describe("Brief screen — medical disclaimer", () => {
     // the two platforms, not just presence.
     expect(
       await screen.findByText(
-        "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation — not a diagnosis, and not medical advice.",
+        "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
       ),
     ).toBeInTheDocument();
   });
