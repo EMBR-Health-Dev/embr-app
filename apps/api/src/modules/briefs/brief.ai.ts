@@ -357,7 +357,16 @@ export const briefAi = {
     try {
       message = await client.messages.create({
         model: env.ANTHROPIC_BRIEF_MODEL,
-        max_tokens: 1024,
+        // 1024 was too small for this response's real shape — confirmed
+        // in production: with thinking disabled (below), a genuine,
+        // well-formed JSON response still hit stop_reason "max_tokens"
+        // at exactly 1024 output tokens, cutting an in-progress string
+        // off mid-word (parse error: "Unterminated string in JSON at
+        // position 2860"). 2048 is the smallest bump past the observed
+        // 2860-character (not token) response — leaves headroom since
+        // tokens and characters aren't 1:1 — without guessing at a much
+        // larger budget than what was actually observed.
+        max_tokens: 2048,
         // Without this, claude-sonnet-5 defaults to adaptive extended
         // thinking, which draws from the same max_tokens budget as the
         // final response — confirmed in production (see brief AI
