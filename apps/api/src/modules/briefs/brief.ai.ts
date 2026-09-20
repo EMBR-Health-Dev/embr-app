@@ -353,6 +353,7 @@ export const briefAi = {
     });
 
     let message: Anthropic.Message;
+    const requestStartedAt = Date.now();
     try {
       message = await client.messages.create({
         model: env.ANTHROPIC_BRIEF_MODEL,
@@ -391,6 +392,21 @@ export const briefAi = {
 
     const textBlock = message.content.find((block) => block.type === "text");
     if (!textBlock || textBlock.type !== "text") {
+      // Diagnostic only — deliberately excludes symptomSummary/
+      // cycleSummary/interpretation (sent in the request) and anything
+      // from message.content itself (the response body, which could
+      // echo user-derived text back): only response *metadata* that
+      // can't carry patient data.
+      logger.error(
+        {
+          stopReason: message.stop_reason,
+          contentTypes: message.content.map((block) => block.type),
+          usage: message.usage,
+          model: env.ANTHROPIC_BRIEF_MODEL,
+          requestDurationMs: Date.now() - requestStartedAt,
+        },
+        "brief AI response contained no text content block",
+      );
       throw AppError.internal("Brief generation failed: model returned no text content");
     }
 

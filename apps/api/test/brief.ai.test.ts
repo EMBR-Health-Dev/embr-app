@@ -2,6 +2,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { AppError } from "@embr/shared";
 import Anthropic from "@anthropic-ai/sdk";
 
+vi.mock("../src/lib/logger.js", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
 const { mockCreate, constructorCalls } = vi.hoisted(() => ({
   mockCreate: vi.fn(),
   constructorCalls: [] as unknown[],
@@ -28,6 +32,7 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
 });
 
 import { briefAi } from "../src/modules/briefs/brief.ai.js";
+import { logger } from "../src/lib/logger.js";
 
 const VALID_INPUT = {
   fromDate: "2026-01-01",
@@ -52,6 +57,7 @@ function dt(text: string, patternIds: string[] = []) {
 beforeEach(() => {
   mockCreate.mockReset();
   constructorCalls.length = 0;
+  vi.mocked(logger.error).mockClear();
 });
 
 describe("brief.ai", () => {
@@ -97,6 +103,80 @@ describe("brief.ai", () => {
   it("rejects a response with no text content block", async () => {
     mockCreate.mockResolvedValue({ content: [] });
     await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("no text content");
+  });
+
+  describe("diagnostic logging when the model returns no text block", () => {
+    // Deliberately checks only response metadata (stop_reason, content
+    // block types, usage, model, timing) — never symptomSummary/
+    // cycleSummary/interpretation (sent in the request) or anything
+    // from message.content itself, which could echo user-derived text.
+    it("logs nothing on a normal, well-formed text response", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "n",
+            discussionTopics: [dt("Ask your GP about this?")],
+            patterns: [],
+          }),
+        ),
+      );
+
+      await briefAi.generate(VALID_INPUT, "en");
+
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it("logs stop_reason, content types, usage, model, and duration for a thinking-only response", async () => {
+      mockCreate.mockResolvedValue({
+        content: [{ type: "thinking", thinking: "internal reasoning", signature: "sig" }],
+        stop_reason: "end_turn",
+        usage: { input_tokens: 120, output_tokens: 40 },
+      });
+
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("no text content");
+
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      const [fields, message] = vi.mocked(logger.error).mock.calls[0]!;
+      expect(message).toBe("brief AI response contained no text content block");
+      expect(fields).toMatchObject({
+        stopReason: "end_turn",
+        contentTypes: ["thinking"],
+        usage: { input_tokens: 120, output_tokens: 40 },
+        model: "claude-sonnet-5",
+      });
+      expect(typeof (fields as Record<string, unknown>).requestDurationMs).toBe("number");
+    });
+
+    it("logs an empty content-types array and a null stop_reason for genuinely empty content", async () => {
+      mockCreate.mockResolvedValue({
+        content: [],
+        stop_reason: null,
+        usage: { input_tokens: 80, output_tokens: 0 },
+      });
+
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("no text content");
+
+      const [fields] = vi.mocked(logger.error).mock.calls[0]!;
+      expect(fields).toMatchObject({
+        stopReason: null,
+        contentTypes: [],
+        usage: { input_tokens: 80, output_tokens: 0 },
+        model: "claude-sonnet-5",
+      });
+    });
+
+    it("logs stop_reason 'refusal' when the model declines and returns no text", async () => {
+      mockCreate.mockResolvedValue({
+        content: [],
+        stop_reason: "refusal",
+        usage: { input_tokens: 90, output_tokens: 0 },
+      });
+
+      await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("no text content");
+
+      const [fields] = vi.mocked(logger.error).mock.calls[0]!;
+      expect(fields).toMatchObject({ stopReason: "refusal", contentTypes: [] });
+    });
   });
 
   it("sends only the structured summary, never raw notes, in the user message", async () => {
