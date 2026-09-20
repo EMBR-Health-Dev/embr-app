@@ -358,6 +358,15 @@ export const briefAi = {
       message = await client.messages.create({
         model: env.ANTHROPIC_BRIEF_MODEL,
         max_tokens: 1024,
+        // Without this, claude-sonnet-5 defaults to adaptive extended
+        // thinking, which draws from the same max_tokens budget as the
+        // final response — confirmed in production (see brief AI
+        // response logging below): every request spent all 1024 tokens
+        // on a "thinking" block and hit stop_reason "max_tokens" before
+        // emitting any text, so generation never produced output at
+        // all. This is a short, structured JSON response, not the kind
+        // of multi-step reasoning task extended thinking is for.
+        thinking: { type: "disabled" },
         system: systemPrompt(locale),
         messages: [
           {
