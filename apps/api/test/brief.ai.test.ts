@@ -85,6 +85,36 @@ describe("brief.ai", () => {
     await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("not valid JSON");
   });
 
+  it("logs only the response's shape, never its content, when JSON parsing fails", async () => {
+    mockCreate.mockResolvedValue(textResponse("Sorry, here's your summary: ..."));
+
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("not valid JSON");
+
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    const [fields, message] = vi.mocked(logger.error).mock.calls[0]!;
+    expect(message).toBe("brief AI response was not valid JSON");
+    expect(fields).toMatchObject({
+      textLength: "Sorry, here's your summary: ...".length,
+      firstCharacter: "S",
+      lastCharacter: ".",
+      hasJsonFence: false,
+    });
+    expect(typeof (fields as Record<string, unknown>).parseErrorMessage).toBe("string");
+    // The actual response text must never appear in what gets logged.
+    expect(JSON.stringify(fields)).not.toContain("Sorry, here's your summary");
+  });
+
+  it("reports a code-fenced response as having a JSON fence in the parse-failure diagnostic", async () => {
+    // Deliberately malformed even after fence-stripping, so this
+    // exercises the parse-failure branch rather than the success path.
+    mockCreate.mockResolvedValue(textResponse("```json\n{not valid json\n```"));
+
+    await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("not valid JSON");
+
+    const [fields] = vi.mocked(logger.error).mock.calls[0]!;
+    expect(fields).toMatchObject({ hasJsonFence: true });
+  });
+
   it("rejects a response missing required fields", async () => {
     mockCreate.mockResolvedValue(textResponse(JSON.stringify({ narrative: "Only a narrative." })));
     // Message deliberately no longer includes the raw Zod error detail

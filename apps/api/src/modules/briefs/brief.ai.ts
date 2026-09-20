@@ -435,9 +435,27 @@ export const briefAi = {
     let parsed: unknown;
     try {
       parsed = JSON.parse(candidate);
-    } catch {
+    } catch (err) {
+      // Shape only, never content: the narrative/discussionTopics text
+      // is built from this user's own symptom/cycle data, so even a
+      // truncated raw-text sample could put real patient health
+      // information into Railway's log stream. These five fields are
+      // enough to tell a truncated response apart from a stray fence
+      // or leading/trailing prose, without ever capturing what the
+      // text actually says.
       logger.error(
-        { rawText: textBlock.text.slice(0, 2000) },
+        {
+          stopReason: message.stop_reason,
+          contentTypes: message.content.map((block) => block.type),
+          usage: message.usage,
+          model: env.ANTHROPIC_BRIEF_MODEL,
+          requestDurationMs: Date.now() - requestStartedAt,
+          textLength: candidate.length,
+          firstCharacter: candidate.slice(0, 1),
+          lastCharacter: candidate.slice(-1),
+          hasJsonFence: /```/.test(textBlock.text),
+          parseErrorMessage: err instanceof Error ? err.message : String(err),
+        },
         "brief AI response was not valid JSON",
       );
       throw AppError.internal("Brief generation failed: model response was not valid JSON");
