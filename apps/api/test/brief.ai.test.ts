@@ -154,7 +154,10 @@ describe("brief.ai", () => {
     // final response — confirmed in production to consume the entire
     // budget on thinking and leave none for the required JSON text.
     expect(call.thinking).toEqual({ type: "disabled" });
-    expect(call.max_tokens).toBe(1024);
+    // 1024 was too small even with thinking disabled — confirmed in
+    // production, a genuine well-formed response hit stop_reason
+    // "max_tokens" at exactly 1024 output tokens, truncating mid-string.
+    expect(call.max_tokens).toBe(2048);
   });
 
   describe("diagnostic logging when the model returns no text block", () => {
