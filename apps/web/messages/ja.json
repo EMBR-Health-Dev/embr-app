@@ -309,11 +309,17 @@
     "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
   },
   "CoOccurrence": {
-    "observedPatternLabel": "観察されたパターン",
-    "observedPatternDescription": "十分な記録が集まると、EMBRがあなたの記録から見えてくるものをここに示します。",
+    "cardLabel": "パターン",
+    "cardDescription": "十分な記録が集まると、EMBRがあなたの記録から見えてくるものをここに示します。",
     "heading": "一緒に記録されたもの",
+    "observedLabel": "観察された記録",
+    "observedText": "{categoryA}は過去{days}日間で{countA}回記録されました。{categoryB}は{countB}回記録されました。",
+    "patternLabel": "パターン",
     "message": "{categoryA}は{categoryB}とともに、{days, plural, other {#日}}記録されています。",
     "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。",
+    "questionLabel": "担当医に相談してみましょう",
+    "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
+    "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
     "emptyTitle": "あなたの記録は、まだ形になっている途中です。",
     "emptyBody": "繰り返しのパターンを示すには、EMBRにはさらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
   },

@@ -90,9 +90,8 @@ describe("CoOccurrenceCard", () => {
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />, "ja");
 
-    await waitFor(() => expect(screen.getByText(/ホットフラッシュ/)).toBeInTheDocument());
     expect(
-      screen.getByText("ホットフラッシュは倦怠感とともに、6日記録されています。"),
+      await screen.findByText("ホットフラッシュは倦怠感とともに、6日記録されています。"),
     ).toBeInTheDocument();
   });
 
@@ -112,6 +111,64 @@ describe("CoOccurrenceCard", () => {
     renderWithIntl(<CoOccurrenceCard />);
 
     await waitFor(() => expect(screen.getByText(/not a diagnosis/i)).toBeInTheDocument());
+  });
+
+  it("separates the reported counts (Observed) from the co-occurrence finding (Pattern) using the frequency data the parent page already fetched", async () => {
+    mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(
+      <CoOccurrenceCard
+        frequency={[
+          { category: "HOT_FLASH", count: 12 },
+          { category: "FATIGUE", count: 9 },
+        ]}
+        windowDays={90}
+      />,
+    );
+
+    // Observed: a plain reported-count fact, distinct from the
+    // Pattern section's own co-occurrence-day count above.
+    expect(
+      await screen.findByText(
+        "Hot Flash was logged 12 times in the last 90 days. Fatigue was logged 9 times.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Observed")).toBeInTheDocument();
+  });
+
+  it("shows a fixed, deterministic 'discuss with your GP' question — never AI-generated — for the detected pattern", async () => {
+    mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
+    expect(
+      await screen.findByText(
+        "Is it common for Hot Flash and Fatigue to occur together at this stage?",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Discuss with your GP")).toBeInTheDocument();
+    expect(screen.getByText("A suggested question, not medical advice.")).toBeInTheDocument();
+  });
+
+  it("shows the Observed and Discuss-with-your-GP layers in Japanese too", async () => {
+    mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(
+      <CoOccurrenceCard frequency={[{ category: "HOT_FLASH", count: 12 }]} windowDays={90} />,
+      "ja",
+    );
+
+    expect(
+      await screen.findByText(
+        "ホットフラッシュは過去90日間で12回記録されました。倦怠感は0回記録されました。",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("この時期にホットフラッシュと倦怠感が一緒に起こるのはよくあることですか？"),
+    ).toBeInTheDocument();
   });
 
   it("passes the from/to window through to the API call", async () => {

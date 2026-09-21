@@ -309,11 +309,17 @@
     "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem."
   },
   "CoOccurrence": {
-    "observedPatternLabel": "Observed pattern",
-    "observedPatternDescription": "What EMBR can surface from your record once there's enough to show a pattern.",
+    "cardLabel": "Pattern",
+    "cardDescription": "What EMBR can surface from your record once there's enough to show a pattern.",
     "heading": "What you've logged together",
+    "observedLabel": "Observed",
+    "observedText": "{categoryA} was logged {countA, plural, one {# time} other {# times}} in the last {days} days. {categoryB} was logged {countB, plural, one {# time} other {# times}}.",
+    "patternLabel": "Pattern",
     "message": "{categoryA} appeared alongside {categoryB} on {days, plural, one {# day} other {# days}}.",
     "caveat": "A description of what you've logged: not a diagnosis, and not a claim about cause.",
+    "questionLabel": "Discuss with your GP",
+    "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
+    "questionCaveat": "A suggested question, not medical advice.",
     "emptyTitle": "Your record is still taking shape.",
     "emptyBody": "EMBR needs more observations before it can surface a recurring pattern. Keep logging over time; this section will update as your record grows."
   },
