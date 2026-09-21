@@ -14,10 +14,12 @@ interface NavLink {
  * flat row of underlined text links each page used to build inline
  * (dashboard/page.tsx, trends/page.tsx, ...) with one real `<nav>`,
  * used consistently everywhere. Primary items match the brand
- * direction's suggested information architecture (Home / Patterns /
- * Clinical Brief / Settings) against the routes that actually exist —
- * "Record" isn't a separate route (logging happens on the dashboard
- * itself), so it isn't listed here.
+ * direction's suggested information architecture (Home / Timeline /
+ * Patterns / Clinical Brief / Settings) against the routes that
+ * actually exist — "Record" itself isn't a separate route (logging
+ * happens on the dashboard), but the Timeline is its chronological
+ * detail view, placed right after Home to keep Record → Understand →
+ * Prepare in reading order.
  *
  * Treatments/Export/Organization keep working (nothing here removes a
  * route) but move into a secondary "More" disclosure on desktop rather
@@ -42,6 +44,7 @@ export function AppNav({
 
   const primaryLinks: NavLink[] = [
     { href: "/dashboard", label: t("home") },
+    { href: "/timeline", label: t("timeline") },
     { href: "/trends", label: t("patterns") },
     { href: "/brief", label: t("clinicalBrief") },
     { href: "/settings", label: t("settings") },

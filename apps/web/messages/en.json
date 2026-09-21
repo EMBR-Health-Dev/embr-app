@@ -260,6 +260,7 @@
   "Nav": {
     "navigationLabel": "Main navigation",
     "home": "Home",
+    "timeline": "Timeline",
     "patterns": "Patterns",
     "clinicalBrief": "Clinical Brief",
     "settings": "Settings",
@@ -269,6 +270,26 @@
     "export": "Export",
     "organization": "Organization",
     "logout": "Log out"
+  },
+  "Timeline": {
+    "title": "Timeline",
+    "subtitle": "Every entry in your record, in order.",
+    "filterGroupLabel": "Filter the timeline",
+    "filter": {
+      "symptoms": "Symptoms",
+      "cycle": "Cycle",
+      "treatments": "Treatments"
+    },
+    "cycleLabel": "Cycle",
+    "periodStarted": "Period started",
+    "periodEnded": "Period ended",
+    "treatmentStarted": "Started {name}",
+    "treatmentEnded": "Ended {name}",
+    "emptyTitle": "Nothing recorded yet.",
+    "emptyBody": "As you log symptoms, cycle days, and treatments, they'll appear here in order, day by day.",
+    "filteredEmptyTitle": "Nothing matches this filter.",
+    "filteredEmptyBody": "Try turning on another category above.",
+    "truncatedNotice": "Showing your most recently recorded activity from the last {days} days."
   },
   "Trends": {
     "title": "Patterns",
