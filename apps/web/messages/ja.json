@@ -240,6 +240,7 @@
       "keepRecord": "長期的な記録を始めましょう。",
       "notSure": "記録を続けると見えてくるものがあります。"
     },
+    "homeIntro": "あなたの記録がひとつの場所に集まります。記録したこと、変化していること、そして担当医に伝えられることです。",
     "todayLabel": "今日",
     "todayDescription": "気づいたことを記録しましょう。",
     "todayLoggedSummary": "{count, plural, other {今日の記録: #件}}",
@@ -249,10 +250,10 @@
     "recordDescription": "記録した内容はすべて、この記録の一部になります。",
     "periodLabel": "生理",
     "patternsLabel": "パターン",
-    "patternsBody": "今週記録された内容です。記録が増えるにつれて、パターンページでより詳しい全体像が見えてきます。",
+    "patternsBody": "今週、変化している内容です。記録が増えるにつれて、パターンページでより詳しい全体像が見えてきます。",
     "viewPatterns": "パターンを見る",
     "evidenceLabel": "あなたのエビデンス",
-    "evidenceBody": "Clinical Briefは、あなたの記録の履歴を、診察での会話に使える簡潔な文書にまとめます。",
+    "evidenceBody": "Clinical Briefは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
     "evidenceLatestMeta": "{from} → {to} ・作成日: {date}",
     "viewClinicalBrief": "Clinical Briefを見る",
     "generateFirstBrief": "最初のClinical Briefを作成する"
