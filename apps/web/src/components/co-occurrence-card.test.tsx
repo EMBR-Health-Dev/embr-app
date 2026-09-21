@@ -171,6 +171,54 @@ describe("CoOccurrenceCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a collapsed 'Why am I seeing this?' disclosure with the literal evidence dates, when the backend provides them", async () => {
+    mockCoOccurrence.mockResolvedValue({
+      categoryA: "HOT_FLASH",
+      categoryB: "FATIGUE",
+      days: 3,
+      dates: ["2026-09-01", "2026-09-05", "2026-09-12"],
+    });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
+    const toggle = await screen.findByText("Why am I seeing this?");
+    const details = toggle.closest("details");
+    expect(details).not.toBeNull();
+    // Collapsed by default — this is a disclosure, not always-visible
+    // clutter on every pattern card.
+    expect(details).not.toHaveAttribute("open");
+
+    expect(screen.getByText("Both were logged on these days:")).toBeInTheDocument();
+    expect(screen.getByText("Sep 1, Sep 5, Sep 12")).toBeInTheDocument();
+  });
+
+  it("shows no 'Why am I seeing this?' disclosure when the backend doesn't provide dates", async () => {
+    mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
+    await waitFor(() => expect(screen.getByText(/appeared alongside/i)).toBeInTheDocument());
+    expect(screen.queryByText("Why am I seeing this?")).not.toBeInTheDocument();
+  });
+
+  it("shows the same evidence disclosure in Japanese", async () => {
+    mockCoOccurrence.mockResolvedValue({
+      categoryA: "HOT_FLASH",
+      categoryB: "FATIGUE",
+      days: 2,
+      dates: ["2026-09-01", "2026-09-05"],
+    });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />, "ja");
+
+    expect(await screen.findByText("なぜこれが表示されているのですか?")).toBeInTheDocument();
+    expect(screen.getByText("両方が記録された日:")).toBeInTheDocument();
+    expect(screen.getByText("9月1日, 9月5日")).toBeInTheDocument();
+  });
+
   it("passes the from/to window through to the API call", async () => {
     mockCoOccurrence.mockResolvedValue(null);
 

@@ -252,6 +252,14 @@ export interface SymptomCoOccurrenceDto {
   categoryA: SymptomCategory;
   categoryB: SymptomCategory;
   days: number;
+  /** The literal calendar dates (YYYY-MM-DD, ascending) both categories
+   * were logged on — the "Why am I seeing this?" evidence behind
+   * `days`, not a separate computation. Optional because this type is
+   * also used (via brief.mappers.ts) to type a Clinical Brief's
+   * persisted co-occurrence snapshot, and briefs generated before this
+   * field existed don't have it stored; the live /trends/co-occurrence
+   * endpoint always populates it. */
+  dates?: string[];
 }
 
 export type EvidenceStrength = "EARLY" | "EMERGING" | "ESTABLISHED";

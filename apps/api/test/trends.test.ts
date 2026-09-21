@@ -395,6 +395,7 @@ describe("GET /trends/co-occurrence", () => {
       categoryA: "HOT_FLASH",
       categoryB: "SLEEP_DISTURBANCE",
       days: 3,
+      dates: ["2026-06-01", "2026-06-02", "2026-06-03"],
     });
   });
 

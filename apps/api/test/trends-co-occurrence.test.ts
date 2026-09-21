@@ -23,6 +23,7 @@ describe("detectSymptomCoOccurrence", () => {
       categoryA: "HOT_FLASH",
       categoryB: "SLEEP_DISTURBANCE",
       days: 3,
+      dates: ["2026-01-01", "2026-01-02", "2026-01-03"],
     });
   });
 
@@ -53,6 +54,7 @@ describe("detectSymptomCoOccurrence", () => {
     expect(result).not.toBeNull();
     expect(result!.days).toBe(MIN_CO_OCCURRENCE_DAYS);
     expect(result!.days).toBe(3);
+    expect(result!.dates).toEqual(["2026-01-01", "2026-01-02", "2026-01-03"]);
   });
 
   it("does not qualify one day below the threshold", () => {
@@ -93,6 +95,7 @@ describe("detectSymptomCoOccurrence", () => {
       categoryA: "ANXIETY",
       categoryB: "BRAIN_FOG",
       days: 5,
+      dates: ["2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05"],
     });
   });
 
@@ -119,7 +122,12 @@ describe("detectSymptomCoOccurrence", () => {
     const forward = detectSymptomCoOccurrence(buildLogs());
     const reversed = detectSymptomCoOccurrence(buildLogs().reverse());
 
-    expect(forward).toEqual({ categoryA: "FATIGUE", categoryB: "WEIGHT_CHANGE", days: 3 });
+    expect(forward).toEqual({
+      categoryA: "FATIGUE",
+      categoryB: "WEIGHT_CHANGE",
+      days: 3,
+      dates: ["2026-04-01", "2026-04-02", "2026-04-03"],
+    });
     expect(reversed).toEqual(forward);
   });
 
@@ -153,7 +161,12 @@ describe("detectSymptomCoOccurrence", () => {
     ];
 
     const result = detectSymptomCoOccurrence(logs);
-    expect(result).toEqual({ categoryA: "FATIGUE", categoryB: "HOT_FLASH", days: 3 });
+    expect(result).toEqual({
+      categoryA: "FATIGUE",
+      categoryB: "HOT_FLASH",
+      days: 3,
+      dates: ["2026-01-01", "2026-01-02", "2026-01-03"],
+    });
   });
 
   it("treats timestamps on either side of a UTC day boundary as different days", () => {
@@ -172,7 +185,12 @@ describe("detectSymptomCoOccurrence", () => {
     // the 01-01/01-02 pair straddling midnight must NOT be counted as
     // the same day, so this qualifies at exactly 3, not 4.
     const result = detectSymptomCoOccurrence(logs);
-    expect(result).toEqual({ categoryA: "FATIGUE", categoryB: "HOT_FLASH", days: 3 });
+    expect(result).toEqual({
+      categoryA: "FATIGUE",
+      categoryB: "HOT_FLASH",
+      days: 3,
+      dates: ["2026-01-02", "2026-01-03", "2026-01-04"],
+    });
   });
 
   it("returns null for an empty dataset", () => {
