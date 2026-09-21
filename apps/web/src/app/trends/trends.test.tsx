@@ -26,6 +26,9 @@ const mockUser = {
 const symptomFrequencyMock = vi.fn();
 const cycleLengthMock = vi.fn();
 const coOccurrenceMock = vi.fn().mockResolvedValue(null);
+const evidenceStrengthMock = vi
+  .fn()
+  .mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 0 });
 
 vi.mock("../../lib/api", () => ({
   api: {
@@ -34,6 +37,7 @@ vi.mock("../../lib/api", () => ({
       symptomFrequency: (...args: unknown[]) => symptomFrequencyMock(...args),
       cycleLength: (...args: unknown[]) => cycleLengthMock(...args),
       coOccurrence: (...args: unknown[]) => coOccurrenceMock(...args),
+      evidenceStrength: (...args: unknown[]) => evidenceStrengthMock(...args),
     },
   },
 }));
@@ -168,6 +172,38 @@ describe("Patterns page — populated state (real data flow)", () => {
       screen.getByText(
         "What EMBR can surface from your record once there's enough to show a pattern.",
       ),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Patterns page — evidence strength", () => {
+  it("shows the Early badge with its caption when the backend reports an early record", async () => {
+    symptomFrequencyMock.mockResolvedValue([]);
+    cycleLengthMock.mockResolvedValue(emptyCycle);
+    evidenceStrengthMock.mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 2 });
+
+    const { default: TrendsPage } = await import("./page");
+    renderWithIntl(<TrendsPage />);
+
+    expect(await screen.findByText("Early record")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "You're just getting started. The more you log, the more EMBR can show you here.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the Established badge once the record crosses the deterministic threshold, in Japanese too", async () => {
+    symptomFrequencyMock.mockResolvedValue([]);
+    cycleLengthMock.mockResolvedValue(emptyCycle);
+    evidenceStrengthMock.mockResolvedValue({ strength: "ESTABLISHED", distinctDaysLogged: 60 });
+
+    const { default: TrendsPage } = await import("./page");
+    renderWithIntl(<TrendsPage />, "ja");
+
+    expect(await screen.findByText("十分な記録が蓄積されています")).toBeInTheDocument();
+    expect(
+      screen.getByText("頼りになる、しっかりとした記録が集まっています。"),
     ).toBeInTheDocument();
   });
 });

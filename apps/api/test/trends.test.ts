@@ -426,3 +426,81 @@ describe("GET /trends/co-occurrence", () => {
     expect(res.body.data).toBeNull();
   });
 });
+
+describe("GET /trends/evidence-strength", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/trends/evidence-strength");
+    expect(res.status).toBe(401);
+  });
+
+  it("is EARLY with nothing logged yet", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "evidence-empty@embr.health");
+
+    const res = await agent.get("/trends/evidence-strength");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ strength: "EARLY", distinctDaysLogged: 0 });
+  });
+
+  it("counts distinct days across both symptom logs and cycle entries, deduped, not summed", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "evidence-mixed@embr.health");
+
+    // Two symptom logs on the same day count as one distinct day.
+    await agent.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "MODERATE",
+      occurredAt: "2026-01-01T08:00:00.000Z",
+    });
+    await agent.post("/symptom-logs").send({
+      category: "FATIGUE",
+      severity: "MILD",
+      occurredAt: "2026-01-01T20:00:00.000Z",
+    });
+    // A cycle entry on a different day adds one more distinct day.
+    await agent.post("/cycle-entries").send({ date: "2026-01-02" });
+
+    const res = await agent.get("/trends/evidence-strength");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ strength: "EARLY", distinctDaysLogged: 2 });
+  });
+
+  it("is EMERGING at 14 distinct days and ESTABLISHED at 45, scoped to the authenticated user only", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "evidence-emerging@embr.health");
+    await registerAndLogin(agentB, "evidence-other@embr.health");
+
+    for (let day = 1; day <= 14; day++) {
+      await agentA.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MODERATE",
+        occurredAt: new Date(Date.UTC(2026, 0, day, 8)).toISOString(),
+      });
+    }
+    // Agent B's own data must never influence agent A's count.
+    await agentB.post("/symptom-logs").send({
+      category: "ANXIETY",
+      severity: "SEVERE",
+      occurredAt: "2026-01-01T08:00:00.000Z",
+    });
+
+    const emerging = await agentA.get("/trends/evidence-strength");
+    expect(emerging.body.data).toEqual({ strength: "EMERGING", distinctDaysLogged: 14 });
+
+    for (let day = 15; day <= 45; day++) {
+      await agentA.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MODERATE",
+        occurredAt: new Date(Date.UTC(2026, 0, day, 8)).toISOString(),
+      });
+    }
+
+    const established = await agentA.get("/trends/evidence-strength");
+    expect(established.body.data).toEqual({ strength: "ESTABLISHED", distinctDaysLogged: 45 });
+  });
+});

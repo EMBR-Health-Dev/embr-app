@@ -324,6 +324,19 @@
     "emptyTitle": "Your record is still taking shape.",
     "emptyBody": "EMBR needs more observations before it can surface a recurring pattern. Keep logging over time; this section will update as your record grows."
   },
+  "EvidenceStrength": {
+    "groupLabel": "How much of your record exists so far",
+    "label": {
+      "EARLY": "Early record",
+      "EMERGING": "Emerging record",
+      "ESTABLISHED": "Established record"
+    },
+    "caption": {
+      "EARLY": "You're just getting started. The more you log, the more EMBR can show you here.",
+      "EMERGING": "Your record is starting to take shape. Keep logging to build a fuller picture.",
+      "ESTABLISHED": "You have a solid record to draw on."
+    }
+  },
   "Organization": {
     "title": "Organization",
     "backToDashboard": "← Dashboard",

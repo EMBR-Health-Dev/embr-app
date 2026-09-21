@@ -101,4 +101,28 @@ export const trendsRepository = {
       take: SYMPTOM_LOG_ROW_CAP,
     });
   },
+
+  /** Full history, deliberately not windowed by from/to — evidence
+   * strength describes the whole longitudinal record, not a
+   * recency-limited slice of it. Capped the same way
+   * symptomLogsForCoOccurrence and periodStartDates are: a generous
+   * safety ceiling, not a real pagination story. */
+  async loggedDates(userId: string): Promise<{ symptomDates: Date[]; cycleDates: Date[] }> {
+    const [symptomRows, cycleRows] = await Promise.all([
+      prisma.symptomLog.findMany({
+        where: { userId },
+        select: { occurredAt: true },
+        take: SYMPTOM_LOG_ROW_CAP,
+      }),
+      prisma.cycleEntry.findMany({
+        where: { userId },
+        select: { date: true },
+        take: CYCLE_ENTRY_ROW_CAP,
+      }),
+    ]);
+    return {
+      symptomDates: symptomRows.map((row: { occurredAt: Date }) => row.occurredAt),
+      cycleDates: cycleRows.map((row: { date: Date }) => row.date),
+    };
+  },
 };
