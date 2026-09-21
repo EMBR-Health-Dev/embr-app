@@ -1078,6 +1078,7 @@ describe("POST /briefs — symptom co-occurrence (deterministic, no AI involveme
       categoryA: "BRAIN_FOG",
       categoryB: "HOT_FLASH",
       days: 3,
+      dates: ["2026-01-05", "2026-01-10", "2026-01-15"],
     });
 
     // Same structural proof style as the treatment-persistence test —
@@ -1092,6 +1093,7 @@ describe("POST /briefs — symptom co-occurrence (deterministic, no AI involveme
       categoryA: "BRAIN_FOG",
       categoryB: "HOT_FLASH",
       days: 3,
+      dates: ["2026-01-05", "2026-01-10", "2026-01-15"],
     });
   });
 
@@ -1155,6 +1157,7 @@ describe("POST /briefs — symptom co-occurrence (deterministic, no AI involveme
       categoryA: "BRAIN_FOG",
       categoryB: "HOT_FLASH",
       days: 4,
+      dates: ["2026-01-05", "2026-01-10", "2026-01-15", "2026-01-20"],
     });
   });
 

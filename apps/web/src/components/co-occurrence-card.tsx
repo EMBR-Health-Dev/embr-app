@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { SymptomCoOccurrenceDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../lib/api";
 import { SectionLabel } from "./section-label";
+import { WhyAmISeeingThis } from "./why-am-i-seeing-this";
 
 /**
  * Three explicit, separately labeled layers (see the
@@ -35,6 +36,7 @@ export function CoOccurrenceCard({
 }) {
   const t = useTranslations("CoOccurrence");
   const tEnum = useTranslations("Enums");
+  const locale = useLocale();
 
   const [result, setResult] = useState<SymptomCoOccurrenceDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,6 +138,20 @@ export function CoOccurrenceCard({
           {t("message", { categoryA: labelA, categoryB: labelB, days: result.days })}
         </p>
         <p className="mt-2 text-xs text-foreground/50">{t("caveat")}</p>
+        {result.dates && result.dates.length > 0 && (
+          <WhyAmISeeingThis>
+            <p>{t("datesEvidenceIntro")}</p>
+            <p className="mt-1">
+              {result.dates
+                .map((d) =>
+                  new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(
+                    new Date(`${d}T00:00:00`),
+                  ),
+                )
+                .join(", ")}
+            </p>
+          </WhyAmISeeingThis>
+        )}
       </div>
 
       <div className="mt-5 border-t border-border-subtle pt-4">

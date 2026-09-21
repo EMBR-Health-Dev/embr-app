@@ -318,6 +318,7 @@
     "patternLabel": "パターン",
     "message": "{categoryA}は{categoryB}とともに、{days, plural, other {#日}}記録されています。",
     "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。",
+    "datesEvidenceIntro": "両方が記録された日:",
     "questionLabel": "担当医に相談してみましょう",
     "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
@@ -336,6 +337,9 @@
       "EMERGING": "あなたの記録は形になり始めています。記録を続けると、より詳しい全体像が見えてきます。",
       "ESTABLISHED": "頼りになる、しっかりとした記録が集まっています。"
     }
+  },
+  "WhyAmISeeingThis": {
+    "toggle": "なぜこれが表示されているのですか?"
   },
   "Organization": {
     "title": "組織",

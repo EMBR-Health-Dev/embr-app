@@ -58,13 +58,26 @@ export function detectSymptomCoOccurrence(
       const categoryB = categories[j]!;
       const datesB = datesByCategory.get(categoryB)!;
 
-      let overlap = 0;
+      const overlapDates: string[] = [];
       for (const date of datesA) {
-        if (datesB.has(date)) overlap++;
+        if (datesB.has(date)) overlapDates.push(date);
       }
 
-      if (overlap >= MIN_CO_OCCURRENCE_DAYS && (!best || overlap > best.days)) {
-        best = { categoryA, categoryB, days: overlap };
+      if (
+        overlapDates.length >= MIN_CO_OCCURRENCE_DAYS &&
+        (!best || overlapDates.length > best.days)
+      ) {
+        // Sorted ascending (ISO date strings sort chronologically) —
+        // the "Why am I seeing this?" disclosure (see
+        // apps/web/src/components/co-occurrence-card.tsx) shows these
+        // literal dates as the evidence behind the pattern, so they
+        // need a stable, human-readable order, not Set iteration order.
+        best = {
+          categoryA,
+          categoryB,
+          days: overlapDates.length,
+          dates: overlapDates.sort(),
+        };
       }
     }
   }

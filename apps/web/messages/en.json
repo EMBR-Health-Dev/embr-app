@@ -318,6 +318,7 @@
     "patternLabel": "Pattern",
     "message": "{categoryA} appeared alongside {categoryB} on {days, plural, one {# day} other {# days}}.",
     "caveat": "A description of what you've logged: not a diagnosis, and not a claim about cause.",
+    "datesEvidenceIntro": "Both were logged on these days:",
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
@@ -336,6 +337,9 @@
       "EMERGING": "Your record is starting to take shape. Keep logging to build a fuller picture.",
       "ESTABLISHED": "You have a solid record to draw on."
     }
+  },
+  "WhyAmISeeingThis": {
+    "toggle": "Why am I seeing this?"
   },
   "Organization": {
     "title": "Organization",
