@@ -14,19 +14,23 @@ interface NavLink {
  * flat row of underlined text links each page used to build inline
  * (dashboard/page.tsx, trends/page.tsx, ...) with one real `<nav>`,
  * used consistently everywhere. Primary items match the brand
- * direction's suggested information architecture (Home / Timeline /
- * Patterns / Clinical Brief / Settings) against the routes that
- * actually exist — "Record" itself isn't a separate route (logging
- * happens on the dashboard), but the Timeline is its chronological
- * detail view, placed right after Home to keep Record → Understand →
- * Prepare in reading order.
+ * direction's information architecture (Home / Timeline / Signals /
+ * Clinical Brief) against the routes that actually exist — "Record"
+ * itself isn't a separate route (logging happens on the dashboard),
+ * but the Timeline is its chronological detail view, placed right
+ * after Home to keep Record → Understand → Prepare in reading order.
+ * "Signals" is the product-facing name for what the /trends route
+ * shows; the route itself stays as-is to avoid breaking existing
+ * links.
  *
- * Treatments/Export/Organization keep working (nothing here removes a
- * route) but move into a secondary "More" disclosure on desktop rather
- * than competing with the four primary items for attention. Below the
- * `md` breakpoint the primary row has nowhere to go without wrapping,
- * so it collapses into a single unified menu (primary + secondary
- * links, stacked) instead — two native `<details>` elements, swapped by
+ * Settings/Treatments/Export/Organization keep working (nothing here
+ * removes a route) but move into a secondary "More" disclosure on
+ * desktop, rather than competing with the primary items for attention
+ * — Settings doesn't need the same visual weight as the four record/
+ * understand/prepare items on every page view. Below the `md`
+ * breakpoint the primary row has nowhere to go without wrapping, so it
+ * collapses into a single unified menu (primary + secondary links,
+ * stacked) instead — two native `<details>` elements, swapped by
  * breakpoint, so both stay keyboard-operable and screen-reader
  * navigable with no menu-open/closed JS state to get wrong.
  */
@@ -45,15 +49,15 @@ export function AppNav({
   const primaryLinks: NavLink[] = [
     { href: "/dashboard", label: t("home") },
     { href: "/timeline", label: t("timeline") },
-    { href: "/trends", label: t("patterns") },
+    { href: "/trends", label: t("signals") },
     { href: "/brief", label: t("clinicalBrief") },
-    { href: "/settings", label: t("settings") },
   ];
 
   const secondaryLinks: NavLink[] = [
     { href: "/treatments", label: t("treatments") },
     { href: "/export", label: t("export") },
     ...(managesOrg ? [{ href: "/organization", label: t("organization") }] : []),
+    { href: "/settings", label: t("settings") },
   ];
 
   function isActive(href: string): boolean {

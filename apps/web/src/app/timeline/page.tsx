@@ -10,7 +10,7 @@ import { AppNav } from "../../components/app-nav";
 import { SectionLabel } from "../../components/section-label";
 import { toIsoDate } from "../../lib/date-format";
 
-// Matches Patterns' own WINDOW_DAYS (apps/web/src/app/trends/page.tsx) —
+// Matches Signals' own WINDOW_DAYS (apps/web/src/app/trends/page.tsx) —
 // the same default recency window used everywhere else records are
 // summarized, not a new convention invented for this page.
 const WINDOW_DAYS = 90;

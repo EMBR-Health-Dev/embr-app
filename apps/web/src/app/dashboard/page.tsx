@@ -300,7 +300,7 @@ function DashboardContent() {
             {t(startingPointKey)}
           </p>
         )}
-        {/* Ties Today/Your record, Patterns, and Evidence together as
+        {/* Ties Today/Your record, Signals, and Evidence together as
             one narrative — what you've recorded, what's changing, and
             what to bring to your GP — rather than three unrelated
             cards on one page. */}

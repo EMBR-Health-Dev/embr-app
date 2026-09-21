@@ -44,11 +44,11 @@ describe("CoOccurrenceCard", () => {
     await waitFor(() => expect(mockCoOccurrence).toHaveBeenCalled());
     expect(await screen.findByText("Your record is still taking shape.")).toBeInTheDocument();
     expect(
-      screen.getByText(/EMBR needs more observations before it can surface a recurring pattern/),
+      screen.getByText(/EMBR needs more observations before it can surface a signal here/),
     ).toBeInTheDocument();
   });
 
-  it("shows the persistent section description in both the empty and populated states", async () => {
+  it("shows the generic 'what EMBR can surface' explainer only in the empty state — the finding sentence carries that job once a signal exists", async () => {
     mockCoOccurrence.mockResolvedValue(null);
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
@@ -56,7 +56,7 @@ describe("CoOccurrenceCard", () => {
 
     expect(
       await screen.findByText(
-        "What EMBR can surface from your record once there's enough to show a pattern.",
+        "What EMBR can surface from your record once there's enough to show a signal.",
       ),
     ).toBeInTheDocument();
   });
@@ -72,39 +72,60 @@ describe("CoOccurrenceCard", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("renders the translated insight in English using real category translations, never a raw enum value", async () => {
+  it("renders the finding as a real sentence using real category translations, never a raw enum value", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />);
 
-    await waitFor(() => expect(screen.getByText(/appeared alongside/i)).toBeInTheDocument());
-    expect(screen.getByText("Hot Flash appeared alongside Fatigue on 6 days.")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Hot Flash and Fatigue appeared together" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/HOT_FLASH/)).not.toBeInTheDocument();
     expect(screen.queryByText(/FATIGUE/)).not.toBeInTheDocument();
   });
 
-  it("renders the translated insight in Japanese", async () => {
+  it("renders the finding heading in Japanese", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />, "ja");
 
     expect(
-      await screen.findByText("ホットフラッシュは倦怠感とともに、6日記録されています。"),
+      await screen.findByRole("heading", {
+        name: "ホットフラッシュと倦怠感が一緒に記録されました",
+      }),
     ).toBeInTheDocument();
   });
 
-  it("pluralizes the day count correctly at the singular boundary", async () => {
+  it("shows the shared-days count and a visual timeline of the literal evidence dates, always visible — not hidden behind a disclosure", async () => {
+    mockCoOccurrence.mockResolvedValue({
+      categoryA: "HOT_FLASH",
+      categoryB: "FATIGUE",
+      days: 3,
+      dates: ["2026-09-01", "2026-09-05", "2026-09-12"],
+    });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
+    expect(await screen.findByText("3 shared days")).toBeInTheDocument();
+    expect(screen.getByText("Sep 1")).toBeInTheDocument();
+    expect(screen.getByText("Sep 5")).toBeInTheDocument();
+    expect(screen.getByText("Sep 12")).toBeInTheDocument();
+    expect(screen.getByText("Evidence")).toBeInTheDocument();
+  });
+
+  it("pluralizes the shared-days count correctly at the singular boundary", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "ANXIETY", categoryB: "HEADACHE", days: 1 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />);
 
-    await waitFor(() => expect(screen.getByText(/on 1 day\./)).toBeInTheDocument());
+    expect(await screen.findByText("1 shared day")).toBeInTheDocument();
   });
 
-  it("includes the non-diagnostic caveat text alongside the insight", async () => {
+  it("keeps the interpretation-boundary caveat visible, not hidden behind a disclosure", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "ANXIETY", categoryB: "HEADACHE", days: 3 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
@@ -113,7 +134,7 @@ describe("CoOccurrenceCard", () => {
     await waitFor(() => expect(screen.getByText(/not a diagnosis/i)).toBeInTheDocument());
   });
 
-  it("separates the reported counts (Observed) from the co-occurrence finding (Pattern) using the frequency data the parent page already fetched", async () => {
+  it("separates the reported counts (Observed) from the finding/evidence using the frequency data the parent page already fetched", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
@@ -127,8 +148,6 @@ describe("CoOccurrenceCard", () => {
       />,
     );
 
-    // Observed: a plain reported-count fact, distinct from the
-    // Pattern section's own co-occurrence-day count above.
     expect(
       await screen.findByText(
         "Hot Flash was logged 12 times in the last 90 days. Fatigue was logged 9 times.",
@@ -137,7 +156,7 @@ describe("CoOccurrenceCard", () => {
     expect(screen.getByText("Observed")).toBeInTheDocument();
   });
 
-  it("shows a fixed, deterministic 'discuss with your GP' question — never AI-generated — for the detected pattern", async () => {
+  it("shows a fixed, deterministic 'discuss with your GP' question — never AI-generated — for the detected signal", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
@@ -171,7 +190,7 @@ describe("CoOccurrenceCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows a collapsed 'Why am I seeing this?' disclosure with the literal evidence dates, when the backend provides them", async () => {
+  it("shows a collapsed 'Why am I seeing this?' disclosure explaining EMBR's own reasoning for surfacing the signal", async () => {
     mockCoOccurrence.mockResolvedValue({
       categoryA: "HOT_FLASH",
       categoryB: "FATIGUE",
@@ -185,25 +204,18 @@ describe("CoOccurrenceCard", () => {
     const toggle = await screen.findByText("Why am I seeing this?");
     const details = toggle.closest("details");
     expect(details).not.toBeNull();
-    // Collapsed by default — this is a disclosure, not always-visible
-    // clutter on every pattern card.
+    // Collapsed by default — reasoning, not always-visible clutter on
+    // every signal card (the evidence itself is already visible above).
     expect(details).not.toHaveAttribute("open");
 
-    expect(screen.getByText("Both were logged on these days:")).toBeInTheDocument();
-    expect(screen.getByText("Sep 1, Sep 5, Sep 12")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "EMBR surfaces a signal like this once two symptoms have been recorded together on at least 3 separate days. Hot Flash and Fatigue currently share 3 days.",
+      ),
+    ).toBeInTheDocument();
   });
 
-  it("shows no 'Why am I seeing this?' disclosure when the backend doesn't provide dates", async () => {
-    mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
-
-    const { CoOccurrenceCard } = await import("./co-occurrence-card");
-    renderWithIntl(<CoOccurrenceCard />);
-
-    await waitFor(() => expect(screen.getByText(/appeared alongside/i)).toBeInTheDocument());
-    expect(screen.queryByText("Why am I seeing this?")).not.toBeInTheDocument();
-  });
-
-  it("shows the same evidence disclosure in Japanese", async () => {
+  it("shows the same disclosure reasoning in Japanese", async () => {
     mockCoOccurrence.mockResolvedValue({
       categoryA: "HOT_FLASH",
       categoryB: "FATIGUE",
@@ -215,8 +227,11 @@ describe("CoOccurrenceCard", () => {
     renderWithIntl(<CoOccurrenceCard />, "ja");
 
     expect(await screen.findByText("なぜこれが表示されているのですか?")).toBeInTheDocument();
-    expect(screen.getByText("両方が記録された日:")).toBeInTheDocument();
-    expect(screen.getByText("9月1日, 9月5日")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "EMBRは、2つの症状が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、ホットフラッシュと倦怠感は2日で一致しています。",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("passes the from/to window through to the API call", async () => {

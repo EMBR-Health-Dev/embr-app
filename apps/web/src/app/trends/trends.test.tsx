@@ -155,7 +155,7 @@ describe("Patterns page — populated state (real data flow)", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the observed-pattern insight, with its new persistent description, when a co-occurring pair exists", async () => {
+  it("shows the finding as a real sentence when a co-occurring pair exists", async () => {
     symptomFrequencyMock.mockResolvedValue([]);
     cycleLengthMock.mockResolvedValue(emptyCycle);
     coOccurrenceMock.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
@@ -165,19 +165,22 @@ describe("Patterns page — populated state (real data flow)", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Hot Flash appeared alongside Fatigue on 6 days."),
+        screen.getByRole("heading", { name: "Hot Flash and Fatigue appeared together" }),
       ).toBeInTheDocument(),
     );
+    // The generic "what EMBR can surface..." explainer only shows in the
+    // empty state — once a real finding exists, the finding sentence
+    // itself carries that job, so the card doesn't repeat itself.
     expect(
-      screen.getByText(
-        "What EMBR can surface from your record once there's enough to show a pattern.",
+      screen.queryByText(
+        "What EMBR can surface from your record once there's enough to show a signal.",
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 });
 
 describe("Patterns page — evidence strength", () => {
-  it("shows the Early badge with its caption when the backend reports an early record", async () => {
+  it("shows the Building-your-record badge with its caption when the backend reports an early record", async () => {
     symptomFrequencyMock.mockResolvedValue([]);
     cycleLengthMock.mockResolvedValue(emptyCycle);
     evidenceStrengthMock.mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 2 });
@@ -185,10 +188,10 @@ describe("Patterns page — evidence strength", () => {
     const { default: TrendsPage } = await import("./page");
     renderWithIntl(<TrendsPage />);
 
-    expect(await screen.findByText("Early record")).toBeInTheDocument();
+    expect(await screen.findByText("Building your record")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "You're just getting started. The more you log, the more EMBR can show you here.",
+        "You're building your record. As you log more consistently, EMBR can surface stronger signals across symptoms and time.",
       ),
     ).toBeInTheDocument();
   });

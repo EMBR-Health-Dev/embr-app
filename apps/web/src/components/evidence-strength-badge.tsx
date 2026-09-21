@@ -8,7 +8,7 @@ import type { EvidenceStrength } from "@embr/types";
  * draw on — not a clinical judgment, not a score. The strength value
  * itself comes from a deterministic backend bucket (see
  * apps/api/src/modules/trends/evidence-strength.ts); this component
- * only renders it. Reusable across Patterns and, eventually, the
+ * only renders it. Reusable across Signals and, eventually, the
  * Clinical Brief — no page-specific logic lives here.
  */
 export function EvidenceStrengthBadge({ strength }: { strength: EvidenceStrength }) {

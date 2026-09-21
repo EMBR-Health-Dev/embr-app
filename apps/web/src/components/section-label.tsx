@@ -3,7 +3,7 @@
  * signal dot (see apps/api/src/modules/briefs/brief.pdf.ts's
  * `sectionHeading`) — the same small lilac point, immediately before
  * an uppercase, letter-spaced eyebrow label. Used consistently across
- * the dashboard and Patterns so the app and the PDF read as two
+ * the dashboard and Signals so the app and the PDF read as two
  * surfaces of one system, not two different products.
  *
  * Purely a layout/typographic device, same as its PDF counterpart: the

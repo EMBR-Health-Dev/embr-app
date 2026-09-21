@@ -39,7 +39,7 @@ export default function TrendsPage() {
   }, [loading, user, router]);
 
   // Same reachability reasoning as dashboard/page.tsx's identical
-  // check — an org admin navigating straight to Patterns shouldn't
+  // check — an org admin navigating straight to Signals shouldn't
   // lose the Organization link just because they didn't start at the
   // dashboard.
   useEffect(() => {
