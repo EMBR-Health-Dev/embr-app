@@ -130,7 +130,11 @@ export default function TrendsPage() {
               )}
             </section>
 
-            <CoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
+            <CoOccurrenceCard
+              from={daysAgoIso(WINDOW_DAYS)}
+              frequency={frequency}
+              windowDays={WINDOW_DAYS}
+            />
 
             <section className="mt-10">
               <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>
