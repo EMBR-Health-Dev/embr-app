@@ -135,14 +135,14 @@
       "headline": "Here's how EMBR works.",
       "trackFallback": "Sleep · Energy · Mood",
       "trackTreatmentsHint": "You can also keep track of treatments you try, including HRT, supplements, medication, or anything else you want to remember.",
-      "patternsLabel": "Patterns",
+      "patternsLabel": "Signals",
       "patternsTitle": "After you've logged for a couple of weeks, EMBR can help you look back at what was happening together.",
       "patternsExampleLabel": "For example:",
       "patternsExample": "\"On 6 days, lower energy appeared alongside disrupted sleep.\"",
       "patternsCaveat": "These are patterns in your records, not diagnoses. EMBR does not tell you what is causing your symptoms.",
       "trackLabel": "Track",
       "briefLabel": "Brief",
-      "briefTitle": "Evidence · Patterns · Questions",
+      "briefTitle": "Evidence · Signals · Questions",
       "briefBody": "When you want one, EMBR turns your records into a simple summary you can take to a healthcare appointment.",
       "briefControlNote": "You decide when to create it. Nothing is generated automatically.",
       "conversationLabel": "Healthcare conversation",
@@ -249,9 +249,9 @@
     "yourRecordLabel": "Your record",
     "recordDescription": "Everything you log becomes part of this record.",
     "periodLabel": "Period",
-    "patternsLabel": "Patterns",
-    "patternsBody": "A weekly view of what's changing. As your record grows, the fuller picture takes shape in Patterns.",
-    "viewPatterns": "Go to Patterns",
+    "patternsLabel": "Signals",
+    "patternsBody": "A weekly view of what's changing. As your record grows, the fuller picture takes shape in Signals.",
+    "viewPatterns": "Go to Signals",
     "evidenceLabel": "Your evidence",
     "evidenceBody": "Your Clinical Brief turns your recorded history into what you can bring to your GP.",
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
@@ -262,7 +262,7 @@
     "navigationLabel": "Main navigation",
     "home": "Home",
     "timeline": "Timeline",
-    "patterns": "Patterns",
+    "signals": "Signals",
     "clinicalBrief": "Clinical Brief",
     "settings": "Settings",
     "more": "More",
@@ -293,7 +293,7 @@
     "truncatedNotice": "Showing your most recently recorded activity from the last {days} days."
   },
   "Trends": {
-    "title": "Patterns",
+    "title": "Signals",
     "subtitle": "See what your record is beginning to show over time.",
     "reportedDataLabel": "Your record",
     "reportedDataDescription": "Reported data",
@@ -310,30 +310,30 @@
     "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem."
   },
   "CoOccurrence": {
-    "cardLabel": "Pattern",
-    "cardDescription": "What EMBR can surface from your record once there's enough to show a pattern.",
-    "heading": "What you've logged together",
+    "cardLabel": "Signal",
+    "cardDescription": "What EMBR can surface from your record once there's enough to show a signal.",
+    "findingHeading": "{categoryA} and {categoryB} appeared together",
+    "evidenceLabel": "Evidence",
+    "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "observedLabel": "Observed",
     "observedText": "{categoryA} was logged {countA, plural, one {# time} other {# times}} in the last {days} days. {categoryB} was logged {countB, plural, one {# time} other {# times}}.",
-    "patternLabel": "Pattern",
-    "message": "{categoryA} appeared alongside {categoryB} on {days, plural, one {# day} other {# days}}.",
     "caveat": "A description of what you've logged: not a diagnosis, and not a claim about cause.",
-    "datesEvidenceIntro": "Both were logged on these days:",
+    "whyReasoning": "EMBR surfaces a signal like this once two symptoms have been recorded together on at least 3 separate days. {categoryA} and {categoryB} currently share {days, plural, one {# day} other {# days}}.",
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
     "emptyTitle": "Your record is still taking shape.",
-    "emptyBody": "EMBR needs more observations before it can surface a recurring pattern. Keep logging over time; this section will update as your record grows."
+    "emptyBody": "EMBR needs more observations before it can surface a signal here. Keep logging over time; this section will update as your record grows."
   },
   "EvidenceStrength": {
     "groupLabel": "How much of your record exists so far",
     "label": {
-      "EARLY": "Early record",
+      "EARLY": "Building your record",
       "EMERGING": "Emerging record",
       "ESTABLISHED": "Established record"
     },
     "caption": {
-      "EARLY": "You're just getting started. The more you log, the more EMBR can show you here.",
+      "EARLY": "You're building your record. As you log more consistently, EMBR can surface stronger signals across symptoms and time.",
       "EMERGING": "Your record is starting to take shape. Keep logging to build a fuller picture.",
       "ESTABLISHED": "You have a solid record to draw on."
     }

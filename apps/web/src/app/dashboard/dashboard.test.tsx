@@ -91,7 +91,7 @@ describe("Dashboard — translation", () => {
     // visually shown at a time via a CSS breakpoint, which jsdom doesn't
     // evaluate), so an unscoped query would match each link twice.
     const desktopNav = screen.getByTestId("app-nav-desktop");
-    expect(within(desktopNav).getByRole("link", { name: "Patterns" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "Signals" })).toBeInTheDocument();
     expect(within(desktopNav).getByRole("link", { name: "Clinical Brief" })).toBeInTheDocument();
     expect(screen.getByText("Today's cycle entry")).toBeInTheDocument();
     expect(screen.getByText("Having a hot flash right now?")).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe("Dashboard — translation", () => {
 
     await waitFor(() => expect(screen.getByText("最近の症状")).toBeInTheDocument());
     const desktopNav = screen.getByTestId("app-nav-desktop");
-    expect(within(desktopNav).getByRole("link", { name: "パターン" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "シグナル" })).toBeInTheDocument();
     expect(within(desktopNav).getByRole("link", { name: "設定" })).toBeInTheDocument();
     expect(screen.getByText("今日の周期記録")).toBeInTheDocument();
     expect(screen.getByText("今、ホットフラッシュが起きていますか?")).toBeInTheDocument();

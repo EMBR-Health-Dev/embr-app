@@ -135,14 +135,14 @@
       "headline": "EMBRの仕組みをご紹介します。",
       "trackFallback": "睡眠 · エネルギー · 気分",
       "trackTreatmentsHint": "HRT、サプリメント、薬など、試している治療も記録できます。",
-      "patternsLabel": "パターン",
+      "patternsLabel": "シグナル",
       "patternsTitle": "数週間記録を続けると、EMBRは同じ時期に起きていたことを振り返る手助けをします。",
       "patternsExampleLabel": "例えば:",
       "patternsExample": "「6日間、エネルギー低下とともに睡眠の乱れが見られました。」",
       "patternsCaveat": "これはあなたの記録の中のパターンであり、診断ではありません。EMBRは症状の原因を教えるものではありません。",
       "trackLabel": "記録",
       "briefLabel": "BRIEF",
-      "briefTitle": "エビデンス · パターン · 質問",
+      "briefTitle": "エビデンス · シグナル · 質問",
       "briefBody": "必要なときに、EMBRはあなたの記録をもとに、診察に持っていけるシンプルな要約を作成します。",
       "briefControlNote": "作成するタイミングはあなたが決めます。自動で作成されることはありません。",
       "conversationLabel": "診察での会話",
@@ -249,9 +249,9 @@
     "yourRecordLabel": "あなたの記録",
     "recordDescription": "記録した内容はすべて、この記録の一部になります。",
     "periodLabel": "生理",
-    "patternsLabel": "パターン",
-    "patternsBody": "今週、変化している内容です。記録が増えるにつれて、パターンページでより詳しい全体像が見えてきます。",
-    "viewPatterns": "パターンを見る",
+    "patternsLabel": "シグナル",
+    "patternsBody": "今週、変化している内容です。記録が増えるにつれて、シグナルページでより詳しい全体像が見えてきます。",
+    "viewPatterns": "シグナルを見る",
     "evidenceLabel": "あなたのエビデンス",
     "evidenceBody": "Clinical Briefは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
     "evidenceLatestMeta": "{from} → {to} ・作成日: {date}",
@@ -262,7 +262,7 @@
     "navigationLabel": "メインナビゲーション",
     "home": "ホーム",
     "timeline": "タイムライン",
-    "patterns": "パターン",
+    "signals": "シグナル",
     "clinicalBrief": "Clinical Brief",
     "settings": "設定",
     "more": "その他",
@@ -293,7 +293,7 @@
     "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。"
   },
   "Trends": {
-    "title": "パターン",
+    "title": "シグナル",
     "subtitle": "あなたの記録から、時間とともに見えてくるものを確認できます。",
     "reportedDataLabel": "あなたの記録",
     "reportedDataDescription": "報告されたデータ",
@@ -310,30 +310,30 @@
     "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
   },
   "CoOccurrence": {
-    "cardLabel": "パターン",
-    "cardDescription": "十分な記録が集まると、EMBRがあなたの記録から見えてくるものをここに示します。",
-    "heading": "一緒に記録されたもの",
+    "cardLabel": "シグナル",
+    "cardDescription": "十分な記録が集まると、EMBRがあなたの記録からシグナルを示します。",
+    "findingHeading": "{categoryA}と{categoryB}が一緒に記録されました",
+    "evidenceLabel": "エビデンス",
+    "sharedDaysCount": "共有日数: {days}日",
     "observedLabel": "観察された記録",
     "observedText": "{categoryA}は過去{days}日間で{countA}回記録されました。{categoryB}は{countB}回記録されました。",
-    "patternLabel": "パターン",
-    "message": "{categoryA}は{categoryB}とともに、{days, plural, other {#日}}記録されています。",
     "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。",
-    "datesEvidenceIntro": "両方が記録された日:",
+    "whyReasoning": "EMBRは、2つの症状が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、{categoryA}と{categoryB}は{days}日で一致しています。",
     "questionLabel": "担当医に相談してみましょう",
     "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
     "emptyTitle": "あなたの記録は、まだ形になっている途中です。",
-    "emptyBody": "繰り返しのパターンを示すには、EMBRにはさらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
+    "emptyBody": "EMBRがここにシグナルを示すには、さらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
   },
   "EvidenceStrength": {
     "groupLabel": "これまでに蓄積された記録の量",
     "label": {
-      "EARLY": "記録を始めたばかり",
+      "EARLY": "記録を作成中",
       "EMERGING": "記録が育ちつつあります",
       "ESTABLISHED": "十分な記録が蓄積されています"
     },
     "caption": {
-      "EARLY": "まだ始めたばかりです。記録を続けるほど、EMBRがここに示せる内容が増えていきます。",
+      "EARLY": "あなたは記録を作っている最中です。継続して記録することで、EMBRは症状や時間の経過にわたるより確かなシグナルを示せるようになります。",
       "EMERGING": "あなたの記録は形になり始めています。記録を続けると、より詳しい全体像が見えてきます。",
       "ESTABLISHED": "頼りになる、しっかりとした記録が集まっています。"
     }
