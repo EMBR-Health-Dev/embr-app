@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { CycleLengthEntryDto, SymptomFrequencyDto } from "@embr/types";
+import type { CycleLengthEntryDto, EvidenceStrength, SymptomFrequencyDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
 import { SectionLabel } from "../../components/section-label";
 import { CoOccurrenceCard } from "../../components/co-occurrence-card";
+import { EvidenceStrengthBadge } from "../../components/evidence-strength-badge";
 
 const WINDOW_DAYS = 90;
 const CYCLE_WINDOW_DAYS = 180;
@@ -29,6 +30,7 @@ export default function TrendsPage() {
   const [frequency, setFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [lengths, setLengths] = useState<CycleLengthEntryDto[]>([]);
   const [averageCycleLength, setAverageCycleLength] = useState<number | null>(null);
+  const [evidenceStrength, setEvidenceStrength] = useState<EvidenceStrength | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [managesOrg, setManagesOrg] = useState(false);
 
@@ -68,11 +70,13 @@ export default function TrendsPage() {
     Promise.all([
       api.trends.symptomFrequency({ from: daysAgoIso(WINDOW_DAYS) }),
       api.trends.cycleLength({ from: daysAgoIso(CYCLE_WINDOW_DAYS) }),
+      api.trends.evidenceStrength(),
     ])
-      .then(([symptomFrequency, cycleLength]) => {
+      .then(([symptomFrequency, cycleLength, evidenceStrengthResult]) => {
         setFrequency(symptomFrequency);
         setLengths(cycleLength.lengths);
         setAverageCycleLength(cycleLength.averageDays);
+        setEvidenceStrength(evidenceStrengthResult.strength);
       })
       .finally(() => setDataLoading(false));
   }, [user]);
@@ -94,6 +98,7 @@ export default function TrendsPage() {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
+        {evidenceStrength && <EvidenceStrengthBadge strength={evidenceStrength} />}
 
         {dataLoading ? (
           <p className="mt-8 text-sm text-foreground/50">{tCommon("loading")}</p>

@@ -6,6 +6,7 @@ import type {
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
+  EvidenceStrengthDto,
   MyOrganizationMembershipDto,
   OnboardingProfileDto,
   OrgBillingStatusDto,
@@ -101,6 +102,8 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+
+    evidenceStrength: () => apiFetch<EvidenceStrengthDto>("/trends/evidence-strength"),
   },
 
   treatments: {

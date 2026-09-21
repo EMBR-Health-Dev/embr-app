@@ -45,4 +45,15 @@ router.get(
   }),
 );
 
+// Deliberately no from/to query — evidence strength describes the
+// whole longitudinal record, not a windowed slice of it (see
+// trendsService.evidenceStrength's own doc comment).
+router.get(
+  "/trends/evidence-strength",
+  asyncHandler(async (req, res) => {
+    const data = await trendsService.evidenceStrength(req.user!.sub);
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
 export { router as trendsRouter };

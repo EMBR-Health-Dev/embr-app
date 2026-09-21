@@ -254,6 +254,21 @@ export interface SymptomCoOccurrenceDto {
   days: number;
 }
 
+export type EvidenceStrength = "EARLY" | "EMERGING" | "ESTABLISHED";
+
+/** How much of a person's record exists to draw on — a plain count of
+ * distinct calendar days with at least one symptom log or cycle entry
+ * across the person's full history, bucketed by a fixed threshold (see
+ * apps/api/src/modules/trends/evidence-strength.ts). This is a fact
+ * about the record's size, not a clinical judgment about the person:
+ * it never modifies a pattern's confidence or interpretation text, and
+ * a small record is never framed as a problem, only as "not enough
+ * yet." */
+export interface EvidenceStrengthDto {
+  strength: EvidenceStrength;
+  distinctDaysLogged: number;
+}
+
 // ---- Reflections (Milestone 19) ----
 //
 // Structured facts only, same "no preformatted sentence" contract as

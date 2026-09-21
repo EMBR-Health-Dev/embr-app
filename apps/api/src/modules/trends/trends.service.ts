@@ -1,6 +1,7 @@
 import type { TrendsQuery } from "@embr/validation";
 import type {
   CycleLengthTrendDto,
+  EvidenceStrengthDto,
   SymptomCategory,
   SymptomCoOccurrenceDto,
   SymptomFrequencyDto,
@@ -8,6 +9,7 @@ import type {
 import { averageCycleLengthDays, computeCycleLengths } from "../../lib/cycle-length.js";
 import { trendsRepository } from "./trends.repository.js";
 import { detectSymptomCoOccurrence } from "./co-occurrence.js";
+import { computeEvidenceStrength } from "./evidence-strength.js";
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -46,5 +48,16 @@ export const trendsService = {
         occurredAt: log.occurredAt,
       })),
     );
+  },
+
+  /** Full history, not windowed — see trendsRepository.loggedDates and
+   * evidence-strength.ts's own doc comments for why. */
+  async evidenceStrength(userId: string): Promise<EvidenceStrengthDto> {
+    const { symptomDates, cycleDates } = await trendsRepository.loggedDates(userId);
+    const distinctDays = new Set<string>();
+    for (const date of symptomDates) distinctDays.add(date.toISOString().slice(0, 10));
+    for (const date of cycleDates) distinctDays.add(date.toISOString().slice(0, 10));
+    const distinctDaysLogged = distinctDays.size;
+    return { strength: computeEvidenceStrength(distinctDaysLogged), distinctDaysLogged };
   },
 };
