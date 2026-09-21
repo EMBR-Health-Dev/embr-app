@@ -166,6 +166,13 @@ async function refreshAccessToken(): Promise<string | null> {
         // screen rather than keep retrying against a token that will
         // never work again.
         await tokenStorage.clear();
+        // Notified here, inside the shared refresh attempt, rather
+        // than by each caller after it resolves — this IIFE only ever
+        // runs once per refresh cycle (see refreshInFlight above), so
+        // this is the one place that fires exactly once even when
+        // several concurrent apiFetch() calls are all awaiting the
+        // same failed refresh.
+        sessionExpiredHandler?.();
         return null;
       }
     })();
@@ -195,14 +202,10 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
     const newAccessToken = await refreshAccessToken();
     if (!newAccessToken) {
-      // Reaching this branch already required stored !== null above —
-      // a real, persisted session existed and its refresh just
-      // definitively failed, so this is unambiguous, unlike apps/web
-      // where the same signal has to be reconstructed from a
-      // localStorage marker (embr_rt-equivalent, httpOnly, isn't
-      // readable here either, but tokenStorage's own presence already
-      // does the same job for free).
-      sessionExpiredHandler?.();
+      // refreshAccessToken() already notified sessionExpiredHandler
+      // (once, from inside the shared refresh attempt) before
+      // resolving to null — nothing left to do here but propagate the
+      // failure to this caller.
       throw err;
     }
 
