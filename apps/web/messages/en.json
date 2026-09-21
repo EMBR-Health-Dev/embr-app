@@ -341,6 +341,39 @@
   "WhyAmISeeingThis": {
     "toggle": "Why am I seeing this?"
   },
+  "HotFlashReferenceLibrary": {
+    "toggle": "The science behind hot flashes",
+    "intro": "General background on what current research says about hot flashes — not specific to your own record, and not medical advice.",
+    "sections": {
+      "hormonal_signaling": {
+        "heading": "Hormonal signaling",
+        "body": "During the menopause transition, estrogen production declines and its signaling to the brain's temperature-regulation centers changes. This shift is the starting point most current research points to for why hot flashes begin during this stage of life, though the full chain from hormonal change to a hot flash involves several more steps described below."
+      },
+      "kndy_nk3_pathway": {
+        "heading": "The KNDy / neurokinin / NK3 pathway",
+        "body": "As estrogen signaling changes, a group of neurons in the hypothalamus known as KNDy neurons (named for the signaling molecules kisspeptin, neurokinin B, and dynorphin) become more active. Their neurokinin B signaling activates NK3 receptors in the brain's thermoregulatory center, which appears to narrow the body's tolerance for small changes in core temperature — so a change that wouldn't normally register gets interpreted as overheating, and the body responds with the sweating and vasodilation of a hot flash. This pathway is one of the more specific mechanistic models current research has identified, and it's the basis for newer nonhormonal treatments described in the treatment pathways section below."
+      },
+      "neurotransmitter_pathways": {
+        "heading": "Serotonin, norepinephrine, and other nonhormonal pathways",
+        "body": "Separately from the NK3 pathway, medications that affect serotonin, norepinephrine, or GABA — neurotransmitter systems more commonly associated with mood and pain — have also been studied for hot flashes. These systems interact with the same thermoregulatory circuits, which is thought to be why some medications originally developed for other conditions can also affect hot flash frequency or severity for some people."
+      },
+      "behavioral_psychological": {
+        "heading": "Behavioral and psychological factors",
+        "body": "A hot flash is a physiological event, but how disruptive it is depends partly on separate factors — stress, sleep, and how the sensation is interpreted in the moment. Behavioral approaches such as cognitive behavioral therapy and clinical hypnosis have been studied for their effect on this second layer: some research suggests they can reduce how much hot flashes interfere with sleep, concentration, or daily life, and possibly their frequency or severity too, through central and psychological pathways rather than a direct effect on peripheral blood vessels."
+      },
+      "context_lifestyle": {
+        "heading": "Context and lifestyle factors",
+        "body": "Caffeine, alcohol, diet, room temperature, and other everyday factors are commonly discussed as hot flash \"triggers,\" but current evidence for a direct, consistent relationship is limited and mixed. This is exactly why EMBR records context like this as an observation — what was reported alongside what — rather than presenting it as a cause. A pattern showing up together on several days is worth noticing; it isn't the same as proof that one caused the other."
+      },
+      "treatment_pathways": {
+        "heading": "Treatment pathways clinicians consider",
+        "body": "Several categories of treatment target different points in the pathways above: hormone therapy addresses the underlying hormonal signaling; NK3 receptor antagonists (such as fezolinetant) specifically block the KNDy pathway described above and were approved based on that mechanism; certain nonhormonal medications affect serotonin/norepinephrine/GABA signaling; and behavioral approaches address the psychological and functional layer. Each has a different evidence base, different candidates it's suited to, and different risks — for example, NK3 receptor antagonists carry a monitoring requirement for rare liver effects, and hormone therapy's suitability depends heavily on individual health history.",
+        "caveat": "This describes categories of treatment used in clinical practice, not a recommendation for you. Whether any of these is appropriate depends on your own health history, and that's a conversation for you and your clinician — EMBR doesn't select or recommend treatments."
+      }
+    },
+    "sourceLabel": "Source",
+    "caveat": "This section summarizes general scientific and clinical literature on hot flashes. It isn't a diagnosis, an explanation of the cause of your own symptoms, or medical advice."
+  },
   "Organization": {
     "title": "Organization",
     "backToDashboard": "← Dashboard",
