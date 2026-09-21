@@ -5,6 +5,11 @@ on:
     branches: [main, develop]
   push:
     branches: [main, develop]
+  # Escape hatch for a PR stuck with zero runs (e.g. a base-branch
+  # retarget via the API fires `edited`, not `synchronize`, so it
+  # doesn't trigger this workflow on its own) — lets CI be dispatched
+  # manually against a specific branch without needing a new commit.
+  workflow_dispatch:
 
 env:
   NODE_VERSION: "22.22.2"
