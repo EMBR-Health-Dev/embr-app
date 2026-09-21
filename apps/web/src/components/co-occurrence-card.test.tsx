@@ -215,6 +215,41 @@ describe("CoOccurrenceCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the hot-flash reference library nested inside the disclosure when hot flash is one of the two categories, but only after expanding it", async () => {
+    mockCoOccurrence.mockResolvedValue({
+      categoryA: "HOT_FLASH",
+      categoryB: "FATIGUE",
+      days: 3,
+      dates: ["2026-09-01", "2026-09-05", "2026-09-12"],
+    });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
+    // Present in the DOM (native <details> keeps content mounted
+    // regardless of open state — see why-am-i-seeing-this.test.tsx's
+    // identical reasoning) but collapsed, nested one level deeper than
+    // WhyAmISeeingThis itself.
+    const referenceToggle = await screen.findByText("The science behind hot flashes");
+    const referenceDetails = referenceToggle.closest("details");
+    expect(referenceDetails).not.toBeNull();
+    expect(referenceDetails).not.toHaveAttribute("open");
+
+    const whyToggle = screen.getByText("Why am I seeing this?");
+    const whyDetails = whyToggle.closest("details");
+    expect(whyDetails?.contains(referenceDetails)).toBe(true);
+  });
+
+  it("does not show the hot-flash reference library when neither category is hot flash", async () => {
+    mockCoOccurrence.mockResolvedValue({ categoryA: "ANXIETY", categoryB: "HEADACHE", days: 3 });
+
+    const { CoOccurrenceCard } = await import("./co-occurrence-card");
+    renderWithIntl(<CoOccurrenceCard />);
+
+    await screen.findByText("Why am I seeing this?");
+    expect(screen.queryByText("The science behind hot flashes")).not.toBeInTheDocument();
+  });
+
   it("shows the same disclosure reasoning in Japanese", async () => {
     mockCoOccurrence.mockResolvedValue({
       categoryA: "HOT_FLASH",

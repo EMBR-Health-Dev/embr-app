@@ -6,6 +6,7 @@ import type { SymptomCoOccurrenceDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../lib/api";
 import { SectionLabel } from "./section-label";
 import { WhyAmISeeingThis } from "./why-am-i-seeing-this";
+import { HotFlashReferenceLibrary } from "./hot-flash-reference-library";
 
 /**
  * A finding → evidence → interpretation boundary → clinician question
@@ -180,6 +181,15 @@ export function CoOccurrenceCard({
 
       <WhyAmISeeingThis>
         <p>{t("whyReasoning", { categoryA: labelA, categoryB: labelB, days: result.days })}</p>
+        {/* The user's own record-derived reasoning above always comes
+            first; this is a strictly secondary, further-optional layer
+            of general scientific background, not evidence about this
+            specific finding. Gated on category, not on the pair, since
+            the reference content is about hot flashes specifically,
+            not about co-occurrence in general. */}
+        {(result.categoryA === "HOT_FLASH" || result.categoryB === "HOT_FLASH") && (
+          <HotFlashReferenceLibrary />
+        )}
       </WhyAmISeeingThis>
 
       <div className="mt-5 border-t border-border-subtle pt-4">
