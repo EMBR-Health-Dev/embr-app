@@ -26,6 +26,7 @@ const mockUser = {
 const symptomFrequencyMock = vi.fn();
 const cycleLengthMock = vi.fn();
 const coOccurrenceMock = vi.fn().mockResolvedValue(null);
+const contextCoOccurrenceMock = vi.fn().mockResolvedValue(null);
 const evidenceStrengthMock = vi
   .fn()
   .mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 0 });
@@ -37,6 +38,7 @@ vi.mock("../../lib/api", () => ({
       symptomFrequency: (...args: unknown[]) => symptomFrequencyMock(...args),
       cycleLength: (...args: unknown[]) => cycleLengthMock(...args),
       coOccurrence: (...args: unknown[]) => coOccurrenceMock(...args),
+      contextCoOccurrence: (...args: unknown[]) => contextCoOccurrenceMock(...args),
       evidenceStrength: (...args: unknown[]) => evidenceStrengthMock(...args),
     },
   },

@@ -9,6 +9,7 @@ import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
 import { SectionLabel } from "../../components/section-label";
 import { CoOccurrenceCard } from "../../components/co-occurrence-card";
+import { ContextCoOccurrenceCard } from "../../components/context-co-occurrence-card";
 import { EvidenceStrengthBadge } from "../../components/evidence-strength-badge";
 
 const WINDOW_DAYS = 90;
@@ -140,6 +141,8 @@ export default function TrendsPage() {
               frequency={frequency}
               windowDays={WINDOW_DAYS}
             />
+
+            <ContextCoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
 
             <section className="mt-10">
               <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>

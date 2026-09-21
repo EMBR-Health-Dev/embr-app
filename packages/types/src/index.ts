@@ -217,6 +217,35 @@ export interface CycleEntryDto {
   updatedAt: string;
 }
 
+export type SleepDurationBucket = "UNDER_6H" | "SIX_TO_SEVEN_H" | "SEVEN_PLUS_H";
+export type StressLevel = "LOW" | "MODERATE" | "HIGH";
+
+export interface ContextLogDto {
+  id: string;
+  date: string;
+  sleepDuration: SleepDurationBucket | null;
+  caffeineAfternoon: boolean | null;
+  alcohol: boolean | null;
+  stressLevel: StressLevel | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** The small, fixed set of context factors detectSymptomContextCoOccurrence
+ * can report on — one deterministic rule per factor (see that function's
+ * doc comment), never free text or an open-ended list. */
+export type ContextFactor = "SHORT_SLEEP" | "CAFFEINE_AFTERNOON" | "ALCOHOL" | "HIGH_STRESS";
+
+/** Same shape and same "recorded together"/"appeared alongside"
+ * evidence language as SymptomCoOccurrenceDto — a symptom category and
+ * a context factor sharing calendar days, never a causal claim. */
+export interface SymptomContextCoOccurrenceDto {
+  category: SymptomCategory;
+  factor: ContextFactor;
+  days: number;
+  dates: string[];
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   page: number;

@@ -36,6 +36,17 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      contexts: [] as Array<{
+        id: string;
+        userId: string;
+        date: Date;
+        sleepDuration: string | null;
+        caffeineAfternoon: boolean | null;
+        alcohol: boolean | null;
+        stressLevel: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>,
     },
     nextId: () => randomUUID(),
   };
@@ -209,6 +220,47 @@ vi.mock("../src/lib/prisma.js", () => ({
         return Promise.resolve(matching.map((e) => ({ date: e.date })));
       }),
     },
+    contextLog: {
+      upsert: vi.fn(
+        ({
+          where,
+          create,
+          update,
+        }: {
+          where: { userId_date: { userId: string; date: Date } };
+          create: Omit<(typeof state.contexts)[number], "id" | "createdAt" | "updatedAt">;
+          update: Partial<(typeof state.contexts)[number]>;
+        }) => {
+          const { userId, date } = where.userId_date;
+          const existing = state.contexts.find(
+            (e) => e.userId === userId && e.date.getTime() === date.getTime(),
+          );
+          if (existing) {
+            Object.assign(existing, update, { updatedAt: now() });
+            return Promise.resolve(existing);
+          }
+          const entry = { id: nextId(), createdAt: now(), updatedAt: now(), ...create };
+          state.contexts.push(entry);
+          return Promise.resolve(entry);
+        },
+      ),
+      // Raw rows for the symptom-context co-occurrence pattern engine —
+      // same "not a GROUP BY" reasoning as symptomLog.findMany above.
+      findMany: vi.fn(({ where }: { where: { userId: string; date?: OccurredAtRange } }) => {
+        const matching = state.contexts.filter(
+          (e) => e.userId === where.userId && inRange(e.date, where.date),
+        );
+        return Promise.resolve(
+          matching.map((e) => ({
+            date: e.date,
+            sleepDuration: e.sleepDuration,
+            caffeineAfternoon: e.caffeineAfternoon,
+            alcohol: e.alcohol,
+            stressLevel: e.stressLevel,
+          })),
+        );
+      }),
+    },
   },
 }));
 
@@ -234,6 +286,7 @@ beforeEach(() => {
   state.users = [];
   state.logs = [];
   state.entries = [];
+  state.contexts = [];
 });
 
 describe("GET /trends/symptom-frequency", () => {
@@ -420,6 +473,83 @@ describe("GET /trends/co-occurrence", () => {
 
     const res = await agent
       .get("/trends/co-occurrence")
+      .query({ from: "2026-06-01T00:00:00.000Z" });
+    expect(res.status).toBe(200);
+    // The January data falls entirely outside the June-onward window,
+    // so nothing here should qualify.
+    expect(res.body.data).toBeNull();
+  });
+});
+
+describe("GET /trends/context-co-occurrence", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/trends/context-co-occurrence");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns null with no qualifying pair", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "contextcooccurrence-empty@embr.health");
+
+    const res = await agent.get("/trends/context-co-occurrence");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeNull();
+  });
+
+  it("returns the symptom/factor pair once real logged data meets the threshold, scoped to the authenticated user only", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "contextcooccurrenceA@embr.health");
+    await registerAndLogin(agentB, "contextcooccurrenceB@embr.health");
+
+    for (const day of [1, 2, 3]) {
+      await agentA.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MODERATE",
+        occurredAt: `2026-06-0${day}T08:00:00.000Z`,
+      });
+      await agentA.post("/context-logs").send({
+        date: `2026-06-0${day}`,
+        caffeineAfternoon: true,
+      });
+      // Agent B's own data must never affect agent A's result.
+      await agentB.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MODERATE",
+        occurredAt: `2026-06-0${day}T08:00:00.000Z`,
+      });
+    }
+
+    const res = await agentA.get("/trends/context-co-occurrence");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      category: "HOT_FLASH",
+      factor: "CAFFEINE_AFTERNOON",
+      days: 3,
+      dates: ["2026-06-01", "2026-06-02", "2026-06-03"],
+    });
+  });
+
+  it("respects the from/to range", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "contextcooccurrencerange@embr.health");
+
+    // 3 qualifying days in January.
+    for (const day of [1, 2, 3]) {
+      await agent.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MILD",
+        occurredAt: `2026-01-0${day}T08:00:00.000Z`,
+      });
+      await agent.post("/context-logs").send({ date: `2026-01-0${day}`, alcohol: true });
+    }
+
+    const res = await agent
+      .get("/trends/context-co-occurrence")
       .query({ from: "2026-06-01T00:00:00.000Z" });
     expect(res.status).toBe(200);
     // The January data falls entirely outside the June-onward window,

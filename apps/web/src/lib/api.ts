@@ -3,6 +3,7 @@ import type {
   BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  ContextLogDto,
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
@@ -19,6 +20,7 @@ import type {
   ReflectionType,
   SsoConnectionDto,
   SymptomCoOccurrenceDto,
+  SymptomContextCoOccurrenceDto,
   SymptomFrequencyDto,
   SymptomLogDto,
   TreatmentDto,
@@ -93,6 +95,19 @@ export const api = {
     }) => apiFetch<CycleEntryDto>("/cycle-entries", { method: "POST", body: input }),
   },
 
+  contextLogs: {
+    list: (query?: { page?: number; pageSize?: number; from?: string; to?: string }) =>
+      apiFetch<PaginatedResponse<ContextLogDto>>("/context-logs", { query }),
+
+    upsert: (input: {
+      date: string;
+      sleepDuration?: string;
+      caffeineAfternoon?: boolean;
+      alcohol?: boolean;
+      stressLevel?: string;
+    }) => apiFetch<ContextLogDto>("/context-logs", { method: "POST", body: input }),
+  },
+
   trends: {
     symptomFrequency: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomFrequencyDto[]>("/trends/symptom-frequency", { query }),
@@ -102,6 +117,9 @@ export const api = {
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+
+    contextCoOccurrence: (query?: { from?: string; to?: string }) =>
+      apiFetch<SymptomContextCoOccurrenceDto | null>("/trends/context-co-occurrence", { query }),
 
     evidenceStrength: () => apiFetch<EvidenceStrengthDto>("/trends/evidence-strength"),
   },

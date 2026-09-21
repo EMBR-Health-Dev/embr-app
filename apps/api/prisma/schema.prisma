@@ -58,6 +58,7 @@ model User {
   auditLogs               AuditLog[]
   symptomLogs             SymptomLog[]
   cycleEntries            CycleEntry[]
+  contextLogs             ContextLog[]
   treatments              Treatment[]
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
@@ -215,6 +216,46 @@ model CycleEntry {
   @@unique([userId, date])
   @@index([userId, date])
   @@map("cycle_entries")
+}
+
+/// A bucketed, non-diagnostic proxy for "short sleep" — not the raw
+/// number of hours. See detectSymptomContextCoOccurrence in the trends
+/// module for the one deterministic rule (UNDER_6H counts as the
+/// observed factor) this bucket exists to support.
+enum SleepDurationBucket {
+  UNDER_6H
+  SIX_TO_SEVEN_H
+  SEVEN_PLUS_H
+}
+
+enum StressLevel {
+  LOW
+  MODERATE
+  HIGH
+}
+
+/// A deliberately small, fixed set of daily context factors (see the
+/// embr-clinical-logic skill doctrine and the "Hot Flash Reference
+/// Library" PR discussion) — never free text, never an open-ended
+/// system. One row per user per day, mirroring CycleEntry's
+/// upsert-by-date shape: these are things reported as true of a whole
+/// day, not moment-specific events like SymptomLog. Every field is
+/// optional except `date` — a day can be logged with just one factor.
+model ContextLog {
+  id                String               @id @default(uuid())
+  userId            String
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime             @db.Date
+  sleepDuration     SleepDurationBucket?
+  caffeineAfternoon Boolean?
+  alcohol           Boolean?
+  stressLevel       StressLevel?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("context_logs")
 }
 
 enum TreatmentCategory {

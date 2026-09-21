@@ -39,6 +39,16 @@ const symptomLogsList = vi
   .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
 const symptomLogsCreate = vi.fn();
 const briefsList = vi.fn().mockResolvedValue({ items: [] });
+const contextLogsUpsert = vi.fn().mockResolvedValue({
+  id: "ctx-1",
+  date: "2026-01-01",
+  sleepDuration: null,
+  caffeineAfternoon: false,
+  alcohol: false,
+  stressLevel: null,
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
+});
 
 vi.mock("../../lib/api", () => ({
   api: {
@@ -48,6 +58,7 @@ vi.mock("../../lib/api", () => ({
     trends: { symptomFrequency },
     reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
     briefs: { list: briefsList },
+    contextLogs: { upsert: contextLogsUpsert },
   },
 }));
 
@@ -58,6 +69,7 @@ beforeEach(() => {
     .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
   symptomLogsCreate.mockReset();
   briefsList.mockReset().mockResolvedValue({ items: [] });
+  contextLogsUpsert.mockClear();
 });
 
 function makeLog(id: string, category = "HOT_FLASH") {
@@ -94,6 +106,7 @@ describe("Dashboard — translation", () => {
     expect(within(desktopNav).getByRole("link", { name: "Signals" })).toBeInTheDocument();
     expect(within(desktopNav).getByRole("link", { name: "Clinical Brief" })).toBeInTheDocument();
     expect(screen.getByText("Today's cycle entry")).toBeInTheDocument();
+    expect(screen.getByText("Today's context")).toBeInTheDocument();
     expect(screen.getByText("Having a hot flash right now?")).toBeInTheDocument();
   });
 
@@ -106,6 +119,7 @@ describe("Dashboard — translation", () => {
     expect(within(desktopNav).getByRole("link", { name: "シグナル" })).toBeInTheDocument();
     expect(within(desktopNav).getByRole("link", { name: "設定" })).toBeInTheDocument();
     expect(screen.getByText("今日の周期記録")).toBeInTheDocument();
+    expect(screen.getByText("今日の状況")).toBeInTheDocument();
     expect(screen.getByText("今、ホットフラッシュが起きていますか?")).toBeInTheDocument();
   });
 
@@ -369,6 +383,46 @@ describe("Dashboard — evidence-infrastructure hierarchy", () => {
     expect(screen.getByText("Period")).toBeInTheDocument();
     expect(screen.getByLabelText(/Period started today/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Period ended today/)).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — context quick-log", () => {
+  it("renders the fixed set of four factors — sleep, stress, caffeine, alcohol — and nothing else", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    expect(screen.getByText("Sleep last night")).toBeInTheDocument();
+    expect(screen.getByText("Stress today")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Caffeine after 2pm/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Alcohol/)).toBeInTheDocument();
+  });
+
+  it("saves the selected factors for today's date and confirms with the shared Saved state", async () => {
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+
+    await user.selectOptions(screen.getByLabelText("Sleep last night"), "UNDER_6H");
+    await user.selectOptions(screen.getByLabelText("Stress today"), "HIGH");
+    await user.click(screen.getByLabelText(/Caffeine after 2pm/));
+
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(1));
+    const [input] = contextLogsUpsert.mock.calls[0] as [Record<string, unknown>];
+    expect(input.sleepDuration).toBe("UNDER_6H");
+    expect(input.stressLevel).toBe("HIGH");
+    expect(input.caffeineAfternoon).toBe(true);
+    expect(input.alcohol).toBe(false);
+    expect(typeof input.date).toBe("string");
+
+    expect(
+      await within(contextSection).findByRole("button", { name: "Saved ✓" }),
+    ).toBeInTheDocument();
   });
 });
 
