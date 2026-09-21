@@ -300,9 +300,16 @@ function DashboardContent() {
             {t(startingPointKey)}
           </p>
         )}
+        {/* Ties Today/Your record, Patterns, and Evidence together as
+            one narrative — what you've recorded, what's changing, and
+            what to bring to your GP — rather than three unrelated
+            cards on one page. */}
+        <p className={`text-sm text-foreground/60 ${startingPointKey ? "mt-3" : ""}`}>
+          {t("homeIntro")}
+        </p>
 
         {/* ---- TODAY ---- */}
-        <section className={startingPointKey ? "mt-10" : ""}>
+        <section className="mt-10">
           <SectionLabel as="h1">
             {t("todayLabel")} · {todayLabel}
           </SectionLabel>

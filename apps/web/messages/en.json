@@ -240,6 +240,7 @@
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
     },
+    "homeIntro": "Everything in one place: what you've recorded, what's changing, and what to bring to your GP.",
     "todayLabel": "Today",
     "todayDescription": "Log what you're noticing.",
     "todayLoggedSummary": "{count, plural, one {# entry recorded today} other {# entries recorded today}}",
@@ -249,10 +250,10 @@
     "recordDescription": "Everything you log becomes part of this record.",
     "periodLabel": "Period",
     "patternsLabel": "Patterns",
-    "patternsBody": "A weekly view of what's been logged. As your record grows, the fuller picture takes shape in Patterns.",
+    "patternsBody": "A weekly view of what's changing. As your record grows, the fuller picture takes shape in Patterns.",
     "viewPatterns": "Go to Patterns",
     "evidenceLabel": "Your evidence",
-    "evidenceBody": "Your Clinical Brief turns your recorded history into a concise document for a healthcare conversation.",
+    "evidenceBody": "Your Clinical Brief turns your recorded history into what you can bring to your GP.",
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
     "viewClinicalBrief": "View Clinical Brief",
     "generateFirstBrief": "Generate your first Clinical Brief"

@@ -341,6 +341,25 @@ describe("Dashboard — evidence-infrastructure hierarchy", () => {
     ).toBeInTheDocument();
   });
 
+  it("ties Record/Understand/Prepare together with one home-page intro line, in both locales", async () => {
+    const { default: DashboardPage } = await import("./page");
+    const { unmount } = renderWithIntl(<DashboardPage />);
+
+    expect(
+      await screen.findByText(
+        "Everything in one place: what you've recorded, what's changing, and what to bring to your GP.",
+      ),
+    ).toBeInTheDocument();
+    unmount();
+
+    renderWithIntl(<DashboardPage />, "ja");
+    expect(
+      await screen.findByText(
+        "あなたの記録がひとつの場所に集まります。記録したこと、変化していること、そして担当医に伝えられることです。",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("visually separates Flow from the period-boundary checkboxes under their own labeled group", async () => {
     const { default: DashboardPage } = await import("./page");
     renderWithIntl(<DashboardPage />);
