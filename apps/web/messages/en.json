@@ -345,6 +345,7 @@
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
+    "briefCta": "View this period in your Clinical Brief",
     "emptyTitle": "Your record is still taking shape.",
     "emptyBody": "EMBR needs more observations before it can surface a signal here. Keep logging over time; this section will update as your record grows."
   },
@@ -354,7 +355,8 @@
     "evidenceLabel": "Evidence",
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "caveat": "A description of what you've recorded: not a diagnosis, and not a claim that one caused the other.",
-    "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}."
+    "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
+    "briefCta": "View this period in your Clinical Brief"
   },
   "EvidenceStrength": {
     "groupLabel": "How much of your record exists so far",

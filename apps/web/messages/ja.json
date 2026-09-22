@@ -345,6 +345,7 @@
     "questionLabel": "担当医に相談してみましょう",
     "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
+    "briefCta": "この期間をClinical Briefで見る",
     "emptyTitle": "あなたの記録は、まだ形になっている途中です。",
     "emptyBody": "EMBRがここにシグナルを示すには、さらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
   },
@@ -354,7 +355,8 @@
     "evidenceLabel": "エビデンス",
     "sharedDaysCount": "共有日数: {days}日",
     "caveat": "これはあなたが記録した内容の説明であり、診断や一方が他方を引き起こしたという主張ではありません。",
-    "whyReasoning": "EMBRは、症状と状況の要因が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、{category}と{factor}は{days}日で一致しています。"
+    "whyReasoning": "EMBRは、症状と状況の要因が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、{category}と{factor}は{days}日で一致しています。",
+    "briefCta": "この期間をClinical Briefで見る"
   },
   "EvidenceStrength": {
     "groupLabel": "これまでに蓄積された記録の量",

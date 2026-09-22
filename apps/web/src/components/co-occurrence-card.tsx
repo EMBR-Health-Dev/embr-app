@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import type { SymptomCoOccurrenceDto, SymptomFrequencyDto } from "@embr/types";
 import { api } from "../lib/api";
+import { toIsoDate } from "../lib/date-format";
 import { SectionLabel } from "./section-label";
 import { WhyAmISeeingThis } from "./why-am-i-seeing-this";
 import { HotFlashReferenceLibrary } from "./hot-flash-reference-library";
@@ -126,6 +128,15 @@ export function CoOccurrenceCard({
       new Date(`${d}T00:00:00`),
     ),
   );
+  // A symptom-symptom co-occurrence like this one is genuinely part of
+  // what Clinical Brief generation recomputes and can cite (see
+  // brief.service.ts's own detectSymptomCoOccurrence call) — so this
+  // link's date range matches what's already on screen, not an
+  // arbitrary default, and the claim it makes (this period is what a
+  // brief would cover) is literally true rather than aspirational.
+  const briefHref = from
+    ? `/brief?from=${toIsoDate(new Date(from))}&to=${toIsoDate(new Date())}`
+    : "/brief";
 
   return (
     <section
@@ -202,6 +213,13 @@ export function CoOccurrenceCard({
         </p>
         <p className="mt-2 text-caption text-foreground/50">{t("questionCaveat")}</p>
       </div>
+
+      <Link
+        href={briefHref}
+        className="mt-4 inline-block text-caption font-medium text-primary underline underline-offset-2"
+      >
+        {t("briefCta")}
+      </Link>
     </section>
   );
 }
