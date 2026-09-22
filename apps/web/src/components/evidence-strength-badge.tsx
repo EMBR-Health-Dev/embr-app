@@ -20,10 +20,10 @@ export function EvidenceStrengthBadge({ strength }: { strength: EvidenceStrength
       role="status"
       aria-label={t("groupLabel")}
     >
-      <span className="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.08em] text-foreground/70">
+      <span className="inline-flex items-center rounded-full border border-border px-3 py-1 text-caption font-medium uppercase tracking-[0.08em] text-foreground/70">
         {t(`label.${strength}`)}
       </span>
-      <p className="text-xs text-foreground/50">{t(`caption.${strength}`)}</p>
+      <p className="text-caption text-foreground/50">{t(`caption.${strength}`)}</p>
     </div>
   );
 }

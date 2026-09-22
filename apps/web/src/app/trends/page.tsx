@@ -98,28 +98,30 @@ export default function TrendsPage() {
 
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
-        <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
+        <p className="mt-3 text-body-s text-foreground/60">{t("subtitle")}</p>
         {evidenceStrength && <EvidenceStrengthBadge strength={evidenceStrength} />}
 
         {dataLoading ? (
-          <p className="mt-8 text-sm text-foreground/50">{tCommon("loading")}</p>
+          <p className="mt-8 text-body-s text-foreground/50">{tCommon("loading")}</p>
         ) : (
           <>
-            <section className="mt-10">
+            <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-6">
               <SectionLabel>{t("reportedDataLabel")}</SectionLabel>
-              <p className="mt-2 text-sm text-foreground/60">{t("reportedDataDescription")}</p>
+              <p className="mt-2 text-body-s text-foreground/60">{t("reportedDataDescription")}</p>
               <h2 className="mt-4 font-display text-heading-m text-foreground">
                 {t("symptomsHeader", { days: WINDOW_DAYS })}
               </h2>
               {frequency.length === 0 ? (
                 <>
-                  <p className="mt-3 text-sm font-medium text-foreground">{t("noSymptomsYet")}</p>
-                  <p className="mt-1 text-sm text-foreground/60">{t("noSymptomsBody")}</p>
+                  <p className="mt-3 text-body-s font-medium text-foreground">
+                    {t("noSymptomsYet")}
+                  </p>
+                  <p className="mt-1 text-body-s text-foreground/60">{t("noSymptomsBody")}</p>
                 </>
               ) : (
-                <ul className="mt-4 flex flex-col gap-2">
+                <ul className="mt-4 flex flex-col gap-3">
                   {frequency.map(({ category, count }) => (
-                    <li key={category} className="flex items-center gap-3 text-sm">
+                    <li key={category} className="flex items-center gap-3 text-body-s">
                       <span className="w-36 shrink-0 text-foreground">
                         {tEnum(`category.${category}`)}
                       </span>
@@ -129,7 +131,9 @@ export default function TrendsPage() {
                           style={{ width: `${Math.max(6, (count / maxCount) * 100)}%` }}
                         />
                       </div>
-                      <span className="w-6 text-right text-foreground/50">{count}</span>
+                      <span className="w-6 text-right font-mono text-foreground/50 tabular-nums">
+                        {count}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -144,21 +148,21 @@ export default function TrendsPage() {
 
             <ContextCoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
 
-            <section className="mt-10">
+            <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-6">
               <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>
-              <p className="mt-2 text-sm text-foreground/60">{t("cycleHistoryDescription")}</p>
+              <p className="mt-2 text-body-s text-foreground/60">{t("cycleHistoryDescription")}</p>
               <h2 className="mt-4 font-display text-heading-m text-foreground">
                 {t("cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
               </h2>
               {lengths.length === 0 ? (
                 <>
-                  <p className="mt-3 text-sm text-foreground/60">{t("noCycleDataYet")}</p>
-                  <p className="mt-1 text-xs text-foreground/40">{t("noCycleDataCaveat")}</p>
+                  <p className="mt-3 text-body-s text-foreground/60">{t("noCycleDataYet")}</p>
+                  <p className="mt-1 text-caption text-foreground/40">{t("noCycleDataCaveat")}</p>
                 </>
               ) : (
                 <>
                   {averageCycleLength !== null && (
-                    <p className="mt-3 text-sm text-foreground/70">
+                    <p className="mt-3 text-body-s text-foreground/70">
                       {t.rich("averagingDays", {
                         days: averageCycleLength,
                         strong: (chunks) => (
@@ -169,17 +173,20 @@ export default function TrendsPage() {
                   )}
                   <ul className="mt-4 divide-y divide-border-subtle">
                     {lengths.map((l) => (
-                      <li key={l.to} className="flex items-center justify-between py-2.5 text-sm">
+                      <li
+                        key={l.to}
+                        className="flex items-center justify-between py-2.5 text-body-s"
+                      >
                         <span className="text-foreground/60">
                           {l.from} → {l.to}
                         </span>
                         <span className="font-medium text-foreground">
-                          {l.days} {t("daysUnit")}
+                          <span className="font-mono tabular-nums">{l.days}</span> {t("daysUnit")}
                         </span>
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-4 text-xs text-foreground/40">{t("irregularityNote")}</p>
+                  <p className="mt-4 text-caption text-foreground/40">{t("irregularityNote")}</p>
                 </>
               )}
             </section>
