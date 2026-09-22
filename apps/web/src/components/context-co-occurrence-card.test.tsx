@@ -145,6 +145,24 @@ describe("ContextCoOccurrenceCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a link to Clinical Brief scoped to the same period, once a signal exists", async () => {
+    mockContextCoOccurrence.mockResolvedValue({
+      category: "HOT_FLASH",
+      factor: "HIGH_STRESS",
+      days: 3,
+      dates: ["2026-09-01", "2026-09-05", "2026-09-12"],
+    });
+
+    const { ContextCoOccurrenceCard } = await import("./context-co-occurrence-card");
+    renderWithIntl(<ContextCoOccurrenceCard from="2026-06-01T00:00:00.000Z" />);
+
+    const link = await screen.findByText("View this period in your Clinical Brief");
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/brief\?from=2026-06-01&to=\d{4}-\d{2}-\d{2}$/),
+    );
+  });
+
   it("passes the from/to window through to the API call", async () => {
     mockContextCoOccurrence.mockResolvedValue(null);
 

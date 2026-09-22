@@ -6,9 +6,15 @@ import type { ClinicalBriefDto, Stage4Pattern } from "@embr/types";
 import messages from "../../../messages/en.json";
 import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
+// A mutable holder, not a fresh literal per call — lets individual
+// tests override the search params (e.g. simulating a link from
+// Signals with ?from=&to=) without needing a per-test vi.mock, which
+// Vitest resolves once at module-eval time, before any test body runs.
+const searchParamsHolder = vi.hoisted(() => ({ current: new URLSearchParams() }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
   usePathname: () => "/brief",
+  useSearchParams: () => searchParamsHolder.current,
 }));
 
 // Stable object reference, not a fresh literal per render — same
@@ -105,6 +111,7 @@ function pattern(overrides: Partial<Stage4Pattern> = {}): Stage4Pattern {
 }
 
 beforeEach(() => {
+  searchParamsHolder.current = new URLSearchParams();
   generateMock.mockReset();
   listMock.mockClear();
   listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
@@ -181,6 +188,25 @@ describe("Brief page — generation", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     expect(await screen.findByText("Date range too large")).toBeInTheDocument();
+  });
+});
+
+describe("Brief page — prefilled from a Signals link", () => {
+  it("prefills From/To from ?from=&to= query params", async () => {
+    searchParamsHolder.current = new URLSearchParams("from=2026-01-01&to=2026-02-01");
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    expect(await screen.findByLabelText("From")).toHaveValue("2026-01-01");
+    expect(screen.getByLabelText("To")).toHaveValue("2026-02-01");
+  });
+
+  it("leaves From/To empty when no query params are present, same as visiting /brief directly", async () => {
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    expect(await screen.findByLabelText("From")).toHaveValue("");
+    expect(screen.getByLabelText("To")).toHaveValue("");
   });
 });
 

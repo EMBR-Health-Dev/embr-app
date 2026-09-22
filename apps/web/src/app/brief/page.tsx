@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
@@ -13,16 +13,22 @@ import { AppNav } from "../../components/app-nav";
 import { EmailVerificationRequired } from "../../components/email-verification-required";
 import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
-export default function BriefPage() {
+function BriefPageContent() {
   const t = useTranslations("Brief");
   const tCommon = useTranslations("Common");
   const tEnum = useTranslations("Enums");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading, logout } = useAuth();
   const [managesOrg, setManagesOrg] = useState(false);
 
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  // Lets a link from Signals (see co-occurrence-card.tsx's briefCta)
+  // land with the same period already filled in, rather than making
+  // someone re-pick dates they just saw on screen a moment ago. Only
+  // ever an initial value — never re-synced from the URL after that,
+  // so typing into the fields behaves exactly as it did before this.
+  const [fromDate, setFromDate] = useState(() => searchParams.get("from") ?? "");
+  const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [generateNeedsVerification, setGenerateNeedsVerification] = useState(false);
@@ -342,6 +348,21 @@ export default function BriefPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function BriefPage() {
+  const t = useTranslations("Common");
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center">
+          <p className="text-foreground/50">{t("loading")}</p>
+        </main>
+      }
+    >
+      <BriefPageContent />
+    </Suspense>
   );
 }
 
