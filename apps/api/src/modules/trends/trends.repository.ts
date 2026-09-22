@@ -20,6 +20,11 @@ const CYCLE_ENTRY_ROW_CAP = 5000;
  * ceiling, not a real pagination story. */
 const SYMPTOM_LOG_ROW_CAP = 5000;
 
+/** Same reasoning as SYMPTOM_LOG_ROW_CAP — context logs feed
+ * detectSymptomContextCoOccurrence's set-intersection logic the same
+ * way symptom logs feed detectSymptomCoOccurrence's. */
+const CONTEXT_LOG_ROW_CAP = 5000;
+
 export const trendsRepository = {
   /**
    * True DB-side aggregate (COUNT ... GROUP BY category) — this is the
@@ -99,6 +104,45 @@ export const trendsRepository = {
       },
       select: { category: true, occurredAt: true },
       take: SYMPTOM_LOG_ROW_CAP,
+    });
+  },
+
+  /** Raw context-factor rows for detectSymptomContextCoOccurrence —
+   * same shape reasoning as symptomLogsForCoOccurrence: not a GROUP
+   * BY, since the set-intersection logic has to run in application
+   * code. */
+  contextLogsForCoOccurrence(
+    userId: string,
+    query: TrendsQuery,
+  ): Promise<
+    Array<{
+      date: Date;
+      sleepDuration: string | null;
+      caffeineAfternoon: boolean | null;
+      alcohol: boolean | null;
+      stressLevel: string | null;
+    }>
+  > {
+    return prisma.contextLog.findMany({
+      where: {
+        userId,
+        ...(query.from || query.to
+          ? {
+              date: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
+          : {}),
+      },
+      select: {
+        date: true,
+        sleepDuration: true,
+        caffeineAfternoon: true,
+        alcohol: true,
+        stressLevel: true,
+      },
+      take: CONTEXT_LOG_ROW_CAP,
     });
   },
 

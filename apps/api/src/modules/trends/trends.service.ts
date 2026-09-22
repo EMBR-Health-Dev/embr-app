@@ -2,13 +2,17 @@ import type { TrendsQuery } from "@embr/validation";
 import type {
   CycleLengthTrendDto,
   EvidenceStrengthDto,
+  SleepDurationBucket,
+  StressLevel,
   SymptomCategory,
   SymptomCoOccurrenceDto,
+  SymptomContextCoOccurrenceDto,
   SymptomFrequencyDto,
 } from "@embr/types";
 import { averageCycleLengthDays, computeCycleLengths } from "../../lib/cycle-length.js";
 import { trendsRepository } from "./trends.repository.js";
 import { detectSymptomCoOccurrence } from "./co-occurrence.js";
+import { detectSymptomContextCoOccurrence } from "./context-co-occurrence.js";
 import { computeEvidenceStrength } from "./evidence-strength.js";
 
 function toIsoDate(date: Date): string {
@@ -46,6 +50,31 @@ export const trendsService = {
       logs.map((log) => ({
         category: log.category as SymptomCategory,
         occurredAt: log.occurredAt,
+      })),
+    );
+  },
+
+  /** Same I/O-vs-logic split as coOccurrence above, for the
+   * symptom-context pattern engine (context-co-occurrence.ts). */
+  async symptomContextCoOccurrence(
+    userId: string,
+    query: TrendsQuery,
+  ): Promise<SymptomContextCoOccurrenceDto | null> {
+    const [symptomLogs, contextLogs] = await Promise.all([
+      trendsRepository.symptomLogsForCoOccurrence(userId, query),
+      trendsRepository.contextLogsForCoOccurrence(userId, query),
+    ]);
+    return detectSymptomContextCoOccurrence(
+      symptomLogs.map((log) => ({
+        category: log.category as SymptomCategory,
+        occurredAt: log.occurredAt,
+      })),
+      contextLogs.map((log) => ({
+        date: log.date,
+        sleepDuration: log.sleepDuration as SleepDurationBucket | null,
+        caffeineAfternoon: log.caffeineAfternoon,
+        alcohol: log.alcohol,
+        stressLevel: log.stressLevel as StressLevel | null,
       })),
     );
   },

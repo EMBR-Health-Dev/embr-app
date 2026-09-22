@@ -39,6 +39,11 @@ const CATEGORIES = [
 
 const SEVERITIES = ["MILD", "MODERATE", "SEVERE"] as const;
 const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
+// A deliberately small, fixed set of context factors (see the
+// embr-clinical-logic skill doctrine) — never free text, never an
+// open-ended list.
+const SLEEP_DURATIONS = ["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"] as const;
+const STRESS_LEVELS = ["LOW", "MODERATE", "HIGH"] as const;
 const LOGS_PAGE_SIZE = 10;
 
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
@@ -89,6 +94,13 @@ function DashboardContent() {
   const [periodEnd, setPeriodEnd] = useState(false);
   const [cycleSaving, setCycleSaving] = useState(false);
   const [cycleSaved, setCycleSaved] = useState(false);
+
+  const [sleepDuration, setSleepDuration] = useState<(typeof SLEEP_DURATIONS)[number] | "">("");
+  const [caffeineAfternoon, setCaffeineAfternoon] = useState(false);
+  const [alcohol, setAlcohol] = useState(false);
+  const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
+  const [contextSaving, setContextSaving] = useState(false);
+  const [contextSaved, setContextSaved] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -265,6 +277,22 @@ function DashboardContent() {
       setCycleSaved(true);
     } finally {
       setCycleSaving(false);
+    }
+  }
+
+  async function saveContextEntry() {
+    setContextSaving(true);
+    try {
+      await api.contextLogs.upsert({
+        date: toIsoDate(new Date()),
+        sleepDuration: sleepDuration || undefined,
+        caffeineAfternoon,
+        alcohol,
+        stressLevel: stressLevel || undefined,
+      });
+      setContextSaved(true);
+    } finally {
+      setContextSaving(false);
     }
   }
 
@@ -504,6 +532,86 @@ function DashboardContent() {
               className="mt-4"
             >
               {cycleSaving ? t("saving") : cycleSaved ? t("saved") : t("saveTodaysEntry")}
+            </Button>
+          </div>
+
+          {/* Context quick-log for today — a deliberately small, fixed
+              set of factors (see the embr-clinical-logic skill
+              doctrine), never free text or an open-ended system. */}
+          <div className="mt-6 rounded border border-border-subtle p-5">
+            <h3 className="font-display text-body-l text-foreground">{t("todaysContextEntry")}</h3>
+
+            <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <span className="font-medium text-foreground">{t("sleepDurationLabel")}</span>
+              <select
+                value={sleepDuration}
+                onChange={(e) => {
+                  setSleepDuration(e.target.value as (typeof SLEEP_DURATIONS)[number] | "");
+                  setContextSaved(false);
+                }}
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("sleepDurationNone")}</option>
+                {SLEEP_DURATIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {tEnum(`sleepDuration.${s}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <span className="font-medium text-foreground">{t("stressLevelLabel")}</span>
+              <select
+                value={stressLevel}
+                onChange={(e) => {
+                  setStressLevel(e.target.value as (typeof STRESS_LEVELS)[number] | "");
+                  setContextSaved(false);
+                }}
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("stressLevelNone")}</option>
+                {STRESS_LEVELS.map((s) => (
+                  <option key={s} value={s}>
+                    {tEnum(`stressLevel.${s}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="mt-4 flex flex-wrap gap-4 border-t border-border-subtle pt-4">
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={caffeineAfternoon}
+                  onChange={(e) => {
+                    setCaffeineAfternoon(e.target.checked);
+                    setContextSaved(false);
+                  }}
+                />
+                {t("caffeineAfternoonLabel")}
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={alcohol}
+                  onChange={(e) => {
+                    setAlcohol(e.target.checked);
+                    setContextSaved(false);
+                  }}
+                />
+                {t("alcoholLabel")}
+              </label>
+            </div>
+
+            <Button
+              variant="ghost"
+              onClick={saveContextEntry}
+              disabled={contextSaving}
+              className="mt-4"
+            >
+              {contextSaving ? t("saving") : contextSaved ? t("saved") : t("saveTodaysEntry")}
             </Button>
           </div>
 

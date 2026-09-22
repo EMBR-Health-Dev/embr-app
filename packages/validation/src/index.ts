@@ -198,6 +198,31 @@ export const cycleEntryQuerySchema = paginationQuerySchema.extend({
 });
 export type CycleEntryQuery = z.infer<typeof cycleEntryQuerySchema>;
 
+// ---- Context logging ----
+//
+// A deliberately small, fixed set of daily context factors (see the
+// embr-clinical-logic skill doctrine) — never free text, never an
+// open-ended system. sleepDuration is a bucket, not raw hours; the
+// other three are booleans/a fixed enum.
+
+export const sleepDurationBucketSchema = z.enum(["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"]);
+export const stressLevelSchema = z.enum(["LOW", "MODERATE", "HIGH"]);
+
+export const upsertContextLogSchema = z.object({
+  date: z.coerce.date(),
+  sleepDuration: sleepDurationBucketSchema.optional(),
+  caffeineAfternoon: z.boolean().optional(),
+  alcohol: z.boolean().optional(),
+  stressLevel: stressLevelSchema.optional(),
+});
+export type UpsertContextLogInput = z.infer<typeof upsertContextLogSchema>;
+
+export const contextLogQuerySchema = paginationQuerySchema.extend({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type ContextLogQuery = z.infer<typeof contextLogQuerySchema>;
+
 // ---- Export (Milestone 6) ----
 //
 // Deliberately unpaginated — an export is "everything in this range,"

@@ -180,6 +180,22 @@
       "MEDIUM": "Medium",
       "HEAVY": "Heavy"
     },
+    "sleepDuration": {
+      "UNDER_6H": "Under 6 hours",
+      "SIX_TO_SEVEN_H": "6–7 hours",
+      "SEVEN_PLUS_H": "7+ hours"
+    },
+    "stressLevel": {
+      "LOW": "Low",
+      "MODERATE": "Moderate",
+      "HIGH": "High"
+    },
+    "contextFactor": {
+      "SHORT_SLEEP": "sleep under 6 hours",
+      "CAFFEINE_AFTERNOON": "caffeine in the afternoon",
+      "ALCOHOL": "alcohol",
+      "HIGH_STRESS": "high stress"
+    },
     "treatmentCategory": {
       "HRT": "HRT",
       "SUPPLEMENT": "Supplement",
@@ -225,6 +241,13 @@
     "flowNone": "None",
     "periodStartedToday": "Period started today",
     "periodEndedToday": "Period ended today",
+    "todaysContextEntry": "Today's context",
+    "sleepDurationLabel": "Sleep last night",
+    "sleepDurationNone": "Not logged",
+    "stressLevelLabel": "Stress today",
+    "stressLevelNone": "Not logged",
+    "caffeineAfternoonLabel": "Caffeine after 2pm",
+    "alcoholLabel": "Alcohol",
     "saveTodaysEntry": "Save today's entry",
     "saved": "Saved ✓",
     "recentSymptoms": "Recent symptoms",
@@ -324,6 +347,14 @@
     "questionCaveat": "A suggested question, not medical advice.",
     "emptyTitle": "Your record is still taking shape.",
     "emptyBody": "EMBR needs more observations before it can surface a signal here. Keep logging over time; this section will update as your record grows."
+  },
+  "ContextCoOccurrence": {
+    "cardLabel": "Signal",
+    "findingHeading": "{category} was recorded alongside {factor}",
+    "evidenceLabel": "Evidence",
+    "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
+    "caveat": "A description of what you've recorded: not a diagnosis, and not a claim that one caused the other.",
+    "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}."
   },
   "EvidenceStrength": {
     "groupLabel": "How much of your record exists so far",

@@ -180,6 +180,22 @@
       "MEDIUM": "普通",
       "HEAVY": "多い"
     },
+    "sleepDuration": {
+      "UNDER_6H": "6時間未満",
+      "SIX_TO_SEVEN_H": "6〜7時間",
+      "SEVEN_PLUS_H": "7時間以上"
+    },
+    "stressLevel": {
+      "LOW": "低い",
+      "MODERATE": "中程度",
+      "HIGH": "高い"
+    },
+    "contextFactor": {
+      "SHORT_SLEEP": "睡眠6時間未満",
+      "CAFFEINE_AFTERNOON": "午後のカフェイン摂取",
+      "ALCOHOL": "飲酒",
+      "HIGH_STRESS": "強いストレス"
+    },
     "treatmentCategory": {
       "HRT": "HRT（ホルモン補充療法）",
       "SUPPLEMENT": "サプリメント",
@@ -225,6 +241,13 @@
     "flowNone": "なし",
     "periodStartedToday": "今日、生理が始まった",
     "periodEndedToday": "今日、生理が終わった",
+    "todaysContextEntry": "今日の状況",
+    "sleepDurationLabel": "昨夜の睡眠",
+    "sleepDurationNone": "未記録",
+    "stressLevelLabel": "今日のストレス",
+    "stressLevelNone": "未記録",
+    "caffeineAfternoonLabel": "午後2時以降のカフェイン",
+    "alcoholLabel": "飲酒",
     "saveTodaysEntry": "今日の記録を保存",
     "saved": "保存しました ✓",
     "recentSymptoms": "最近の症状",
@@ -324,6 +347,14 @@
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
     "emptyTitle": "あなたの記録は、まだ形になっている途中です。",
     "emptyBody": "EMBRがここにシグナルを示すには、さらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
+  },
+  "ContextCoOccurrence": {
+    "cardLabel": "シグナル",
+    "findingHeading": "{category}は{factor}と一緒に記録されました",
+    "evidenceLabel": "エビデンス",
+    "sharedDaysCount": "共有日数: {days}日",
+    "caveat": "これはあなたが記録した内容の説明であり、診断や一方が他方を引き起こしたという主張ではありません。",
+    "whyReasoning": "EMBRは、症状と状況の要因が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、{category}と{factor}は{days}日で一致しています。"
   },
   "EvidenceStrength": {
     "groupLabel": "これまでに蓄積された記録の量",

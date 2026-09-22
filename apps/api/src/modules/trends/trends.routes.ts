@@ -45,6 +45,18 @@ router.get(
   }),
 );
 
+router.get(
+  "/trends/context-co-occurrence",
+  validate(trendsQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const data = await trendsService.symptomContextCoOccurrence(
+      req.user!.sub,
+      req.query as unknown as TrendsQuery,
+    );
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
 // Deliberately no from/to query — evidence strength describes the
 // whole longitudinal record, not a windowed slice of it (see
 // trendsService.evidenceStrength's own doc comment).
