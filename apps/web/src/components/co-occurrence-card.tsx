@@ -85,7 +85,10 @@ export function CoOccurrenceCard({
 
   if (loading) {
     return (
-      <section className="mt-8 rounded border border-border-subtle p-5" aria-busy="true">
+      <section
+        className="mt-8 rounded-lg border border-border-subtle bg-surface p-6"
+        aria-busy="true"
+      >
         <div className="h-4 w-40 animate-pulse rounded bg-muted" />
       </section>
     );
@@ -102,14 +105,14 @@ export function CoOccurrenceCard({
   if (!result) {
     return (
       <section
-        className="mt-8 rounded border border-border-subtle p-5"
+        className="mt-8 rounded-lg border border-border-subtle bg-surface p-6"
         role="region"
         aria-label={t("cardLabel")}
       >
         <SectionLabel>{t("cardLabel")}</SectionLabel>
-        <p className="mt-2 text-sm text-foreground/60">{t("cardDescription")}</p>
-        <p className="mt-3 text-sm font-medium text-foreground">{t("emptyTitle")}</p>
-        <p className="mt-1 text-sm text-foreground/60">{t("emptyBody")}</p>
+        <p className="mt-2 text-body-s text-foreground/60">{t("cardDescription")}</p>
+        <p className="mt-3 text-body-s font-medium text-foreground">{t("emptyTitle")}</p>
+        <p className="mt-1 text-body-s text-foreground/60">{t("emptyBody")}</p>
       </section>
     );
   }
@@ -126,7 +129,7 @@ export function CoOccurrenceCard({
 
   return (
     <section
-      className="mt-8 border-l-2 border-primary py-1 pl-5"
+      className="mt-8 rounded-lg border border-border-subtle bg-surface p-6"
       role="region"
       aria-label={t("cardLabel")}
     >
@@ -143,7 +146,7 @@ export function CoOccurrenceCard({
           plain comma-separated date list. */}
       <div className="mt-4">
         <SectionLabel as="h3">{t("evidenceLabel")}</SectionLabel>
-        <p className="mt-2 text-sm font-medium text-foreground">
+        <p className="mt-2 text-body-s font-medium text-foreground">
           {t("sharedDaysCount", { days: result.days })}
         </p>
         {formattedDates.length > 0 && (
@@ -153,7 +156,7 @@ export function CoOccurrenceCard({
                 {i > 0 && <div className="h-px w-4 shrink-0 bg-border sm:w-6" aria-hidden="true" />}
                 <div className="flex flex-col items-center gap-1 px-0.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="whitespace-nowrap text-xs text-foreground/70">{label}</span>
+                  <span className="whitespace-nowrap text-caption text-foreground/70">{label}</span>
                 </div>
               </div>
             ))}
@@ -163,7 +166,7 @@ export function CoOccurrenceCard({
 
       <div className="mt-4">
         <SectionLabel as="h3">{t("observedLabel")}</SectionLabel>
-        <p className="mt-2 text-sm text-foreground/80">
+        <p className="mt-2 text-body-s text-foreground/80">
           {t("observedText", {
             categoryA: labelA,
             categoryB: labelB,
@@ -177,7 +180,7 @@ export function CoOccurrenceCard({
       {/* Interpretation boundary — always visible, same reasoning as
           the evidence above: this is the one sentence that must never
           be one tap away. */}
-      <p className="mt-3 text-xs text-foreground/50">{t("caveat")}</p>
+      <p className="mt-3 text-caption text-foreground/50">{t("caveat")}</p>
 
       <WhyAmISeeingThis>
         <p>{t("whyReasoning", { categoryA: labelA, categoryB: labelB, days: result.days })}</p>
@@ -194,10 +197,10 @@ export function CoOccurrenceCard({
 
       <div className="mt-5 border-t border-border-subtle pt-4">
         <SectionLabel as="h3">{t("questionLabel")}</SectionLabel>
-        <p className="mt-2 text-sm text-foreground/80">
+        <p className="mt-2 text-body-s text-foreground/80">
           {t("questionText", { categoryA: labelA, categoryB: labelB })}
         </p>
-        <p className="mt-2 text-xs text-foreground/50">{t("questionCaveat")}</p>
+        <p className="mt-2 text-caption text-foreground/50">{t("questionCaveat")}</p>
       </div>
     </section>
   );
