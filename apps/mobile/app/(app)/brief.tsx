@@ -150,7 +150,12 @@ export default function BriefScreen() {
                 maximumDate={new Date()}
               />
             </View>
-            {generateError && <Text style={styles.error}>{generateError}</Text>}
+            {generateError && (
+              <View style={styles.errorCallout}>
+                <Text style={styles.error}>{generateError}</Text>
+                <Text style={styles.errorReassurance}>{t("brief.generateErrorReassurance")}</Text>
+              </View>
+            )}
 
             <Pressable
               style={[styles.button, generating && styles.buttonDisabled]}
@@ -447,7 +452,16 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
   hint: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4, marginBottom: 16 },
   dateRow: { flexDirection: "row", gap: 8 },
-  error: { color: theme.colors.error, fontSize: 13, marginTop: 8 },
+  errorCallout: {
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  error: { color: theme.colors.error, fontSize: 13 },
+  errorReassurance: { color: theme.colors.textMuted, fontSize: 12, marginTop: 4, lineHeight: 16 },
   button: {
     backgroundColor: theme.colors.textPrimary,
     borderRadius: 8,

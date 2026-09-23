@@ -50,6 +50,15 @@ import { computeTreatmentSummary } from "./treatment-summary.js";
 // legitimately working (the exact race this exists to prevent).
 const BRIEF_GENERATION_LOCK_TTL_MS = 90_000;
 
+/** Bumped only when ClinicalBrief.generationMetadata's own shape
+ * changes (a field added, removed, or renamed) — independent of
+ * interpretationVersion (stage4-interpretation.ts, tracks the Stage 4
+ * pattern-building logic) and PROMPT_VERSION (brief.ai.ts, tracks the
+ * system prompt), which already version their own separate concerns.
+ * Internal-only, same as the metadata object itself — see that
+ * field's own doc comment in schema.prisma. */
+export const BRIEF_GENERATION_METADATA_SCHEMA_VERSION = "1.0";
+
 function computeSymptomSummary(logs: SymptomLog[]) {
   return computeSymptomFrequency(logs);
 }
@@ -208,7 +217,10 @@ async function generateBriefContent(
     interpretation: buildAiSafeStage4Interpretation(interpretation, treatmentImpact, locale),
   };
 
-  const { narrative, discussionTopics, patterns } = await briefAi.generate(aiInput, locale);
+  const { narrative, discussionTopics, patterns, modelId, promptVersion } = await briefAi.generate(
+    aiInput,
+    locale,
+  );
 
   // Citation integrity: every pattern the AI echoed back must
   // resolve to one this step actually supplied, unaltered. Validated
@@ -262,6 +274,19 @@ async function generateBriefContent(
     aiNarrative: narrative,
     aiDiscussionTopics: discussionTopics,
     locale,
+    // Internal-only reproducibility metadata — see
+    // ClinicalBrief.generationMetadata's own doc comment. Built here
+    // (not inside briefAi.generate) because patternEngineVersion comes
+    // from `interpretation`, which this function computed earlier and
+    // briefAi.generate never sees in canonical form (only the
+    // AI-safe projection — see aiInput's own comment above).
+    generationMetadata: {
+      schemaVersion: BRIEF_GENERATION_METADATA_SCHEMA_VERSION,
+      patternEngineVersion: interpretation.interpretationVersion,
+      promptVersion,
+      modelId,
+      generatedAt: new Date().toISOString(),
+    },
   });
 
   return {

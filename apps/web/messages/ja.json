@@ -527,6 +527,7 @@
     "generating": "作成中…",
     "pickDates": "開始日と終了日の両方を選択してください。",
     "generateError": "BRIEFを作成できませんでした。もう一度お試しください。",
+    "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBriefは以下からそのままご覧いただけます。",
     "briefReady": "BRIEFが完成しました",
     "downloadPdf": "PDFをダウンロード",
     "downloadSummary": "診察用サマリーをダウンロード",

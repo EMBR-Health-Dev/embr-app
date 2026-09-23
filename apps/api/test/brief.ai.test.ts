@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { AppError } from "@embr/shared";
 import Anthropic from "@anthropic-ai/sdk";
+import { env } from "../src/config/env.js";
+import { PROMPT_VERSION } from "../src/modules/briefs/brief.ai.js";
 
 vi.mock("../src/lib/logger.js", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
@@ -77,6 +79,8 @@ describe("brief.ai", () => {
       narrative: "Some narrative.",
       discussionTopics: ["A question?"],
       patterns: [],
+      modelId: env.ANTHROPIC_BRIEF_MODEL,
+      promptVersion: PROMPT_VERSION,
     });
   });
 

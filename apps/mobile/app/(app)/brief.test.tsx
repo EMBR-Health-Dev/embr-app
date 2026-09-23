@@ -274,6 +274,37 @@ describe("Brief screen — generation", () => {
     expect(listMock).toHaveBeenCalledTimes(1);
     expect(trendsMock).toHaveBeenCalledTimes(1);
   });
+
+  it("reassures the person their record is safe and existing briefs are still available, alongside any generation failure", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    const { ApiError } = await import("../../lib/api-client");
+    generateMock.mockRejectedValue(
+      new ApiError(503, "SERVICE_UNAVAILABLE", "Brief generation is temporarily unavailable."),
+    );
+    const { default: BriefScreen } = await import("./brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+
+    fireEvent.click(screen.getByText("From"));
+    fireEvent.click(screen.getByText("To"));
+    fireEvent.click(screen.getByText("Generate brief"));
+
+    expect(
+      await screen.findByText("Brief generation is temporarily unavailable."),
+    ).toBeInTheDocument();
+    // Fixed reassurance copy, shown alongside the specific error —
+    // never an Anthropic/provider-level message (the mocked ApiError
+    // above is already what the API guarantees is safe to show; this
+    // only asserts the added reassurance renders with it).
+    expect(
+      screen.getByText(
+        "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("Brief screen — renders a complete fixture", () => {

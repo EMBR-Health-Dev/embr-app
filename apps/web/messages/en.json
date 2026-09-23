@@ -527,6 +527,7 @@
     "generating": "Generating…",
     "pickDates": "Pick both a start and end date.",
     "generateError": "Couldn't generate a brief. Try again.",
+    "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
     "briefReady": "Your brief is ready",
     "downloadPdf": "Download PDF",
     "downloadSummary": "Download clinician summary",

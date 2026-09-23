@@ -621,6 +621,23 @@ model ClinicalBrief {
   /// field.
   locale BriefLocale @default(en)
 
+  /// { schemaVersion: string, patternEngineVersion: string, promptVersion: string, modelId: string, generatedAt: string }
+  /// Internal-only reproducibility/debugging metadata — deliberately
+  /// never surfaced through ClinicalBriefDto/brief.mappers.ts (see
+  /// this field's own "without exposing implementation details to
+  /// users" requirement). patternEngineVersion mirrors
+  /// interpretation.interpretationVersion (stage4-interpretation.ts)
+  /// rather than duplicating that value under a different name;
+  /// modelId/promptVersion are the two facts this row otherwise has
+  /// no record of at all — env.ANTHROPIC_BRIEF_MODEL and the system
+  /// prompt in brief.ai.ts can both change over time, and without this
+  /// column an old brief's exact generation inputs become
+  /// unreconstructable. Nullable/never backfilled for briefs generated
+  /// before this field existed, same convention as every other
+  /// additive field on this model (see interpretation's own doc
+  /// comment for the precedent).
+  generationMetadata Json?
+
   createdAt DateTime @default(now())
 
   /// Second line of defense against double-generation for the same
