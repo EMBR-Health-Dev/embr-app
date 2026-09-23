@@ -43,6 +43,14 @@ export interface BriefContent {
    * later concern (structural citation validation) — this step only
    * validates that the shape returned is well-formed. */
   patterns: Stage4Pattern[];
+  /** Reproducibility metadata for ClinicalBrief.generationMetadata —
+   * never AI-authored, never validated as content: modelId is the
+   * literal request parameter this call itself used, and
+   * PROMPT_VERSION is a constant bumped by hand whenever
+   * SYSTEM_PROMPT_EN/JA's actual rules change (not their locale, not
+   * cosmetic wording — see PROMPT_VERSION's own doc comment). */
+  modelId: string;
+  promptVersion: string;
 }
 
 /** Mirrors Stage4EvidenceRef from stage4-interpretation.ts exactly — a
@@ -211,6 +219,21 @@ JSON形式のみで、他の文章を含めずに、必ず次の形で応答し�
 function systemPrompt(locale: Locale): string {
   return locale === "ja" ? SYSTEM_PROMPT_JA : SYSTEM_PROMPT_EN;
 }
+
+/**
+ * Bumped by hand whenever SYSTEM_PROMPT_EN/SYSTEM_PROMPT_JA's actual
+ * rules change — a new numbered rule, a changed safety boundary, a
+ * changed response-shape contract. NOT bumped for the routine changes
+ * this file already documents as non-substantive (e.g. the em-dash
+ * copy fix in stage4-interpretation.ts, or adding the JA translation
+ * itself, which by definition carries the same 10 rules — see
+ * SYSTEM_PROMPT_JA's own doc comment). Persisted per-brief via
+ * BriefContent.promptVersion so a stored brief's exact generation
+ * inputs stay reconstructable even after this prompt changes again —
+ * see ClinicalBrief.generationMetadata's own doc comment for why this
+ * is not otherwise recoverable from the row alone.
+ */
+export const PROMPT_VERSION = "1.0";
 
 /**
  * Defense-in-depth, not the primary safety mechanism — the system
@@ -507,6 +530,8 @@ export const briefAi = {
       narrative: result.data.narrative,
       discussionTopics: result.data.discussionTopics.map((topic) => topic.text),
       patterns: result.data.patterns,
+      modelId: env.ANTHROPIC_BRIEF_MODEL,
+      promptVersion: PROMPT_VERSION,
     };
 
     const safetyFailure = failsContentSafety(content, locale);

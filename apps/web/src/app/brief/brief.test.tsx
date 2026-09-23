@@ -189,6 +189,32 @@ describe("Brief page — generation", () => {
 
     expect(await screen.findByText("Date range too large")).toBeInTheDocument();
   });
+
+  it("reassures the person their record is safe and existing briefs are still available, alongside any generation failure", async () => {
+    const { ApiError } = await import("../../lib/api-client");
+    generateMock.mockRejectedValue(
+      new ApiError(503, "SERVICE_UNAVAILABLE", "Brief generation is temporarily unavailable."),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(
+      await screen.findByText("Brief generation is temporarily unavailable."),
+    ).toBeInTheDocument();
+    // Fixed reassurance copy, shown alongside the specific (already
+    // safe, non-leaking) error — never an Anthropic/provider-level
+    // message.
+    expect(
+      screen.getByText(
+        "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("Brief page — prefilled from a Signals link", () => {

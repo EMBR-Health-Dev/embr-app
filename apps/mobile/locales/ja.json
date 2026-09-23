@@ -275,6 +275,7 @@
     "generate": "BRIEFを作成",
     "generating": "作成中…",
     "generateError": "BRIEFを作成できませんでした。",
+    "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBriefは以下からそのままご覧いただけます。",
     "briefReady": "BRIEFが完成しました",
     "preparing": "準備中…",
     "sharePdf": "PDFを共有 / 保存",

@@ -34,6 +34,7 @@ export const briefRepository = {
     aiNarrative: string;
     aiDiscussionTopics: Prisma.InputJsonValue;
     locale: Locale;
+    generationMetadata: Prisma.InputJsonValue;
   }) {
     try {
       return await prisma.clinicalBrief.create({

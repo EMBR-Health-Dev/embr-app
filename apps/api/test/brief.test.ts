@@ -62,6 +62,7 @@ const { state, nextId } = vi.hoisted(() => {
         citedPatternIds: unknown;
         aiNarrative: string;
         aiDiscussionTopics: unknown;
+        generationMetadata: unknown;
         createdAt: Date;
       }>,
       emailVerificationTokens: [] as Array<{
@@ -627,6 +628,37 @@ describe("POST /briefs", () => {
     expect(res.body.data.aiNarrative).toBe(aiState.nextResponse.narrative);
     expect(res.body.data.aiDiscussionTopics).toEqual(aiState.nextResponse.discussionTopics);
     expect(state.briefs).toHaveLength(1);
+  });
+
+  it("persists internal-only generation metadata, never exposed through the API response", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-metadata@embr.health");
+    aiState.nextResponse = {
+      narrative: "n/a",
+      discussionTopics: ["n/a"],
+      // Not part of BriefResponse's own type (it predates this field —
+      // see aiState's hoisted declaration above) — cast is how this
+      // file already handles giving the mock extra fields real
+      // responses now include, same reasoning as patterns' own
+      // handling a few lines above in the mock factory.
+      ...({ modelId: "claude-sonnet-5", promptVersion: "1.0" } as Record<string, unknown>),
+    };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    // Never part of the public DTO — see ClinicalBrief.generationMetadata's
+    // own doc comment in schema.prisma for why.
+    expect(res.body.data.generationMetadata).toBeUndefined();
+    expect(state.briefs).toHaveLength(1);
+    expect(state.briefs[0].generationMetadata).toEqual({
+      schemaVersion: "1.0",
+      patternEngineVersion: "1.0",
+      promptVersion: "1.0",
+      modelId: "claude-sonnet-5",
+      generatedAt: expect.any(String),
+    });
   });
 
   it("computes cycle summary from period-start entries", async () => {

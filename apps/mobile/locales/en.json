@@ -276,6 +276,7 @@
     "generate": "Generate brief",
     "generating": "Generating…",
     "generateError": "Couldn't generate a brief.",
+    "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
     "briefReady": "Your brief is ready",
     "preparing": "Preparing…",
     "sharePdf": "Share / Save PDF",

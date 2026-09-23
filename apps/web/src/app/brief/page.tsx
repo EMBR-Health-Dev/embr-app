@@ -211,9 +211,10 @@ function BriefPageContent() {
           </Button>
         </form>
         {generateError && (
-          <p role="alert" className="mt-2 text-sm font-medium text-foreground">
-            {generateError}
-          </p>
+          <div role="alert" className="mt-3 rounded-lg border border-border-subtle bg-surface p-4">
+            <p className="text-body-s font-medium text-foreground">{generateError}</p>
+            <p className="mt-1 text-caption text-foreground/60">{t("generateErrorReassurance")}</p>
+          </div>
         )}
         {generateNeedsVerification && <EmailVerificationRequired email={user.email} />}
 
