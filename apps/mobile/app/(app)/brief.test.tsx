@@ -489,7 +489,6 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
       ),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Hide evidence"));
     const hideToggle = screen.getByRole("button", { name: "Hide evidence" });
     expect(hideToggle).toHaveAttribute("aria-expanded", "true");
     fireEvent.click(hideToggle);

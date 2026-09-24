@@ -405,7 +405,6 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
       ),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Hide evidence" }));
     const hideToggle = screen.getByRole("button", { name: "Hide evidence" });
     expect(hideToggle).toHaveAttribute("aria-expanded", "true");
     await user.click(hideToggle);
