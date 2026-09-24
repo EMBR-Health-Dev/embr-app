@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   compareSymptomFrequency,
   computePreviousPeriod,
+  groupLogDatesByCategory,
 } from "../src/modules/briefs/period-comparison.js";
 
 describe("computePreviousPeriod", () => {
@@ -184,5 +185,36 @@ describe("compareSymptomFrequency", () => {
     );
     // -2/3 = -66.67% -> rounds to -67
     expect(result[0]!.percentageChange).toBe(-67);
+  });
+});
+
+describe("groupLogDatesByCategory", () => {
+  it("groups logs into sorted, per-category date lists", () => {
+    const result = groupLogDatesByCategory([
+      { category: "HOT_FLASH", occurredAt: new Date("2026-01-20") },
+      { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") },
+      { category: "FATIGUE", occurredAt: new Date("2026-01-10") },
+    ]);
+    expect(result.get("HOT_FLASH")).toEqual(["2026-01-05", "2026-01-20"]);
+    expect(result.get("FATIGUE")).toEqual(["2026-01-10"]);
+  });
+
+  it("returns an empty map for no logs", () => {
+    expect(groupLogDatesByCategory([]).size).toBe(0);
+  });
+
+  it("does not deduplicate two logs of the same category on the same day — matches count, not distinct days", () => {
+    const result = groupLogDatesByCategory([
+      { category: "HOT_FLASH", occurredAt: new Date("2026-01-05T08:00:00Z") },
+      { category: "HOT_FLASH", occurredAt: new Date("2026-01-05T20:00:00Z") },
+    ]);
+    expect(result.get("HOT_FLASH")).toEqual(["2026-01-05", "2026-01-05"]);
+  });
+
+  it("a category absent from the input has no key in the map at all — not an empty array", () => {
+    const result = groupLogDatesByCategory([
+      { category: "HOT_FLASH", occurredAt: new Date("2026-01-05") },
+    ]);
+    expect(result.has("FATIGUE")).toBe(false);
   });
 });

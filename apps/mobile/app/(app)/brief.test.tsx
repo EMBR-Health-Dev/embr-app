@@ -453,6 +453,8 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
             absoluteChange: 2,
             percentageChange: 50,
             direction: "increased",
+            currentDates: ["2026-01-05", "2026-01-20"],
+            previousDates: ["2025-12-10"],
           },
         ],
         interpretation: { interpretationVersion: "1.0", patterns: [pattern()] },
@@ -474,6 +476,16 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
       screen.getByText("This reflects self-reported logging frequency only."),
     ).toBeInTheDocument();
     expect(screen.getByText("Source: Self-reported symptom logs")).toBeInTheDocument();
+
+    // The day-level dates behind the 6/4 counts above — the answer to
+    // "show me exactly what user data caused EMBR to say this."
+    expect(screen.getByText(/Logged on \(this period\): Jan 5, Jan 20/)).toBeInTheDocument();
+    expect(screen.getByText(/Logged on \(previous period\): Dec 10/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "This describes a pattern in your logged data. It does not establish a medical cause.",
+      ),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Hide evidence"));
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
@@ -497,6 +509,67 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
       screen.getByText("This reflects self-reported logging frequency only."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Reported on \d+ days/)).toBeNull();
+  });
+
+  it("shows the day-level dates behind a co-occurrence and a treatment-impact citation", async () => {
+    mockHistoryOf(
+      brief({
+        coOccurrence: {
+          categoryA: "BRAIN_FOG",
+          categoryB: "HOT_FLASH",
+          days: 2,
+          dates: ["2026-01-06", "2026-01-19"],
+        },
+        treatmentImpact: [
+          {
+            treatmentId: "t1",
+            name: "Estradiol patch",
+            category: "HRT",
+            windowDays: 14,
+            before: { logCount: 1, days: 14 },
+            after: { logCount: 2, days: 14 },
+            insufficientData: false,
+            beforeDates: [{ date: "2025-12-28", category: "HOT_FLASH" }],
+            afterDates: [
+              { date: "2026-01-12", category: "HOT_FLASH" },
+              { date: "2026-01-14", category: "BRAIN_FOG" },
+            ],
+          },
+        ],
+        interpretation: {
+          interpretationVersion: "1.0",
+          patterns: [
+            pattern({
+              id: "co_occurrence_detected:BRAIN_FOG:HOT_FLASH",
+              type: "co_occurrence_detected",
+              evidenceRef: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH" },
+            }),
+            pattern({
+              id: "treatment_window_changed:t1",
+              type: "treatment_window_changed",
+              evidenceRef: { treatmentId: "t1" },
+            }),
+          ],
+        },
+        citedPatternIds: [
+          "co_occurrence_detected:BRAIN_FOG:HOT_FLASH",
+          "treatment_window_changed:t1",
+        ],
+      }),
+    );
+
+    await renderAndExpandBrief();
+
+    await waitFor(() => expect(screen.getByText("Grounded in your data")).toBeInTheDocument());
+    for (const toggle of screen.getAllByText("View evidence")) {
+      fireEvent.click(toggle);
+    }
+
+    expect(screen.getByText(/Logged on: Jan 6, Jan 19/)).toBeInTheDocument();
+    expect(screen.getByText(/Logged before starting: Dec 28 \(Hot Flash\)/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Logged after starting: Jan 12 \(Hot Flash\), Jan 14 \(Brain Fog\)/),
+    ).toBeInTheDocument();
   });
 });
 
@@ -662,6 +735,8 @@ describe("Brief screen — deterministic evidence sections", () => {
           absoluteChange: 2,
           percentageChange: 50,
           direction: "increased",
+          currentDates: ["2026-01-05", "2026-01-20"],
+          previousDates: ["2025-12-10"],
         },
       ],
       persistentSymptoms: ["HOT_FLASH"],
@@ -679,6 +754,17 @@ describe("Brief screen — deterministic evidence sections", () => {
           before: { logCount: 2, days: 14 },
           after: { logCount: 5, days: 14 },
           insufficientData: false,
+          beforeDates: [
+            { date: "2025-12-27", category: "HOT_FLASH" },
+            { date: "2025-12-30", category: "HOT_FLASH" },
+          ],
+          afterDates: [
+            { date: "2026-01-11", category: "HOT_FLASH" },
+            { date: "2026-01-15", category: "HOT_FLASH" },
+            { date: "2026-01-18", category: "HOT_FLASH" },
+            { date: "2026-01-20", category: "HOT_FLASH" },
+            { date: "2026-01-23", category: "HOT_FLASH" },
+          ],
         },
         {
           treatmentId: "t2",
@@ -688,6 +774,8 @@ describe("Brief screen — deterministic evidence sections", () => {
           before: { logCount: 0, days: 14 },
           after: { logCount: 1, days: 1 },
           insufficientData: true,
+          beforeDates: [],
+          afterDates: [{ date: "2026-01-24", category: "HOT_FLASH" }],
         },
       ],
       ...overrides,

@@ -400,14 +400,28 @@ function formatSeverityBreakdown(
 // still has its observation/caveat text to show, it just skips the
 // numeric detail underneath.
 type ResolvedEvidence =
-  | { kind: "frequency"; currentCount: number; previousCount: number }
-  | { kind: "coOccurrence"; days: number; categoryA: string; categoryB: string }
+  | {
+      kind: "frequency";
+      currentCount: number;
+      previousCount: number;
+      currentDates: string[];
+      previousDates: string[];
+    }
+  | {
+      kind: "coOccurrence";
+      days: number;
+      categoryA: string;
+      categoryB: string;
+      dates: string[];
+    }
   | {
       kind: "treatmentImpact";
       beforeCount: number;
       beforeDays: number;
       afterCount: number;
       afterDays: number;
+      beforeDates: Array<{ date: string; category: string }>;
+      afterDates: Array<{ date: string; category: string }>;
     };
 
 function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): ResolvedEvidence | null {
@@ -415,13 +429,25 @@ function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): Resol
   if ("category" in ref) {
     const entry = brief.frequencyComparison?.find((e) => e.category === ref.category);
     return entry
-      ? { kind: "frequency", currentCount: entry.currentCount, previousCount: entry.previousCount }
+      ? {
+          kind: "frequency",
+          currentCount: entry.currentCount,
+          previousCount: entry.previousCount,
+          currentDates: entry.currentDates,
+          previousDates: entry.previousDates,
+        }
       : null;
   }
   if ("categoryA" in ref) {
     const co = brief.coOccurrence;
     return co && co.categoryA === ref.categoryA && co.categoryB === ref.categoryB
-      ? { kind: "coOccurrence", days: co.days, categoryA: co.categoryA, categoryB: co.categoryB }
+      ? {
+          kind: "coOccurrence",
+          days: co.days,
+          categoryA: co.categoryA,
+          categoryB: co.categoryB,
+          dates: co.dates ?? [],
+        }
       : null;
   }
   const entry = brief.treatmentImpact?.find((e) => e.treatmentId === ref.treatmentId);
@@ -432,8 +458,40 @@ function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): Resol
         beforeDays: entry.before.days,
         afterCount: entry.after.logCount,
         afterDays: entry.after.days,
+        beforeDates: entry.beforeDates,
+        afterDates: entry.afterDates,
       }
     : null;
+}
+
+// Formats the literal dates behind a resolved evidence entry's count —
+// the day-level detail a founder/user can point to and ask "show me
+// exactly what caused this line." Short month/day (not a full date, and
+// never a timestamp — occurredAt's time-of-day carries no meaning here,
+// same reasoning timeline/page.tsx's own formatDateHeading already
+// documents) joined with the locale's own list conjunction, matching
+// formatSeverityBreakdown's existing Intl.ListFormat convention above.
+function formatEvidenceDates(dates: string[], locale: string): string {
+  const formatted = dates.map((date) =>
+    new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(
+      new Date(`${date}T00:00:00`),
+    ),
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(formatted);
+}
+
+function formatTreatmentEvidenceDates(
+  entries: Array<{ date: string; category: string }>,
+  locale: string,
+  tEnum: ReturnType<typeof useTranslations<"Enums">>,
+): string {
+  const formatted = entries.map(
+    (entry) =>
+      `${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(
+        new Date(`${entry.date}T00:00:00`),
+      )} (${tEnum(`category.${entry.category}`)})`,
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(formatted);
 }
 
 // Reuses the exact same i18n messages the standalone frequency/co-occurrence/
@@ -517,6 +575,48 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                   {expanded && (
                     <div className="mt-1 rounded border border-border-subtle bg-surface p-3 text-xs text-foreground/70">
                       {resolved && <p>{formatEvidenceLine(resolved, t, tEnum)}</p>}
+                      {resolved?.kind === "frequency" && (
+                        <>
+                          {resolved.currentDates.length > 0 && (
+                            <p className="mt-1">
+                              {t("evidenceDatesCurrentLabel")}:{" "}
+                              {formatEvidenceDates(resolved.currentDates, locale)}
+                            </p>
+                          )}
+                          {resolved.previousDates.length > 0 && (
+                            <p className="mt-1">
+                              {t("evidenceDatesPreviousLabel")}:{" "}
+                              {formatEvidenceDates(resolved.previousDates, locale)}
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {resolved?.kind === "coOccurrence" && resolved.dates.length > 0 && (
+                        <p className="mt-1">
+                          {t("evidenceDatesLabel")}: {formatEvidenceDates(resolved.dates, locale)}
+                        </p>
+                      )}
+                      {resolved?.kind === "treatmentImpact" && (
+                        <>
+                          {resolved.beforeDates.length > 0 && (
+                            <p className="mt-1">
+                              {t("evidenceDatesBeforeLabel")}:{" "}
+                              {formatTreatmentEvidenceDates(resolved.beforeDates, locale, tEnum)}
+                            </p>
+                          )}
+                          {resolved.afterDates.length > 0 && (
+                            <p className="mt-1">
+                              {t("evidenceDatesAfterLabel")}:{" "}
+                              {formatTreatmentEvidenceDates(resolved.afterDates, locale, tEnum)}
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {resolved && (
+                        <p className="mt-1 text-foreground/50">
+                          {t("evidenceDatesInterpretation")}
+                        </p>
+                      )}
                       <p className="mt-1">{pattern.caveat}</p>
                       <p className="mt-2 text-foreground/50">
                         {t("evidenceSourceLabel")}: {t("evidenceSourceSelfReported")}

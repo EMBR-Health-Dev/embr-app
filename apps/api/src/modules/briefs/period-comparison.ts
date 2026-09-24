@@ -72,6 +72,30 @@ export interface SymptomFrequencyComparisonEntry {
  * function has no basis for making, and the category taxonomy is a
  * small, fixed, already-orderable set.
  */
+/**
+ * Groups already-fetched symptom logs by category into sorted, unique
+ * ISO date strings (YYYY-MM-DD) — the day-level detail behind each
+ * compareSymptomFrequency() entry's aggregate count. Takes the same
+ * {category, occurredAt} logs already fetched for the current/previous
+ * period (see brief.service.ts) rather than a new query: the per-log
+ * dates were always fetched, only ever discarded after aggregation
+ * until this field existed. A category with no logs in a period simply
+ * has no key in the returned map — callers fall back to an empty array
+ * (see BriefFrequencyComparisonEntryDto's currentDates/previousDates).
+ */
+export function groupLogDatesByCategory(
+  logs: Array<{ category: string; occurredAt: Date }>,
+): Map<string, string[]> {
+  const byCategory = new Map<string, string[]>();
+  for (const log of logs) {
+    const dates = byCategory.get(log.category) ?? [];
+    dates.push(log.occurredAt.toISOString().slice(0, 10));
+    byCategory.set(log.category, dates);
+  }
+  for (const dates of byCategory.values()) dates.sort();
+  return byCategory;
+}
+
 export function compareSymptomFrequency(
   current: Array<{ category: string; count: number }>,
   previous: Array<{ category: string; count: number }>,
