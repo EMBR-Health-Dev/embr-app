@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
+import type {
+  BriefTrendsDto,
+  ClinicalBriefDto,
+  ClinicalBriefListItemDto,
+  Stage4Pattern,
+} from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
@@ -286,8 +291,100 @@ function formatSeverityBreakdown(
   return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(parts);
 }
 
+// Resolves a cited Stage4Pattern back to the raw evidence object it was
+// built from — everything here (frequencyComparison, coOccurrence,
+// treatmentImpact) is already on ClinicalBriefDto, sent to the client
+// today, just not yet linked back to the pattern that cites it. Returns
+// null rather than throwing when nothing matches (an old brief whose
+// interpretation predates one of these fields, or a pattern type this
+// resolver doesn't yet cover) — a citation with no resolvable evidence
+// still has its observation/caveat text to show, it just skips the
+// numeric detail underneath. Same logic as apps/web/src/app/brief/page.tsx's
+// resolveEvidence — no shared UI-logic package exists between web and
+// mobile (see formatSeverityBreakdown above, duplicated the same way).
+type ResolvedEvidence =
+  | { kind: "frequency"; currentCount: number; previousCount: number }
+  | { kind: "coOccurrence"; days: number; categoryA: string; categoryB: string }
+  | {
+      kind: "treatmentImpact";
+      beforeCount: number;
+      beforeDays: number;
+      afterCount: number;
+      afterDays: number;
+    };
+
+function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): ResolvedEvidence | null {
+  const ref = pattern.evidenceRef;
+  if ("category" in ref) {
+    const entry = brief.frequencyComparison?.find((e) => e.category === ref.category);
+    return entry
+      ? { kind: "frequency", currentCount: entry.currentCount, previousCount: entry.previousCount }
+      : null;
+  }
+  if ("categoryA" in ref) {
+    const co = brief.coOccurrence;
+    return co && co.categoryA === ref.categoryA && co.categoryB === ref.categoryB
+      ? { kind: "coOccurrence", days: co.days, categoryA: co.categoryA, categoryB: co.categoryB }
+      : null;
+  }
+  const entry = brief.treatmentImpact?.find((e) => e.treatmentId === ref.treatmentId);
+  return entry && !entry.insufficientData
+    ? {
+        kind: "treatmentImpact",
+        beforeCount: entry.before.logCount,
+        beforeDays: entry.before.days,
+        afterCount: entry.after.logCount,
+        afterDays: entry.after.days,
+      }
+    : null;
+}
+
+// Reuses the exact same i18n messages (and the same two-step pluralization
+// composition) the standalone frequency/co-occurrence/treatment-impact
+// sections further down this file already use — this is the same numbers,
+// just surfaced next to the citation that's grounded in them.
+function formatEvidenceLine(
+  resolved: ResolvedEvidence,
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
+  switch (resolved.kind) {
+    case "frequency": {
+      const current = t("brief.frequencyComparisonDayCount", { count: resolved.currentCount });
+      const previous = t("brief.frequencyComparisonDayCount", { count: resolved.previousCount });
+      return t("brief.frequencyComparisonEntry", { current, previous });
+    }
+    case "coOccurrence":
+      return t("brief.coOccurrenceEntry", {
+        count: resolved.days,
+        categoryA: t(`enums.category.${resolved.categoryA}`),
+        categoryB: t(`enums.category.${resolved.categoryB}`),
+      });
+    case "treatmentImpact": {
+      const before = t("brief.treatmentImpactLogCount", { count: resolved.beforeCount });
+      const after = t("brief.treatmentImpactLogCount", { count: resolved.afterCount });
+      return t("brief.treatmentImpactEntry", {
+        before,
+        after,
+        beforeDays: resolved.beforeDays,
+        afterDays: resolved.afterDays,
+      });
+    }
+  }
+}
+
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
   const { t, i18n } = useTranslation();
+  const [expandedPatternIds, setExpandedPatternIds] = useState<Set<string>>(new Set());
+
+  function toggleEvidence(id: string) {
+    setExpandedPatternIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
     <View style={styles.briefContent}>
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
@@ -304,11 +401,35 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
             // somehow doesn't, so a single unexpected id can't take
             // down the whole screen.
             if (!pattern) return null;
+            const expanded = expandedPatternIds.has(id);
+            const resolved = resolveEvidence(pattern, brief);
             return (
-              <Text key={id} style={styles.summaryLine}>
-                {pattern.observation}
-                {pattern.association ? ` ${pattern.association}` : ""}
-              </Text>
+              <View key={id} style={styles.evidenceItem}>
+                <Text style={styles.summaryLine}>
+                  {pattern.observation}
+                  {pattern.association ? ` ${pattern.association}` : ""}
+                </Text>
+                <Pressable onPress={() => toggleEvidence(id)}>
+                  <Text style={styles.link}>
+                    {expanded ? t("brief.hideEvidence") : t("brief.viewEvidence")}
+                  </Text>
+                </Pressable>
+                {expanded && (
+                  <View style={styles.evidenceDetail}>
+                    {resolved && (
+                      <Text style={styles.evidenceLine}>{formatEvidenceLine(resolved, t)}</Text>
+                    )}
+                    <Text style={styles.evidenceLine}>{pattern.caveat}</Text>
+                    <Text style={styles.evidenceMeta}>
+                      {t("brief.evidenceSourceLabel")}: {t("brief.evidenceSourceSelfReported")}
+                    </Text>
+                    <Text style={styles.evidenceMeta}>
+                      {t("brief.evidenceConfidenceLabel")}:{" "}
+                      {t("brief.evidenceConfidenceDescriptive")}
+                    </Text>
+                  </View>
+                )}
+              </View>
             );
           })}
         </>
@@ -504,6 +625,17 @@ const styles = StyleSheet.create({
   },
   topic: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
   summaryLine: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  evidenceItem: { marginTop: 4 },
+  evidenceDetail: {
+    marginTop: 4,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  evidenceLine: { fontSize: 12, color: theme.colors.textMuted, lineHeight: 16 },
+  evidenceMeta: { fontSize: 11, color: theme.colors.textMuted, marginTop: 4 },
   treatmentSafetyNote: {
     fontSize: 11,
     color: theme.colors.textMuted,

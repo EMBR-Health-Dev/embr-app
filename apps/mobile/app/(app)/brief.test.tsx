@@ -441,6 +441,65 @@ describe("Brief screen — Grounded in your data (Stage 4 citations)", () => {
   });
 });
 
+describe("Brief screen — View evidence (evidence drill-down)", () => {
+  it("resolves a frequency pattern's citation to its frequencyComparison entry and shows the caveat", async () => {
+    mockHistoryOf(
+      brief({
+        frequencyComparison: [
+          {
+            category: "HOT_FLASH",
+            currentCount: 6,
+            previousCount: 4,
+            absoluteChange: 2,
+            percentageChange: 50,
+            direction: "increased",
+          },
+        ],
+        interpretation: { interpretationVersion: "1.0", patterns: [pattern()] },
+        citedPatternIds: ["frequency_increased:HOT_FLASH"],
+      }),
+    );
+
+    await renderAndExpandBrief();
+
+    await waitFor(() => expect(screen.getByText("Grounded in your data")).toBeInTheDocument());
+    expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
+
+    fireEvent.click(screen.getByText("View evidence"));
+
+    expect(
+      screen.getByText("Reported on 6 days, compared with 4 days in the previous period."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("This reflects self-reported logging frequency only."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Source: Self-reported symptom logs")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Hide evidence"));
+    expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
+  });
+
+  it("still shows the caveat when the pattern's evidence can't be resolved (an old brief)", async () => {
+    mockHistoryOf(
+      brief({
+        frequencyComparison: [],
+        interpretation: { interpretationVersion: "1.0", patterns: [pattern()] },
+        citedPatternIds: ["frequency_increased:HOT_FLASH"],
+      }),
+    );
+
+    await renderAndExpandBrief();
+
+    await waitFor(() => expect(screen.getByText("Grounded in your data")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("View evidence"));
+
+    expect(
+      screen.getByText("This reflects self-reported logging frequency only."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Reported on \d+ days/)).toBeNull();
+  });
+});
+
 describe("Brief screen — Your recent trends", () => {
   it("shows the trends section with a per-category line when the API returns data", async () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
