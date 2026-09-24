@@ -381,7 +381,9 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     await screen.findByText("Grounded in your data");
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "View evidence" }));
+    const toggle = screen.getByRole("button", { name: "View evidence" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await user.click(toggle);
 
     expect(
       screen.getByText("Reported on 6 days, compared with 4 days in the previous period."),
@@ -391,7 +393,9 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Source: Self-reported symptom logs")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Hide evidence" }));
+    const hideToggle = screen.getByRole("button", { name: "Hide evidence" });
+    expect(hideToggle).toHaveAttribute("aria-expanded", "true");
+    await user.click(hideToggle);
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
   });
 

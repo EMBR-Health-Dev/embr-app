@@ -409,7 +409,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                   {pattern.observation}
                   {pattern.association ? ` ${pattern.association}` : ""}
                 </Text>
-                <Pressable onPress={() => toggleEvidence(id)}>
+                <Pressable
+                  onPress={() => toggleEvidence(id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded }}
+                  // accessibilityState.expanded is what real iOS/Android
+                  // React Native reads; the installed react-native-web
+                  // version (verified in node_modules) only maps a flat
+                  // aria-expanded prop to the DOM, not the nested
+                  // accessibilityState object, so this is needed
+                  // alongside it for the web preview build and for this
+                  // screen's own tests to see the attribute at all.
+                  aria-expanded={expanded}
+                >
                   <Text style={styles.link}>
                     {expanded ? t("brief.hideEvidence") : t("brief.viewEvidence")}
                   </Text>
