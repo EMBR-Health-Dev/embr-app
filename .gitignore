@@ -34,3 +34,7 @@ apps/mobile/expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+
+# EMBR Research Sandbox (research/) — third-party research dataset fixtures
+# and their derived output never get committed; see research/README.md.
+research/fixtures/
