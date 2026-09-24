@@ -559,6 +559,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               if (!pattern) return [];
               const expanded = expandedPatternIds.has(id);
               const resolved = resolveEvidence(pattern, brief);
+              const detailId = `evidence-detail-${brief.id}-${id}`;
               return (
                 <li key={id} className="list-disc">
                   {pattern.observation}
@@ -567,13 +568,18 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                     <button
                       type="button"
                       onClick={() => toggleEvidence(id)}
+                      aria-expanded={expanded}
+                      aria-controls={detailId}
                       className="mt-1 text-xs font-medium text-primary underline underline-offset-2"
                     >
                       {expanded ? t("hideEvidence") : t("viewEvidence")}
                     </button>
                   </div>
                   {expanded && (
-                    <div className="mt-1 rounded border border-border-subtle bg-surface p-3 text-xs text-foreground/70">
+                    <div
+                      id={detailId}
+                      className="mt-1 rounded border border-border-subtle bg-surface p-3 text-xs text-foreground/70"
+                    >
                       {resolved && <p>{formatEvidenceLine(resolved, t, tEnum)}</p>}
                       {resolved?.kind === "frequency" && (
                         <>
