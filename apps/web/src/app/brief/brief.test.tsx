@@ -352,6 +352,75 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
   });
 });
 
+describe("Brief page — View evidence (evidence drill-down)", () => {
+  it("resolves a frequency pattern's citation to its frequencyComparison entry and shows the caveat", async () => {
+    generateMock.mockResolvedValue(
+      brief({
+        frequencyComparison: [
+          {
+            category: "HOT_FLASH",
+            currentCount: 6,
+            previousCount: 4,
+            absoluteChange: 2,
+            percentageChange: 50,
+            direction: "increased",
+          },
+        ],
+        interpretation: { interpretationVersion: "1.0", patterns: [pattern()] },
+        citedPatternIds: ["frequency_increased:HOT_FLASH"],
+      }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    await screen.findByText("Grounded in your data");
+    expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "View evidence" }));
+
+    expect(
+      screen.getByText("Reported on 6 days, compared with 4 days in the previous period."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("This reflects self-reported logging frequency only."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Source: Self-reported symptom logs")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Hide evidence" }));
+    expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
+  });
+
+  it("still shows the caveat when the pattern's evidence can't be resolved (an old brief)", async () => {
+    generateMock.mockResolvedValue(
+      brief({
+        frequencyComparison: [],
+        interpretation: { interpretationVersion: "1.0", patterns: [pattern()] },
+        citedPatternIds: ["frequency_increased:HOT_FLASH"],
+      }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    await screen.findByText("Grounded in your data");
+    await user.click(screen.getByRole("button", { name: "View evidence" }));
+
+    expect(
+      screen.getByText("This reflects self-reported logging frequency only."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Reported on \d+ days/)).toBeNull();
+  });
+});
+
 describe("Brief page — Your recent trends", () => {
   it("shows the trends section with a per-category line when the API returns data", async () => {
     trendsMock.mockResolvedValue({

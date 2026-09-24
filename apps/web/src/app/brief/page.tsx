@@ -3,7 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
+import type {
+  BriefTrendsDto,
+  ClinicalBriefDto,
+  ClinicalBriefListItemDto,
+  Stage4Pattern,
+} from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -385,10 +390,97 @@ function formatSeverityBreakdown(
   return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(parts);
 }
 
+// Resolves a cited Stage4Pattern back to the raw evidence object it was
+// built from — everything here (frequencyComparison, coOccurrence,
+// treatmentImpact) is already on ClinicalBriefDto, sent to the client
+// today, just not yet linked back to the pattern that cites it. Returns
+// null rather than throwing when nothing matches (an old brief whose
+// interpretation predates one of these fields, or a pattern type this
+// resolver doesn't yet cover) — a citation with no resolvable evidence
+// still has its observation/caveat text to show, it just skips the
+// numeric detail underneath.
+type ResolvedEvidence =
+  | { kind: "frequency"; currentCount: number; previousCount: number }
+  | { kind: "coOccurrence"; days: number; categoryA: string; categoryB: string }
+  | {
+      kind: "treatmentImpact";
+      beforeCount: number;
+      beforeDays: number;
+      afterCount: number;
+      afterDays: number;
+    };
+
+function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): ResolvedEvidence | null {
+  const ref = pattern.evidenceRef;
+  if ("category" in ref) {
+    const entry = brief.frequencyComparison?.find((e) => e.category === ref.category);
+    return entry
+      ? { kind: "frequency", currentCount: entry.currentCount, previousCount: entry.previousCount }
+      : null;
+  }
+  if ("categoryA" in ref) {
+    const co = brief.coOccurrence;
+    return co && co.categoryA === ref.categoryA && co.categoryB === ref.categoryB
+      ? { kind: "coOccurrence", days: co.days, categoryA: co.categoryA, categoryB: co.categoryB }
+      : null;
+  }
+  const entry = brief.treatmentImpact?.find((e) => e.treatmentId === ref.treatmentId);
+  return entry && !entry.insufficientData
+    ? {
+        kind: "treatmentImpact",
+        beforeCount: entry.before.logCount,
+        beforeDays: entry.before.days,
+        afterCount: entry.after.logCount,
+        afterDays: entry.after.days,
+      }
+    : null;
+}
+
+// Reuses the exact same i18n messages the standalone frequency/co-occurrence/
+// treatment-impact sections further down this page already render — this is
+// the same numbers, just surfaced next to the citation that's grounded in
+// them, not a second copy of the wording.
+function formatEvidenceLine(
+  resolved: ResolvedEvidence,
+  t: ReturnType<typeof useTranslations<"Brief">>,
+  tEnum: ReturnType<typeof useTranslations<"Enums">>,
+): string {
+  switch (resolved.kind) {
+    case "frequency":
+      return t("frequencyComparisonEntry", {
+        currentCount: resolved.currentCount,
+        previousCount: resolved.previousCount,
+      });
+    case "coOccurrence":
+      return t("coOccurrenceEntry", {
+        categoryA: tEnum(`category.${resolved.categoryA}`),
+        categoryB: tEnum(`category.${resolved.categoryB}`),
+        days: resolved.days,
+      });
+    case "treatmentImpact":
+      return t("treatmentImpactEntry", {
+        beforeCount: resolved.beforeCount,
+        beforeDays: resolved.beforeDays,
+        afterCount: resolved.afterCount,
+        afterDays: resolved.afterDays,
+      });
+  }
+}
+
 function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
   const t = useTranslations("Brief");
   const tEnum = useTranslations("Enums");
   const locale = useLocale();
+  const [expandedPatternIds, setExpandedPatternIds] = useState<Set<string>>(new Set());
+
+  function toggleEvidence(id: string) {
+    setExpandedPatternIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
@@ -397,7 +489,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
         <div>
           <h3 className="font-medium text-foreground">{t("groundedInTitle")}</h3>
-          <ul className="mt-1 list-disc pl-5 text-foreground/70">
+          <ul className="mt-1 flex flex-col gap-2 pl-5 text-foreground/70">
             {brief.citedPatternIds.flatMap((id) => {
               const pattern = brief.interpretation!.patterns.find((entry) => entry.id === id);
               // Should always resolve — citedPatternIds is only ever
@@ -407,10 +499,33 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               // somehow doesn't, so a single unexpected id can't take
               // down the whole page.
               if (!pattern) return [];
+              const expanded = expandedPatternIds.has(id);
+              const resolved = resolveEvidence(pattern, brief);
               return (
-                <li key={id}>
+                <li key={id} className="list-disc">
                   {pattern.observation}
                   {pattern.association ? ` ${pattern.association}` : ""}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => toggleEvidence(id)}
+                      className="mt-1 text-xs font-medium text-primary underline underline-offset-2"
+                    >
+                      {expanded ? t("hideEvidence") : t("viewEvidence")}
+                    </button>
+                  </div>
+                  {expanded && (
+                    <div className="mt-1 rounded border border-border-subtle bg-surface p-3 text-xs text-foreground/70">
+                      {resolved && <p>{formatEvidenceLine(resolved, t, tEnum)}</p>}
+                      <p className="mt-1">{pattern.caveat}</p>
+                      <p className="mt-2 text-foreground/50">
+                        {t("evidenceSourceLabel")}: {t("evidenceSourceSelfReported")}
+                      </p>
+                      <p className="text-foreground/50">
+                        {t("evidenceConfidenceLabel")}: {t("evidenceConfidenceDescriptive")}
+                      </p>
+                    </div>
+                  )}
                 </li>
               );
             })}
