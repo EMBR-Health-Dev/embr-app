@@ -28,6 +28,12 @@ the same fact drift; one doesn't.
 - `architecture.md` — the system as an acquirer would need to understand
   it: what's proprietary, what's third-party, what's replaceable, and
   what creates switching cost. New content, not covered elsewhere.
+- `readiness.md` — the control document: a per-area table of what's
+  verified, what's open, and who needs to supply the missing evidence.
+  Not a claim that EMBR is acquisition-ready — a record of exactly how
+  far engineering-verifiable evidence actually goes, and where it
+  stops. Read this before assuming any other document in this repo
+  constitutes closed diligence on a given area.
 
 ## What's intentionally not here yet
 

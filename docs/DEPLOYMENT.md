@@ -202,25 +202,25 @@ See `docs/BACKUPS.md`.
   production" any prior one instantly.
 - **Database migrations**: `apps/api/prisma/schema.prisma` is the source
   of truth; `apps/api/prisma/migrations` now holds a real, linear
-  migration history (nine migrations as of this writing, from the
-  initial schema through the Stripe billing fields). Generate new ones
+  migration history (17 migrations as of this writing, from the
+  initial schema through the day-level evidence layer). Generate new ones
   with `pnpm db:migrate` against a real local Postgres and commit the
   result, same as every prior one.
-  **`prisma migrate deploy` running in `ci.yml` only ever applies
-  against CI's own ephemeral Postgres service container** — it verifies
-  the migration history is valid and applies cleanly, it is not a
-  production deploy step. Nothing in this repository automatically runs
-  migrations against a real staging/production database on deploy: `apps/api/Dockerfile`'s
-  `CMD` starts the server directly, with no pre-flight migration step,
-  and no `railway.json`/`fly.toml`/release-command config exists yet.
-  Whoever sets up the real deploy must add an explicit `prisma migrate
-deploy` step — a Railway/Fly "pre-deploy" or "release" command, run
-  once per deploy before the new API version starts serving traffic —
-  or migrations will simply never reach the real database. Treat any
-  migration that drops or renames a column as high-risk: take a manual
-  backup via `scripts/db-backup.sh` first and confirm the rollback plan
-  for that specific migration, since `prisma migrate deploy` has no
-  automatic "undo."
+  `prisma migrate deploy` running in `ci.yml` only ever applies
+  against CI's own ephemeral Postgres service container — it verifies
+  the migration history is valid and applies cleanly, it is not itself
+  a production deploy step.
+  **Verified 2026-09-25 — the production deploy step does exist**: the
+  `@embr/api` Railway service's `preDeployCommand` runs
+  `pnpm --filter @embr/api exec prisma migrate deploy` before every
+  deploy (confirmed directly against Railway's own service config,
+  not assumed), so migrations do reach the real production database on
+  every push to `main`. Treat any migration that drops or renames a
+  column as high-risk regardless: take a manual backup via
+  `scripts/db-backup.sh` first and confirm the rollback plan for that
+  specific migration, since `prisma migrate deploy` has no automatic
+  "undo." See `docs/acquisition/readiness.md` for the current
+  engineering-verified status of this and other production claims.
 
 ## Mobile app builds & submission
 
