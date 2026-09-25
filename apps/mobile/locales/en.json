@@ -216,6 +216,7 @@
     "none": "None",
     "periodStartedToday": "Period started today",
     "periodEndedToday": "Period ended today",
+    "periodMiddleHint": "For an ordinary day during your period, just log Flow above and leave both switches off.",
     "notesPlaceholder": "Notes (optional)",
     "genericError": "Something went wrong. Try again in a moment.",
     "saving": "Saving…",

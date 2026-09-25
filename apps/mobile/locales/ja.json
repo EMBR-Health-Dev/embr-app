@@ -216,6 +216,7 @@
     "none": "なし",
     "periodStartedToday": "今日、生理が始まった",
     "periodEndedToday": "今日、生理が終わった",
+    "periodMiddleHint": "生理中の通常の日は、上の「経血量」だけを記録し、下の2つのスイッチはどちらもオフのままにしてください。",
     "notesPlaceholder": "メモ(任意)",
     "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
     "saving": "保存中…",
