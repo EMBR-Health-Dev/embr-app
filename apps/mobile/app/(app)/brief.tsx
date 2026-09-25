@@ -303,14 +303,28 @@ function formatSeverityBreakdown(
 // resolveEvidence — no shared UI-logic package exists between web and
 // mobile (see formatSeverityBreakdown above, duplicated the same way).
 type ResolvedEvidence =
-  | { kind: "frequency"; currentCount: number; previousCount: number }
-  | { kind: "coOccurrence"; days: number; categoryA: string; categoryB: string }
+  | {
+      kind: "frequency";
+      currentCount: number;
+      previousCount: number;
+      currentDates: string[];
+      previousDates: string[];
+    }
+  | {
+      kind: "coOccurrence";
+      days: number;
+      categoryA: string;
+      categoryB: string;
+      dates: string[];
+    }
   | {
       kind: "treatmentImpact";
       beforeCount: number;
       beforeDays: number;
       afterCount: number;
       afterDays: number;
+      beforeDates: { date: string; category: string }[];
+      afterDates: { date: string; category: string }[];
     };
 
 function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): ResolvedEvidence | null {
@@ -318,13 +332,25 @@ function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): Resol
   if ("category" in ref) {
     const entry = brief.frequencyComparison?.find((e) => e.category === ref.category);
     return entry
-      ? { kind: "frequency", currentCount: entry.currentCount, previousCount: entry.previousCount }
+      ? {
+          kind: "frequency",
+          currentCount: entry.currentCount,
+          previousCount: entry.previousCount,
+          currentDates: entry.currentDates,
+          previousDates: entry.previousDates,
+        }
       : null;
   }
   if ("categoryA" in ref) {
     const co = brief.coOccurrence;
     return co && co.categoryA === ref.categoryA && co.categoryB === ref.categoryB
-      ? { kind: "coOccurrence", days: co.days, categoryA: co.categoryA, categoryB: co.categoryB }
+      ? {
+          kind: "coOccurrence",
+          days: co.days,
+          categoryA: co.categoryA,
+          categoryB: co.categoryB,
+          dates: co.dates ?? [],
+        }
       : null;
   }
   const entry = brief.treatmentImpact?.find((e) => e.treatmentId === ref.treatmentId);
@@ -335,8 +361,38 @@ function resolveEvidence(pattern: Stage4Pattern, brief: ClinicalBriefDto): Resol
         beforeDays: entry.before.days,
         afterCount: entry.after.logCount,
         afterDays: entry.after.days,
+        beforeDates: entry.beforeDates,
+        afterDates: entry.afterDates,
       }
     : null;
+}
+
+// Same day-level formatting as apps/web/src/app/brief/page.tsx's
+// formatEvidenceDates/formatTreatmentEvidenceDates — no shared
+// UI-logic package between web and mobile, see this file's own
+// resolveEvidence doc comment above for why that's duplicated here
+// rather than factored out.
+function formatEvidenceDates(dates: string[], locale: string): string {
+  const formatted = dates.map((date) =>
+    new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(
+      new Date(`${date}T00:00:00`),
+    ),
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(formatted);
+}
+
+function formatTreatmentEvidenceDates(
+  entries: { date: string; category: string }[],
+  locale: string,
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
+  const formatted = entries.map(
+    (entry) =>
+      `${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(
+        new Date(`${entry.date}T00:00:00`),
+      )} (${t(`enums.category.${entry.category}`)})`,
+  );
+  return new Intl.ListFormat(locale, { style: "narrow", type: "conjunction" }).format(formatted);
 }
 
 // Reuses the exact same i18n messages (and the same two-step pluralization
@@ -430,6 +486,49 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                   <View style={styles.evidenceDetail}>
                     {resolved && (
                       <Text style={styles.evidenceLine}>{formatEvidenceLine(resolved, t)}</Text>
+                    )}
+                    {resolved?.kind === "frequency" && (
+                      <>
+                        {resolved.currentDates.length > 0 && (
+                          <Text style={styles.evidenceLine}>
+                            {t("brief.evidenceDatesCurrentLabel")}:{" "}
+                            {formatEvidenceDates(resolved.currentDates, i18n.language)}
+                          </Text>
+                        )}
+                        {resolved.previousDates.length > 0 && (
+                          <Text style={styles.evidenceLine}>
+                            {t("brief.evidenceDatesPreviousLabel")}:{" "}
+                            {formatEvidenceDates(resolved.previousDates, i18n.language)}
+                          </Text>
+                        )}
+                      </>
+                    )}
+                    {resolved?.kind === "coOccurrence" && resolved.dates.length > 0 && (
+                      <Text style={styles.evidenceLine}>
+                        {t("brief.evidenceDatesLabel")}:{" "}
+                        {formatEvidenceDates(resolved.dates, i18n.language)}
+                      </Text>
+                    )}
+                    {resolved?.kind === "treatmentImpact" && (
+                      <>
+                        {resolved.beforeDates.length > 0 && (
+                          <Text style={styles.evidenceLine}>
+                            {t("brief.evidenceDatesBeforeLabel")}:{" "}
+                            {formatTreatmentEvidenceDates(resolved.beforeDates, i18n.language, t)}
+                          </Text>
+                        )}
+                        {resolved.afterDates.length > 0 && (
+                          <Text style={styles.evidenceLine}>
+                            {t("brief.evidenceDatesAfterLabel")}:{" "}
+                            {formatTreatmentEvidenceDates(resolved.afterDates, i18n.language, t)}
+                          </Text>
+                        )}
+                      </>
+                    )}
+                    {resolved && (
+                      <Text style={styles.evidenceMeta}>
+                        {t("brief.evidenceDatesInterpretation")}
+                      </Text>
                     )}
                     <Text style={styles.evidenceLine}>{pattern.caveat}</Text>
                     <Text style={styles.evidenceMeta}>

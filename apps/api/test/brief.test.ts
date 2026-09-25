@@ -286,12 +286,23 @@ vi.mock("../src/lib/prisma.js", () => ({
       findUnique: vi.fn().mockResolvedValue(null),
     },
     symptomLog: {
+      // Supports both upper-bound styles real call sites use:
+      // exportRepository.listSymptomLogsForExport passes an inclusive
+      // `lte`; treatmentRepository.listSymptomLogsInWindows passes an
+      // exclusive `lt` (matching count()'s own `lt` below exactly, so
+      // findMany- and count-based window queries agree on which logs
+      // fall inside a window).
       findMany: vi.fn(
-        ({ where }: { where: { userId: string; occurredAt?: { gte?: Date; lte?: Date } } }) => {
+        ({
+          where,
+        }: {
+          where: { userId: string; occurredAt?: { gte?: Date; lte?: Date; lt?: Date } };
+        }) => {
           const results = state.symptomLogs.filter((log) => {
             if (log.userId !== where.userId) return false;
             if (where.occurredAt?.gte && log.occurredAt < where.occurredAt.gte) return false;
             if (where.occurredAt?.lte && log.occurredAt > where.occurredAt.lte) return false;
+            if (where.occurredAt?.lt && log.occurredAt >= where.occurredAt.lt) return false;
             return true;
           });
           return Promise.resolve(results);
@@ -975,6 +986,8 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
           absoluteChange: -1,
           percentageChange: -100,
           direction: "decreased",
+          currentDates: [],
+          previousDates: ["2025-12-20"],
         },
         {
           category: "HOT_FLASH",
@@ -983,6 +996,8 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
           absoluteChange: 1,
           percentageChange: 100,
           direction: "increased",
+          currentDates: ["2026-01-05", "2026-01-20"],
+          previousDates: ["2025-12-15"],
         },
       ]),
     );
@@ -1007,6 +1022,8 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
         absoluteChange: 1,
         percentageChange: null,
         direction: "increased",
+        currentDates: ["2026-01-05"],
+        previousDates: [],
       },
     ]);
   });
@@ -1251,6 +1268,38 @@ describe("POST /briefs — treatment impact (deterministic, no AI involvement)",
       after: { logCount: 3, days: 14 },
       insufficientData: false,
     });
+  });
+
+  it("includes the day-level logs (date + category) behind each window's count, sorted ascending", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "tximpact-dates@embr.health");
+
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      category: "HRT",
+      startDate: new Date("2026-01-10"),
+      endDate: null,
+    });
+    // Deliberately inserted out of chronological order — the response
+    // must still come back sorted, not in insertion order.
+    addSymptomLog(userId, { category: "FATIGUE", occurredAt: new Date("2026-01-05") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-02") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-20") });
+    addSymptomLog(userId, { category: "ANXIETY", occurredAt: new Date("2026-01-11") });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.treatmentImpact[0].beforeDates).toEqual([
+      { date: "2026-01-02", category: "HOT_FLASH" },
+      { date: "2026-01-05", category: "FATIGUE" },
+    ]);
+    expect(res.body.data.treatmentImpact[0].afterDates).toEqual([
+      { date: "2026-01-11", category: "ANXIETY" },
+      { date: "2026-01-20", category: "HOT_FLASH" },
+    ]);
   });
 
   it("excludes a treatment that merely overlaps the period without starting inside it", async () => {
@@ -2626,6 +2675,8 @@ describe("POST /briefs — sparse and empty datasets", () => {
         absoluteChange: 1,
         percentageChange: null,
         direction: "increased",
+        currentDates: ["2026-01-15"],
+        previousDates: [],
       },
     ]);
     // A single category can never co-occur with itself.

@@ -579,6 +579,16 @@ export interface BriefFrequencyComparisonEntryDto {
    * this is never a manufactured percentage. */
   percentageChange: number | null;
   direction: "increased" | "decreased" | "unchanged";
+  /** Sorted ascending ISO dates (YYYY-MM-DD) this category was
+   * reported on, within the current/previous comparison period
+   * respectively — the day-level detail behind currentCount/
+   * previousCount. Same underlying symptom logs the counts above were
+   * derived from, not a second query — see period-comparison.ts's
+   * groupLogDatesByCategory. Not sent to the AI (see
+   * BriefFrequencyComparisonEntryDto's own doc comment above; this
+   * field is never part of BriefInput). */
+  currentDates: string[];
+  previousDates: string[];
 }
 
 /** The list view — no AI content, keeps history/pagination responses
@@ -601,6 +611,16 @@ export interface ClinicalBriefListItemDto {
 export interface BriefTreatmentImpactEntryDto extends TreatmentImpactDto {
   name: string;
   category: TreatmentCategory;
+  /** The day-level symptom logs behind before.logCount/after.logCount
+   * respectively — every logged category, not just one, since the
+   * count itself is a total across all symptom categories in each
+   * window (see treatment.repository.ts's countSymptomLogsInWindows).
+   * Sorted ascending by date. Never sent to the AI — see
+   * stage4-ai-projection.ts's projectTreatmentPattern, which only
+   * reads before.logCount/before.days (and the after equivalents),
+   * never these fields. */
+  beforeDates: Array<{ date: string; category: SymptomCategory }>;
+  afterDates: Array<{ date: string; category: SymptomCategory }>;
 }
 
 /** aiNarrative and aiDiscussionTopics are AI-generated from the

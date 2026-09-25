@@ -35,7 +35,11 @@ import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.j
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
-import { compareSymptomFrequency, computePreviousPeriod } from "./period-comparison.js";
+import {
+  compareSymptomFrequency,
+  computePreviousPeriod,
+  groupLogDatesByCategory,
+} from "./period-comparison.js";
 import { detectPersistentSymptoms } from "./persistent-symptoms.js";
 import { buildAiSafeStage4Interpretation } from "./stage4-ai-projection.js";
 import { buildStage4Interpretation } from "./stage4-interpretation.js";
@@ -120,7 +124,19 @@ async function generateBriefContent(
   // for the current period rather than a second, parallel counting
   // implementation for the previous one.
   const previousSymptomSummary = computeSymptomSummary(previousSymptomLogs);
-  const frequencyComparison = compareSymptomFrequency(symptomSummary, previousSymptomSummary);
+  // Same already-fetched symptomLogs/previousSymptomLogs as above — no
+  // new query, just the per-log dates that were always there,
+  // attached onto each comparison entry (see groupLogDatesByCategory's
+  // own doc comment).
+  const currentDatesByCategory = groupLogDatesByCategory(symptomLogs);
+  const previousDatesByCategory = groupLogDatesByCategory(previousSymptomLogs);
+  const frequencyComparison = compareSymptomFrequency(symptomSummary, previousSymptomSummary).map(
+    (entry) => ({
+      ...entry,
+      currentDates: currentDatesByCategory.get(entry.category) ?? [],
+      previousDates: previousDatesByCategory.get(entry.category) ?? [],
+    }),
+  );
 
   // Zero new data: a pure filter over frequencyComparison, which is
   // already computed above — no new counting, no new query. See
@@ -163,19 +179,45 @@ async function generateBriefContent(
         endDate: treatment.endDate,
         today,
       });
-      const { beforeLogCount, afterLogCount } = await treatmentRepository.countSymptomLogsInWindows(
+      // listSymptomLogsInWindows, not countSymptomLogsInWindows — the
+      // evidence drill-down needs the actual dates/categories behind
+      // each window's count, not just the number (see
+      // treatment.repository.ts's own doc comment on why this is a
+      // separate method rather than a change to the count-only one).
+      const { beforeLogs, afterLogs } = await treatmentRepository.listSymptomLogsInWindows(
         userId,
         windows,
       );
+      // Sorted here rather than relying solely on the query's own
+      // orderBy — this is what the DTO's own doc comment promises
+      // ("sorted ascending by date"), so it holds regardless of
+      // whatever order the database (or, in tests, the in-memory
+      // fixture) happens to return rows in.
+      const byOccurredAt = (a: { occurredAt: Date }, b: { occurredAt: Date }) =>
+        a.occurredAt.getTime() - b.occurredAt.getTime();
+      beforeLogs.sort(byOccurredAt);
+      afterLogs.sort(byOccurredAt);
       const impact = buildTreatmentImpact({
         treatmentId: treatment.id,
         startDate: treatment.startDate,
         endDate: treatment.endDate,
         today,
-        beforeLogCount,
-        afterLogCount,
+        beforeLogCount: beforeLogs.length,
+        afterLogCount: afterLogs.length,
       });
-      return { ...impact, name: treatment.name, category: treatment.category };
+      return {
+        ...impact,
+        name: treatment.name,
+        category: treatment.category,
+        beforeDates: beforeLogs.map((log) => ({
+          date: log.occurredAt.toISOString().slice(0, 10),
+          category: log.category as SymptomCategory,
+        })),
+        afterDates: afterLogs.map((log) => ({
+          date: log.occurredAt.toISOString().slice(0, 10),
+          category: log.category as SymptomCategory,
+        })),
+      };
     }),
   );
 

@@ -87,6 +87,36 @@ export const treatmentRepository = {
     return { beforeLogCount, afterLogCount };
   },
 
+  /** Same before/after windows as countSymptomLogsInWindows, but the
+   * actual rows, not just the counts — used only by the Brief's
+   * evidence drill-down (brief.service.ts), which needs the individual
+   * dates/categories to show what's behind each window's log count.
+   * countSymptomLogsInWindows' own DB-side-aggregate reasoning still
+   * holds for its own caller (the Treatments page, which only ever
+   * needed a number) — this is a separate method, not a replacement,
+   * so that path's query cost is unchanged. */
+  async listSymptomLogsInWindows(
+    userId: string,
+    windows: { before: { from: Date; to: Date }; after: { from: Date; to: Date } },
+  ): Promise<{
+    beforeLogs: Array<{ occurredAt: Date; category: string }>;
+    afterLogs: Array<{ occurredAt: Date; category: string }>;
+  }> {
+    const [beforeLogs, afterLogs] = await Promise.all([
+      prisma.symptomLog.findMany({
+        where: { userId, occurredAt: { gte: windows.before.from, lt: windows.before.to } },
+        select: { occurredAt: true, category: true },
+        orderBy: { occurredAt: "asc" },
+      }),
+      prisma.symptomLog.findMany({
+        where: { userId, occurredAt: { gte: windows.after.from, lt: windows.after.to } },
+        select: { occurredAt: true, category: true },
+        orderBy: { occurredAt: "asc" },
+      }),
+    ]);
+    return { beforeLogs, afterLogs };
+  },
+
   /** Every treatment that overlaps [fromDate, toDate] at all — not just
    * ones that started inside the range. An ongoing treatment (endDate
    * null) that started before fromDate must still appear, since it was
