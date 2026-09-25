@@ -25,6 +25,16 @@
 > workflow functionality against a real target, and mobile EAS/App Store
 > configuration. Treat those specific line items below as still open
 > unless a later audit says otherwise.
+>
+> **Database backups — verified 2026-09-25, no longer open.** A real
+> production Postgres now exists on Railway, and the "configured, not
+> functional" finding below no longer holds: the `embr-db-backup` cron
+> service is running successfully daily (03:00 UTC), confirmed directly
+> against Railway's own deployment logs going back to at least
+> 2026-09-18 with no failed run in that window — encrypted dump, upload
+> to the private `embr-backups` bucket, 30-day retention pruning all
+> working as designed. See `docs/BACKUPS.md` for the full mechanism and
+> `docs/acquisition/architecture.md` for the diligence framing.
 
 ---
 
