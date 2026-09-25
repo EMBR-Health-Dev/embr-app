@@ -79,6 +79,9 @@ export const api = {
     create: (input: { category: string; severity: string; occurredAt: string; notes?: string }) =>
       apiFetch<SymptomLogDto>("/symptom-logs", { method: "POST", body: input }),
 
+    update: (id: string, input: { severity?: string; notes?: string }) =>
+      apiFetch<SymptomLogDto>(`/symptom-logs/${id}`, { method: "PATCH", body: input }),
+
     delete: (id: string) => apiFetch<void>(`/symptom-logs/${id}`, { method: "DELETE" }),
   },
 

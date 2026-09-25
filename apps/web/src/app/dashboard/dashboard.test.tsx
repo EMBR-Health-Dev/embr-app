@@ -38,6 +38,8 @@ const symptomLogsList = vi
   .fn()
   .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
 const symptomLogsCreate = vi.fn();
+const symptomLogsUpdate = vi.fn();
+const symptomLogsDelete = vi.fn();
 const briefsList = vi.fn().mockResolvedValue({ items: [] });
 const contextLogsUpsert = vi.fn().mockResolvedValue({
   id: "ctx-1",
@@ -52,7 +54,12 @@ const contextLogsUpsert = vi.fn().mockResolvedValue({
 
 vi.mock("../../lib/api", () => ({
   api: {
-    symptomLogs: { list: symptomLogsList, create: symptomLogsCreate },
+    symptomLogs: {
+      list: symptomLogsList,
+      create: symptomLogsCreate,
+      update: symptomLogsUpdate,
+      delete: symptomLogsDelete,
+    },
     onboarding: { get: vi.fn().mockResolvedValue({ jobToBeDone: null }) },
     organizations: { mine: vi.fn().mockResolvedValue([]) },
     trends: { symptomFrequency },
@@ -68,6 +75,8 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
   symptomLogsCreate.mockReset();
+  symptomLogsUpdate.mockReset().mockResolvedValue(makeLog("updated-1"));
+  symptomLogsDelete.mockReset().mockResolvedValue(undefined);
   briefsList.mockReset().mockResolvedValue({ items: [] });
   contextLogsUpsert.mockClear();
 });
@@ -206,7 +215,33 @@ describe("Dashboard — hot-flash quick-log duplicate-submission guard", () => {
     expect(symptomLogsCreate).toHaveBeenCalledTimes(1);
 
     resolveCreate();
+    // Stays disabled through the post-success cooldown too — the
+    // in-flight guard above only covers the request itself, which
+    // resolves in well under a second here; a real accidental second
+    // tap usually lands right after the first one already succeeded,
+    // which is exactly the window this cooldown exists to close.
+    await waitFor(() => expect(symptomLogsList).toHaveBeenCalled());
+    expect(button).toBeDisabled();
+  });
+
+  it("re-enables the button once the post-success cooldown elapses", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    symptomLogsCreate.mockResolvedValue(makeLog("hf-1"));
+
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const button = await screen.findByRole("button", {
+      name: "Log a hot flash happening right now",
+    });
+
+    await user.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+
+    await vi.advanceTimersByTimeAsync(3000);
     await waitFor(() => expect(button).not.toBeDisabled());
+    vi.useRealTimers();
   });
 });
 
