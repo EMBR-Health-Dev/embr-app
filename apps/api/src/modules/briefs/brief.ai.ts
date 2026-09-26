@@ -82,7 +82,23 @@ const stage4PatternSchema = z.object({
   id: z.string().min(1),
   type: stage4PatternTypeSchema,
   observation: z.string().min(1),
-  association: z.string().min(1).optional(),
+  // Only co_occurrence_detected patterns carry a real `association`
+  // (see stage4-interpretation.ts's buildCoOccurrencePattern) — every
+  // other pattern type never sets this field at all, and the wire
+  // format's own response-shape example in the system prompt above
+  // shows "association": "..." on every pattern regardless of type
+  // (it has to: one fixed example can't vary per pattern type), which
+  // in production reliably produces "" rather than an omitted key
+  // for the pattern types that have nothing here. Confirmed directly
+  // (Railway logs, 2026-09-24T20:46): a real generation failed this
+  // exact way, killing the whole brief with no way for the user to
+  // recover other than reporting a bug. Structurally harmless either
+  // way — validateStage4Patterns never reads this field's content (see
+  // its own doc comment), it only proves provenance via id/type/
+  // evidenceRef and returns the canonical pattern's own association
+  // text, never the model's — so accepting "" as "not supplied" here
+  // costs nothing and fixes a real, reproducible outage.
+  association: z.string().optional(),
   interpretation: z.string().min(1),
   caveat: z.string().min(1),
   confidence: z.literal("descriptive"),

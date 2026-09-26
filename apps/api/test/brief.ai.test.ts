@@ -127,6 +127,42 @@ describe("brief.ai", () => {
     await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toThrow("unexpected response shape");
   });
 
+  // Regression for a real production outage (Railway logs,
+  // 2026-09-24T20:46): the model echoed a frequency pattern back with
+  // association: "" instead of omitting the key (every pattern in the
+  // system prompt's own response-shape example shows an "association"
+  // field, whatever the pattern type — see stage4PatternSchema's own
+  // doc comment), which used to fail this schema's .min(1) check and
+  // kill the entire brief with a generic 500. Only co-occurrence
+  // patterns ever have a real association (stage4-interpretation.ts);
+  // every other type legitimately has nothing there.
+  it("accepts a pattern with an empty-string association — the model's actual behavior when a pattern type has no real association to echo", async () => {
+    mockCreate.mockResolvedValue(
+      textResponse(
+        JSON.stringify({
+          narrative: "Hot flash frequency increased.",
+          discussionTopics: [dt("Is this typical?", ["frequency_increased:HOT_FLASH"])],
+          patterns: [
+            {
+              id: "frequency_increased:HOT_FLASH",
+              type: "frequency_increased",
+              observation: "Hot flash frequency increased.",
+              association: "",
+              interpretation: "This reflects a change in logging frequency.",
+              caveat: "This reflects self-reported logging frequency only.",
+              confidence: "descriptive",
+              evidenceRef: { category: "HOT_FLASH" },
+            },
+          ],
+        }),
+      ),
+    );
+
+    const result = await briefAi.generate(VALID_INPUT, "en");
+    expect(result.patterns).toHaveLength(1);
+    expect(result.patterns[0]!.association).toBe("");
+  });
+
   it("rejects an empty discussionTopics array", async () => {
     mockCreate.mockResolvedValue(
       textResponse(JSON.stringify({ narrative: "n", discussionTopics: [], patterns: [] })),

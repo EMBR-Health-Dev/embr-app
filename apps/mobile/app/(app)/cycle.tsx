@@ -123,6 +123,7 @@ export default function CycleScreen() {
                 }}
               />
             </View>
+            <Text style={styles.hint}>{t("cycle.periodMiddleHint")}</Text>
 
             <TextInput
               style={styles.notesInput}
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   switchLabel: { fontSize: 15, color: theme.colors.textPrimary },
+  hint: { fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   notesInput: {
     borderWidth: 1,
     borderColor: theme.colors.borderStrong,

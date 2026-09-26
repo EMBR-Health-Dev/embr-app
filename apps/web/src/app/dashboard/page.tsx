@@ -66,7 +66,23 @@ function DashboardContent() {
   const [loadingMoreLogs, setLoadingMoreLogs] = useState(false);
   const [loadMoreLogsError, setLoadMoreLogsError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [duplicateHint, setDuplicateHint] = useState(false);
   const [loggingHotFlash, setLoggingHotFlash] = useState(false);
+  // A short post-tap cooldown, separate from loggingHotFlash — that
+  // flag only covers the in-flight request itself (milliseconds), not
+  // the much more common case of a slow or shaky tap landing again
+  // right after the first one already succeeded. There's still no
+  // server-side idempotency for symptom logs (see logHotFlashNow's own
+  // comment), so this is the only thing narrowing that window; the
+  // delete button in Recent history below is what lets a real
+  // duplicate that gets through anyway be corrected.
+  const [hotFlashCooldown, setHotFlashCooldown] = useState(false);
+  const [lastHotFlashLog, setLastHotFlashLog] = useState<SymptomLogDto | null>(null);
+  const [hotFlashSeverity, setHotFlashSeverity] = useState<(typeof SEVERITIES)[number]>("MODERATE");
+  const [severitySaving, setSeveritySaving] = useState(false);
+  const [severityUpdated, setSeverityUpdated] = useState(false);
+  const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
+  const [deleteLogError, setDeleteLogError] = useState<string | null>(null);
   const [logSubmitError, setLogSubmitError] = useState<string | null>(null);
   const [managesOrg, setManagesOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
@@ -218,23 +234,70 @@ function DashboardContent() {
     // Guards against a double-tap or a slow/retried request creating
     // two near-identical records — there's no server-side idempotency
     // check for symptom logs (unlike cycle entries' unique-per-day
-    // upsert), so this is the only thing preventing a duplicate here.
-    if (loggingHotFlash) return;
+    // upsert), so this, together with the post-success cooldown below,
+    // is the only thing preventing a duplicate here.
+    if (loggingHotFlash || hotFlashCooldown) return;
     setLoggingHotFlash(true);
     try {
-      await api.symptomLogs.create({
+      const created = await api.symptomLogs.create({
         category: "HOT_FLASH",
         severity: "MODERATE",
         occurredAt: new Date().toISOString(),
       });
       setConfirmation(t("hotFlashConfirmation"));
+      setLastHotFlashLog(created);
+      setHotFlashSeverity("MODERATE");
+      setSeverityUpdated(false);
+      setHotFlashCooldown(true);
+      setTimeout(() => setHotFlashCooldown(false), 3000);
       const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
       setWeeklyFrequency(frequency);
       setReflectionsRefreshKey((key) => key + 1);
+      // Informational only, not a judgment call about which tap was
+      // the "real" one — a second hot flash logged minutes apart is
+      // entirely plausible and not this hint's business. Anything
+      // still on today's list after this reload is what actually
+      // matters, and the delete button on each row below is the fix.
+      const todaysHotFlashes = logs.filter(
+        (log) =>
+          log.category === "HOT_FLASH" &&
+          toIsoDate(new Date(log.occurredAt)) === toIsoDate(new Date()),
+      );
+      setDuplicateHint(todaysHotFlashes.length + 1 > 1);
     } catch (err) {
       setConfirmation(err instanceof ApiError ? err.message : t("hotFlashError"));
     } finally {
       setLoggingHotFlash(false);
+    }
+  }
+
+  async function adjustHotFlashSeverity(newSeverity: (typeof SEVERITIES)[number]) {
+    if (!lastHotFlashLog) return;
+    setHotFlashSeverity(newSeverity);
+    setSeveritySaving(true);
+    try {
+      await api.symptomLogs.update(lastHotFlashLog.id, { severity: newSeverity });
+      setSeverityUpdated(true);
+      await loadLogs();
+    } catch (err) {
+      setConfirmation(err instanceof ApiError ? err.message : t("severityUpdateError"));
+    } finally {
+      setSeveritySaving(false);
+    }
+  }
+
+  async function deleteLog(id: string) {
+    setDeletingLogId(id);
+    setDeleteLogError(null);
+    try {
+      await api.symptomLogs.delete(id);
+      if (lastHotFlashLog?.id === id) setLastHotFlashLog(null);
+      const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+      setWeeklyFrequency(frequency);
+    } catch (err) {
+      setDeleteLogError(err instanceof ApiError ? err.message : t("deleteLogError"));
+    } finally {
+      setDeletingLogId(null);
     }
   }
 
@@ -349,7 +412,7 @@ function DashboardContent() {
                 anyone wants to fill out a category picker. */}
             <button
               onClick={() => void logHotFlashNow()}
-              disabled={loggingHotFlash}
+              disabled={loggingHotFlash || hotFlashCooldown}
               className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100"
               aria-label={t("hotFlashAriaLabel")}
               aria-busy={loggingHotFlash}
@@ -364,6 +427,42 @@ function DashboardContent() {
               <p role="status" className="text-sm font-medium text-foreground">
                 {confirmation}
               </p>
+            )}
+            {duplicateHint && (
+              <p className="max-w-xs text-xs text-foreground/45">{t("loggedAgainHint")}</p>
+            )}
+
+            {lastHotFlashLog && (
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs font-medium text-foreground/60">
+                  {t("adjustSeverity")}
+                </span>
+                <div className="flex gap-2">
+                  {SEVERITIES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => void adjustHotFlashSeverity(s)}
+                      disabled={severitySaving}
+                      aria-pressed={hotFlashSeverity === s}
+                      className={`rounded-sm border px-3 py-1.5 text-sm disabled:opacity-60 ${
+                        hotFlashSeverity === s
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-foreground"
+                      }`}
+                    >
+                      {tEnum(`severity.${s}`)}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-xs text-foreground/45">
+                  {severitySaving
+                    ? t("severitySaving")
+                    : severityUpdated
+                      ? t("severityUpdated")
+                      : ""}
+                </span>
+              </div>
             )}
 
             {!confirmation && (
@@ -524,6 +623,7 @@ function DashboardContent() {
                   {t("periodEndedToday")}
                 </label>
               </div>
+              <p className="mt-2 text-xs text-foreground/45">{t("periodMiddleHint")}</p>
             </div>
             <Button
               variant="ghost"
@@ -625,7 +725,7 @@ function DashboardContent() {
             ) : (
               <ul className="mt-3 divide-y divide-border-subtle">
                 {logs.map((log) => (
-                  <li key={log.id} className="flex items-center justify-between py-3 text-sm">
+                  <li key={log.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                     <div>
                       <span className="font-medium text-foreground">
                         {tEnum(`category.${log.category}`)}
@@ -635,17 +735,32 @@ function DashboardContent() {
                       </span>
                       {log.notes && <p className="mt-1 text-foreground/60">{log.notes}</p>}
                     </div>
-                    <time className="text-foreground/40" dateTime={log.occurredAt}>
-                      {new Date(log.occurredAt).toLocaleString(locale, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </time>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <time className="text-foreground/40" dateTime={log.occurredAt}>
+                        {new Date(log.occurredAt).toLocaleString(locale, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                      <button
+                        type="button"
+                        onClick={() => void deleteLog(log.id)}
+                        disabled={deletingLogId === log.id}
+                        className="text-xs font-medium text-foreground/50 underline underline-offset-2 disabled:opacity-50"
+                      >
+                        {t("deleteLog")}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
+            )}
+            {deleteLogError && (
+              <p role="alert" className="mt-2 text-sm font-medium text-foreground">
+                {deleteLogError}
+              </p>
             )}
             {!logsLoading && logs.length > 0 && logsPage < logsTotalPages && (
               <button

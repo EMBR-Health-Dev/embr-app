@@ -197,6 +197,7 @@ function BriefPageContent() {
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
 
         <p className="mt-3 text-sm text-foreground/60">{t("description")}</p>
+        <p className="mt-1 text-xs text-foreground/45">{t("noMinimumEntries")}</p>
 
         <form onSubmit={handleGenerate} className="mt-8 flex flex-wrap items-end gap-4">
           <Field
