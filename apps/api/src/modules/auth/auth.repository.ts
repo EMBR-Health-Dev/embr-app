@@ -11,10 +11,6 @@ export const authRepository = {
     return prisma.user.findUnique({ where: { id } });
   },
 
-  createUser(data: { email: string; passwordHash: string }) {
-    return prisma.user.create({ data });
-  },
-
   markEmailVerified(userId: string) {
     return prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
   },

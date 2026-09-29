@@ -6,6 +6,7 @@ import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { resolveLocaleFromAcceptLanguage } from "../../lib/locale.js";
 import { requireAuth, requireVerifiedEmail } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { briefGenerationLimiter } from "./brief-rate-limiter.js";
@@ -14,7 +15,7 @@ import { buildClinicalBriefPdf } from "./brief.pdf.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/briefs", requireAuth());
+router.use("/briefs", requireAuth(), requireCurrentConsent());
 
 router.post(
   "/briefs",

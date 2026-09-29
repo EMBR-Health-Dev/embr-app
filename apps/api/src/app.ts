@@ -29,6 +29,7 @@ import { organizationRouter } from "./modules/organizations/organization.routes.
 import { ssoRouter } from "./modules/sso/sso.routes.js";
 import { briefRouter } from "./modules/briefs/brief.routes.js";
 import { onboardingRouter } from "./modules/onboarding/onboarding.routes.js";
+import { consentRouter } from "./modules/consent/consent.routes.js";
 import { publicAssessmentRouter } from "./modules/public-assessment/public-assessment.routes.js";
 import { billingRouter } from "./modules/billing/billing.routes.js";
 import { billingWebhookRouter } from "./modules/billing/billing.webhook.routes.js";
@@ -139,6 +140,7 @@ export function createApp(): Express {
   app.use(ssoRouter);
   app.use(briefRouter);
   app.use(onboardingRouter);
+  app.use(consentRouter);
   app.use(publicAssessmentRouter);
 
   // ---- 404 + error handling (must be last) ----

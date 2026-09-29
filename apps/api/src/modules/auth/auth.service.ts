@@ -9,6 +9,8 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
 import { writeAuditLog } from "./audit.js";
 import { toUserDto } from "./auth.mappers.js";
 import { onboardingRepository } from "../onboarding/onboarding.repository.js";
+import { consentService } from "../consent/consent.service.js";
+import type { RegisterInput } from "@embr/validation";
 
 interface IssuedSession {
   user: UserDto;
@@ -48,7 +50,11 @@ interface SessionRecord {
 }
 
 export const authService = {
-  async register(req: Request, input: { email: string; password: string }): Promise<UserDto> {
+  async register(req: Request, input: RegisterInput): Promise<UserDto> {
+    // Checked before anything is written: an account is never created
+    // without the items registration requires.
+    consentService.validateRegistration(input.consents);
+
     const existing = await authRepository.findUserByEmail(input.email);
     if (existing) {
       // Same response whether the account exists or not is impossible
@@ -59,14 +65,22 @@ export const authService = {
     }
 
     const passwordHash = await hashPassword(input.password);
-    const user = await authRepository.createUser({ email: input.email, passwordHash });
+    // The account and its consent records are created in one atomic
+    // write, so there is never an account without the acceptances it was
+    // created with.
+    const user = await consentService.createUserWithRegistrationConsents(
+      { email: input.email, passwordHash },
+      input.consents,
+      input.locale,
+      input.client,
+    );
 
     const verificationToken = generateOpaqueToken();
     await authRepository.createEmailVerificationToken(user.id, hashToken(verificationToken));
     await sendVerificationEmail(user.email, verificationToken);
 
     await writeAuditLog(req, "USER_REGISTERED", user.id);
-    return toUserDto(user);
+    return toUserDto(user, null, await consentService.statesFor(user.id));
   },
 
   async verifyEmail(req: Request, token: string): Promise<void> {
@@ -110,7 +124,12 @@ export const authService = {
     await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id);
 
     const onboarding = await onboardingRepository.findByUserId(user.id);
-    return { user: toUserDto(user, onboarding?.completedAt ?? null), accessToken, refreshToken };
+    const consents = await consentService.statesFor(user.id);
+    return {
+      user: toUserDto(user, onboarding?.completedAt ?? null, consents),
+      accessToken,
+      refreshToken,
+    };
   },
 
   async refresh(req: Request, presentedToken: string): Promise<IssuedSession> {
@@ -156,7 +175,12 @@ export const authService = {
     await writeAuditLog(req, "TOKEN_REFRESHED", user.id, { sessionId: session.id });
 
     const onboarding = await onboardingRepository.findByUserId(user.id);
-    return { user: toUserDto(user, onboarding?.completedAt ?? null), accessToken, refreshToken };
+    const consents = await consentService.statesFor(user.id);
+    return {
+      user: toUserDto(user, onboarding?.completedAt ?? null, consents),
+      accessToken,
+      refreshToken,
+    };
   },
 
   async logout(req: Request, presentedToken: string | undefined): Promise<void> {

@@ -3,11 +3,12 @@ import { trendsQuerySchema, type TrendsQuery } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { trendsService } from "./trends.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/trends", requireAuth());
+router.use("/trends", requireAuth(), requireCurrentConsent());
 
 router.get(
   "/trends/symptom-frequency",

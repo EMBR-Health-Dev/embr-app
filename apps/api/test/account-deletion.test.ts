@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { CURRENT_CONSENTS } from "./helpers/consents.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -223,7 +224,9 @@ vi.mock("../src/lib/prisma.js", () => {
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
-  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const register = await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (login.headers["set-cookie"] as unknown as string[])
     .find((c: string) => c.startsWith("embr_csrf="))!
