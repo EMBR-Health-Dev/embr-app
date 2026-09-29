@@ -3,6 +3,7 @@ import type {
   BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  ConsentStatusDto,
   ContextLogDto,
   CycleEntryDto,
   CycleLengthTrendDto,
@@ -27,11 +28,25 @@ import type {
   TreatmentImpactDto,
   UserDto,
 } from "@embr/types";
+import type { GrantConsentsInput, RegisterInput } from "@embr/validation";
 import { apiFetch, apiFetchBlob } from "./api-client";
 
 export const api = {
+  consents: {
+    status: () => apiFetch<ConsentStatusDto>("/consents"),
+
+    grant: (input: GrantConsentsInput) =>
+      apiFetch<{ consents: UserDto["consents"] }>("/consents", { method: "POST", body: input }),
+
+    withdrawHealthProcessing: () =>
+      apiFetch<{ consents: UserDto["consents"] }>("/consents/withdraw", {
+        method: "POST",
+        body: { type: "HEALTH_PROCESSING", client: "web" },
+      }),
+  },
+
   auth: {
-    register: (input: { email: string; password: string }) =>
+    register: (input: RegisterInput) =>
       apiFetch<UserDto>("/auth/register", { method: "POST", body: input }),
 
     login: (input: { email: string; password: string }) =>

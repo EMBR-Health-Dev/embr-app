@@ -675,5 +675,29 @@
       "message": "You've logged {count, plural, one {# symptom entry} other {# symptom entries}} during this period.",
       "caveat": "A count of what you've logged during this treatment, not a measure of how well it's working."
     }
+  },
+  "Consent": {
+    "termsLabel": "I agree to the <link>Terms of Use</link>.",
+    "privacyLabel": "I have read and understood the <link>Privacy Policy</link>.",
+    "healthExplanation": "EMBR stores and processes the health information you enter, such as symptoms, cycle details, daily context and treatments, to build your record, show your patterns and create your EMBR BRIEF.",
+    "healthLabel": "I acknowledge and, where required, consent to EMBR processing the health information I provide as described above and in the <link>Privacy Policy</link>.",
+    "manageNote": "You can manage your privacy choices in your account settings. Where processing is based on consent, you can withdraw that consent at any time.",
+    "opensInNewTab": "(opens in a new tab)",
+    "termsRequired": "Please accept the Terms of Use to continue.",
+    "privacyRequired": "Please confirm you have read the Privacy Policy.",
+    "healthRequired": "This is required to continue.",
+    "versionOutdated": "These documents were just updated. Please reload the page and review them again.",
+    "title": "Before you continue",
+    "subtitle": "Please review the following. Nothing in your record changes while you decide.",
+    "updatedNote": "Updated since you last reviewed it.",
+    "withdrawnNote": "You withdrew this earlier. Health features are paused until you give it again.",
+    "continue": "Continue",
+    "saving": "Saving…",
+    "allRequired": "Please tick each item above to continue.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "otherOptions": "Other options",
+    "exportData": "Export your data",
+    "accountSettings": "Account settings, including deleting your account",
+    "logOut": "Log out"
   }
 }
