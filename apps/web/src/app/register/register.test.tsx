@@ -47,7 +47,7 @@ describe("Register — consent", () => {
     expect(privacyBox()).not.toBeChecked();
     expect(healthBox()).not.toBeChecked();
     expect(
-      screen.getByText(/stores and processes the health information you enter/),
+      screen.getByText(/stores and uses the health information you enter/),
     ).toBeInTheDocument();
   });
 
@@ -125,7 +125,7 @@ describe("Register — consent", () => {
     await user.click(privacyBox());
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByText("This is required to continue.")).toBeInTheDocument();
+    expect(await screen.findByText("Please review this item to continue.")).toBeInTheDocument();
     expect(healthBox()).toHaveAttribute("aria-invalid", "true");
   });
 
@@ -146,6 +146,11 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage("ja");
     expect(screen.getByRole("checkbox", { name: /利用規約/ })).not.toBeChecked();
+    // The health item names what is handled and why, in plain Japanese.
+    const health = screen.getByRole("checkbox", { name: /症状、周期、治療などの健康情報/ });
+    expect(health).toHaveAccessibleName(/記録の作成、パターンの表示、EMBR BRIEFの作成/);
+    expect(health).not.toBeChecked();
+    expect(screen.getByText(/同意に基づく情報の取り扱いについては/)).toBeInTheDocument();
     await user.type(screen.getByLabelText("メールアドレス"), "person@embr.health");
     await user.type(screen.getByLabelText("パスワード"), "Sup3rSecret!Pass");
     const boxes = screen.getAllByRole("checkbox");

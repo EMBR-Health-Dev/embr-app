@@ -67,7 +67,7 @@ describe("Consent screen", () => {
     consents = { TERMS: "OUTDATED", PRIVACY: "CURRENT", HEALTH_PROCESSING: "WITHDRAWN" };
     await renderPage();
     expect(screen.getByText("Updated since you last reviewed it.")).toBeInTheDocument();
-    expect(screen.getByText(/You withdrew this earlier/)).toBeInTheDocument();
+    expect(screen.getByText(/You withdrew this item earlier/)).toBeInTheDocument();
   });
 
   it("does not submit until every shown item is ticked", async () => {

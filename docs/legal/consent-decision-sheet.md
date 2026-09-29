@@ -19,15 +19,24 @@ here goes to production until these are answered.
 
 ## Wording counsel needs to supply (EN and JA)
 
-1. Terms: "I agree to the Terms of Use." (contractual acceptance)
-2. Privacy: "I have read and understood the Privacy Policy." (acknowledgement, not agreement)
-3. Health information: explanation sentence and checkbox text. Current
-   placeholder: "I acknowledge and, where required, consent to EMBR
-   processing the health information I provide as described above and in
-   the Privacy Policy."
-4. Settings text on managing choices. Current placeholder: "You can manage
-   your privacy choices in your account settings. Where processing is based
-   on consent, you can withdraw that consent at any time."
+The strings live in `apps/web/messages/en.json` and `ja.json` (`Consent`).
+Current placeholders, revised for native Japanese register (calm, plain,
+precise; 「取り扱い」 rather than a literal 「処理」 in the UI):
+
+| Item                | English placeholder                                                                                                                                                                                                                                                                                | Japanese placeholder                                                                                                                                                                                             |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Terms               | I agree to the Terms of Use.                                                                                                                                                                                                                                                                       | 利用規約に同意します。                                                                                                                                                                                           |
+| Privacy             | I have read and understood the Privacy Policy.                                                                                                                                                                                                                                                     | プライバシーポリシーを読み、内容を理解しました。                                                                                                                                                                 |
+| Health explanation  | EMBR stores and uses the health information you enter, such as symptoms, cycle details, daily context and treatments, to build your record, show your patterns and create your EMBR BRIEF.                                                                                                         | EMBRでは、あなたが入力した症状、周期、日々の状況、治療などの健康情報を、記録の作成、パターンの表示、EMBR BRIEFの作成のために保存・利用します。                                                                   |
+| Health checkbox     | I acknowledge that EMBR handles the health information I provide, such as symptoms, cycle details and treatments, for the purposes described in the Privacy Policy, including building my record, showing my patterns and creating my EMBR BRIEF, and, where required, I consent to that handling. | EMBRが、私が提供する症状、周期、治療などの健康情報を、記録の作成、パターンの表示、EMBR BRIEFの作成など、プライバシーポリシーに記載された目的のために取り扱うことを確認し、必要な場合はその取り扱いに同意します。 |
+| Managing choices    | You can manage your privacy choices in your account settings. Where the handling of your information is based on consent, you can withdraw that consent at any time.                                                                                                                               | プライバシーに関する設定は、アカウント設定から管理できます。同意に基づく情報の取り扱いについては、いつでも同意を撤回できます。                                                                                   |
+| Item not yet ticked | Please review this item to continue.                                                                                                                                                                                                                                                               | 続けるには、この項目を確認してください。                                                                                                                                                                         |
+
+**Do not finalize the health checkbox wording until counsel confirms
+whether the final text should use 「同意」 (consent) or an
+acknowledgement formulation.** This is where translation and legal
+characterization meet. The "item not yet ticked" message is deliberately
+"review", not "required", for the same reason.
 
 ## Versions
 
@@ -44,3 +53,8 @@ version asks every existing user to review the item again at next sign-in.
   member withdraws (future calculations already exclude them).
 - Retention period for the security audit log, which does record IP
   address and user agent for sign-in events.
+- The Japanese Privacy Policy should list the health information EMBR
+  collects explicitly, for example: 症状、症状の重症度、月経・周期に関する
+  情報、睡眠、ストレス、治療・服薬等に関する情報、メモその他ユーザーが入力す
+  る健康関連情報. The English and Japanese documents must carry the same
+  legal meaning.
