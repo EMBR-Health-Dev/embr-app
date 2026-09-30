@@ -9,7 +9,10 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary", "lcov"],
-      exclude: ["**/*.d.ts", "src/server.ts"],
+      // src/generated is Prisma's generated client (a large vendored
+      // runtime). Nothing loaded it while every suite mocked Prisma; the
+      // real-Postgres integration tests do, and it isn't our code to cover.
+      exclude: ["**/*.d.ts", "src/server.ts", "src/generated/**"],
       // Deliberately conservative starting point — this was added without
       // a live Postgres/Redis available to actually run the suite and
       // read the real number back (see Milestone 11 in

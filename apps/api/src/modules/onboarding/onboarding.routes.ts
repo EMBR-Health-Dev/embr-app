@@ -3,12 +3,13 @@ import { patchOnboardingSchema, type PatchOnboardingInput } from "@embr/validati
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { onboardingService } from "./onboarding.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/onboarding", requireAuth());
+router.use("/onboarding", requireAuth(), requireCurrentConsent());
 
 router.get(
   "/onboarding",

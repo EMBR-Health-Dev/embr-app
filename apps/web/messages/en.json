@@ -675,5 +675,29 @@
       "message": "You've logged {count, plural, one {# symptom entry} other {# symptom entries}} during this period.",
       "caveat": "A count of what you've logged during this treatment, not a measure of how well it's working."
     }
+  },
+  "Consent": {
+    "termsLabel": "I agree to the <link>Terms of Use</link>.",
+    "privacyLabel": "I have read and understood the <link>Privacy Policy</link>.",
+    "healthExplanation": "EMBR stores and uses the health information you enter, such as symptoms, cycle details, daily context and treatments, to build your record, show your patterns and create your EMBR BRIEF.",
+    "healthLabel": "I acknowledge that EMBR handles the health information I provide, such as symptoms, cycle details and treatments, for the purposes described in the <link>Privacy Policy</link>, including building my record, showing my patterns and creating my EMBR BRIEF, and, where required, I consent to that handling.",
+    "manageNote": "You can manage your privacy choices in your account settings. Where the handling of your information is based on consent, you can withdraw that consent at any time.",
+    "opensInNewTab": "(opens in a new tab)",
+    "termsRequired": "Please accept the Terms of Use to continue.",
+    "privacyRequired": "Please confirm you have read the Privacy Policy.",
+    "healthRequired": "Please review this item to continue.",
+    "versionOutdated": "These documents were just updated. Please reload the page and review them again.",
+    "title": "Before you continue",
+    "subtitle": "Please review the following. Your existing records are unchanged.",
+    "updatedNote": "Updated since you last reviewed it.",
+    "withdrawnNote": "You withdrew this item earlier. Features that use health information are paused until you review and agree to it again.",
+    "continue": "Continue",
+    "saving": "Saving…",
+    "allRequired": "Please tick each item above to continue.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "otherOptions": "Other choices",
+    "exportData": "Export your data",
+    "accountSettings": "Account settings, including account deletion",
+    "logOut": "Log out"
   }
 }

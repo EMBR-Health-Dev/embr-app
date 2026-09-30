@@ -130,6 +130,15 @@ const apiEnvSchema = z.object({
   // changes what happens when it's left unset.
   COOKIE_SECURE: booleanEnvVar().default(process.env.NODE_ENV === "production"),
 
+  // Whether creating an account requires the HEALTH_PROCESSING item at
+  // the same time. A legal decision, not a product one (see
+  // docs/legal/consent-decision-sheet.md, question 2), so it's config.
+  // Either way, health features stay blocked server-side until that
+  // item is current (requireCurrentConsent) — this only changes whether
+  // the account itself can exist without it. TERMS and PRIVACY are
+  // always required at registration.
+  CONSENT_HEALTH_REQUIRED_AT_REGISTRATION: booleanEnvVar().default(false),
+
   // ---- Observability (Milestone 11) ----
   // Optional by design: Sentry stays fully disabled (no-op init) when this
   // is unset, so local dev and CI never need a real DSN configured.

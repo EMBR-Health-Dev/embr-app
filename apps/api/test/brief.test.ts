@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { CURRENT_CONSENTS } from "./helpers/consents.js";
 import { briefAi } from "../src/modules/briefs/brief.ai.js";
 import { briefService } from "../src/modules/briefs/brief.service.js";
 import { buildClinicalBriefPdf } from "../src/modules/briefs/brief.pdf.js";
@@ -453,7 +454,9 @@ function lastVerificationToken(): string {
  * use registerAndLoginUnverified below instead.
  */
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
-  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const register = await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   await agent.post("/auth/verify-email").send({ token: lastVerificationToken() });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   // Mirrors what a real browser does automatically: read the CSRF
@@ -475,7 +478,9 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 /** Same as registerAndLogin, minus the verify-email step — for tests
  * of the verified-email gate itself. */
 async function registerAndLoginUnverified(agent: ReturnType<typeof request.agent>, email: string) {
-  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const register = await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
     c.startsWith("embr_csrf="),

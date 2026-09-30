@@ -14,6 +14,7 @@ vi.mock("./api", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/onboarding",
 }));
 
 function meResponse(onboardingCompletedAt: string | null) {
@@ -24,6 +25,7 @@ function meResponse(onboardingCompletedAt: string | null) {
     emailVerified: true,
     createdAt: "2026-01-01T00:00:00.000Z",
     onboardingCompletedAt,
+    consents: { TERMS: "CURRENT", PRIVACY: "CURRENT", HEALTH_PROCESSING: "CURRENT" } as const,
   };
 }
 

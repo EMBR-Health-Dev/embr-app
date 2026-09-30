@@ -33,11 +33,86 @@ export const passwordSchema = z
 
 export const emailSchema = z.string().trim().toLowerCase().email("Must be a valid email address");
 
+// ---- Consent (Terms, Privacy, health information) ----
+//
+// Three independently versioned items. What each one legally *is*
+// (contractual acceptance, acknowledgement of a notice, explicit
+// consent or another Article 9 condition) is for counsel to decide —
+// see docs/legal/consent-decision-sheet.md. The code only records what
+// was shown, in which language and version, what the person ticked,
+// and when.
+
+export const CONSENT_TYPES = ["TERMS", "PRIVACY", "HEALTH_PROCESSING"] as const;
+export const consentTypeSchema = z.enum(CONSENT_TYPES);
+export type ConsentTypeValue = z.infer<typeof consentTypeSchema>;
+
+/**
+ * The current version of each item. The server is the authority: a
+ * client sends the version it displayed, and the API rejects anything
+ * that doesn't match, so a stale page or an old mobile build can't
+ * record acceptance of wording the person never saw. Raising a version
+ * asks every existing user to review that item again at next sign-in.
+ *
+ * Placeholder draft versions until the legal documents are final. Each
+ * final value must match the version shown on the published page.
+ */
+export const LEGAL_DOCUMENT_VERSIONS: Record<ConsentTypeValue, string> = {
+  TERMS: "0.1-draft",
+  PRIVACY: "0.1-draft",
+  HEALTH_PROCESSING: "0.1-draft",
+};
+
+export const LEGAL_DOCUMENT_URLS = {
+  TERMS: "https://embrhealthcare.com/terms.html",
+  PRIVACY: "https://embrhealthcare.com/privacy.html",
+} as const;
+
+export const consentLocaleSchema = z.enum(["en", "ja"]);
+
+export const consentAcceptanceSchema = z.object({
+  type: consentTypeSchema,
+  /** The version the client displayed to the person. */
+  version: z.string().min(1).max(50),
+});
+export type ConsentAcceptance = z.infer<typeof consentAcceptanceSchema>;
+
+const consentAcceptancesSchema = z
+  .array(consentAcceptanceSchema)
+  .max(CONSENT_TYPES.length)
+  .refine((items) => new Set(items.map((i) => i.type)).size === items.length, {
+    message: "Each consent item may only appear once",
+  });
+
+export const consentClientSchema = z.enum(["web", "mobile"]);
+
 export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
+  /** One entry per box the person ticked. Which entries are required
+   * is enforced by the API (TERMS and PRIVACY always; HEALTH_PROCESSING
+   * only if configured), not here. */
+  consents: consentAcceptancesSchema.default([]),
+  locale: consentLocaleSchema.default("en"),
+  client: consentClientSchema.optional(),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const grantConsentsSchema = z.object({
+  consents: consentAcceptancesSchema.refine((items) => items.length > 0, {
+    message: "At least one consent item is required",
+  }),
+  locale: consentLocaleSchema.default("en"),
+  client: consentClientSchema.optional(),
+});
+export type GrantConsentsInput = z.infer<typeof grantConsentsSchema>;
+
+/** Only health processing can be withdrawn while keeping the account;
+ * the Terms end with the account itself. */
+export const withdrawConsentSchema = z.object({
+  type: z.literal("HEALTH_PROCESSING"),
+  client: consentClientSchema.optional(),
+});
+export type WithdrawConsentInput = z.infer<typeof withdrawConsentSchema>;
 
 export const loginSchema = z.object({
   email: emailSchema,

@@ -1,10 +1,16 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { UserDto } from "@embr/types";
 import { api } from "./api";
-import { ApiError, clearHadSession, setSessionExpiredHandler } from "./api-client";
+import {
+  ApiError,
+  clearHadSession,
+  setConsentRequiredHandler,
+  setSessionExpiredHandler,
+} from "./api-client";
+import { consentHref, isConsentExempt, needsConsentReview } from "./consent";
 
 interface AuthContextValue {
   user: UserDto | null;
@@ -17,6 +23,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,6 +65,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.replace("/login?reason=session-expired");
     });
     return () => setSessionExpiredHandler(null);
+  }, [router]);
+
+  // Consent gate, UI side. The API is the real control (403
+  // CONSENT_REQUIRED on every health route); this keeps people from
+  // landing on pages that would only fail. Covers every way into the
+  // app in one place: login, SSO sign-in (which never passes through
+  // the registration form), existing users when a version is raised,
+  // and a bookmarked deep link.
+  useEffect(() => {
+    if (loading || !pathname || isConsentExempt(pathname)) return;
+    if (needsConsentReview(user)) router.replace(consentHref(pathname));
+  }, [loading, user, pathname, router]);
+
+  useEffect(() => {
+    setConsentRequiredHandler(() => {
+      const here = window.location.pathname;
+      if (!isConsentExempt(here)) router.replace(consentHref(here));
+    });
+    return () => setConsentRequiredHandler(null);
   }, [router]);
 
   const logout = useCallback(async () => {

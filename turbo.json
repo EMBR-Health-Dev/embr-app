@@ -21,7 +21,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "passThroughEnv": ["DATABASE_URL", "REDIS_URL"]
     },
     "test:e2e": {
       "dependsOn": ["build"],

@@ -23,3 +23,19 @@ process.env.STRIPE_WEBHOOK_SECRET ??= "whsec_test_placeholder";
 process.env.STRIPE_SEAT_PRICE_ID ??= "price_test_placeholder";
 process.env.NODE_ENV = "test";
 process.env.LOG_LEVEL = "fatal";
+
+// Consent ledger: replaced for every suite with a realistic in-memory
+// fake (see helpers/fake-consent-repository.ts for why). Suites that
+// test the real queries opt out with vi.unmock — see
+// integration/consent-repository.test.ts.
+import { beforeEach, vi } from "vitest";
+import { resetFakeConsentStore } from "./helpers/fake-consent-repository.js";
+
+vi.mock("../src/modules/consent/consent.repository.js", async () => {
+  const fake = await import("./helpers/fake-consent-repository.js");
+  return { consentRepository: fake.consentRepository };
+});
+
+beforeEach(() => {
+  resetFakeConsentStore();
+});

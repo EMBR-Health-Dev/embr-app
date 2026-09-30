@@ -4,6 +4,7 @@ import type { User } from "../../generated/prisma/index.js";
 import { adminRepository } from "./admin.repository.js";
 import { toAuditLogDto } from "./admin.mappers.js";
 import { toUserDto } from "../auth/auth.mappers.js";
+import { consentService } from "../consent/consent.service.js";
 import { paginate } from "../../lib/pagination.js";
 
 export const adminService = {
@@ -23,8 +24,9 @@ export const adminService = {
     // parameter (see auth.mappers.ts), so this doesn't introduce a new
     // type, just makes the existing one explicit at the one point that
     // needs it.
+    const consents = await consentService.statesForMany(items.map((user: User) => user.id));
     return paginate(
-      items.map((user: User) => toUserDto(user)),
+      items.map((user: User) => toUserDto(user, null, consents.get(user.id)!)),
       total,
       query,
     );

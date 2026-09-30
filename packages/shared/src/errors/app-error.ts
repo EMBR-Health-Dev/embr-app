@@ -48,6 +48,16 @@ export class AppError extends Error {
     return new AppError({ code: ErrorCode.EMAIL_NOT_VERIFIED, message });
   }
 
+  static consentRequired(message = "Please review and accept the current terms to continue") {
+    return new AppError({ code: ErrorCode.CONSENT_REQUIRED, message });
+  }
+
+  static consentVersionOutdated(
+    message = "These terms have been updated. Please reload the page and review them again",
+  ) {
+    return new AppError({ code: ErrorCode.CONSENT_VERSION_OUTDATED, message });
+  }
+
   static notFound(resource: string) {
     return new AppError({ code: ErrorCode.NOT_FOUND, message: `${resource} not found` });
   }
