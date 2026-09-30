@@ -20,7 +20,8 @@
     "continueWithSso": "SSOでログイン",
     "newToEmbr": "EMBRは初めてですか?",
     "createAccount": "アカウントを作成",
-    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
+    "accountDeleted": "アカウントとその中のすべてのデータを削除しました。"
   },
   "LanguageSwitcher": {
     "label": "言語",
@@ -516,7 +517,7 @@
     "revoking": "削除中…",
     "revoke": "削除",
     "deleteAccountTitle": "アカウントの削除",
-    "deleteAccountDescription": "アカウントとその中のすべてのデータ(症状の記録、周期の記録、BRIEF、設定など)を完全に削除します。この操作は取り消せません。",
+    "deleteAccountDescription": "アカウントとその中のすべてのデータ(症状の記録、周期の記録、日々の状況、治療の記録、BRIEF、設定など)を完全に削除します。この操作は取り消せません。",
     "deleteMyAccount": "アカウントを削除する",
     "confirmPasswordLabel": "パスワードを確認",
     "forgotPasswordHint": "パスワードをお忘れですか?",

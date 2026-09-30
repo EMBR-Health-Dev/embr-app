@@ -20,7 +20,8 @@
     "continueWithSso": "Continue with SSO",
     "newToEmbr": "New to EMBR?",
     "createAccount": "Create an account",
-    "sessionExpired": "Your session expired. Log in again to continue."
+    "sessionExpired": "Your session expired. Log in again to continue.",
+    "accountDeleted": "Your account and everything in it have been deleted."
   },
   "LanguageSwitcher": {
     "label": "Language",
@@ -516,7 +517,7 @@
     "revoking": "Revoking…",
     "revoke": "Revoke",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, briefs, and settings. This cannot be undone.",
+    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, daily context, treatments, briefs, and settings. This cannot be undone.",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordLabel": "Confirm your password",
     "forgotPasswordHint": "Don't know your password?",

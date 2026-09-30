@@ -135,7 +135,7 @@ export default function SettingsPage() {
     setDeleting(true);
     try {
       await api.auth.deleteAccount({ password: deletePassword });
-      router.push("/login");
+      router.push("/login?reason=account-deleted");
     } catch (err) {
       setDeleteError(err instanceof ApiError ? err.message : t("genericError"));
     } finally {

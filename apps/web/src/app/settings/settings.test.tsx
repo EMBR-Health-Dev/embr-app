@@ -150,7 +150,7 @@ describe("Settings — account deletion behavior (unchanged)", () => {
     await waitFor(() =>
       expect(deleteAccountMock).toHaveBeenCalledWith({ password: "Sup3rSecret!Pass" }),
     );
-    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/login"));
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/login?reason=account-deleted"));
   });
 
   it("cancel clears the password field and hides the confirmation step again", async () => {
