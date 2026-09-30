@@ -17,6 +17,7 @@ import { Button } from "../../components/button";
 import { AppNav } from "../../components/app-nav";
 import { SectionLabel } from "../../components/section-label";
 import { ReflectionsSection } from "../../components/reflections-section";
+import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
 
@@ -829,6 +830,8 @@ function DashboardContent() {
             <Button>{latestBrief ? t("viewClinicalBrief") : t("generateFirstBrief")}</Button>
           </Link>
         </section>
+
+        <SafetyNotice />
       </main>
     </div>
   );
