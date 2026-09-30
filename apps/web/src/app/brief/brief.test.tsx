@@ -137,6 +137,9 @@ describe("Brief page — generation", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     expect(await screen.findByText("Pick both a start and end date.")).toBeInTheDocument();
+    // A missing date isn't a failed generation — the failure reassurance
+    // must not appear alongside the validation prompt.
+    expect(screen.queryByText(/nothing was lost/i)).not.toBeInTheDocument();
     expect(generateMock).not.toHaveBeenCalled();
   });
 

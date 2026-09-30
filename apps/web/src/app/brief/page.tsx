@@ -36,6 +36,10 @@ function BriefPageContent() {
   const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // Kept apart from generateError: a missing date is a form-validation
+  // prompt, not a failed generation, so it must not carry the
+  // "nothing was lost, try again" reassurance that error box shows.
+  const [dateError, setDateError] = useState<string | null>(null);
   const [generateNeedsVerification, setGenerateNeedsVerification] = useState(false);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
 
@@ -80,10 +84,11 @@ function BriefPageContent() {
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setGenerateError(null);
+    setDateError(null);
     setGenerateNeedsVerification(false);
 
     if (!fromDate || !toDate) {
-      setGenerateError(t("pickDates"));
+      setDateError(t("pickDates"));
       return;
     }
 
@@ -216,6 +221,11 @@ function BriefPageContent() {
             {generating ? t("generating") : t("generate")}
           </Button>
         </form>
+        {dateError && (
+          <p role="alert" className="mt-3 text-sm font-medium text-foreground">
+            {dateError}
+          </p>
+        )}
         {generateError && (
           <div role="alert" className="mt-3 rounded-lg border border-border-subtle bg-surface p-4">
             <p className="text-body-s font-medium text-foreground">{generateError}</p>
