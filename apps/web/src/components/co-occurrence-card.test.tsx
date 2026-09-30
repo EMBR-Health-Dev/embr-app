@@ -261,10 +261,10 @@ describe("CoOccurrenceCard", () => {
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />, "ja");
 
-    expect(await screen.findByText("なぜこれが表示されているのですか?")).toBeInTheDocument();
+    expect(await screen.findByText("なぜこれが表示されているのですか？")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "EMBRは、2つの症状が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、ホットフラッシュと倦怠感は2日で一致しています。",
+        "EMBRは、2つの症状が同じ日に記録された日が3日以上あると、このようなシグナルを表示します。現在、ホットフラッシュと倦怠感が同じ日に記録された日は2日です。",
       ),
     ).toBeInTheDocument();
   });
@@ -280,7 +280,7 @@ describe("CoOccurrenceCard", () => {
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard from="2026-06-01T00:00:00.000Z" />);
 
-    const link = await screen.findByText("View this period in your Clinical Brief");
+    const link = await screen.findByText("View this period in your EMBR BRIEF");
     expect(link).toHaveAttribute(
       "href",
       expect.stringMatching(/^\/brief\?from=2026-06-01&to=\d{4}-\d{2}-\d{2}$/),
@@ -293,7 +293,7 @@ describe("CoOccurrenceCard", () => {
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />);
 
-    const link = await screen.findByText("View this period in your Clinical Brief");
+    const link = await screen.findByText("View this period in your EMBR BRIEF");
     expect(link).toHaveAttribute("href", "/brief");
   });
 

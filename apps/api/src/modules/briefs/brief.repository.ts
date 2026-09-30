@@ -90,6 +90,12 @@ export const briefRepository = {
     ]);
   },
 
+  findByPeriodForUser(userId: string, fromDate: Date, toDate: Date) {
+    return prisma.clinicalBrief.findFirst({
+      where: { userId, fromDate, toDate },
+    });
+  },
+
   findByIdForUser(id: string, userId: string) {
     return prisma.clinicalBrief.findFirst({
       where: { id, userId },

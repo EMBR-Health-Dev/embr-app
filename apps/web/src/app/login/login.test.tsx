@@ -171,6 +171,16 @@ describe("Login — translation", () => {
     expect(screen.getByText("SSO sign-in didn't work. Try again.")).toBeInTheDocument();
   });
 
+  it("confirms the deletion when reason=account-deleted", async () => {
+    searchParamsValue = new URLSearchParams({ reason: "account-deleted" });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(
+      screen.getByText("Your account and everything in it have been deleted."),
+    ).toBeInTheDocument();
+  });
+
   it("shows the session-expired message when reason=session-expired", async () => {
     searchParamsValue = new URLSearchParams({ reason: "session-expired" });
     const { default: LoginPage } = await import("./page");

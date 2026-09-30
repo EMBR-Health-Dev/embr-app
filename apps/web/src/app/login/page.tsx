@@ -112,6 +112,12 @@ function LoginForm() {
         </p>
       )}
 
+      {reason === "account-deleted" && (
+        <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
+          {t("accountDeleted")}
+        </p>
+      )}
+
       {reason === "session-expired" && (
         <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
           {t("sessionExpired")}

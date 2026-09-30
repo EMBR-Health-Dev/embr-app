@@ -52,8 +52,8 @@ describe("coOccurrence.message localization", () => {
       categoryB: i18next.t("enums.category.FATIGUE"),
       count: 6,
     });
-    expect(singleDay).toBe("ホットフラッシュは倦怠感とともに、1日記録されています。");
-    expect(sixDays).toBe("ホットフラッシュは倦怠感とともに、6日記録されています。");
+    expect(singleDay).toBe("ホットフラッシュと倦怠感が同じ日に記録された日は1日です。");
+    expect(sixDays).toBe("ホットフラッシュと倦怠感が同じ日に記録された日は6日です。");
   });
 
   it("never falls back to a raw category enum value in either locale", async () => {

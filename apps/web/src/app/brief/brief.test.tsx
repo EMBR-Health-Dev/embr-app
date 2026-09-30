@@ -137,6 +137,9 @@ describe("Brief page — generation", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     expect(await screen.findByText("Pick both a start and end date.")).toBeInTheDocument();
+    // A missing date isn't a failed generation — the failure reassurance
+    // must not appear alongside the validation prompt.
+    expect(screen.queryByText(/nothing was lost/i)).not.toBeInTheDocument();
     expect(generateMock).not.toHaveBeenCalled();
   });
 
@@ -388,7 +391,7 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     await user.click(toggle);
 
     expect(
-      screen.getByText("Reported on 6 days, compared with 4 days in the previous period."),
+      screen.getByText("Logged 6 times, compared with 4 times in the previous period."),
     ).toBeInTheDocument();
     expect(
       screen.getByText("This reflects self-reported logging frequency only."),
@@ -697,6 +700,19 @@ describe("Brief page — deterministic evidence sections", () => {
     });
   }
 
+  it("says so when no symptoms were logged in the range, rather than an empty heading", async () => {
+    generateMock.mockResolvedValue(brief({ symptomSummary: [] }));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(await screen.findByText("No symptoms logged in this range.")).toBeInTheDocument();
+  });
+
   it("renders real content for every deterministic section, including the insufficientData treatment-impact case", async () => {
     generateMock.mockResolvedValue(realisticBrief());
     const { default: BriefPage } = await import("./page");
@@ -711,9 +727,7 @@ describe("Brief page — deterministic evidence sections", () => {
       await screen.findByText("Hot Flash: 6 occurrences (4 Moderate, 2 Severe)"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Hot Flash: Reported on 6 days, compared with 4 days in the previous period.",
-      ),
+      screen.getByText("Hot Flash: Logged 6 times, compared with 4 times in the previous period."),
     ).toBeInTheDocument();
     expect(screen.getByText("Hot Flash remained present across both periods.")).toBeInTheDocument();
     expect(
@@ -863,7 +877,11 @@ describe("Brief page — clinician summary download", () => {
     await user.click(button);
 
     await waitFor(() => {
-      expect(summaryPdfMock).toHaveBeenCalledWith({ from: "2026-01-01", to: "2026-02-01" });
+      // Local-day boundaries, so the brief's last day is included.
+      expect(summaryPdfMock).toHaveBeenCalledWith({
+        from: startOfLocalDay("2026-01-01"),
+        to: endOfLocalDay("2026-02-01"),
+      });
     });
     // The actual PDF-ness of the response and its Japanese-content
     // fidelity are the backend's own responsibility, already verified

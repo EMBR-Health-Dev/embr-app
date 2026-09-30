@@ -12,11 +12,12 @@ import type {
   SymptomCoOccurrenceDto,
 } from "@embr/types";
 
+import { briefPeriodLabel } from "./brief-period-label.js";
+
 export function toClinicalBriefListItemDto(brief: ClinicalBrief): ClinicalBriefListItemDto {
   return {
     id: brief.id,
-    fromDate: brief.fromDate.toISOString().slice(0, 10),
-    toDate: brief.toDate.toISOString().slice(0, 10),
+    ...briefPeriodLabel(brief.fromDate, brief.toDate),
     createdAt: brief.createdAt.toISOString(),
   };
 }

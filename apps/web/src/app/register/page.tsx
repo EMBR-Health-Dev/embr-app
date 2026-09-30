@@ -11,6 +11,7 @@ import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { ConsentItems } from "../../components/consent-items";
+import { LanguageSwitcher } from "../../components/language-switcher";
 
 const REQUIRED_MESSAGE = {
   TERMS: "termsRequired",
@@ -120,6 +121,9 @@ function RegisterForm() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
+        <div className="mb-2 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <h1 className="font-display text-display-m text-foreground">{t("title")}</h1>
         <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
 
