@@ -700,6 +700,19 @@ describe("Brief page — deterministic evidence sections", () => {
     });
   }
 
+  it("says so when no symptoms were logged in the range, rather than an empty heading", async () => {
+    generateMock.mockResolvedValue(brief({ symptomSummary: [] }));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(await screen.findByText("No symptoms logged in this range.")).toBeInTheDocument();
+  });
+
   it("renders real content for every deterministic section, including the insufficientData treatment-impact case", async () => {
     generateMock.mockResolvedValue(realisticBrief());
     const { default: BriefPage } = await import("./page");

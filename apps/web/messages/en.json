@@ -558,6 +558,7 @@
     "averageCycleLength": "Average cycle length: {days} days ({count, plural, one {# cycle} other {# cycles}} recorded)",
     "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
     "noTreatmentsInRange": "No treatments logged in this range.",
+    "noSymptomsInRange": "No symptoms logged in this range.",
     "ongoing": "Ongoing",
     "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
     "frequencyComparisonTitle": "Compared with the previous period",

@@ -268,7 +268,7 @@ function BriefPageContent() {
           </section>
         )}
 
-        {trends && trends.briefCount > 0 && (
+        {trends && trends.briefCount > 0 && trends.categories.length > 0 && (
           <section className="mt-10">
             <h2 className="font-display text-heading-m text-foreground">{t("trendsTitle")}</h2>
             <p className="mt-1 text-sm text-foreground/60">
@@ -667,6 +667,9 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       <div>
         <h3 className="font-medium text-foreground">{t("symptomFrequency")}</h3>
+        {brief.symptomSummary.length === 0 && (
+          <p className="mt-1 text-foreground/70">{t("noSymptomsInRange")}</p>
+        )}
         <ul className="mt-1 text-foreground/70">
           {brief.symptomSummary.map((entry) => (
             <li key={entry.category}>
