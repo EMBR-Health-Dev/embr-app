@@ -699,5 +699,10 @@
     "exportData": "Export your data",
     "accountSettings": "Account settings, including account deletion",
     "logOut": "Log out"
+  },
+  "SafetyNotice": {
+    "heading": "When to seek urgent help",
+    "body": "EMBR is a place to keep a record. It cannot tell whether something is an emergency. If you have chest pain, trouble breathing, very heavy bleeding, or a sudden severe symptom, call your local emergency number now (for example 112 in the EU, 999 in the UK, 119 in Japan).",
+    "selfHarm": "If you are thinking about harming yourself, contact emergency services or a crisis line in your area right away."
   }
 }
