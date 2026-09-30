@@ -32,6 +32,7 @@ import {
   type BriefTrendSourceBrief,
 } from "./brief-trends.js";
 import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.js";
+import { briefPeriodLabel } from "./brief-period-label.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -235,8 +236,7 @@ async function generateBriefContent(
   );
 
   const aiInput: BriefInput = {
-    fromDate: fromDate.toISOString().slice(0, 10),
-    toDate: toDate.toISOString().slice(0, 10),
+    ...briefPeriodLabel(fromDate, toDate),
     symptomSummary,
     cycleSummary,
     // The deterministic Stage 4 layer, built from the same three
@@ -426,8 +426,7 @@ export const briefService = {
     });
 
     const sourceBriefs: BriefTrendSourceBrief[] = briefs.map((brief: ClinicalBrief) => ({
-      fromDate: brief.fromDate.toISOString().slice(0, 10),
-      toDate: brief.toDate.toISOString().slice(0, 10),
+      ...briefPeriodLabel(brief.fromDate, brief.toDate),
       symptomSummary: brief.symptomSummary as unknown as BriefTrendSourceBrief["symptomSummary"],
       persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
     }));

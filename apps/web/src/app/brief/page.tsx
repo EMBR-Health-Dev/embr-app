@@ -123,7 +123,13 @@ function BriefPageContent() {
     setSummaryNeedsVerification(false);
     setDownloadingSummary(true);
     try {
-      const blob = await api.export.clinicianSummaryPdf({ from: brief.fromDate, to: brief.toDate });
+      // Local-day boundaries, the same as generation and the /export
+      // page: the bare "YYYY-MM-DD" strings parse as UTC midnight, and
+      // `to` at midnight dropped every entry logged on the last day.
+      const blob = await api.export.clinicianSummaryPdf({
+        from: startOfLocalDay(brief.fromDate),
+        to: endOfLocalDay(brief.toDate),
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

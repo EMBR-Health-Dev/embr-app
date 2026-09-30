@@ -864,7 +864,11 @@ describe("Brief page — clinician summary download", () => {
     await user.click(button);
 
     await waitFor(() => {
-      expect(summaryPdfMock).toHaveBeenCalledWith({ from: "2026-01-01", to: "2026-02-01" });
+      // Local-day boundaries, so the brief's last day is included.
+      expect(summaryPdfMock).toHaveBeenCalledWith({
+        from: startOfLocalDay("2026-01-01"),
+        to: endOfLocalDay("2026-02-01"),
+      });
     });
     // The actual PDF-ness of the response and its Japanese-content
     // fidelity are the backend's own responsibility, already verified
