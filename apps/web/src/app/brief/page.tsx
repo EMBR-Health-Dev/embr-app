@@ -332,17 +332,17 @@ function BriefPageContent() {
             <ul className="mt-4 flex flex-col gap-3">
               {history.map((item) => (
                 <li key={item.id} className="rounded border border-border-subtle p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <button
                       onClick={() => void toggleBrief(item.id)}
                       className="text-left text-sm font-medium text-foreground"
                     >
-                      {item.fromDate} to {item.toDate}
+                      {t("periodRange", { from: item.fromDate, to: item.toDate })}
                       <span className="ml-2 text-xs font-normal text-foreground/50">
                         {t("generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                       </span>
                     </button>
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-3">
                       <a
                         href={api.briefs.pdfUrl(item.id)}
                         className="text-xs font-medium text-primary underline underline-offset-2"

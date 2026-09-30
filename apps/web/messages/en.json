@@ -545,6 +545,7 @@
     "downloadingSummary": "Preparing…",
     "downloadSummaryError": "Couldn't prepare the summary. Try again.",
     "pastBriefs": "Past briefs",
+    "periodRange": "{from} to {to}",
     "noBriefsYet": "No briefs generated yet.",
     "generatedOn": "generated {date}",
     "pdf": "PDF",

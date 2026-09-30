@@ -545,6 +545,7 @@
     "downloadingSummary": "準備中…",
     "downloadSummaryError": "サマリーの準備に失敗しました。もう一度お試しください。",
     "pastBriefs": "過去のBRIEF",
+    "periodRange": "{from}〜{to}",
     "noBriefsYet": "まだBRIEFが作成されていません。",
     "generatedOn": "作成日: {date}",
     "pdf": "PDF",
