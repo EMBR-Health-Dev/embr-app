@@ -98,6 +98,7 @@ interface PdfStrings {
   generatedAt: (utcTimestamp: string) => string;
   topDisclaimer: string;
   summaryHeading: string;
+  aiAuthorshipNote: string;
   groundedInHeading: string;
   questionsHeading: string;
   symptomSignalsHeading: string;
@@ -135,7 +136,7 @@ const EN: PdfStrings = {
   // Brief.title) are allowed to differ: this is pre-existing English
   // wording this task preserves as closely as possible, not
   // reconciled as part of localizing it.
-  documentTitle: "Clinical Brief",
+  documentTitle: "EMBR BRIEF",
   observationPeriodLabel: "OBSERVATION PERIOD",
   preparedFor: (email) => `Prepared for ${email}`,
   generatedAt: (utcTimestamp) => `Generated ${utcTimestamp} UTC`,
@@ -143,6 +144,8 @@ const EN: PdfStrings = {
     "This is a structured summary of self-tracked data, generated to help a conversation with a" +
     " GP. Not a diagnosis, and not medical advice.",
   summaryHeading: "Summary",
+  aiAuthorshipNote:
+    "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
   groundedInHeading: "Grounded in your data",
   questionsHeading: "Questions to bring to your GP",
   symptomSignalsHeading: "Symptom Signals",
@@ -208,6 +211,8 @@ const JA: PdfStrings = {
   // "要約" (native Japanese "summary"), not "サマリー" — avoids reading
   // as a near-homophone of "BRIEF" itself inside the same document.
   summaryHeading: "要約",
+  aiAuthorshipNote:
+    "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
   groundedInHeading: "データに基づく根拠",
   questionsHeading: "担当医への質問",
   // "症状の頻度" (Brief.symptomFrequency's own JA text), not a literal

@@ -126,7 +126,7 @@
     },
     "appointmentStatus": {
       "headline": "Do you have a healthcare appointment coming up?",
-      "hint": "No need for the exact date yet. Just helps us know whether to keep a Clinical Brief close at hand.",
+      "hint": "No need for the exact date yet. Just helps us know whether to keep an EMBR BRIEF close at hand.",
       "withinMonth": "Within the next month",
       "withinThreeMonthsOrLonger": "Within the next 3 months or longer",
       "waitingToSchedule": "Waiting to schedule",
@@ -285,17 +285,17 @@
     "patternsBody": "A weekly view of what's changing. As your record grows, the fuller picture takes shape in Signals.",
     "viewPatterns": "Go to Signals",
     "evidenceLabel": "Your evidence",
-    "evidenceBody": "Your Clinical Brief turns your recorded history into what you can bring to your GP.",
+    "evidenceBody": "Your EMBR BRIEF turns your recorded history into what you can bring to your GP.",
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
-    "viewClinicalBrief": "View Clinical Brief",
-    "generateFirstBrief": "Generate your first Clinical Brief"
+    "viewClinicalBrief": "View EMBR BRIEF",
+    "generateFirstBrief": "Generate your first EMBR BRIEF"
   },
   "Nav": {
     "navigationLabel": "Main navigation",
     "home": "Home",
     "timeline": "Timeline",
     "signals": "Signals",
-    "clinicalBrief": "Clinical Brief",
+    "clinicalBrief": "EMBR BRIEF",
     "settings": "Settings",
     "more": "More",
     "menu": "Menu",
@@ -354,7 +354,7 @@
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
-    "briefCta": "View this period in your Clinical Brief",
+    "briefCta": "View this period in your EMBR BRIEF",
     "emptyTitle": "Your record is still taking shape.",
     "emptyBody": "EMBR needs more observations before it can surface a signal here. Keep logging over time; this section will update as your record grows."
   },
@@ -365,7 +365,7 @@
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "caveat": "A description of what you've recorded: not a diagnosis, and not a claim that one caused the other.",
     "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
-    "briefCta": "View this period in your Clinical Brief"
+    "briefCta": "View this period in your EMBR BRIEF"
   },
   "EvidenceStrength": {
     "groupLabel": "How much of your record exists so far",
@@ -539,6 +539,7 @@
     "generateError": "Couldn't generate a brief. Try again.",
     "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
     "briefReady": "Your brief is ready",
+    "aiAuthorshipNote": "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
     "downloadPdf": "Download PDF",
     "downloadSummary": "Download clinician summary",
     "downloadingSummary": "Preparing…",

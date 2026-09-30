@@ -559,7 +559,10 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
-      <p className="text-foreground/80">{brief.aiNarrative}</p>
+      <div>
+        <p className="text-foreground/80">{brief.aiNarrative}</p>
+        <p className="mt-1 text-xs text-foreground/50">{t("aiAuthorshipNote")}</p>
+      </div>
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
         <div>

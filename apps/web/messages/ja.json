@@ -126,7 +126,7 @@
     },
     "appointmentStatus": {
       "headline": "近々、診察の予定はありますか?",
-      "hint": "正確な日付はまだ不要です。Clinical Briefをすぐ使える状態にしておくかどうかの参考にします。",
+      "hint": "正確な日付はまだ不要です。EMBR BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
       "withinMonth": "1か月以内",
       "withinThreeMonthsOrLonger": "3か月以内、またはそれ以降",
       "waitingToSchedule": "まだ予約していません",
@@ -147,7 +147,7 @@
       "briefBody": "必要なときに、EMBRはあなたの記録をもとに、診察に持っていけるシンプルな要約を作成します。",
       "briefControlNote": "作成するタイミングはあなたが決めます。自動で作成されることはありません。",
       "conversationLabel": "診察での会話",
-      "conversationTitle": "Briefを使うと、経験してきたこと、時間の経過とともに気づいたこと、聞きたいことを説明しやすくなります。",
+      "conversationTitle": "BRIEFを使うと、経験してきたこと、時間の経過とともに気づいたこと、聞きたいことを説明しやすくなります。",
       "conversationBody": "もちろん、自分のためだけにEMBRを使い続けることもできます。",
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
@@ -285,17 +285,17 @@
     "patternsBody": "今週、変化している内容です。記録が増えるにつれて、シグナルページでより詳しい全体像が見えてきます。",
     "viewPatterns": "シグナルを見る",
     "evidenceLabel": "あなたのエビデンス",
-    "evidenceBody": "Clinical Briefは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
+    "evidenceBody": "EMBR BRIEFは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
     "evidenceLatestMeta": "{from} → {to} ・作成日: {date}",
-    "viewClinicalBrief": "Clinical Briefを見る",
-    "generateFirstBrief": "最初のClinical Briefを作成する"
+    "viewClinicalBrief": "EMBR BRIEFを見る",
+    "generateFirstBrief": "最初のEMBR BRIEFを作成する"
   },
   "Nav": {
     "navigationLabel": "メインナビゲーション",
     "home": "ホーム",
     "timeline": "タイムライン",
     "signals": "シグナル",
-    "clinicalBrief": "Clinical Brief",
+    "clinicalBrief": "EMBR BRIEF",
     "settings": "設定",
     "more": "その他",
     "menu": "メニュー",
@@ -354,7 +354,7 @@
     "questionLabel": "担当医に相談してみましょう",
     "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
-    "briefCta": "この期間をClinical Briefで見る",
+    "briefCta": "この期間をEMBR BRIEFで見る",
     "emptyTitle": "あなたの記録は、まだ形になっている途中です。",
     "emptyBody": "EMBRがここにシグナルを示すには、さらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
   },
@@ -365,7 +365,7 @@
     "sharedDaysCount": "共有日数: {days}日",
     "caveat": "これはあなたが記録した内容の説明であり、診断や一方が他方を引き起こしたという主張ではありません。",
     "whyReasoning": "EMBRは、症状と状況の要因が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、{category}と{factor}は{days}日で一致しています。",
-    "briefCta": "この期間をClinical Briefで見る"
+    "briefCta": "この期間をEMBR BRIEFで見る"
   },
   "EvidenceStrength": {
     "groupLabel": "これまでに蓄積された記録の量",
@@ -537,8 +537,9 @@
     "generating": "作成中…",
     "pickDates": "開始日と終了日の両方を選択してください。",
     "generateError": "BRIEFを作成できませんでした。もう一度お試しください。",
-    "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBriefは以下からそのままご覧いただけます。",
+    "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBRIEFは以下からそのままご覧いただけます。",
     "briefReady": "BRIEFが完成しました",
+    "aiAuthorshipNote": "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
     "downloadPdf": "PDFをダウンロード",
     "downloadSummary": "診察用サマリーをダウンロード",
     "downloadingSummary": "準備中…",
@@ -584,10 +585,10 @@
     "evidenceDatesAfterLabel": "開始後の記録日",
     "evidenceDatesInterpretation": "これはあなたが記録したデータの傾向を示すものであり、医学的な因果関係を証明するものではありません。",
     "trendsTitle": "最近の傾向",
-    "trendsAcrossBriefs": "直近{count}件のブリーフについて",
+    "trendsAcrossBriefs": "直近{count}件のBRIEFについて",
     "trendsCategoryLine": "{category}は{total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
-    "longitudinalPatternsTitle": "ブリーフ全体で継続している傾向",
-    "longitudinalPatternsLine": "{category}は直近{total}件のブリーフすべてで報告されています。"
+    "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
+    "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで報告されています。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",
