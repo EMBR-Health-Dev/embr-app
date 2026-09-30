@@ -1,0 +1,15 @@
+# Default owner for everything.
+* @tiy1
+
+# Areas where a mistake has outsized privacy, safety, or legal impact.
+# Add a second reviewer here (for example a GitHub handle for the code
+# reviewer) and enable "Require review from Code Owners" in the main
+# branch protection rule for this file to be enforced.
+/apps/api/src/modules/auth/ @tiy1
+/apps/api/src/modules/sso/ @tiy1
+/apps/api/src/modules/briefs/ @tiy1
+/apps/api/src/modules/organizations/ @tiy1
+/packages/validation/ @tiy1
+/docs/legal/ @tiy1
+/.github/ @tiy1
+/scripts/ @tiy1
