@@ -129,7 +129,7 @@ describe("Dashboard — translation", () => {
     expect(within(desktopNav).getByRole("link", { name: "設定" })).toBeInTheDocument();
     expect(screen.getByText("今日の周期記録")).toBeInTheDocument();
     expect(screen.getByText("今日の状況")).toBeInTheDocument();
-    expect(screen.getByText("今、ホットフラッシュが起きていますか?")).toBeInTheDocument();
+    expect(screen.getByText("今、ホットフラッシュが起きていますか？")).toBeInTheDocument();
   });
 
   it("translates symptom category options in the log form", async () => {
@@ -181,7 +181,7 @@ describe("Dashboard — weekly reflection", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("今週の記録: 1件 · 最も多い症状: ホットフラッシュ"),
+        screen.getByText("今週の記録：1件 · 最も多い症状：ホットフラッシュ"),
       ).toBeInTheDocument(),
     );
   });

@@ -164,7 +164,7 @@ function buildFrequencyPattern(
 
   const interpretation =
     locale === "ja"
-      ? `これは、前回の期間と比較して${category}の報告頻度が${increased ? "増加" : "減少"}している` +
+      ? `これは、前回の期間と比較して${category}の記録頻度が${increased ? "増加" : "減少"}している` +
         `ことを示しています。`
       : increased
         ? `This represents an increase in how often ${category} was reported, relative to the previous period.`
@@ -196,11 +196,11 @@ function buildCoOccurrencePattern(
     type,
     observation:
       locale === "ja"
-        ? `${labelA}と${labelB}は、この期間中にどちらも報告されました。`
-        : `${categoryA} and ${categoryB} were both reported during this period.`,
+        ? `${labelA}と${labelB}は、この期間中にどちらも記録されました。`
+        : `${labelA} and ${labelB} were both reported during this period.`,
     association:
       locale === "ja"
-        ? `同じ日に報告されたのは${days}日です。`
+        ? `同じ日に記録されたのは${days}日です。`
         : `They were both reported on the same day on ${days} occasion${days === 1 ? "" : "s"}.`,
     interpretation:
       locale === "ja"
@@ -228,7 +228,7 @@ function buildTreatmentWindowPattern(
   if (before.logCount === after.logCount) return null;
   const observation =
     locale === "ja"
-      ? `${entry.name}: 開始前${before.days}日間で${before.logCount}件の症状記録があり、開始後` +
+      ? `${entry.name}：開始前${before.days}日間で${before.logCount}件の症状記録があり、開始後` +
         `${after.days}日間で${after.logCount}件でした。`
       : // Colon, not the em dash this template used before — see this
         // file's own doc comment on why this one English string is the

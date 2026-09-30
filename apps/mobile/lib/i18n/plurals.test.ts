@@ -47,7 +47,7 @@ describe("brief.averageCycleLength plural resolution", () => {
   it("Japanese: the single 'other' form renders correctly at any count", async () => {
     await i18next.changeLanguage("ja");
     expect(i18next.t("brief.averageCycleLength", { days: 28, count: 3 })).toBe(
-      "平均周期: 28日(3周期記録あり)",
+      "平均周期：28日（3周期記録あり）",
     );
   });
 });

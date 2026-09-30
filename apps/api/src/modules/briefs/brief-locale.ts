@@ -24,12 +24,12 @@ const CATEGORY_LABELS_JA: Record<string, string> = {
   HOT_FLASH: "ホットフラッシュ",
   NIGHT_SWEATS: "寝汗",
   MOOD_CHANGE: "気分の変化",
-  SLEEP_DISTURBANCE: "睡眠障害",
+  SLEEP_DISTURBANCE: "睡眠の乱れ",
   BRAIN_FOG: "ブレインフォグ",
   JOINT_PAIN: "関節痛",
   FATIGUE: "倦怠感",
   ANXIETY: "不安",
-  IRREGULAR_HEARTBEAT: "不整脈",
+  IRREGULAR_HEARTBEAT: "脈の乱れ",
   VAGINAL_DRYNESS: "膣の乾燥",
   LIBIDO_CHANGE: "性欲の変化",
   WEIGHT_CHANGE: "体重の変化",
@@ -196,8 +196,8 @@ const JA: PdfStrings = {
   // at, for no reason.
   documentTitle: "EMBR BRIEF",
   observationPeriodLabel: "観察期間",
-  preparedFor: (email) => `${email} 宛`,
-  generatedAt: (utcTimestamp) => `作成日時: ${utcTimestamp} UTC`,
+  preparedFor: (email) => `記録者：${email}`,
+  generatedAt: (utcTimestamp) => `作成日時：${utcTimestamp} UTC`,
   // Reused verbatim from Brief.description's own already-reviewed JA
   // text rather than translated fresh — this PDF line and the web
   // page's own description say almost the same thing in English
@@ -207,7 +207,7 @@ const JA: PdfStrings = {
   // independently-worded Japanese versions of the same disclaimer.
   topDisclaimer:
     "あなたの記録を整理した要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となる" +
-    "データ要約であり、診断や医学的アドバイスではありません。",
+    "データ要約であり、診断や医学的助言ではありません。",
   // "要約" (native Japanese "summary"), not "サマリー" — avoids reading
   // as a near-homophone of "BRIEF" itself inside the same document.
   summaryHeading: "要約",
@@ -228,14 +228,14 @@ const JA: PdfStrings = {
   frequencyComparisonLine: (currentCount, previousCount) =>
     `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
   ongoingSymptomsHeading: "継続している症状",
-  persistentSymptomLine: (category) => `${category}は両方の期間で継続して報告されました。`,
+  persistentSymptomLine: (category) => `${category}は両方の期間で継続して記録されました。`,
   patternsNoticedHeading: "気づいたパターン",
   coOccurrenceLine: (categoryA, categoryB, days) =>
-    `${categoryA}と${categoryB}は同じ日に${days}日報告されました。`,
+    `${categoryA}と${categoryB}が同じ日に記録された日は${days}日でした。`,
   cycleSummaryHeading: "周期の要約",
   notEnoughCycleDataText: "この期間の周期の長さを計算するには、生理開始日の記録が不足しています。",
-  averageCycleLengthLine: (days, cycleCount) => `平均周期: ${days}日（${cycleCount}周期記録あり）`,
-  periodDaysLoggedLine: (days) => `記録された生理日数: ${days}日`,
+  averageCycleLengthLine: (days, cycleCount) => `平均周期：${days}日（${cycleCount}周期記録あり）`,
+  periodDaysLoggedLine: (days) => `記録された生理日数：${days}日`,
   treatmentsHeading: "この期間に記録された治療",
   noTreatmentsText: "この期間に記録された治療はありません。",
   ongoingLabel: "継続中",
@@ -254,7 +254,7 @@ const JA: PdfStrings = {
   // keeps "that judgment belongs to the clinician" exactly as absolute
   // in Japanese as in English.
   closingDisclaimer:
-    "上記はすべて、報告された内容と、該当箇所で示された報告データ内のパターンを反映したものです。" +
+    "上記はすべて、記録された内容と、該当箇所で示された記録データ内のパターンを反映したものです。" +
     "これらは臨床的な解釈や診断ではありません。その判断は、この記録を一緒に確認する臨床医に委ねられます。",
 };
 

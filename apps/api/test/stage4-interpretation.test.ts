@@ -103,6 +103,16 @@ describe("buildStage4Interpretation — frequency patterns", () => {
 });
 
 describe("buildStage4Interpretation — co-occurrence pattern", () => {
+  it("names both symptoms by label in English, not by category id", () => {
+    const [pattern] = buildStage4Interpretation(
+      emptyInput({ coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 } }),
+    ).patterns;
+
+    expect(pattern!.observation).toBe(
+      "Brain Fog and Hot Flash were both reported during this period.",
+    );
+  });
+
   it("produces co_occurrence_detected when a pair is supplied, with association and evidenceRef", () => {
     const result = buildStage4Interpretation(
       emptyInput({ coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 } }),

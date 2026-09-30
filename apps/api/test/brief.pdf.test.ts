@@ -179,7 +179,7 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
     expect(text).toContain("この期間に記録された治療");
     expect(text).toContain("この期間に記録された治療はありません。");
     expect(text).toContain(
-      "上記はすべて、報告された内容と、該当箇所で示された報告データ内のパターンを反映したものです。",
+      "上記はすべて、記録された内容と、該当箇所で示された記録データ内のパターンを反映したものです。",
     );
     // The English section headings and empty-state strings must be
     // fully absent, not merely joined by Japanese ones.
@@ -274,8 +274,8 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
     expect(text).toContain("治療開始後の変化");
     expect(text).toContain("データに基づく根拠");
     // Dynamic sentence templates.
-    expect(text).toContain("平均周期: 28日（3周期記録あり）");
-    expect(text).toContain("記録された生理日数: 15日");
+    expect(text).toContain("平均周期：28日（3周期記録あり）");
+    expect(text).toContain("記録された生理日数：15日");
     // AI-generated content, rendered exactly as persisted. Checked as
     // two separate substrings, not one long span — PDFKit line-wraps
     // this sentence mid-way, same as any long line, so a single

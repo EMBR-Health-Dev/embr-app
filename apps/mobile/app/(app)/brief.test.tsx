@@ -472,7 +472,7 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
     fireEvent.click(toggle);
 
     expect(
-      screen.getByText("Reported on 6 days, compared with 4 days in the previous period."),
+      screen.getByText("Logged 6 times, compared with 4 times in the previous period."),
     ).toBeInTheDocument();
     expect(
       screen.getByText("This reflects self-reported logging frequency only."),
@@ -512,7 +512,7 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
     expect(
       screen.getByText("This reflects self-reported logging frequency only."),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/Reported on \d+ days/)).toBeNull();
+    expect(screen.queryByText(/Logged \d+ times/)).toBeNull();
   });
 
   it("shows the day-level dates behind a co-occurrence and a treatment-impact citation", async () => {
@@ -795,9 +795,7 @@ describe("Brief screen — deterministic evidence sections", () => {
       await screen.findByText("Hot Flash: 6 occurrences (4 Moderate, 2 Severe)"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Hot Flash: Reported on 6 days, compared with 4 days in the previous period.",
-      ),
+      screen.getByText("Hot Flash: Logged 6 times, compared with 4 times in the previous period."),
     ).toBeInTheDocument();
     expect(screen.getByText("Hot Flash remained present across both periods.")).toBeInTheDocument();
     expect(

@@ -88,7 +88,7 @@ function projectTreatmentPattern(
     ...pattern,
     observation:
       locale === "ja"
-        ? `治療期間の記録では、開始前${before.days}日間で症状ログが${before.logCount}件、開始後` +
+        ? `治療期間の記録では、開始前${before.days}日間で症状の記録が${before.logCount}件、開始後` +
           `${after.days}日間で${after.logCount}件でした。`
         : `A treatment window showed ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"}` +
           ` in the ${before.days} days before starting, compared with ${after.logCount} symptom` +
