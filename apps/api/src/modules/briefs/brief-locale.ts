@@ -98,6 +98,7 @@ interface PdfStrings {
   generatedAt: (utcTimestamp: string) => string;
   topDisclaimer: string;
   summaryHeading: string;
+  aiAuthorshipNote: string;
   groundedInHeading: string;
   questionsHeading: string;
   symptomSignalsHeading: string;
@@ -135,7 +136,7 @@ const EN: PdfStrings = {
   // Brief.title) are allowed to differ: this is pre-existing English
   // wording this task preserves as closely as possible, not
   // reconciled as part of localizing it.
-  documentTitle: "Clinical Brief",
+  documentTitle: "EMBR BRIEF",
   observationPeriodLabel: "OBSERVATION PERIOD",
   preparedFor: (email) => `Prepared for ${email}`,
   generatedAt: (utcTimestamp) => `Generated ${utcTimestamp} UTC`,
@@ -143,6 +144,8 @@ const EN: PdfStrings = {
     "This is a structured summary of self-tracked data, generated to help a conversation with a" +
     " GP. Not a diagnosis, and not medical advice.",
   summaryHeading: "Summary",
+  aiAuthorshipNote:
+    "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
   groundedInHeading: "Grounded in your data",
   questionsHeading: "Questions to bring to your GP",
   symptomSignalsHeading: "Symptom Signals",
@@ -151,8 +154,8 @@ const EN: PdfStrings = {
     `${count} occurrence${count === 1 ? "" : "s"} (${severityBreakdown})`,
   comparedWithPreviousHeading: "Compared with the previous period",
   frequencyComparisonLine: (currentCount, previousCount) =>
-    `Reported on ${currentCount} day${currentCount === 1 ? "" : "s"}, compared with` +
-    ` ${previousCount} day${previousCount === 1 ? "" : "s"} in the previous period.`,
+    `Logged ${currentCount} time${currentCount === 1 ? "" : "s"}, compared with` +
+    ` ${previousCount} time${previousCount === 1 ? "" : "s"} in the previous period.`,
   ongoingSymptomsHeading: "Ongoing symptoms",
   persistentSymptomLine: (category) => `${category} remained present across both periods.`,
   patternsNoticedHeading: "Patterns noticed",
@@ -208,6 +211,8 @@ const JA: PdfStrings = {
   // "要約" (native Japanese "summary"), not "サマリー" — avoids reading
   // as a near-homophone of "BRIEF" itself inside the same document.
   summaryHeading: "要約",
+  aiAuthorshipNote:
+    "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
   groundedInHeading: "データに基づく根拠",
   questionsHeading: "担当医への質問",
   // "症状の頻度" (Brief.symptomFrequency's own JA text), not a literal
@@ -221,7 +226,7 @@ const JA: PdfStrings = {
   occurrenceLine: (count, severityBreakdown) => `${count}回（${severityBreakdown}）`,
   comparedWithPreviousHeading: "前回の期間との比較",
   frequencyComparisonLine: (currentCount, previousCount) =>
-    `今回の期間に${currentCount}日報告され、前回の期間は${previousCount}日でした。`,
+    `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
   ongoingSymptomsHeading: "継続している症状",
   persistentSymptomLine: (category) => `${category}は両方の期間で継続して報告されました。`,
   patternsNoticedHeading: "気づいたパターン",

@@ -10,6 +10,7 @@ import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { treatmentWriteLimiter } from "./treatment-rate-limiter.js";
@@ -17,7 +18,7 @@ import { treatmentService } from "./treatment.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/treatments", requireAuth());
+router.use("/treatments", requireAuth(), requireCurrentConsent());
 
 router.post(
   "/treatments",

@@ -17,6 +17,7 @@ import type {
 } from "@embr/types";
 import { env } from "../../config/env.js";
 import { isSuppressedByCohortSize } from "../../lib/cohort-suppression.js";
+import { consentService } from "../consent/consent.service.js";
 import { organizationRepository } from "./organization.repository.js";
 import {
   toMyOrganizationMembershipDto,
@@ -205,8 +206,14 @@ export const organizationService = {
     query: OrgTrendsQuery,
   ): Promise<OrgSymptomFrequencyDto> {
     const memberUserIds = await organizationRepository.memberUserIds(organizationId);
+    // Members whose health-processing item isn't current are excluded
+    // *before* the cohort is counted, so the k-anonymity floor below
+    // applies to the people actually included, and nobody who hasn't
+    // authorized that processing contributes to an employer-facing
+    // statistic.
+    const includedUserIds = await consentService.usersWithCurrentHealthProcessing(memberUserIds);
     const { cohortSize, categories } = await organizationRepository.symptomFrequencyForMembers(
-      memberUserIds,
+      memberUserIds.filter((id) => includedUserIds.has(id)),
       query,
     );
 
@@ -268,8 +275,13 @@ export const organizationService = {
     const earliestNeeded =
       earliestJoinDate < weeklyWindowStart ? earliestJoinDate : weeklyWindowStart;
 
+    // Eligibility is membership (seats), not health data, so it stays the
+    // raw count; but "who has logged" is derived from health records, so
+    // only members with current health-processing consent contribute
+    // activity.
+    const consentedUserIds = await consentService.usersWithCurrentHealthProcessing(eligibleUserIds);
     const { symptomActivity, cycleActivity } = await organizationRepository.activityForMembers(
-      eligibleUserIds,
+      eligibleUserIds.filter((id) => consentedUserIds.has(id)),
       earliestNeeded,
     );
     const activity = [...symptomActivity, ...cycleActivity];

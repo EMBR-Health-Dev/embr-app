@@ -32,6 +32,7 @@ import {
   type BriefTrendSourceBrief,
 } from "./brief-trends.js";
 import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.js";
+import { briefPeriodLabel } from "./brief-period-label.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -235,8 +236,7 @@ async function generateBriefContent(
   );
 
   const aiInput: BriefInput = {
-    fromDate: fromDate.toISOString().slice(0, 10),
-    toDate: toDate.toISOString().slice(0, 10),
+    ...briefPeriodLabel(fromDate, toDate),
     symptomSummary,
     cycleSummary,
     // The deterministic Stage 4 layer, built from the same three
@@ -382,6 +382,18 @@ export const briefService = {
     }
 
     try {
+      // One brief per exact period (@@unique([userId, fromDate, toDate])).
+      // Without this check, regenerating a period after logging more
+      // data would still make the paid AI call, then hit the unique
+      // constraint and silently hand back the older brief as if it
+      // were new. Checked after the lock so a concurrent twin still
+      // gets the lock's own CONFLICT above.
+      const existing = await briefRepository.findByPeriodForUser(userId, fromDate, toDate);
+      if (existing) {
+        throw AppError.conflict(
+          "You already have a brief for exactly this date range. To create a new one for the same dates, delete the existing brief from your past briefs first.",
+        );
+      }
       return await generateBriefContent(userId, fromDate, toDate, locale);
     } finally {
       if (lock.status === "acquired") {
@@ -414,8 +426,7 @@ export const briefService = {
     });
 
     const sourceBriefs: BriefTrendSourceBrief[] = briefs.map((brief: ClinicalBrief) => ({
-      fromDate: brief.fromDate.toISOString().slice(0, 10),
-      toDate: brief.toDate.toISOString().slice(0, 10),
+      ...briefPeriodLabel(brief.fromDate, brief.toDate),
       symptomSummary: brief.symptomSummary as unknown as BriefTrendSourceBrief["symptomSummary"],
       persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
     }));

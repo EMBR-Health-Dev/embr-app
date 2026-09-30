@@ -20,7 +20,8 @@
     "continueWithSso": "SSOでログイン",
     "newToEmbr": "EMBRは初めてですか?",
     "createAccount": "アカウントを作成",
-    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
+    "accountDeleted": "アカウントとその中のすべてのデータを削除しました。"
   },
   "LanguageSwitcher": {
     "label": "言語",
@@ -125,7 +126,7 @@
     },
     "appointmentStatus": {
       "headline": "近々、診察の予定はありますか?",
-      "hint": "正確な日付はまだ不要です。Clinical Briefをすぐ使える状態にしておくかどうかの参考にします。",
+      "hint": "正確な日付はまだ不要です。EMBR BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
       "withinMonth": "1か月以内",
       "withinThreeMonthsOrLonger": "3か月以内、またはそれ以降",
       "waitingToSchedule": "まだ予約していません",
@@ -146,7 +147,7 @@
       "briefBody": "必要なときに、EMBRはあなたの記録をもとに、診察に持っていけるシンプルな要約を作成します。",
       "briefControlNote": "作成するタイミングはあなたが決めます。自動で作成されることはありません。",
       "conversationLabel": "診察での会話",
-      "conversationTitle": "Briefを使うと、経験してきたこと、時間の経過とともに気づいたこと、聞きたいことを説明しやすくなります。",
+      "conversationTitle": "BRIEFを使うと、経験してきたこと、時間の経過とともに気づいたこと、聞きたいことを説明しやすくなります。",
       "conversationBody": "もちろん、自分のためだけにEMBRを使い続けることもできます。",
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
@@ -284,17 +285,17 @@
     "patternsBody": "今週、変化している内容です。記録が増えるにつれて、シグナルページでより詳しい全体像が見えてきます。",
     "viewPatterns": "シグナルを見る",
     "evidenceLabel": "あなたのエビデンス",
-    "evidenceBody": "Clinical Briefは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
+    "evidenceBody": "EMBR BRIEFは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
     "evidenceLatestMeta": "{from} → {to} ・作成日: {date}",
-    "viewClinicalBrief": "Clinical Briefを見る",
-    "generateFirstBrief": "最初のClinical Briefを作成する"
+    "viewClinicalBrief": "EMBR BRIEFを見る",
+    "generateFirstBrief": "最初のEMBR BRIEFを作成する"
   },
   "Nav": {
     "navigationLabel": "メインナビゲーション",
     "home": "ホーム",
     "timeline": "タイムライン",
     "signals": "シグナル",
-    "clinicalBrief": "Clinical Brief",
+    "clinicalBrief": "EMBR BRIEF",
     "settings": "設定",
     "more": "その他",
     "menu": "メニュー",
@@ -353,7 +354,7 @@
     "questionLabel": "担当医に相談してみましょう",
     "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
-    "briefCta": "この期間をClinical Briefで見る",
+    "briefCta": "この期間をEMBR BRIEFで見る",
     "emptyTitle": "あなたの記録は、まだ形になっている途中です。",
     "emptyBody": "EMBRがここにシグナルを示すには、さらに多くの観察が必要です。記録を続けていただくと、記録が増えるにつれてこのセクションが更新されます。"
   },
@@ -364,7 +365,7 @@
     "sharedDaysCount": "共有日数: {days}日",
     "caveat": "これはあなたが記録した内容の説明であり、診断や一方が他方を引き起こしたという主張ではありません。",
     "whyReasoning": "EMBRは、症状と状況の要因が同じ日に3回以上記録されると、このようなシグナルを表示します。現在、{category}と{factor}は{days}日で一致しています。",
-    "briefCta": "この期間をClinical Briefで見る"
+    "briefCta": "この期間をEMBR BRIEFで見る"
   },
   "EvidenceStrength": {
     "groupLabel": "これまでに蓄積された記録の量",
@@ -516,7 +517,7 @@
     "revoking": "削除中…",
     "revoke": "削除",
     "deleteAccountTitle": "アカウントの削除",
-    "deleteAccountDescription": "アカウントとその中のすべてのデータ(症状の記録、周期の記録、BRIEF、設定など)を完全に削除します。この操作は取り消せません。",
+    "deleteAccountDescription": "アカウントとその中のすべてのデータ(症状の記録、周期の記録、日々の状況、治療の記録、BRIEF、設定など)を完全に削除します。この操作は取り消せません。",
     "deleteMyAccount": "アカウントを削除する",
     "confirmPasswordLabel": "パスワードを確認",
     "forgotPasswordHint": "パスワードをお忘れですか?",
@@ -536,13 +537,15 @@
     "generating": "作成中…",
     "pickDates": "開始日と終了日の両方を選択してください。",
     "generateError": "BRIEFを作成できませんでした。もう一度お試しください。",
-    "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBriefは以下からそのままご覧いただけます。",
+    "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBRIEFは以下からそのままご覧いただけます。",
     "briefReady": "BRIEFが完成しました",
+    "aiAuthorshipNote": "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
     "downloadPdf": "PDFをダウンロード",
     "downloadSummary": "診察用サマリーをダウンロード",
     "downloadingSummary": "準備中…",
     "downloadSummaryError": "サマリーの準備に失敗しました。もう一度お試しください。",
     "pastBriefs": "過去のBRIEF",
+    "periodRange": "{from}〜{to}",
     "noBriefsYet": "まだBRIEFが作成されていません。",
     "generatedOn": "作成日: {date}",
     "pdf": "PDF",
@@ -557,10 +560,11 @@
     "averageCycleLength": "平均周期: {days}日({count, plural, other {#周期}}記録あり)",
     "treatmentsLoggedDuringPeriod": "この期間に記録された治療",
     "noTreatmentsInRange": "この期間に記録された治療はありません。",
+    "noSymptomsInRange": "この期間に記録された症状はありません。",
     "ongoing": "継続中",
     "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
     "frequencyComparisonTitle": "前回の期間との比較",
-    "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#日}}報告され、前回の期間は{previousCount, plural, other {#日}}でした。",
+    "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#回}}記録され、前回の期間は{previousCount, plural, other {#回}}でした。",
     "patternsNoticedTitle": "気づいたパターン",
     "coOccurrenceEntry": "{categoryA}と{categoryB}は同じ日に{days, plural, other {#日}}報告されました。",
     "treatmentImpactTitle": "治療開始後の変化",
@@ -582,10 +586,10 @@
     "evidenceDatesAfterLabel": "開始後の記録日",
     "evidenceDatesInterpretation": "これはあなたが記録したデータの傾向を示すものであり、医学的な因果関係を証明するものではありません。",
     "trendsTitle": "最近の傾向",
-    "trendsAcrossBriefs": "直近{count}件のブリーフについて",
+    "trendsAcrossBriefs": "直近{count}件のBRIEFについて",
     "trendsCategoryLine": "{category}は{total}件中{present}件で報告され、{persistent}件で継続として記録されました。",
-    "longitudinalPatternsTitle": "ブリーフ全体で継続している傾向",
-    "longitudinalPatternsLine": "{category}は直近{total}件のブリーフすべてで報告されています。"
+    "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
+    "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで報告されています。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",
@@ -675,5 +679,29 @@
       "message": "この期間に{count, plural, other {#件}}の症状を記録しました。",
       "caveat": "これはこの治療期間中に記録された件数であり、効果を示すものではありません。"
     }
+  },
+  "Consent": {
+    "termsLabel": "<link>利用規約</link>に同意します。",
+    "privacyLabel": "<link>プライバシーポリシー</link>を読み、内容を理解しました。",
+    "healthExplanation": "EMBRでは、あなたが入力した症状、周期、日々の状況、治療などの健康情報を、記録の作成、パターンの表示、EMBR BRIEFの作成のために保存・利用します。",
+    "healthLabel": "EMBRが、私が提供する症状、周期、治療などの健康情報を、記録の作成、パターンの表示、EMBR BRIEFの作成など、<link>プライバシーポリシー</link>に記載された目的のために取り扱うことを確認し、必要な場合はその取り扱いに同意します。",
+    "manageNote": "プライバシーに関する設定は、アカウント設定から管理できます。同意に基づく情報の取り扱いについては、いつでも同意を撤回できます。",
+    "opensInNewTab": "（新しいタブで開きます）",
+    "termsRequired": "続けるには利用規約への同意が必要です。",
+    "privacyRequired": "プライバシーポリシーを読んだことを確認してください。",
+    "healthRequired": "続けるには、この項目を確認してください。",
+    "versionOutdated": "内容が更新されました。ページを再読み込みして、もう一度ご確認ください。",
+    "title": "続ける前に",
+    "subtitle": "以下の内容をご確認ください。これまでの記録に変更はありません。",
+    "updatedNote": "前回確認された後に更新されました。",
+    "withdrawnNote": "以前にこの項目を撤回しています。再度確認・同意するまで、健康情報を扱う機能は一時停止されます。",
+    "continue": "続ける",
+    "saving": "保存中…",
+    "allRequired": "続けるには、上の各項目にチェックを入れてください。",
+    "genericError": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "otherOptions": "その他の選択肢",
+    "exportData": "データをエクスポート",
+    "accountSettings": "アカウント設定（アカウント削除を含む）",
+    "logOut": "ログアウト"
   }
 }

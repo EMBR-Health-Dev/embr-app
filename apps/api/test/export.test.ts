@@ -2,6 +2,9 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { CURRENT_CONSENTS } from "./helpers/consents.js";
+import { LEGAL_DOCUMENT_VERSIONS } from "@embr/validation";
+import { consentRepository } from "../src/modules/consent/consent.repository.js";
 import { buildClinicianSummaryPdf } from "../src/modules/export/pdf.js";
 import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
 
@@ -315,7 +318,9 @@ function lastVerificationToken(): string {
  * /export/* (see export.routes.ts) and is about export content, not
  * the gate itself. See registerAndLoginUnverified for gate tests. */
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
-  await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   await agent.post("/auth/verify-email").send({ token: lastVerificationToken() });
   const res = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   // Mirrors what a real browser does automatically: read the CSRF
@@ -332,7 +337,9 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 }
 
 async function registerAndLoginUnverified(agent: ReturnType<typeof request.agent>, email: string) {
-  await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   const res = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
     c.startsWith("embr_csrf="),
@@ -377,6 +384,26 @@ describe("GET /export/* — email verification gate", () => {
     const res = await agent.get("/export/symptom-logs.csv");
 
     expect(res.status).toBe(200);
+  });
+  it("stays available after health processing is withdrawn, so a person can always take their data", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "export-withdrawn@embr.health");
+    await consentRepository.insertMany([
+      {
+        userId: loginRes.body.data.user.id,
+        type: "HEALTH_PROCESSING",
+        version: LEGAL_DOCUMENT_VERSIONS.HEALTH_PROCESSING,
+        locale: "en",
+        action: "WITHDRAWN",
+        source: "SETTINGS",
+      },
+    ]);
+
+    // Health features are blocked...
+    expect((await agent.get("/symptom-logs")).body.error.code).toBe("CONSENT_REQUIRED");
+    // ...but export is not.
+    expect((await agent.get("/export/symptom-logs.csv")).status).toBe(200);
   });
 });
 

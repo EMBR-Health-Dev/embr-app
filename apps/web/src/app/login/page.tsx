@@ -9,6 +9,7 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { useAuth } from "../../lib/auth-context";
 import { safeRedirect } from "../../lib/safe-redirect";
+import { consentHref, needsConsentReview } from "../../lib/consent";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { LanguageSwitcher } from "../../components/language-switcher";
@@ -55,13 +56,16 @@ function LoginForm() {
       // An explicit redirect param (SSO, accept-invite) always wins —
       // those flows have their own reason for sending the person
       // somewhere specific, and onboarding shouldn't interrupt them.
-      if (redirectParam) {
-        router.push(redirectTo);
-      } else if (!session.user.onboardingCompletedAt) {
-        router.push("/onboarding");
-      } else {
-        router.push("/dashboard");
-      }
+      const destination = redirectParam
+        ? redirectTo
+        : session.user.onboardingCompletedAt
+          ? "/dashboard"
+          : "/onboarding";
+      // Consent comes before anything else, including an explicit
+      // redirect: none of those destinations work until every item is
+      // current (the API returns 403 CONSENT_REQUIRED). The consent
+      // screen carries the destination and continues there afterwards.
+      router.push(needsConsentReview(session.user) ? consentHref(destination) : destination);
     } catch (err) {
       // Deliberately the same message shape the API itself returns for
       // both "wrong password" and "no such account" — no reason for the
@@ -105,6 +109,12 @@ function LoginForm() {
       {reason === "password-changed" && (
         <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
           {t("passwordChanged")}
+        </p>
+      )}
+
+      {reason === "account-deleted" && (
+        <p className="mb-6 mt-6 rounded-sm bg-accent px-3 py-2 text-sm text-accent-foreground">
+          {t("accountDeleted")}
         </p>
       )}
 

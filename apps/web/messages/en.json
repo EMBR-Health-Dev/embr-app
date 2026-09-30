@@ -20,7 +20,8 @@
     "continueWithSso": "Continue with SSO",
     "newToEmbr": "New to EMBR?",
     "createAccount": "Create an account",
-    "sessionExpired": "Your session expired. Log in again to continue."
+    "sessionExpired": "Your session expired. Log in again to continue.",
+    "accountDeleted": "Your account and everything in it have been deleted."
   },
   "LanguageSwitcher": {
     "label": "Language",
@@ -125,7 +126,7 @@
     },
     "appointmentStatus": {
       "headline": "Do you have a healthcare appointment coming up?",
-      "hint": "No need for the exact date yet. Just helps us know whether to keep a Clinical Brief close at hand.",
+      "hint": "No need for the exact date yet. Just helps us know whether to keep an EMBR BRIEF close at hand.",
       "withinMonth": "Within the next month",
       "withinThreeMonthsOrLonger": "Within the next 3 months or longer",
       "waitingToSchedule": "Waiting to schedule",
@@ -284,17 +285,17 @@
     "patternsBody": "A weekly view of what's changing. As your record grows, the fuller picture takes shape in Signals.",
     "viewPatterns": "Go to Signals",
     "evidenceLabel": "Your evidence",
-    "evidenceBody": "Your Clinical Brief turns your recorded history into what you can bring to your GP.",
+    "evidenceBody": "Your EMBR BRIEF turns your recorded history into what you can bring to your GP.",
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
-    "viewClinicalBrief": "View Clinical Brief",
-    "generateFirstBrief": "Generate your first Clinical Brief"
+    "viewClinicalBrief": "View EMBR BRIEF",
+    "generateFirstBrief": "Generate your first EMBR BRIEF"
   },
   "Nav": {
     "navigationLabel": "Main navigation",
     "home": "Home",
     "timeline": "Timeline",
     "signals": "Signals",
-    "clinicalBrief": "Clinical Brief",
+    "clinicalBrief": "EMBR BRIEF",
     "settings": "Settings",
     "more": "More",
     "menu": "Menu",
@@ -353,7 +354,7 @@
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
-    "briefCta": "View this period in your Clinical Brief",
+    "briefCta": "View this period in your EMBR BRIEF",
     "emptyTitle": "Your record is still taking shape.",
     "emptyBody": "EMBR needs more observations before it can surface a signal here. Keep logging over time; this section will update as your record grows."
   },
@@ -364,7 +365,7 @@
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "caveat": "A description of what you've recorded: not a diagnosis, and not a claim that one caused the other.",
     "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
-    "briefCta": "View this period in your Clinical Brief"
+    "briefCta": "View this period in your EMBR BRIEF"
   },
   "EvidenceStrength": {
     "groupLabel": "How much of your record exists so far",
@@ -516,7 +517,7 @@
     "revoking": "Revoking…",
     "revoke": "Revoke",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, briefs, and settings. This cannot be undone.",
+    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, daily context, treatments, briefs, and settings. This cannot be undone.",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordLabel": "Confirm your password",
     "forgotPasswordHint": "Don't know your password?",
@@ -538,11 +539,13 @@
     "generateError": "Couldn't generate a brief. Try again.",
     "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
     "briefReady": "Your brief is ready",
+    "aiAuthorshipNote": "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
     "downloadPdf": "Download PDF",
     "downloadSummary": "Download clinician summary",
     "downloadingSummary": "Preparing…",
     "downloadSummaryError": "Couldn't prepare the summary. Try again.",
     "pastBriefs": "Past briefs",
+    "periodRange": "{from} to {to}",
     "noBriefsYet": "No briefs generated yet.",
     "generatedOn": "generated {date}",
     "pdf": "PDF",
@@ -557,10 +560,11 @@
     "averageCycleLength": "Average cycle length: {days} days ({count, plural, one {# cycle} other {# cycles}} recorded)",
     "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
     "noTreatmentsInRange": "No treatments logged in this range.",
+    "noSymptomsInRange": "No symptoms logged in this range.",
     "ongoing": "Ongoing",
     "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
     "frequencyComparisonTitle": "Compared with the previous period",
-    "frequencyComparisonEntry": "Reported on {currentCount, plural, one {# day} other {# days}}, compared with {previousCount, plural, one {# day} other {# days}} in the previous period.",
+    "frequencyComparisonEntry": "Logged {currentCount, plural, one {# time} other {# times}}, compared with {previousCount, plural, one {# time} other {# times}} in the previous period.",
     "patternsNoticedTitle": "Patterns noticed",
     "coOccurrenceEntry": "{categoryA} and {categoryB} were both reported on {days, plural, one {# day} other {# days}}.",
     "treatmentImpactTitle": "Observed changes after starting treatment",
@@ -675,5 +679,29 @@
       "message": "You've logged {count, plural, one {# symptom entry} other {# symptom entries}} during this period.",
       "caveat": "A count of what you've logged during this treatment, not a measure of how well it's working."
     }
+  },
+  "Consent": {
+    "termsLabel": "I agree to the <link>Terms of Use</link>.",
+    "privacyLabel": "I have read and understood the <link>Privacy Policy</link>.",
+    "healthExplanation": "EMBR stores and uses the health information you enter, such as symptoms, cycle details, daily context and treatments, to build your record, show your patterns and create your EMBR BRIEF.",
+    "healthLabel": "I acknowledge that EMBR handles the health information I provide, such as symptoms, cycle details and treatments, for the purposes described in the <link>Privacy Policy</link>, including building my record, showing my patterns and creating my EMBR BRIEF, and, where required, I consent to that handling.",
+    "manageNote": "You can manage your privacy choices in your account settings. Where the handling of your information is based on consent, you can withdraw that consent at any time.",
+    "opensInNewTab": "(opens in a new tab)",
+    "termsRequired": "Please accept the Terms of Use to continue.",
+    "privacyRequired": "Please confirm you have read the Privacy Policy.",
+    "healthRequired": "Please review this item to continue.",
+    "versionOutdated": "These documents were just updated. Please reload the page and review them again.",
+    "title": "Before you continue",
+    "subtitle": "Please review the following. Your existing records are unchanged.",
+    "updatedNote": "Updated since you last reviewed it.",
+    "withdrawnNote": "You withdrew this item earlier. Features that use health information are paused until you review and agree to it again.",
+    "continue": "Continue",
+    "saving": "Saving…",
+    "allRequired": "Please tick each item above to continue.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "otherOptions": "Other choices",
+    "exportData": "Export your data",
+    "accountSettings": "Account settings, including account deletion",
+    "logOut": "Log out"
   }
 }

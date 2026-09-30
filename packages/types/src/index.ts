@@ -47,6 +47,48 @@ export interface UserDto {
    * those are health-adjacent and live only behind GET /onboarding,
    * never on UserDto. */
   onboardingCompletedAt: string | null;
+  /** Where the person stands on each consent item, relative to the
+   * current version. Anything other than "CURRENT" means health
+   * features are blocked server-side (403 CONSENT_REQUIRED) and clients
+   * should route to the consent screen. Carried on UserDto for the same
+   * reason as onboardingCompletedAt: one signal every client already
+   * receives, no second request. */
+  consents: Record<ConsentType, ConsentState>;
+}
+
+// ---- Consent ----
+
+export type ConsentType = "TERMS" | "PRIVACY" | "HEALTH_PROCESSING";
+
+/** CURRENT: accepted the current version. OUTDATED: accepted an older
+ * version. MISSING: never accepted. WITHDRAWN: most recent action was a
+ * withdrawal (health processing only). */
+export type ConsentState = "CURRENT" | "OUTDATED" | "MISSING" | "WITHDRAWN";
+
+export type ConsentAction = "GRANTED" | "WITHDRAWN";
+
+export type ConsentSource = "REGISTRATION" | "CONSENT_SCREEN" | "SETTINGS";
+
+/** One entry in a person's append-only consent history. */
+export interface ConsentRecordDto {
+  id: string;
+  type: ConsentType;
+  version: string;
+  locale: string;
+  action: ConsentAction;
+  source: ConsentSource;
+  client: string | null;
+  createdAt: string;
+}
+
+export interface ConsentStatusDto {
+  items: Array<{
+    type: ConsentType;
+    state: ConsentState;
+    currentVersion: string;
+    acceptedVersion: string | null;
+  }>;
+  history: ConsentRecordDto[];
 }
 
 export interface AuthSessionResponse {

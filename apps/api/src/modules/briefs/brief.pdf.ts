@@ -141,6 +141,9 @@ export function buildClinicalBriefPdf(
     .font(EMBR_PDF_BODY_FONT)
     .fillColor(INK)
     .text(brief.aiNarrative, { align: "left" });
+  // Says which parts are AI-written (this summary and the questions)
+  // as opposed to the deterministic sections, and what the model saw.
+  doc.moveDown(0.3).fontSize(8).fillColor(INK_MUTED).text(t.aiAuthorshipNote);
   doc.moveDown(1);
 
   // ---- Grounded in your data (the deterministic findings the AI actually cited) ----

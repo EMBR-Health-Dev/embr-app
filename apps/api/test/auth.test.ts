@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { CURRENT_CONSENTS } from "./helpers/consents.js";
 import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
 
 // vi.mock(...) below is hoisted above all other top-level code in this
@@ -214,7 +215,9 @@ vi.mock("../src/lib/prisma.js", () => ({
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
-  await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   const loginRes = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   return loginRes;
 }
@@ -232,7 +235,7 @@ describe("POST /auth/register", () => {
     const app = createApp();
     const res = await request(app)
       .post("/auth/register")
-      .send({ email: "new@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "new@embr.health", password: VALID_PASSWORD });
 
     expect(res.status).toBe(201);
     expect(res.body.data.email).toBe("new@embr.health");
@@ -244,7 +247,7 @@ describe("POST /auth/register", () => {
     const app = createApp();
     const res = await request(app)
       .post("/auth/register")
-      .send({ email: "weak@embr.health", password: "short" });
+      .send({ consents: CURRENT_CONSENTS, email: "weak@embr.health", password: "short" });
 
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
@@ -254,10 +257,10 @@ describe("POST /auth/register", () => {
     const app = createApp();
     await request(app)
       .post("/auth/register")
-      .send({ email: "dupe@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "dupe@embr.health", password: VALID_PASSWORD });
     const res = await request(app)
       .post("/auth/register")
-      .send({ email: "dupe@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "dupe@embr.health", password: VALID_PASSWORD });
 
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe("CONFLICT");
@@ -276,7 +279,7 @@ describe("POST /auth/verify-email", () => {
     const app = createApp();
     await request(app)
       .post("/auth/register")
-      .send({ email: "verify@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "verify@embr.health", password: VALID_PASSWORD });
 
     // The raw token as it actually left the system via the email —
     // proving the hashing round-trips correctly (findValidEmailVerificationToken
@@ -304,9 +307,11 @@ describe("POST /auth/verify-email", () => {
 
   it("rejects a token that was never issued", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "invalidtoken@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "invalidtoken@embr.health",
+      password: VALID_PASSWORD,
+    });
 
     const res = await request(app)
       .post("/auth/verify-email")
@@ -319,9 +324,11 @@ describe("POST /auth/verify-email", () => {
 
   it("rejects an expired token", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "expiredtoken@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "expiredtoken@embr.health",
+      password: VALID_PASSWORD,
+    });
 
     const token = lastVerificationToken();
     // Force the stored record's own expiresAt into the past — this
@@ -338,9 +345,11 @@ describe("POST /auth/verify-email", () => {
 
   it("rejects a token that has already been consumed", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "consumedtoken@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "consumedtoken@embr.health",
+      password: VALID_PASSWORD,
+    });
     const token = lastVerificationToken();
 
     const first = await request(app).post("/auth/verify-email").send({ token });
@@ -365,9 +374,11 @@ describe("POST /auth/resend-verification", () => {
 
   it("returns 202 without sending another email for an already-verified account", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "alreadyverified@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "alreadyverified@embr.health",
+      password: VALID_PASSWORD,
+    });
     await request(app).post("/auth/verify-email").send({ token: lastVerificationToken() });
     vi.mocked(sendVerificationEmail).mockClear();
 
@@ -383,7 +394,7 @@ describe("POST /auth/resend-verification", () => {
     const app = createApp();
     await request(app)
       .post("/auth/register")
-      .send({ email: "resend@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "resend@embr.health", password: VALID_PASSWORD });
     const firstToken = lastVerificationToken();
 
     const resendRes = await request(app)
@@ -411,7 +422,7 @@ describe("POST /auth/login", () => {
     const app = createApp();
     await request(app)
       .post("/auth/register")
-      .send({ email: "login@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "login@embr.health", password: VALID_PASSWORD });
 
     const res = await request(app)
       .post("/auth/login")
@@ -427,9 +438,11 @@ describe("POST /auth/login", () => {
 
   it("allows a never-verified account to log in — email verification never gates login", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "unverified-login@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "unverified-login@embr.health",
+      password: VALID_PASSWORD,
+    });
 
     const res = await request(app)
       .post("/auth/login")
@@ -444,7 +457,7 @@ describe("POST /auth/login", () => {
     const app = createApp();
     await request(app)
       .post("/auth/register")
-      .send({ email: "wrongpw@embr.health", password: VALID_PASSWORD });
+      .send({ consents: CURRENT_CONSENTS, email: "wrongpw@embr.health", password: VALID_PASSWORD });
 
     const res = await request(app)
       .post("/auth/login")
@@ -648,9 +661,11 @@ describe("POST /auth/refresh", () => {
 describe("Mobile auth (Bearer access token, body-presented refresh token)", () => {
   it("login response includes refreshToken, not just accessToken", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "mobile-login@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "mobile-login@embr.health",
+      password: VALID_PASSWORD,
+    });
 
     const res = await request(app)
       .post("/auth/login")
@@ -663,9 +678,11 @@ describe("Mobile auth (Bearer access token, body-presented refresh token)", () =
 
   it("GET /auth/me works via Authorization header alone, no cookies at all", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "mobile-me@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "mobile-me@embr.health",
+      password: VALID_PASSWORD,
+    });
     const loginRes = await request(app)
       .post("/auth/login")
       .send({ email: "mobile-me@embr.health", password: VALID_PASSWORD });
@@ -682,9 +699,11 @@ describe("Mobile auth (Bearer access token, body-presented refresh token)", () =
 
   it("POST /auth/refresh works from a refresh token in the body, no cookie or CSRF header", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "mobile-refresh@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "mobile-refresh@embr.health",
+      password: VALID_PASSWORD,
+    });
     const loginRes = await request(app)
       .post("/auth/login")
       .send({ email: "mobile-refresh@embr.health", password: VALID_PASSWORD });
@@ -703,9 +722,11 @@ describe("Mobile auth (Bearer access token, body-presented refresh token)", () =
 
   it("a body-presented refresh token also rotates and rejects reuse, same as the cookie path", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "mobile-rotate@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "mobile-rotate@embr.health",
+      password: VALID_PASSWORD,
+    });
     const loginRes = await request(app)
       .post("/auth/login")
       .send({ email: "mobile-rotate@embr.health", password: VALID_PASSWORD });
@@ -720,9 +741,11 @@ describe("Mobile auth (Bearer access token, body-presented refresh token)", () =
 
   it("POST /auth/logout works from a refresh token in the body, no cookie or CSRF header", async () => {
     const app = createApp();
-    await request(app)
-      .post("/auth/register")
-      .send({ email: "mobile-logout@embr.health", password: VALID_PASSWORD });
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "mobile-logout@embr.health",
+      password: VALID_PASSWORD,
+    });
     const loginRes = await request(app)
       .post("/auth/login")
       .send({ email: "mobile-logout@embr.health", password: VALID_PASSWORD });

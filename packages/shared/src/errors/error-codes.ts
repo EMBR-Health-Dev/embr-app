@@ -17,6 +17,13 @@ export enum ErrorCode {
    * anything) so a client can branch on this one code to show a
    * verification prompt instead of a generic access-denied message. */
   EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED",
+  /** Authenticated, but a required consent item (Terms, Privacy or
+   * health processing) isn't current. Resolved by the person reviewing
+   * the consent screen, so clients branch on it to route there. */
+  CONSENT_REQUIRED = "CONSENT_REQUIRED",
+  /** The consent version the client displayed isn't the current one
+   * (stale page or old app build). The client should reload. */
+  CONSENT_VERSION_OUTDATED = "CONSENT_VERSION_OUTDATED",
 }
 
 export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
@@ -29,4 +36,6 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   [ErrorCode.INTERNAL_ERROR]: 500,
   [ErrorCode.SERVICE_UNAVAILABLE]: 503,
   [ErrorCode.EMAIL_NOT_VERIFIED]: 403,
+  [ErrorCode.CONSENT_REQUIRED]: 403,
+  [ErrorCode.CONSENT_VERSION_OUTDATED]: 409,
 };

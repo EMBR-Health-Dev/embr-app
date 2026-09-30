@@ -171,6 +171,16 @@ describe("Login — translation", () => {
     expect(screen.getByText("SSO sign-in didn't work. Try again.")).toBeInTheDocument();
   });
 
+  it("confirms the deletion when reason=account-deleted", async () => {
+    searchParamsValue = new URLSearchParams({ reason: "account-deleted" });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+
+    expect(
+      screen.getByText("Your account and everything in it have been deleted."),
+    ).toBeInTheDocument();
+  });
+
   it("shows the session-expired message when reason=session-expired", async () => {
     searchParamsValue = new URLSearchParams({ reason: "session-expired" });
     const { default: LoginPage } = await import("./page");
@@ -186,5 +196,59 @@ describe("Login — translation", () => {
     expect(
       screen.queryByText("Your session expired. Log in again to continue."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("Login — consent routing", () => {
+  const pending = { TERMS: "CURRENT", PRIVACY: "CURRENT", HEALTH_PROCESSING: "MISSING" };
+
+  it("goes to the consent screen first, carrying the normal destination", async () => {
+    loginMock.mockResolvedValue({
+      user: {
+        id: "u1",
+        email: "person@embr.health",
+        onboardingCompletedAt: "2026-01-01T00:00:00Z",
+        consents: pending,
+      },
+    });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+    await fillAndSubmit();
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/consent?redirect=%2Fdashboard"));
+  });
+
+  it("puts consent ahead of an explicit redirect too", async () => {
+    searchParamsValue = new URLSearchParams({ redirect: "/organizations/accept-invite?token=x" });
+    loginMock.mockResolvedValue({
+      user: {
+        id: "u1",
+        email: "person@embr.health",
+        onboardingCompletedAt: null,
+        consents: pending,
+      },
+    });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+    await fillAndSubmit();
+    await waitFor(() =>
+      expect(routerPush).toHaveBeenCalledWith(
+        `/consent?redirect=${encodeURIComponent("/organizations/accept-invite?token=x")}`,
+      ),
+    );
+  });
+
+  it("goes straight to the destination when everything is current", async () => {
+    loginMock.mockResolvedValue({
+      user: {
+        id: "u1",
+        email: "person@embr.health",
+        onboardingCompletedAt: "2026-01-01T00:00:00Z",
+        consents: { TERMS: "CURRENT", PRIVACY: "CURRENT", HEALTH_PROCESSING: "CURRENT" },
+      },
+    });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+    await fillAndSubmit();
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/dashboard"));
   });
 });

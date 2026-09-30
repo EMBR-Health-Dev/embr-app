@@ -159,6 +159,27 @@ describe("buildStage4Interpretation — treatment window pattern", () => {
     expect(result.patterns).toEqual([]);
   });
 
+  it("produces no pattern when before and after counts are equal, including 0 and 0", () => {
+    const result = buildStage4Interpretation(
+      emptyInput({
+        treatmentImpact: [
+          treatmentImpact({
+            treatmentId: "t1",
+            before: { logCount: 0, days: 14 },
+            after: { logCount: 0, days: 14 },
+          }),
+          treatmentImpact({
+            treatmentId: "t2",
+            before: { logCount: 3, days: 14 },
+            after: { logCount: 3, days: 14 },
+          }),
+        ],
+      }),
+    );
+
+    expect(result.patterns).toEqual([]);
+  });
+
   it("evaluates multiple treatments independently", () => {
     const result = buildStage4Interpretation(
       emptyInput({
@@ -263,7 +284,7 @@ describe("buildStage4Interpretation — contract", () => {
 
     const byType = Object.fromEntries(result.patterns.map((p) => [p.type, p]));
     expect(byType.frequency_increased!.interpretation).toBe(
-      "This represents an increase in how often HOT_FLASH was reported, relative to the previous period.",
+      "This represents an increase in how often Hot Flash was reported, relative to the previous period.",
     );
     expect(byType.co_occurrence_detected!.interpretation).toBe(
       "This indicates the two symptoms tend to occur on the same days. It does not establish that one causes the other.",
@@ -547,6 +568,8 @@ describe("buildStage4Interpretation — Japanese locale", () => {
     );
     const result = buildStage4Interpretation(emptyInput({ frequencyComparison: comparison }));
 
-    expect(result.patterns[0]!.observation).toContain("HOT_FLASH");
+    expect(result.patterns[0]!.observation).toBe(
+      "Hot Flash was logged 6 times during the current period, compared with 4 during the previous period.",
+    );
   });
 });

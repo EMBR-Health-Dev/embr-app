@@ -302,7 +302,9 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
 
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
 
-    expect(text).toContain("Clinical Brief");
+    // Both locales now title the document "EMBR BRIEF", so an
+    // English-only line stands in as the proof of the English fallback.
+    expect(text).toContain("written by AI");
     expect(text).toContain("No symptoms logged in this range.");
   });
 });

@@ -36,6 +36,10 @@ function BriefPageContent() {
   const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // Kept apart from generateError: a missing date is a form-validation
+  // prompt, not a failed generation, so it must not carry the
+  // "nothing was lost, try again" reassurance that error box shows.
+  const [dateError, setDateError] = useState<string | null>(null);
   const [generateNeedsVerification, setGenerateNeedsVerification] = useState(false);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
 
@@ -80,10 +84,11 @@ function BriefPageContent() {
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setGenerateError(null);
+    setDateError(null);
     setGenerateNeedsVerification(false);
 
     if (!fromDate || !toDate) {
-      setGenerateError(t("pickDates"));
+      setDateError(t("pickDates"));
       return;
     }
 
@@ -118,7 +123,13 @@ function BriefPageContent() {
     setSummaryNeedsVerification(false);
     setDownloadingSummary(true);
     try {
-      const blob = await api.export.clinicianSummaryPdf({ from: brief.fromDate, to: brief.toDate });
+      // Local-day boundaries, the same as generation and the /export
+      // page: the bare "YYYY-MM-DD" strings parse as UTC midnight, and
+      // `to` at midnight dropped every entry logged on the last day.
+      const blob = await api.export.clinicianSummaryPdf({
+        from: startOfLocalDay(brief.fromDate),
+        to: endOfLocalDay(brief.toDate),
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -216,6 +227,11 @@ function BriefPageContent() {
             {generating ? t("generating") : t("generate")}
           </Button>
         </form>
+        {dateError && (
+          <p role="alert" className="mt-3 text-sm font-medium text-foreground">
+            {dateError}
+          </p>
+        )}
         {generateError && (
           <div role="alert" className="mt-3 rounded-lg border border-border-subtle bg-surface p-4">
             <p className="text-body-s font-medium text-foreground">{generateError}</p>
@@ -252,7 +268,7 @@ function BriefPageContent() {
           </section>
         )}
 
-        {trends && trends.briefCount > 0 && (
+        {trends && trends.briefCount > 0 && trends.categories.length > 0 && (
           <section className="mt-10">
             <h2 className="font-display text-heading-m text-foreground">{t("trendsTitle")}</h2>
             <p className="mt-1 text-sm text-foreground/60">
@@ -316,17 +332,17 @@ function BriefPageContent() {
             <ul className="mt-4 flex flex-col gap-3">
               {history.map((item) => (
                 <li key={item.id} className="rounded border border-border-subtle p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <button
                       onClick={() => void toggleBrief(item.id)}
                       className="text-left text-sm font-medium text-foreground"
                     >
-                      {item.fromDate} to {item.toDate}
+                      {t("periodRange", { from: item.fromDate, to: item.toDate })}
                       <span className="ml-2 text-xs font-normal text-foreground/50">
                         {t("generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                       </span>
                     </button>
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-3">
                       <a
                         href={api.briefs.pdfUrl(item.id)}
                         className="text-xs font-medium text-primary underline underline-offset-2"
@@ -543,7 +559,10 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
-      <p className="text-foreground/80">{brief.aiNarrative}</p>
+      <div>
+        <p className="text-foreground/80">{brief.aiNarrative}</p>
+        <p className="mt-1 text-xs text-foreground/50">{t("aiAuthorshipNote")}</p>
+      </div>
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
         <div>
@@ -651,6 +670,9 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       <div>
         <h3 className="font-medium text-foreground">{t("symptomFrequency")}</h3>
+        {brief.symptomSummary.length === 0 && (
+          <p className="mt-1 text-foreground/70">{t("noSymptomsInRange")}</p>
+        )}
         <ul className="mt-1 text-foreground/70">
           {brief.symptomSummary.map((entry) => (
             <li key={entry.category}>
