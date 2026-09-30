@@ -9,6 +9,8 @@ import { ApiError } from "../../lib/api-client";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
+  // For the page's LanguageSwitcher.
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
 
 const registerMock = vi.fn();
