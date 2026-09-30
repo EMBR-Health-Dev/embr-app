@@ -151,8 +151,8 @@ const EN: PdfStrings = {
     `${count} occurrence${count === 1 ? "" : "s"} (${severityBreakdown})`,
   comparedWithPreviousHeading: "Compared with the previous period",
   frequencyComparisonLine: (currentCount, previousCount) =>
-    `Reported on ${currentCount} day${currentCount === 1 ? "" : "s"}, compared with` +
-    ` ${previousCount} day${previousCount === 1 ? "" : "s"} in the previous period.`,
+    `Logged ${currentCount} time${currentCount === 1 ? "" : "s"}, compared with` +
+    ` ${previousCount} time${previousCount === 1 ? "" : "s"} in the previous period.`,
   ongoingSymptomsHeading: "Ongoing symptoms",
   persistentSymptomLine: (category) => `${category} remained present across both periods.`,
   patternsNoticedHeading: "Patterns noticed",
@@ -221,7 +221,7 @@ const JA: PdfStrings = {
   occurrenceLine: (count, severityBreakdown) => `${count}回（${severityBreakdown}）`,
   comparedWithPreviousHeading: "前回の期間との比較",
   frequencyComparisonLine: (currentCount, previousCount) =>
-    `今回の期間に${currentCount}日報告され、前回の期間は${previousCount}日でした。`,
+    `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
   ongoingSymptomsHeading: "継続している症状",
   persistentSymptomLine: (category) => `${category}は両方の期間で継続して報告されました。`,
   patternsNoticedHeading: "気づいたパターン",

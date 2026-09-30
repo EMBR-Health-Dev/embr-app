@@ -391,7 +391,7 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     await user.click(toggle);
 
     expect(
-      screen.getByText("Reported on 6 days, compared with 4 days in the previous period."),
+      screen.getByText("Logged 6 times, compared with 4 times in the previous period."),
     ).toBeInTheDocument();
     expect(
       screen.getByText("This reflects self-reported logging frequency only."),
@@ -714,9 +714,7 @@ describe("Brief page — deterministic evidence sections", () => {
       await screen.findByText("Hot Flash: 6 occurrences (4 Moderate, 2 Severe)"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Hot Flash: Reported on 6 days, compared with 4 days in the previous period.",
-      ),
+      screen.getByText("Hot Flash: Logged 6 times, compared with 4 times in the previous period."),
     ).toBeInTheDocument();
     expect(screen.getByText("Hot Flash remained present across both periods.")).toBeInTheDocument();
     expect(

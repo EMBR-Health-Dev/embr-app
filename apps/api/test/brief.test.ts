@@ -1888,9 +1888,9 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
     id: "frequency_increased:HOT_FLASH",
     type: "frequency_increased",
     observation:
-      "HOT_FLASH was reported on 2 days during the current period, compared with 0 during the previous period.",
+      "Hot Flash was logged 2 times during the current period, compared with 0 during the previous period.",
     interpretation:
-      "This represents an increase in how often HOT_FLASH was reported, relative to the previous period.",
+      "This represents an increase in how often Hot Flash was reported, relative to the previous period.",
     caveat:
       "This reflects self-reported logging frequency only. It does not indicate severity, cause, or clinical significance.",
     confidence: "descriptive",
@@ -2274,12 +2274,11 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(getRes.body.data.frequencyComparison).toEqual([]);
     expect(getRes.body.data.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
     expect(getRes.body.data.persistentSymptoms).toEqual([]);
-    // The canonical, persisted interpretation is allowed to contain the
-    // treatment name — see the dedicated Stage 4 persistence test
-    // above for the full proof that the AI-facing copy never does.
-    expect(getRes.body.data.interpretation.patterns).toEqual(
-      expect.arrayContaining([expect.objectContaining({ type: "treatment_window_changed" })]),
-    );
+    // 0 logs before and 0 after is no change at all, so no
+    // treatment_window_changed pattern is emitted from it: the raw
+    // before/after counts above stay in treatmentImpact, but nothing is
+    // presented as a pattern grounded in the user's data.
+    expect(getRes.body.data.interpretation.patterns).toEqual([]);
 
     // 3. GET /briefs/:id/pdf is built from that same persisted brief
     // (via briefService.get(), a separate request from generation) and
@@ -2301,9 +2300,8 @@ describe("Treatment history persistence — generate, re-read, and PDF all agree
     expect(lastPdfCallArg.coOccurrence).toBeNull();
     expect(lastPdfCallArg.treatmentImpact[0]).toMatchObject(expectedTreatmentImpact);
     expect(lastPdfCallArg.persistentSymptoms).toEqual([]);
-    expect(lastPdfCallArg.interpretation.patterns).toEqual(
-      expect.arrayContaining([expect.objectContaining({ type: "treatment_window_changed" })]),
-    );
+    // 0 before / 0 after: no treatment_window_changed pattern (see above).
+    expect(lastPdfCallArg.interpretation.patterns).toEqual([]);
     // The mocked AI response for this test never set patterns, so the
     // mock factory's default (patterns: []) applies — the AI cited
     // nothing, a real fact distinct from null.
