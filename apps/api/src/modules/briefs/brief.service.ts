@@ -382,6 +382,18 @@ export const briefService = {
     }
 
     try {
+      // One brief per exact period (@@unique([userId, fromDate, toDate])).
+      // Without this check, regenerating a period after logging more
+      // data would still make the paid AI call, then hit the unique
+      // constraint and silently hand back the older brief as if it
+      // were new. Checked after the lock so a concurrent twin still
+      // gets the lock's own CONFLICT above.
+      const existing = await briefRepository.findByPeriodForUser(userId, fromDate, toDate);
+      if (existing) {
+        throw AppError.conflict(
+          "You already have a brief for exactly this date range. To create a new one for the same dates, delete the existing brief from your past briefs first.",
+        );
+      }
       return await generateBriefContent(userId, fromDate, toDate, locale);
     } finally {
       if (lock.status === "acquired") {

@@ -826,26 +826,47 @@ describe("POST /briefs — concurrency and locking", () => {
   });
 
   it("falls back to the database unique constraint (not an error) when Redis is unavailable for both concurrent requests", async () => {
-    const app = createApp();
-    const agent = request.agent(app);
-    await registerAndLogin(agent, "brief-double-fallback@embr.health");
+    const userId = nextId();
     aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
     lockState.acquireShouldThrow = true;
 
-    const [resA, resB] = await Promise.all([
-      agent.post("/briefs").send(RANGE),
-      agent.post("/briefs").send(RANGE),
+    // Service-level Promise.all, not two agent.post() calls: supertest
+    // serializes requests on one agent (see the first test in this
+    // block), and a serialized second request now meets the
+    // same-period pre-check (409) instead of racing. Interleaved like
+    // this, both calls pass that pre-check before either persists.
+    const [a, b] = await Promise.all([
+      briefService.generate(userId, new Date(RANGE.fromDate), new Date(RANGE.toDate)),
+      briefService.generate(userId, new Date(RANGE.fromDate), new Date(RANGE.toDate)),
     ]);
 
-    // With no lock coordinating them, both requests generated (a real,
+    // With no lock coordinating them, both calls generated (a real,
     // accepted cost of a Redis outage — see redis-lock.ts's own doc
     // comment) — but only one row was ever persisted: the second
     // create() hit the unique constraint and brief.repository.ts
     // returned the first row back instead of erroring, so neither
-    // request-level response is an error.
-    expect(resA.status).toBe(201);
-    expect(resB.status).toBe(201);
-    expect(resA.body.data.id).toBe(resB.body.data.id);
+    // call is an error.
+    expect(a.id).toBe(b.id);
+    expect(state.briefs).toHaveLength(1);
+  });
+});
+
+describe("POST /briefs — same period regenerated later", () => {
+  it("returns CONFLICT without calling the AI when a brief for the exact range already exists", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-same-period@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
+
+    const first = await agent.post("/briefs").send(RANGE);
+    expect(first.status).toBe(201);
+    const aiCallsAfterFirst = vi.mocked(briefAi.generate).mock.calls.length;
+
+    const second = await agent.post("/briefs").send(RANGE);
+
+    expect(second.status).toBe(409);
+    expect(second.body.error.message).toMatch(/already have a brief for exactly this date range/);
+    expect(vi.mocked(briefAi.generate).mock.calls.length).toBe(aiCallsAfterFirst);
     expect(state.briefs).toHaveLength(1);
   });
 });
