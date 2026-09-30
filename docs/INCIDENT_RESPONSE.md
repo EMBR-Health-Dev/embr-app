@@ -44,6 +44,38 @@ interpret.
   Note the incident, the suspected scope, and the timeline as you go,
   even before that decision is made.
 
+## Notification obligations and decision owner
+
+EMBR processes health information for users in the EU, the UK, and Japan.
+Regulators in each place set short clocks that start when EMBR becomes
+_aware_ of a personal data breach, so the decision cannot wait for a full
+investigation. The summary below is an engineering checklist, not legal
+advice. Counsel should confirm the exact thresholds and wording before
+this runbook is treated as final.
+
+- **Decision owner**: the founder decides whether and when to notify.
+  Record the name and a backup contact here before beta: `TBD`.
+- **Start a clock log immediately**: write down the time EMBR first
+  became aware, what is known, and what is not yet known.
+- **EU (GDPR Art. 33 and 34)**: notify the competent supervisory authority
+  without undue delay and, where feasible, within 72 hours of becoming
+  aware, unless the breach is unlikely to risk people's rights and
+  freedoms. Health data is special-category data, so assume a risk and
+  assess whether affected people must be told directly (Art. 34).
+- **UK (UK GDPR)**: the same 72-hour test applies, with the report made to
+  the ICO.
+- **Japan (APPI)**: a leak of special care-required personal information
+  (which includes health information) generally requires a prompt initial
+  report and a later final report to the Personal Information Protection
+  Commission, plus notice to the people affected. Counsel to confirm the
+  current deadlines.
+- **Processors to contact if their systems are involved**: the hosting,
+  email, and AI providers listed in `docs/acquisition/architecture.md`.
+  Record a security contact for each here before beta: `TBD`.
+- **Preserve evidence**: keep logs, the pre-change database backup, and
+  the timeline notes. Do not delete anything to "clean up" during the
+  incident.
+
 ## During the incident
 
 - One person drives (makes changes); everyone else investigates and
