@@ -241,20 +241,20 @@ function BriefPageContent() {
         {generateNeedsVerification && <EmailVerificationRequired email={user.email} />}
 
         {justGenerated && (
-          <section className="mt-8 rounded border border-primary bg-primary/5 p-5">
+          <section className="mt-8 rounded border border-lilac-300 border-t-4 border-t-lilac-600 bg-lilac-100/60 p-5">
             <h2 className="font-display text-heading-m text-foreground">{t("briefReady")}</h2>
             <BriefContent brief={justGenerated} />
-            <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <a
                 href={api.briefs.pdfUrl(justGenerated.id)}
-                className="inline-block text-sm font-medium text-foreground underline underline-offset-2"
+                className="inline-flex items-center justify-center rounded-sm bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 {t("downloadPdf")}
               </a>
               <button
                 onClick={() => void handleDownloadSummary(justGenerated)}
                 disabled={downloadingSummary}
-                className="text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-sm border border-lilac-300 bg-background px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-lilac-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
               >
                 {downloadingSummary ? t("downloadingSummary") : t("downloadSummary")}
               </button>
@@ -345,7 +345,7 @@ function BriefPageContent() {
                     <div className="flex shrink-0 items-center gap-3">
                       <a
                         href={api.briefs.pdfUrl(item.id)}
-                        className="text-xs font-medium text-primary underline underline-offset-2"
+                        className="text-xs font-medium text-lilac-700 underline underline-offset-2"
                       >
                         {t("pdf")}
                       </a>
@@ -373,6 +373,12 @@ function BriefPageContent() {
     </div>
   );
 }
+
+// Section labels inside a brief, in the same uppercase lilac style as
+// the PDF's section headings (brief.pdf.ts sectionHeading), so the page
+// and the document it downloads read as one thing.
+const BRIEF_SECTION_HEADING =
+  "font-body text-xs font-semibold uppercase tracking-[0.08em] text-lilac-700";
 
 export default function BriefPage() {
   const t = useTranslations("Common");
@@ -566,8 +572,8 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
         <div>
-          <h3 className="font-medium text-foreground">{t("groundedInTitle")}</h3>
-          <ul className="mt-1 flex flex-col gap-2 pl-5 text-foreground/70">
+          <h3 className={BRIEF_SECTION_HEADING}>{t("groundedInTitle")}</h3>
+          <ul className="mt-2 flex flex-col gap-2 text-foreground/80">
             {brief.citedPatternIds.flatMap((id) => {
               const pattern = brief.interpretation!.patterns.find((entry) => entry.id === id);
               // Should always resolve — citedPatternIds is only ever
@@ -581,7 +587,10 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               const resolved = resolveEvidence(pattern, brief);
               const detailId = `evidence-detail-${brief.id}-${id}`;
               return (
-                <li key={id} className="list-disc">
+                <li
+                  key={id}
+                  className="rounded-sm border border-lilac-200 border-l-[3px] border-l-lilac-500 bg-background px-3 py-2"
+                >
                   {pattern.observation}
                   {pattern.association ? ` ${pattern.association}` : ""}
                   <div>
@@ -590,7 +599,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                       onClick={() => toggleEvidence(id)}
                       aria-expanded={expanded}
                       aria-controls={detailId}
-                      className="mt-1 text-xs font-medium text-primary underline underline-offset-2"
+                      className="mt-1 text-xs font-medium text-lilac-700 underline underline-offset-2"
                     >
                       {expanded ? t("hideEvidence") : t("viewEvidence")}
                     </button>
@@ -660,16 +669,27 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       )}
 
       <div>
-        <h3 className="font-medium text-foreground">{t("questionsForGp")}</h3>
-        <ul className="mt-1 list-disc pl-5 text-foreground/80">
+        <h3 className={BRIEF_SECTION_HEADING}>{t("questionsForGp")}</h3>
+        <ol className="mt-2 flex flex-col gap-2">
           {brief.aiDiscussionTopics.map((topic, i) => (
-            <li key={i}>{topic}</li>
+            <li
+              key={i}
+              className="flex gap-3 rounded-sm border-l-[3px] border-l-lilac-700 bg-lilac-100 px-3 py-2 font-medium text-foreground"
+            >
+              <span
+                aria-hidden="true"
+                className="font-display text-body-l leading-tight text-lilac-700"
+              >
+                {i + 1}
+              </span>
+              <span>{topic}</span>
+            </li>
           ))}
-        </ul>
+        </ol>
       </div>
 
       <div>
-        <h3 className="font-medium text-foreground">{t("symptomFrequency")}</h3>
+        <h3 className={BRIEF_SECTION_HEADING}>{t("symptomFrequency")}</h3>
         {brief.symptomSummary.length === 0 && (
           <p className="mt-1 text-foreground/70">{t("noSymptomsInRange")}</p>
         )}
@@ -685,7 +705,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
         <div>
-          <h3 className="font-medium text-foreground">{t("frequencyComparisonTitle")}</h3>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("frequencyComparisonTitle")}</h3>
           <ul className="mt-1 text-foreground/70">
             {brief.frequencyComparison.map((entry) => (
               <li key={entry.category}>
@@ -702,7 +722,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       {brief.persistentSymptoms && brief.persistentSymptoms.length > 0 && (
         <div>
-          <h3 className="font-medium text-foreground">{t("persistentSymptomsTitle")}</h3>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("persistentSymptomsTitle")}</h3>
           <ul className="mt-1 text-foreground/70">
             {brief.persistentSymptoms.map((category) => (
               <li key={category}>
@@ -715,7 +735,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       {brief.coOccurrence && (
         <div>
-          <h3 className="font-medium text-foreground">{t("patternsNoticedTitle")}</h3>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("patternsNoticedTitle")}</h3>
           <p className="mt-1 text-foreground/70">
             {t("coOccurrenceEntry", {
               categoryA: tEnum(`category.${brief.coOccurrence.categoryA}`),
@@ -727,7 +747,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       )}
 
       <div>
-        <h3 className="font-medium text-foreground">{t("cycleSummary")}</h3>
+        <h3 className={BRIEF_SECTION_HEADING}>{t("cycleSummary")}</h3>
         <p className="mt-1 text-foreground/70">
           {brief.cycleSummary.averageCycleLengthDays === null
             ? t("notEnoughCycleData")
@@ -739,7 +759,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       </div>
 
       <div>
-        <h3 className="font-medium text-foreground">{t("treatmentsLoggedDuringPeriod")}</h3>
+        <h3 className={BRIEF_SECTION_HEADING}>{t("treatmentsLoggedDuringPeriod")}</h3>
         {brief.treatmentSummary.length === 0 ? (
           <p className="mt-1 text-foreground/70">{t("noTreatmentsInRange")}</p>
         ) : (
@@ -757,7 +777,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
       {brief.treatmentImpact && brief.treatmentImpact.length > 0 && (
         <div>
-          <h3 className="font-medium text-foreground">{t("treatmentImpactTitle")}</h3>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("treatmentImpactTitle")}</h3>
           <ul className="mt-1 text-foreground/70">
             {brief.treatmentImpact.map((entry) => (
               <li key={entry.treatmentId}>

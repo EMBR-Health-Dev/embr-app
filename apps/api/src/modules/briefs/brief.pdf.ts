@@ -22,7 +22,7 @@ import {
 const INK = "#2A1F39"; // graphite-900 — headings, primary text
 const INK_MUTED = "#746B82"; // graphite-500 — secondary/meta text
 const INK_FAINT = "#B8B2C1"; // graphite-300 — hairline rules
-const ACCENT = "#A888B6"; // lilac-500 — the one accent color, used sparingly
+const ACCENT = "#9270A0"; // lilac-600 — the one accent color, used sparingly (one step bolder than the app's lilac-500 so it holds up in print)
 
 // The recurring "signal" mark from the brand's visual language — a
 // single point, not a bullet character — set immediately before every

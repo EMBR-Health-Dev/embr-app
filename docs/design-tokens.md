@@ -28,19 +28,20 @@ what lets Tailwind's opacity modifiers work correctly —
 
 ## Layer 1 — Palette (from brand guidelines, do not modify without updating the guidelines)
 
-| Token             | Hex            | Usage                                                               |
-| ----------------- | -------------- | ------------------------------------------------------------------- |
-| `graphite-900`    | `#2A1F39`      | Primary brand color — headlines, nav, primary text                  |
-| `graphite-700`    | `#4A4058`      | Strong secondary text                                               |
-| `graphite-500`    | `#746B82`      | Secondary text                                                      |
-| `graphite-300`    | `#B8B2C1`      | Borders, disabled states                                            |
-| `graphite-100`    | `#F1EEF4`      | Subtle surfaces, dividers                                           |
-| `lilac-500`       | `#A888B6`      | Primary accent — buttons, links, interactive elements, focus states |
-| `lilac-600`       | `#9270A0`      | Accent hover/active state                                           |
-| `lilac-100`…`400` | see guidelines | Accent surface tints                                                |
-| `rose-500`        | `#C88AA1`      | Alerts, form validation, destructive actions                        |
-| `ice-500`         | `#EEF4F9`      | Success messages, informational cards                               |
-| `pearl-50`        | `#FAF7FB`      | Page background, card surfaces                                      |
+| Token             | Hex            | Usage                                                                                                                                                                                    |
+| ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `graphite-900`    | `#2A1F39`      | Primary brand color — headlines, nav, primary text                                                                                                                                       |
+| `graphite-700`    | `#4A4058`      | Strong secondary text                                                                                                                                                                    |
+| `graphite-500`    | `#746B82`      | Secondary text                                                                                                                                                                           |
+| `graphite-300`    | `#B8B2C1`      | Borders, disabled states                                                                                                                                                                 |
+| `graphite-100`    | `#F1EEF4`      | Subtle surfaces, dividers                                                                                                                                                                |
+| `lilac-500`       | `#A888B6`      | Primary accent — buttons, links, interactive elements, focus states                                                                                                                      |
+| `lilac-600`       | `#9270A0`      | Accent hover/active state                                                                                                                                                                |
+| `lilac-700`       | `#7A588A`      | Deep accent for small text and emphasis on the brief (section labels, evidence links, question markers). 5.50:1 on `pearl-50`, 4.97:1 on `lilac-100`; `lilac-500` as text is only 2.88:1 |
+| `lilac-100`…`400` | see guidelines | Accent surface tints                                                                                                                                                                     |
+| `rose-500`        | `#C88AA1`      | Alerts, form validation, destructive actions                                                                                                                                             |
+| `ice-500`         | `#EEF4F9`      | Success messages, informational cards                                                                                                                                                    |
+| `pearl-50`        | `#FAF7FB`      | Page background, card surfaces                                                                                                                                                           |
 
 ## Layer 2 — Semantic tokens
 

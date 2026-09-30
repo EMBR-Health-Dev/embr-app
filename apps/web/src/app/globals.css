@@ -30,6 +30,10 @@
     --color-lilac-400: 190 161 198;
     --color-lilac-500: 168 136 182;
     --color-lilac-600: 146 112 160;
+    /* Deeper step of the same lilac, for small accent text and emphasis
+       on the brief. 5.50:1 on pearl-50 and 4.97:1 on lilac-100 (both
+       verified); lilac-500 as text is only 2.88:1 on pearl-50. */
+    --color-lilac-700: 122 88 138;
     --color-rose-500: 200 138 161;
     --color-ice-500: 238 244 249;
     --color-pearl-50: 250 247 251;
@@ -46,19 +50,27 @@
     --muted-foreground: var(--color-graphite-500); /* 4.74:1 on background, verified */
     --primary: var(--color-lilac-500);
     --primary-hover: var(--color-lilac-600);
-    --primary-foreground: var(--color-graphite-900); /* 5.07:1 on primary, verified — NOT pearl (2.88:1, fails) */
+    --primary-foreground: var(
+      --color-graphite-900
+    ); /* 5.07:1 on primary, verified — NOT pearl (2.88:1, fails) */
     --border: var(--color-graphite-300);
     --border-subtle: var(--color-graphite-100);
     --accent: var(--color-ice-500);
     --accent-foreground: var(--color-graphite-900); /* 14.0:1 on accent, verified */
     --destructive: var(--color-rose-500);
-    --destructive-foreground: var(--color-graphite-900); /* 5.62:1 on destructive as a solid fill, verified */
+    --destructive-foreground: var(
+      --color-graphite-900
+    ); /* 5.62:1 on destructive as a solid fill, verified */
     --ring: var(--color-lilac-500);
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body), -apple-system, system-ui, sans-serif;
+    font-family:
+      var(--font-body),
+      -apple-system,
+      system-ui,
+      sans-serif;
   }
   h1,
   h2,
