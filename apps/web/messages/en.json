@@ -819,8 +819,8 @@
           "body": "Export your symptom logs, cycle entries and treatments as CSV, or a clinician summary as PDF, whenever you choose."
         },
         "delete": {
-          "title": "Delete it for good",
-          "body": "Deleting your account permanently removes your symptom logs, cycle entries, briefs and settings."
+          "title": "Delete your account",
+          "body": "Deleting your account removes your symptom logs, cycle entries, daily context, treatments, briefs and settings from EMBR."
         },
         "sessions": {
           "title": "See where you're signed in",
