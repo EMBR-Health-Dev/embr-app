@@ -52,6 +52,14 @@ const contextLogsUpsert = vi.fn().mockResolvedValue({
   updatedAt: "2026-01-01T00:00:00Z",
 });
 
+// The "your record goes back to" summary makes its own list requests;
+// mocked here so these tests keep asserting the dashboard's own calls.
+vi.mock("../../lib/record-history", () => ({
+  fetchRecordSpan: vi
+    .fn()
+    .mockResolvedValue({ start: null, symptomCount: 0, cycleCount: 0, treatmentCount: 0 }),
+}));
+
 vi.mock("../../lib/api", () => ({
   api: {
     symptomLogs: {

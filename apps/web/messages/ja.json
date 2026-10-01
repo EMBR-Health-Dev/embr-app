@@ -322,7 +322,8 @@
     "emptyBody": "症状、周期、治療を記録すると、日付順にここに表示されます。",
     "filteredEmptyTitle": "この条件に一致する記録はありません。",
     "filteredEmptyBody": "上の項目を追加で選択してみてください。",
-    "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。"
+    "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。",
+    "truncatedNoticeAll": "すべての記録のうち、最近記録された内容を表示しています。"
   },
   "Trends": {
     "title": "シグナル",
@@ -339,7 +340,9 @@
     "noCycleDataCaveat": "周閉経期には周期が不規則になったり、なくなったりすることはよくあります。これはあなたと担当医のための記録であり、診断ではありません。",
     "averagingDays": "この期間、生理開始日の間隔は平均<strong>{days}日</strong>です。",
     "daysUnit": "日",
-    "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
+    "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。",
+    "symptomsHeaderAll": "すべての記録の症状",
+    "cycleLengthHeaderAll": "すべての記録の周期の長さ"
   },
   "CoOccurrence": {
     "cardLabel": "シグナル",
@@ -589,7 +592,11 @@
     "trendsAcrossBriefs": "直近{count}件のBRIEFについて",
     "trendsCategoryLine": "{category}：{total}件中{present}件のBRIEFで記録（うち{persistent}件で継続）。",
     "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
-    "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで記録されています。"
+    "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで記録されています。",
+    "presetsLabel": "期間を選ぶ",
+    "preset30": "過去30日間",
+    "preset90": "過去90日間",
+    "presetAll": "最初の記録から"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",
@@ -708,5 +715,16 @@
     "heading": "緊急のときは",
     "body": "EMBRは記録を残すためのものです。緊急かどうかを判断することはできません。胸の痛み、息苦しさ、非常に多い出血、突然の強い症状がある場合は、すぐにお住まいの地域の緊急番号に連絡してください（例：日本 119、EU 112、英国 999）。",
     "selfHarm": "自分を傷つけたい気持ちがあるときは、すぐに救急、またはお住まいの地域の相談窓口に連絡してください。"
+  },
+  "History": {
+    "rangeLabel": "表示する期間",
+    "range": {
+      "90d": "過去90日間",
+      "12m": "過去12か月",
+      "all": "すべての記録"
+    },
+    "recordSince": "あなたの記録は{date}から続いています。",
+    "recordSummary": "これまでに、症状の記録{symptoms}件、周期の記録{cycle}件、治療{treatments}件。",
+    "viewFullTimeline": "すべての記録をタイムラインで見る"
   }
 }

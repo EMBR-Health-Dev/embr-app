@@ -16,7 +16,8 @@ import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { AppNav } from "../../components/app-nav";
 import { EmailVerificationRequired } from "../../components/email-verification-required";
-import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
+import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
+import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
 
 function BriefPageContent() {
   const t = useTranslations("Brief");
@@ -40,6 +41,9 @@ function BriefPageContent() {
   // prompt, not a failed generation, so it must not carry the
   // "nothing was lost, try again" reassurance that error box shows.
   const [dateError, setDateError] = useState<string | null>(null);
+  // First day of the person's record, for the "Since your first entry"
+  // preset: a brief can cover the whole history, not only recent weeks.
+  const [recordStart, setRecordStart] = useState<string | null>(null);
   const [generateNeedsVerification, setGenerateNeedsVerification] = useState(false);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
 
@@ -80,6 +84,19 @@ function BriefPageContent() {
     // list's own loading state or page size.
     if (user) api.briefs.trends().then(setTrends);
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchRecordSpan()
+      .then((span) => setRecordStart(span.start))
+      .catch(() => setRecordStart(null));
+  }, [user]);
+
+  function applyPreset(from: string) {
+    setFromDate(from);
+    setToDate(toIsoDate(new Date()));
+    setDateError(null);
+  }
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
@@ -227,6 +244,26 @@ function BriefPageContent() {
             {generating ? t("generating") : t("generate")}
           </Button>
         </form>
+        <div
+          role="group"
+          aria-label={t("presetsLabel")}
+          className="mt-3 flex flex-wrap items-center gap-2"
+        >
+          {[
+            { label: t("preset30"), from: daysAgoIsoDate(30) },
+            { label: t("preset90"), from: daysAgoIsoDate(90) },
+            ...(recordStart ? [{ label: t("presetAll"), from: recordStart }] : []),
+          ].map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => applyPreset(preset.from)}
+              className="rounded-full border border-lilac-300 bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-lilac-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
         {dateError && (
           <p role="alert" className="mt-3 text-sm font-medium text-foreground">
             {dateError}

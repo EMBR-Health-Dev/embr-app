@@ -20,6 +20,8 @@ import { ReflectionsSection } from "../../components/reflections-section";
 import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
+import { RecordSpanSummary } from "../../components/record-span-summary";
+import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -94,6 +96,7 @@ function DashboardContent() {
   // logging" contract as apps/mobile/app/(app)/index.tsx's identical
   // refreshKey.
   const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
+  const [recordSpan, setRecordSpan] = useState<RecordSpan | null>(null);
 
   const suggestedCategory = searchParams.get("logCategory");
   const wantsFirstLog = searchParams.get("firstLog") !== null || Boolean(suggestedCategory);
@@ -118,6 +121,15 @@ function DashboardContent() {
   const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextSaved, setContextSaved] = useState(false);
+
+  // How far back the record goes; refreshed whenever a new entry lands
+  // (same signal the weekly reflection uses).
+  useEffect(() => {
+    if (!user) return;
+    fetchRecordSpan()
+      .then(setRecordSpan)
+      .catch(() => setRecordSpan(null));
+  }, [user, reflectionsRefreshKey]);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -483,6 +495,7 @@ function DashboardContent() {
         <section className="mt-14">
           <SectionLabel>{t("yourRecordLabel")}</SectionLabel>
           <p className="mt-2 text-sm text-foreground/60">{t("recordDescription")}</p>
+          {recordSpan && <RecordSpanSummary span={recordSpan} showTimelineLink />}
 
           <div className="mt-6">
             <button

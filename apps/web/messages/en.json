@@ -322,7 +322,8 @@
     "emptyBody": "As you log symptoms, cycle days, and treatments, they'll appear here in order, day by day.",
     "filteredEmptyTitle": "Nothing matches this filter.",
     "filteredEmptyBody": "Try turning on another category above.",
-    "truncatedNotice": "Showing your most recently recorded activity from the last {days} days."
+    "truncatedNotice": "Showing your most recently recorded activity from the last {days} days.",
+    "truncatedNoticeAll": "Showing your most recently recorded activity across your full record."
   },
   "Trends": {
     "title": "Signals",
@@ -339,7 +340,9 @@
     "noCycleDataCaveat": "Irregular or absent cycles are common in perimenopause. This is a record for you and your provider, not a diagnosis.",
     "averagingDays": "Averaging <strong>{days} days</strong> between period starts over this window.",
     "daysUnit": "days",
-    "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem."
+    "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem.",
+    "symptomsHeaderAll": "Symptoms, full record",
+    "cycleLengthHeaderAll": "Cycle length, full record"
   },
   "CoOccurrence": {
     "cardLabel": "Signal",
@@ -589,7 +592,11 @@
     "trendsAcrossBriefs": "Across your last {count, plural, one {# brief} other {# briefs}}",
     "trendsCategoryLine": "{category}: reported in {present} of {total, plural, one {# brief} other {# briefs}}, marked persistent in {persistent}.",
     "longitudinalPatternsTitle": "Recurring across your briefs",
-    "longitudinalPatternsLine": "{category} has appeared in every one of your last {total, plural, one {# brief} other {# briefs}}."
+    "longitudinalPatternsLine": "{category} has appeared in every one of your last {total, plural, one {# brief} other {# briefs}}.",
+    "presetsLabel": "Quick ranges",
+    "preset30": "Last 30 days",
+    "preset90": "Last 90 days",
+    "presetAll": "Since your first entry"
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",
@@ -708,5 +715,16 @@
     "heading": "When to seek urgent help",
     "body": "EMBR is a place to keep a record. It cannot tell whether something is an emergency. If you have chest pain, trouble breathing, very heavy bleeding, or a sudden severe symptom, call your local emergency number now (for example 112 in the EU, 999 in the UK, 119 in Japan).",
     "selfHarm": "If you are thinking about harming yourself, contact emergency services or a crisis line in your area right away."
+  },
+  "History": {
+    "rangeLabel": "Time range",
+    "range": {
+      "90d": "Last 90 days",
+      "12m": "Last 12 months",
+      "all": "Full record"
+    },
+    "recordSince": "Your record goes back to {date}.",
+    "recordSummary": "{symptoms, plural, one {# symptom entry} other {# symptom entries}}, {cycle, plural, one {# cycle entry} other {# cycle entries}} and {treatments, plural, one {# treatment} other {# treatments}} so far.",
+    "viewFullTimeline": "See your full timeline"
   }
 }

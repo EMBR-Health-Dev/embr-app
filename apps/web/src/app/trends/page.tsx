@@ -11,14 +11,22 @@ import { SectionLabel } from "../../components/section-label";
 import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 import { ContextCoOccurrenceCard } from "../../components/context-co-occurrence-card";
 import { EvidenceStrengthBadge } from "../../components/evidence-strength-badge";
+import { HistoryRangeSwitch } from "../../components/history-range-switch";
+import {
+  daysAgoIsoDate,
+  daysSince,
+  fetchRecordSpan,
+  rangeStartDate,
+  type HistoryRange,
+} from "../../lib/record-history";
 
-const WINDOW_DAYS = 90;
-const CYCLE_WINDOW_DAYS = 180;
+// Cycle length needs several period starts to say anything, so the
+// default 90-day view reads cycles over a longer 180 days; the wider
+// ranges use the range itself.
+const DEFAULT_CYCLE_WINDOW_DAYS = 180;
 
-function daysAgoIso(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString();
+function startOfDayIso(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00`).toISOString();
 }
 
 export default function TrendsPage() {
@@ -34,6 +42,20 @@ export default function TrendsPage() {
   const [evidenceStrength, setEvidenceStrength] = useState<EvidenceStrength | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [managesOrg, setManagesOrg] = useState(false);
+  const [range, setRange] = useState<HistoryRange>("90d");
+  const [recordStart, setRecordStart] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchRecordSpan()
+      .then((span) => setRecordStart(span.start))
+      .catch(() => setRecordStart(null));
+  }, [user]);
+
+  const awaitingRecordStart = range === "all" && recordStart === undefined;
+  const rangeStart = rangeStartDate(range, recordStart ?? null);
+  const windowDays = daysSince(rangeStart) - 1;
+  const cycleStart = range === "90d" ? daysAgoIsoDate(DEFAULT_CYCLE_WINDOW_DAYS) : rangeStart;
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -58,6 +80,7 @@ export default function TrendsPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (awaitingRecordStart) return;
     // Matches React's own documented data-fetching-in-effect pattern
     // (react.dev/learn/synchronizing-with-effects#fetching-data);
     // react-hooks/set-state-in-effect flags it anyway. Same reasoning
@@ -69,8 +92,8 @@ export default function TrendsPage() {
     // no longer subject to the pageSize:100 cap the old client-side
     // aggregation had (see Milestone 5's known limitation).
     Promise.all([
-      api.trends.symptomFrequency({ from: daysAgoIso(WINDOW_DAYS) }),
-      api.trends.cycleLength({ from: daysAgoIso(CYCLE_WINDOW_DAYS) }),
+      api.trends.symptomFrequency({ from: startOfDayIso(rangeStart) }),
+      api.trends.cycleLength({ from: startOfDayIso(cycleStart) }),
       api.trends.evidenceStrength(),
     ])
       .then(([symptomFrequency, cycleLength, evidenceStrengthResult]) => {
@@ -80,7 +103,7 @@ export default function TrendsPage() {
         setEvidenceStrength(evidenceStrengthResult.strength);
       })
       .finally(() => setDataLoading(false));
-  }, [user]);
+  }, [user, rangeStart, cycleStart, awaitingRecordStart]);
 
   const maxCount = frequency[0]?.count ?? 1;
 
@@ -101,6 +124,8 @@ export default function TrendsPage() {
         <p className="mt-3 text-body-s text-foreground/60">{t("subtitle")}</p>
         {evidenceStrength && <EvidenceStrengthBadge strength={evidenceStrength} />}
 
+        <HistoryRangeSwitch value={range} onChange={setRange} disabled={dataLoading} />
+
         {dataLoading ? (
           <p className="mt-8 text-body-s text-foreground/50">{tCommon("loading")}</p>
         ) : (
@@ -109,7 +134,9 @@ export default function TrendsPage() {
               <SectionLabel>{t("reportedDataLabel")}</SectionLabel>
               <p className="mt-2 text-body-s text-foreground/60">{t("reportedDataDescription")}</p>
               <h2 className="mt-4 font-display text-heading-m text-foreground">
-                {t("symptomsHeader", { days: WINDOW_DAYS })}
+                {range === "all"
+                  ? t("symptomsHeaderAll")
+                  : t("symptomsHeader", { days: windowDays })}
               </h2>
               {frequency.length === 0 ? (
                 <>
@@ -141,18 +168,21 @@ export default function TrendsPage() {
             </section>
 
             <CoOccurrenceCard
-              from={daysAgoIso(WINDOW_DAYS)}
+              key={`co-${rangeStart}`}
+              from={startOfDayIso(rangeStart)}
               frequency={frequency}
-              windowDays={WINDOW_DAYS}
+              windowDays={windowDays}
             />
 
-            <ContextCoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
+            <ContextCoOccurrenceCard key={`ctx-${rangeStart}`} from={startOfDayIso(rangeStart)} />
 
             <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-6">
               <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>
               <p className="mt-2 text-body-s text-foreground/60">{t("cycleHistoryDescription")}</p>
               <h2 className="mt-4 font-display text-heading-m text-foreground">
-                {t("cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
+                {range === "all"
+                  ? t("cycleLengthHeaderAll")
+                  : t("cycleLengthHeader", { days: daysSince(cycleStart) - 1 })}
               </h2>
               {lengths.length === 0 ? (
                 <>

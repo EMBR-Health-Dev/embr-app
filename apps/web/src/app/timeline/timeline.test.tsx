@@ -27,6 +27,15 @@ const symptomLogsList = vi.fn();
 const cycleEntriesList = vi.fn();
 const treatmentsList = vi.fn();
 
+// The record summary's own list requests are mocked out so these tests
+// keep counting only the timeline's fetches; the date helpers stay real.
+vi.mock("../../lib/record-history", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/record-history")>()),
+  fetchRecordSpan: vi
+    .fn()
+    .mockResolvedValue({ start: null, symptomCount: 0, cycleCount: 0, treatmentCount: 0 }),
+}));
+
 vi.mock("../../lib/api", () => ({
   api: {
     organizations: { mine: vi.fn().mockResolvedValue([]) },
@@ -160,7 +169,8 @@ describe("Timeline page — populated state (real data flow)", () => {
     expect(screen.getByText("Started Estradiol patch")).toBeInTheDocument();
 
     // Most-recent-first ordering: Sep 20's heading appears before Sep 18's.
-    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    // Day headings are level 3, under a level-2 month heading.
+    const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     const sep20Index = headings.findIndex((h) => h?.includes("20"));
     const sep18Index = headings.findIndex((h) => h?.includes("18"));
     expect(sep20Index).toBeGreaterThanOrEqual(0);
@@ -223,5 +233,37 @@ describe("Timeline page — populated state (real data flow)", () => {
     // "タイムライン" appears twice (the nav link and the page's own h1) —
     // scoped to the heading specifically to disambiguate.
     expect(screen.getByRole("heading", { name: "タイムライン", level: 1 })).toBeInTheDocument();
+  });
+});
+
+describe("Timeline page — full record", () => {
+  it("shows how far back the record goes, and 'Full record' fetches from its first entry", async () => {
+    const { fetchRecordSpan } = await import("../../lib/record-history");
+    vi.mocked(fetchRecordSpan).mockResolvedValueOnce({
+      start: "2025-06-01",
+      symptomCount: 120,
+      cycleCount: 9,
+      treatmentCount: 2,
+    });
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    expect(await screen.findByText("Your record goes back to June 1, 2025.")).toBeInTheDocument();
+    expect(
+      screen.getByText("120 symptom entries, 9 cycle entries and 2 treatments so far."),
+    ).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Full record" }));
+
+    await waitFor(() =>
+      expect(symptomLogsList).toHaveBeenCalledWith(
+        expect.objectContaining({ from: new Date("2025-06-01T00:00:00").toISOString(), page: 1 }),
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Full record" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });
