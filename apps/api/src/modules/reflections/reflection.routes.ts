@@ -7,12 +7,13 @@ import {
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { reflectionService } from "./reflection.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/reflections", requireAuth());
+router.use("/reflections", requireAuth(), requireCurrentConsent());
 
 router.get(
   "/reflections",

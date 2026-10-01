@@ -12,6 +12,7 @@ import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { AppNav } from "../../components/app-nav";
+import { LanguageSwitcher } from "../../components/language-switcher";
 import { formatDeviceLabel } from "../../lib/user-agent";
 
 export default function SettingsPage() {
@@ -135,7 +136,7 @@ export default function SettingsPage() {
     setDeleting(true);
     try {
       await api.auth.deleteAccount({ password: deletePassword });
-      router.push("/login");
+      router.push("/login?reason=account-deleted");
     } catch (err) {
       setDeleteError(err instanceof ApiError ? err.message : t("genericError"));
     } finally {
@@ -160,7 +161,10 @@ export default function SettingsPage() {
     <div className="min-h-screen">
       <AppNav userEmail={user.email} managesOrg={managesOrg} onLogout={() => void handleLogout()} />
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
+          <LanguageSwitcher />
+        </div>
 
         <section className="mt-10">
           <h2 className="font-display text-heading-m text-foreground">{t("accountTitle")}</h2>

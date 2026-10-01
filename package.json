@@ -44,12 +44,13 @@
     "overrides": {
       "postcss": ">=8.5.18",
       "sharp": ">=0.35.4",
-      "brace-expansion": ">=2.1.2 <3",
+      "brace-expansion": ">=2.1.6 <3",
       "nanoid": ">=3.3.18",
       "deepmerge-ts": ">=8.0.0",
       "uuid": ">=11.1.1",
       "@opentelemetry/core": "^1.30.1",
       "js-yaml": ">=4.3.2",
+      "undici": ">=8.10.2 <9",
       "@xmldom/xmldom": ">=0.9.12"
     },
     "auditConfig": {

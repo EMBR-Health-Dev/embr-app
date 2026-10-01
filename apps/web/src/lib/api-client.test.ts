@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch, ApiError, setSessionExpiredHandler } from "./api-client";
+import {
+  apiFetch,
+  ApiError,
+  setConsentRequiredHandler,
+  setSessionExpiredHandler,
+} from "./api-client";
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -250,5 +255,34 @@ describe("ApiError", () => {
     expect(err.code).toBe("VALIDATION_ERROR");
     expect(err.message).toBe("Bad input");
     expect(err.details).toEqual([{ field: "email", message: "required" }]);
+  });
+});
+
+describe("apiFetch — consent-required notification", () => {
+  afterEach(() => setConsentRequiredHandler(null));
+
+  it("notifies when the API answers 403 CONSENT_REQUIRED, and still rejects", async () => {
+    const handler = vi.fn();
+    setConsentRequiredHandler(handler);
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(403, { error: { code: "CONSENT_REQUIRED", message: "Review required" } }),
+    );
+
+    await expect(apiFetch("/symptom-logs")).rejects.toMatchObject({
+      status: 403,
+      code: "CONSENT_REQUIRED",
+    });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not notify for other 403s", async () => {
+    const handler = vi.fn();
+    setConsentRequiredHandler(handler);
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(403, { error: { code: "EMAIL_NOT_VERIFIED", message: "Verify" } }),
+    );
+
+    await expect(apiFetch("/briefs")).rejects.toMatchObject({ status: 403 });
+    expect(handler).not.toHaveBeenCalled();
   });
 });

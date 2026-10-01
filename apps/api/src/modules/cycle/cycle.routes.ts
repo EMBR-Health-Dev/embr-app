@@ -10,13 +10,14 @@ import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { cycleService } from "./cycle.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/cycle-entries", requireAuth());
+router.use("/cycle-entries", requireAuth(), requireCurrentConsent());
 
 /** Create-or-replace the entry for the given date (see
  * cycleRepository.upsertByDate) — safe to call again for the same day

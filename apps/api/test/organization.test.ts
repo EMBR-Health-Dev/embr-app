@@ -2,9 +2,27 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { CURRENT_CONSENTS } from "./helpers/consents.js";
+import { LEGAL_DOCUMENT_VERSIONS } from "@embr/validation";
+import { consentRepository } from "../src/modules/consent/consent.repository.js";
+
 import { organizationService } from "../src/modules/organizations/organization.service.js";
 import { prisma } from "../src/lib/prisma.js";
 import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
+
+/** Records a health-processing withdrawal in the (faked) consent ledger. */
+function withdrawHealthProcessing(userId: string) {
+  return consentRepository.insertMany([
+    {
+      userId,
+      type: "HEALTH_PROCESSING",
+      version: LEGAL_DOCUMENT_VERSIONS.HEALTH_PROCESSING,
+      locale: "en",
+      action: "WITHDRAWN",
+      source: "SETTINGS",
+    },
+  ]);
+}
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -495,7 +513,9 @@ function lastVerificationToken(): string {
  * invite creation (see organization.routes.ts) and isn't testing the
  * gate itself. See registerAndLoginUnverified for that. */
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
-  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const register = await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   await agent.post("/auth/verify-email").send({ token: lastVerificationToken() });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   // Mirrors what a real browser does automatically: read the CSRF
@@ -512,7 +532,9 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 }
 
 async function registerAndLoginUnverified(agent: ReturnType<typeof request.agent>, email: string) {
-  const register = await agent.post("/auth/register").send({ email, password: VALID_PASSWORD });
+  const register = await agent
+    .post("/auth/register")
+    .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
   const login = await agent.post("/auth/login").send({ email, password: VALID_PASSWORD });
   const csrfCookie = (login.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
     c.startsWith("embr_csrf="),
@@ -1283,6 +1305,24 @@ describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
     expect(res.body.data.categories).toEqual([{ category: "HOT_FLASH", count: 5 }]);
   });
 
+  it("excludes members without current health consent before applying the minimum cohort size", async () => {
+    const { orgAdminAgent, organizationId } = await setupOrgWithLoggingMembers(5);
+    // All 5 logged; one then withdraws health processing. They must stop
+    // contributing, and the floor must apply to the 4 who remain.
+    const withdrawnId = state.memberships.find(
+      (m) => m.organizationId === organizationId && m.role === "ORG_MEMBER",
+    )!.userId;
+    await withdrawHealthProcessing(withdrawnId);
+
+    const res = await orgAdminAgent.get(
+      `/organizations/${organizationId}/trends/symptom-frequency`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data.cohortSize).toBe(4);
+    expect(res.body.data.suppressed).toBe(true);
+    expect(res.body.data.categories).toEqual([]);
+  });
+
   it("requires ORG_ADMIN, not just ORG_MEMBER", async () => {
     const { organizationId } = await setupOrgWithLoggingMembers(5);
     const app = createApp();
@@ -1358,6 +1398,25 @@ describe("GET /organizations/:organizationId/trends/activation", () => {
     const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
     expect(res.body.data.suppressed).toBe(true);
     expect(res.body.data.activatedCount).toBeNull();
+  });
+
+  it("counts logging activity only from members with current health consent, without changing eligibility", async () => {
+    const { orgAdminAgent, organizationId, app } = await setupOrg("consent");
+    const joinDate = new Date("2026-01-01T00:00:00.000Z");
+    const memberIds: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const memberId = await addRegisteredMember(app, `member-consent-${i}@embr.health`);
+      addMembership(organizationId, memberId, "ORG_MEMBER", joinDate);
+      if (i < 3) addSymptomLog(memberId, new Date("2026-01-10T00:00:00.000Z"));
+      memberIds.push(memberId);
+    }
+    // One of the three who logged withdraws health processing.
+    await withdrawHealthProcessing(memberIds[0]!);
+
+    const res = await orgAdminAgent.get(`/organizations/${organizationId}/trends/activation`);
+    expect(res.body.data.suppressed).toBe(false);
+    expect(res.body.data.eligibleCount).toBe(6); // seats, not health data: unchanged
+    expect(res.body.data.activatedCount).toBe(2);
   });
 
   it("returns real activation and weekly-active numbers once the cohort meets the minimum size", async () => {

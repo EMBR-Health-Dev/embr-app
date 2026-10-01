@@ -136,7 +136,7 @@ describe("ResetPassword page", () => {
 
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("新しいパスワード"), VALID_PASSWORD);
-    await user.type(screen.getByLabelText("新しいパスワード(確認)"), VALID_PASSWORD);
+    await user.type(screen.getByLabelText("新しいパスワード（確認）"), VALID_PASSWORD);
     await user.click(screen.getByRole("button", { name: "パスワードを再設定" }));
 
     await waitFor(() => expect(screen.getByText("パスワードを再設定しました")).toBeInTheDocument());

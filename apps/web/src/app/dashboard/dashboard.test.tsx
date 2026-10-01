@@ -113,7 +113,7 @@ describe("Dashboard — translation", () => {
     // evaluate), so an unscoped query would match each link twice.
     const desktopNav = screen.getByTestId("app-nav-desktop");
     expect(within(desktopNav).getByRole("link", { name: "Signals" })).toBeInTheDocument();
-    expect(within(desktopNav).getByRole("link", { name: "Clinical Brief" })).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "EMBR BRIEF" })).toBeInTheDocument();
     expect(screen.getByText("Today's cycle entry")).toBeInTheDocument();
     expect(screen.getByText("Today's context")).toBeInTheDocument();
     expect(screen.getByText("Having a hot flash right now?")).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe("Dashboard — translation", () => {
     expect(within(desktopNav).getByRole("link", { name: "設定" })).toBeInTheDocument();
     expect(screen.getByText("今日の周期記録")).toBeInTheDocument();
     expect(screen.getByText("今日の状況")).toBeInTheDocument();
-    expect(screen.getByText("今、ホットフラッシュが起きていますか?")).toBeInTheDocument();
+    expect(screen.getByText("今、ホットフラッシュが起きていますか？")).toBeInTheDocument();
   });
 
   it("translates symptom category options in the log form", async () => {
@@ -181,7 +181,7 @@ describe("Dashboard — weekly reflection", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("今週の記録: 1件 · 最も多い症状: ホットフラッシュ"),
+        screen.getByText("今週の記録：1件 · 最も多い症状：ホットフラッシュ"),
       ).toBeInTheDocument(),
     );
   });
@@ -467,7 +467,7 @@ describe("Dashboard — Clinical Brief as an evidence artifact", () => {
     renderWithIntl(<DashboardPage />);
 
     expect(
-      await screen.findByRole("button", { name: "Generate your first Clinical Brief" }),
+      await screen.findByRole("button", { name: "Generate your first EMBR BRIEF" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/generated/)).not.toBeInTheDocument();
   });
@@ -487,7 +487,7 @@ describe("Dashboard — Clinical Brief as an evidence artifact", () => {
     const { default: DashboardPage } = await import("./page");
     renderWithIntl(<DashboardPage />);
 
-    expect(await screen.findByRole("button", { name: "View Clinical Brief" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "View EMBR BRIEF" })).toBeInTheDocument();
     expect(
       screen.getByText("2026-01-01 → 2026-02-01 · generated February 1, 2026"),
     ).toBeInTheDocument();

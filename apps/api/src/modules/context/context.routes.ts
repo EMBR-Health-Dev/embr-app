@@ -7,13 +7,14 @@ import {
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireAuth } from "../auth/auth.middleware.js";
+import { requireCurrentConsent } from "../consent/consent.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { contextService } from "./context.service.js";
 
 const router: ExpressRouter = Router();
 
-router.use("/context-logs", requireAuth());
+router.use("/context-logs", requireAuth(), requireCurrentConsent());
 
 /** Create-or-replace the entry for the given date (see
  * contextRepository.upsertByDate) — safe to call again for the same

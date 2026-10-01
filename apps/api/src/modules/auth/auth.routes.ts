@@ -20,6 +20,7 @@ import { authRepository } from "./auth.repository.js";
 import { toUserDto } from "./auth.mappers.js";
 import { requireAuth } from "./auth.middleware.js";
 import { onboardingRepository } from "../onboarding/onboarding.repository.js";
+import { consentService } from "../consent/consent.service.js";
 import { writeAuditLog } from "./audit.js";
 import { requireCsrfToken, issueCsrfToken } from "./csrf.js";
 import {
@@ -202,9 +203,11 @@ router.get(
     const user = await authRepository.findUserById(req.user!.sub);
     if (!user) throw AppError.unauthorized();
     const onboarding = await onboardingRepository.findByUserId(req.user!.sub);
-    res
-      .status(200)
-      .json({ data: toUserDto(user, onboarding?.completedAt ?? null), requestId: req.requestId });
+    const consents = await consentService.statesFor(req.user!.sub);
+    res.status(200).json({
+      data: toUserDto(user, onboarding?.completedAt ?? null, consents),
+      requestId: req.requestId,
+    });
   }),
 );
 

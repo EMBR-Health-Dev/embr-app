@@ -30,6 +30,16 @@ export function setSessionExpiredHandler(handler: (() => void) | null): void {
   sessionExpiredHandler = handler;
 }
 
+// Same hand-off pattern for the API's server-side consent gate: any
+// request that comes back 403 CONSENT_REQUIRED (health routes, when a
+// consent item isn't current) routes the person to the consent screen,
+// wherever in the app the request came from. The server is the actual
+// control; this just keeps the UI in step with it.
+let consentRequiredHandler: (() => void) | null = null;
+export function setConsentRequiredHandler(handler: (() => void) | null): void {
+  consentRequiredHandler = handler;
+}
+
 // The one signal that distinguishes "a real session just expired" from
 // "there was never a session to begin with" — both produce an
 // identical 401 from the API (see auth.service.ts's refresh()), and
@@ -242,6 +252,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (!NO_REFRESH_PATHS.has(path)) markHadSession();
     return data;
   } catch (err) {
+    if (err instanceof ApiError && err.code === "CONSENT_REQUIRED") {
+      consentRequiredHandler?.();
+    }
     const shouldRetryAfterRefresh =
       err instanceof ApiError &&
       err.status === 401 &&
