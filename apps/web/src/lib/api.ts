@@ -23,6 +23,7 @@ import type {
   SymptomCoOccurrenceDto,
   SymptomContextCoOccurrenceDto,
   SymptomFrequencyDto,
+  SymptomHistoryDto,
   SymptomLogDto,
   TreatmentDto,
   TreatmentImpactDto,
@@ -140,6 +141,10 @@ export const api = {
       apiFetch<SymptomContextCoOccurrenceDto | null>("/trends/context-co-occurrence", { query }),
 
     evidenceStrength: () => apiFetch<EvidenceStrengthDto>("/trends/evidence-strength"),
+
+    /** Per-symptom history; `from`/`to` are YYYY-MM-DD in `timeZone`. */
+    symptomHistory: (query: { from?: string; to?: string; timeZone: string }) =>
+      apiFetch<SymptomHistoryDto>("/trends/symptom-history", { query }),
   },
 
   treatments: {

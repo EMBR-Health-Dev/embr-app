@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { CycleEntryDto, SymptomLogDto, TreatmentDto } from "@embr/types";
+import type { CycleEntryDto, SymptomHistoryDto, SymptomLogDto, TreatmentDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
@@ -11,6 +11,8 @@ import { SectionLabel } from "../../components/section-label";
 import { toIsoDate } from "../../lib/date-format";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
 import { RecordSpanSummary } from "../../components/record-span-summary";
+import { SymptomEvidenceCard } from "../../components/symptom-evidence-card";
+import { browserTimeZone } from "../../lib/symptom-evidence";
 import {
   daysSince,
   fetchRecordSpan,
@@ -52,6 +54,7 @@ interface DayGroup {
 export default function TimelinePage() {
   const t = useTranslations("Timeline");
   const tEnum = useTranslations("Enums");
+  const tHistory = useTranslations("SymptomHistory");
   const tCommon = useTranslations("Common");
   const locale = useLocale();
   const router = useRouter();
@@ -65,6 +68,7 @@ export default function TimelinePage() {
   const [truncated, setTruncated] = useState(false);
   const [range, setRange] = useState<HistoryRange>("90d");
   const [recordSpan, setRecordSpan] = useState<RecordSpan | null>(null);
+  const [symptomHistory, setSymptomHistory] = useState<SymptomHistoryDto | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [managesOrg, setManagesOrg] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(() => new Set(FILTER_KEYS));
@@ -91,6 +95,16 @@ export default function TimelinePage() {
       setRange(requested);
     }
   }, []);
+
+  // Per-symptom evidence cards: whole-record figures, independent of
+  // the range below, so fetched once.
+  useEffect(() => {
+    if (!user) return;
+    api.trends
+      .symptomHistory({ timeZone: browserTimeZone() })
+      .then(setSymptomHistory)
+      .catch(() => setSymptomHistory(null));
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -218,6 +232,27 @@ export default function TimelinePage() {
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
         {recordSpan && <RecordSpanSummary span={recordSpan} />}
+
+        {symptomHistory && symptomHistory.categories.length > 0 && (
+          <section className="mt-10" aria-labelledby="symptom-history-heading">
+            <h2
+              id="symptom-history-heading"
+              className="font-display text-heading-m text-foreground"
+            >
+              {tHistory("sectionTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-foreground/60">{tHistory("sectionIntro")}</p>
+            <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+              {symptomHistory.categories.map((category) => (
+                <SymptomEvidenceCard
+                  key={category.category}
+                  history={category}
+                  gapDays={symptomHistory.rules.notLoggedRecentlyGapDays}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
 
         <HistoryRangeSwitch value={range} onChange={setRange} disabled={dataLoading} />
 

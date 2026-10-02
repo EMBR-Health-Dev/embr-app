@@ -26,6 +26,7 @@ vi.mock("../../lib/auth-context", () => ({
 const symptomLogsList = vi.fn();
 const cycleEntriesList = vi.fn();
 const treatmentsList = vi.fn();
+const symptomHistory = vi.fn();
 
 // The record summary's own list requests are mocked out so these tests
 // keep counting only the timeline's fetches; the date helpers stay real.
@@ -42,6 +43,7 @@ vi.mock("../../lib/api", () => ({
     symptomLogs: { list: (...args: unknown[]) => symptomLogsList(...args) },
     cycleEntries: { list: (...args: unknown[]) => cycleEntriesList(...args) },
     treatments: { list: (...args: unknown[]) => treatmentsList(...args) },
+    trends: { symptomHistory: (...args: unknown[]) => symptomHistory(...args) },
   },
 }));
 
@@ -59,6 +61,14 @@ beforeEach(() => {
   symptomLogsList.mockReset().mockResolvedValue(emptyPage);
   cycleEntriesList.mockReset().mockResolvedValue(emptyPage);
   treatmentsList.mockReset().mockResolvedValue(emptyPage);
+  symptomHistory.mockReset().mockResolvedValue({
+    timeZone: "UTC",
+    rangeFrom: "2026-07-04",
+    rangeTo: "2026-10-01",
+    today: "2026-10-01",
+    rules: { notLoggedRecentlyGapDays: 21, notLoggedRecentlyMinDays: 3 },
+    categories: [],
+  });
 });
 
 describe("Timeline page — empty state", () => {
@@ -265,5 +275,73 @@ describe("Timeline page — full record", () => {
       "aria-pressed",
       "true",
     );
+  });
+});
+
+describe("Timeline page — symptom evidence cards", () => {
+  function category(overrides: Record<string, unknown>) {
+    return {
+      category: "BRAIN_FOG",
+      firstLoggedOn: "2026-07-14",
+      lastLoggedOn: "2026-10-01",
+      totalEntries: 30,
+      totalDaysLogged: 30,
+      daysLoggedLast7: 5,
+      daysLoggedLast42: 24,
+      rangeEntries: 30,
+      rangeDaysLogged: 30,
+      rangeSeverityDays: { MILD: 10, MODERATE: 15, SEVERE: 5 },
+      notLoggedRecently: false,
+      days: [],
+      ...overrides,
+    };
+  }
+
+  it("shows what, when, how often and recently for each symptom, and links to its history", async () => {
+    symptomHistory.mockResolvedValue({
+      timeZone: "UTC",
+      rangeFrom: "2026-07-04",
+      rangeTo: "2026-10-01",
+      today: "2026-10-01",
+      rules: { notLoggedRecentlyGapDays: 21, notLoggedRecentlyMinDays: 3 },
+      categories: [
+        category({}),
+        category({
+          category: "JOINT_PAIN",
+          lastLoggedOn: "2026-09-04",
+          daysLoggedLast7: 0,
+          daysLoggedLast42: 6,
+          notLoggedRecently: true,
+        }),
+      ],
+    });
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    const heading = await screen.findByRole("heading", { name: "Symptom history" });
+    const section = heading.closest("section")!;
+    const fog = within(section).getByRole("heading", { name: "Brain Fog" }).closest("li")!;
+    expect(within(fog).getByText("24 of the last 42 days")).toBeInTheDocument();
+    expect(within(fog).getByText("Jul 14, 2026")).toBeInTheDocument();
+    expect(within(fog).getByText("Logged on 5 of the last 7 days.")).toBeInTheDocument();
+    expect(within(fog).queryByText("Not logged recently")).not.toBeInTheDocument();
+    expect(within(fog).getByRole("link", { name: "View Brain Fog history" })).toHaveAttribute(
+      "href",
+      "/timeline/BRAIN_FOG",
+    );
+
+    const joint = within(section).getByRole("heading", { name: "Joint Pain" }).closest("li")!;
+    expect(within(joint).getByText("Not logged recently")).toBeInTheDocument();
+    expect(within(joint).getByText("Not logged in the last 21 days.")).toBeInTheDocument();
+    for (const word of [/resolved/i, /improved/i, /gone/i]) {
+      expect(section).not.toHaveTextContent(word);
+    }
+  });
+
+  it("shows no evidence section for an empty record", async () => {
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+    await screen.findByText("Nothing recorded yet.");
+    expect(screen.queryByRole("heading", { name: "Symptom history" })).not.toBeInTheDocument();
   });
 });

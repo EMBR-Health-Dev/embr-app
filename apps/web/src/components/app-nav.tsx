@@ -61,7 +61,8 @@ export function AppNav({
   ];
 
   function isActive(href: string): boolean {
-    return pathname === href;
+    // Detail views (e.g. /timeline/BRAIN_FOG) keep their section active.
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   return (
