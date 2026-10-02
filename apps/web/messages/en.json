@@ -849,6 +849,7 @@
       "createAccount": "Create an account",
       "disclaimer": "EMBR is not a diagnostic tool and does not provide medical advice. Talk to a qualified healthcare professional about your health."
     }
+  },
   "Consent": {
     "termsLabel": "I agree to the <link>Terms of Use</link>.",
     "privacyLabel": "I have read and understood the <link>Privacy Policy</link>.",

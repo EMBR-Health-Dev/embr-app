@@ -849,6 +849,7 @@
       "createAccount": "アカウントを作成",
       "disclaimer": "EMBRは診断ツールではなく、医学的アドバイスを提供するものではありません。ご自身の健康については、資格を持つ医療専門家にご相談ください。"
     }
+  },
   "Consent": {
     "termsLabel": "<link>利用規約</link>に同意します。",
     "privacyLabel": "<link>プライバシーポリシー</link>を読み、内容を理解しました。",
