@@ -159,13 +159,13 @@ const styles = StyleSheet.create({
   stageBody: { marginTop: 8, fontSize: 14, color: theme.colors.textSecondary },
   actions: { marginTop: 32, gap: 12 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: "center",
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 15, fontWeight: "600" },
   secondaryLink: {
     textAlign: "center",
     fontSize: 14,

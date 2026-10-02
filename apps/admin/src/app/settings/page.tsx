@@ -15,7 +15,7 @@ function ReasonBanner() {
   const reason = useSearchParams().get("reason");
   if (reason !== "password-changed") return null;
   return (
-    <p className="mb-6 rounded-sm bg-teal/10 px-3 py-2 text-sm text-teal">
+    <p className="mb-6 rounded-sm bg-foreground/10 px-3 py-2 text-sm text-foreground">
       Password changed. Log in with your new password.
     </p>
   );
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-bone/50">Loading…</p>
+        <p className="text-foreground/50">Loading…</p>
       </main>
     );
   }
@@ -105,8 +105,8 @@ export default function AdminSettingsPage() {
   if (!isAdmin) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <h1 className="font-display text-2xl text-bone">Not authorized</h1>
-        <p className="max-w-sm text-bone/60">{user.email} doesn&apos;t have admin access.</p>
+        <h1 className="font-display text-2xl text-foreground">Not authorized</h1>
+        <p className="max-w-sm text-foreground/60">{user.email} doesn&apos;t have admin access.</p>
       </main>
     );
   }
@@ -114,10 +114,10 @@ export default function AdminSettingsPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-bone">Settings</h1>
+        <h1 className="font-display text-2xl text-foreground">Settings</h1>
         <Link
           href="/dashboard"
-          className="text-sm font-medium text-teal underline underline-offset-2"
+          className="text-sm font-medium text-primary underline underline-offset-2"
         >
           ← Dashboard
         </Link>
@@ -130,8 +130,8 @@ export default function AdminSettingsPage() {
       </Suspense>
 
       <section className="mt-4">
-        <h2 className="font-display text-lg text-bone">Change password</h2>
-        <p className="mt-1 text-sm text-bone/60">
+        <h2 className="font-display text-lg text-foreground">Change password</h2>
+        <p className="mt-1 text-sm text-foreground/60">
           Changing your password signs you out everywhere, including this device.
         </p>
         <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-4" noValidate>
@@ -151,7 +151,7 @@ export default function AdminSettingsPage() {
             onChange={(e) => setNewPassword(e.target.value)}
             error={fieldErrors.newPassword}
           />
-          {passwordError && <p className="text-sm text-red-400">{passwordError}</p>}
+          {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
           <Button type="submit" disabled={changingPassword} className="self-start">
             {changingPassword ? "Changing…" : "Change password"}
           </Button>
@@ -160,34 +160,34 @@ export default function AdminSettingsPage() {
 
       <section className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg text-bone">Devices</h2>
+          <h2 className="font-display text-lg text-foreground">Devices</h2>
           <button
             onClick={logoutEverywhere}
             disabled={loggingOutAll}
-            className="text-sm font-medium text-red-400 underline underline-offset-2 disabled:opacity-50"
+            className="text-sm font-medium text-destructive underline underline-offset-2 disabled:opacity-50"
           >
             {loggingOutAll ? "Logging out…" : "Log out everywhere"}
           </button>
         </div>
 
         {sessionsLoading ? (
-          <p className="mt-3 text-sm text-bone/50">Loading…</p>
+          <p className="mt-3 text-sm text-foreground/50">Loading…</p>
         ) : sessions.length === 0 ? (
-          <p className="mt-3 text-sm text-bone/50">No active sessions.</p>
+          <p className="mt-3 text-sm text-foreground/50">No active sessions.</p>
         ) : (
-          <ul className="mt-4 divide-y divide-bone/10">
+          <ul className="mt-4 divide-y divide-border">
             {sessions.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
-                  <p className="text-bone">
+                  <p className="text-foreground">
                     {s.userAgent ?? "Unknown device"}
                     {s.current && (
-                      <span className="ml-2 rounded-sm bg-teal/10 px-1.5 py-0.5 text-xs font-medium text-teal">
+                      <span className="ml-2 rounded-sm bg-foreground/10 px-1.5 py-0.5 text-xs font-medium text-foreground">
                         This device
                       </span>
                     )}
                   </p>
-                  <p className="text-bone/50">
+                  <p className="text-foreground/50">
                     {s.ipAddress ?? "Unknown IP"} · signed in{" "}
                     {new Date(s.createdAt).toLocaleDateString()}
                   </p>
@@ -196,7 +196,7 @@ export default function AdminSettingsPage() {
                   <button
                     onClick={() => revokeSession(s.id)}
                     disabled={revokingId === s.id}
-                    className="text-red-400 underline underline-offset-2 disabled:opacity-50"
+                    className="text-destructive underline underline-offset-2 disabled:opacity-50"
                   >
                     {revokingId === s.id ? "Revoking…" : "Revoke"}
                   </button>

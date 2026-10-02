@@ -188,7 +188,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
                   checked={checked}
                   onChange={() => toggle(category)}
                 />
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-lilac-300 px-3.5 py-1.5 text-sm text-foreground transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-700 peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+                <span className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3.5 py-1.5 text-sm text-foreground transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-100 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
                   {checked && <span aria-hidden="true">✓</span>}
                   {tEnum(`category.${category}`)}
                 </span>
@@ -222,7 +222,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
                         checked={severity === level}
                         onChange={() => choose(category, level)}
                       />
-                      <span className="flex justify-center rounded-sm border border-border px-3 py-2 text-sm text-foreground transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+                      <span className="flex justify-center rounded-sm border border-border px-3 py-2 text-sm text-foreground transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-100 peer-checked:font-medium peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
                         {tEnum(`severity.${level}`)}
                       </span>
                     </label>

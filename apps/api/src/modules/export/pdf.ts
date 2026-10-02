@@ -8,6 +8,7 @@ import {
   EMBR_PDF_HEADING_FONT,
   registerEmbrPdfFonts,
 } from "../../lib/pdf-fonts.js";
+import { PDF_INK, PDF_INK_FAINT, PDF_INK_MUTED, PDF_INK_SECONDARY } from "../../lib/pdf-palette.js";
 
 export function categoryLabel(category: string): string {
   return category
@@ -69,15 +70,13 @@ export function cycleLengths(entries: CycleEntry[]): number[] {
 export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocument {
   const doc = new PDFDocument({ margin: 50, size: "A4" });
   registerEmbrPdfFonts(doc);
-  const brass = "#b8974f";
-  const navy = "#0f1b2d";
 
-  doc.fillColor(navy).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR Health Summary");
+  doc.fillColor(PDF_INK).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR Health Summary");
   doc.moveDown(0.3);
   doc
     .fontSize(10)
     .font(EMBR_PDF_BODY_FONT)
-    .fillColor("#555555")
+    .fillColor(PDF_INK_SECONDARY)
     .text(`Prepared for ${input.userEmail}`)
     .text(
       `Range: ${input.from ? localDayStartLabel(input.from) : "all time"} to ${input.to ? localDayEndLabel(input.to) : "present"}`,
@@ -86,51 +85,51 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
   doc
     .moveDown(0.5)
     .fontSize(9)
-    .fillColor("#888888")
+    .fillColor(PDF_INK_MUTED)
     .text(
       "This is a personal tracking record, not a diagnosis. For discussion with your provider.",
     );
 
   doc.moveDown(1.2);
-  doc.strokeColor(brass).lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  doc.strokeColor(PDF_INK_FAINT).lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
   doc.moveDown(1);
 
   // ---- Symptom frequency ----
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Symptom frequency");
+  doc.fillColor(PDF_INK).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Symptom frequency");
   doc.moveDown(0.4);
   const frequency = symptomFrequency(input.symptomLogs);
   if (frequency.length === 0) {
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#555555")
+      .fillColor(PDF_INK_SECONDARY)
       .text("No symptoms logged in this range.");
   } else {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, count } of frequency) {
-      doc.fillColor(navy).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
-      doc.fillColor("#555555").text(`  ${count} occurrence${count === 1 ? "" : "s"}`);
+      doc.fillColor(PDF_INK).text(`${categoryLabel(category)}`, { continued: true, width: 300 });
+      doc.fillColor(PDF_INK_SECONDARY).text(`  ${count} occurrence${count === 1 ? "" : "s"}`);
     }
   }
 
   doc.moveDown(1);
 
   // ---- Cycle summary ----
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Cycle summary");
+  doc.fillColor(PDF_INK).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Cycle summary");
   doc.moveDown(0.4);
   const lengths = cycleLengths(input.cycleEntries);
   if (lengths.length === 0) {
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#555555")
+      .fillColor(PDF_INK_SECONDARY)
       .text("Not enough period-start entries in this range to compute cycle length.");
   } else {
     const average = Math.round(lengths.reduce((sum, l) => sum + l, 0) / lengths.length);
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor(navy)
+      .fillColor(PDF_INK)
       .text(
         `Average cycle length: ${average} days (${lengths.length} cycle${lengths.length === 1 ? "" : "s"} recorded)`,
       );
@@ -139,24 +138,24 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
   doc.moveDown(1);
 
   // ---- Recent entries table ----
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Symptom log");
+  doc.fillColor(PDF_INK).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Symptom log");
   doc.moveDown(0.4);
   if (input.symptomLogs.length === 0) {
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#555555")
+      .fillColor(PDF_INK_SECONDARY)
       .text("No entries in this range.");
   } else {
     doc.fontSize(9).font(EMBR_PDF_BODY_FONT);
     for (const log of input.symptomLogs) {
       if (doc.y > 760) doc.addPage();
       doc
-        .fillColor(navy)
+        .fillColor(PDF_INK)
         .text(
           `${formatDate(log.occurredAt)}  ${categoryLabel(log.category)}  (${log.severity.toLowerCase()})`,
         );
-      if (log.notes) doc.fillColor("#666666").text(`  ${log.notes}`, { indent: 10 });
+      if (log.notes) doc.fillColor(PDF_INK_SECONDARY).text(`  ${log.notes}`, { indent: 10 });
     }
   }
 
@@ -173,13 +172,13 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
   // export) already includes the user's own notes. Excluding them
   // only for treatments would be an inconsistent surprise in what's
   // supposed to be a complete personal record.
-  doc.fillColor(navy).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Treatment history");
+  doc.fillColor(PDF_INK).fontSize(14).font(EMBR_PDF_HEADING_FONT).text("Treatment history");
   doc.moveDown(0.4);
   if (input.treatments.length === 0) {
     doc
       .fontSize(10)
       .font(EMBR_PDF_BODY_FONT)
-      .fillColor("#555555")
+      .fillColor(PDF_INK_SECONDARY)
       .text("No treatments logged in this range.");
   } else {
     doc.fontSize(9).font(EMBR_PDF_BODY_FONT);
@@ -187,16 +186,17 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
       if (doc.y > 760) doc.addPage();
       const dateRange = `${formatDate(treatment.startDate)} – ${treatment.endDate ? formatDate(treatment.endDate) : "Ongoing"}`;
       doc
-        .fillColor(navy)
+        .fillColor(PDF_INK)
         .text(`${treatment.name}  ${treatmentCategoryLabel(treatment.category)}  ${dateRange}`);
-      if (treatment.notes) doc.fillColor("#666666").text(`  ${treatment.notes}`, { indent: 10 });
+      if (treatment.notes)
+        doc.fillColor(PDF_INK_SECONDARY).text(`  ${treatment.notes}`, { indent: 10 });
     }
   }
   doc.moveDown(0.4);
   doc
     .fontSize(9)
     .font(EMBR_PDF_BODY_FONT)
-    .fillColor("#888888")
+    .fillColor(PDF_INK_MUTED)
     .text(
       "This reflects what you've logged. It does not assess whether a treatment is working or" +
         " make treatment recommendations.",

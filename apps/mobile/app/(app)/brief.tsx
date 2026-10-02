@@ -11,7 +11,7 @@ import type {
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
-import { theme } from "../../lib/theme";
+import { errorMarker, destructiveText, theme } from "../../lib/theme";
 import { DatePickerField } from "../../components/date-picker-field";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
@@ -692,17 +692,17 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
-  error: { color: theme.colors.error, fontSize: 13 },
+  error: { ...errorMarker, fontSize: 13 },
   errorReassurance: { color: theme.colors.textMuted, fontSize: 12, marginTop: 4, lineHeight: 16 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 12,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 15, fontWeight: "600" },
   freshBrief: {
     marginTop: 20,
     padding: 16,
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   link: { fontSize: 13, color: theme.colors.success, fontWeight: "500" },
-  dangerText: { fontSize: 13, color: theme.colors.error },
+  dangerText: { fontSize: 13, ...destructiveText },
   briefRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,

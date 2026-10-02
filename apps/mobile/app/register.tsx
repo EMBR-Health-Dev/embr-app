@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { registerSchema } from "@embr/validation";
 import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
-import { theme } from "../lib/theme";
+import { errorMarker, theme } from "../lib/theme";
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -124,16 +124,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surface,
   },
-  error: { color: theme.colors.error, fontSize: 14 },
+  error: { ...errorMarker, fontSize: 14 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 16, fontWeight: "600" },
   link: { marginTop: 8, alignSelf: "center" },
   linkText: { color: theme.colors.success, fontWeight: "500" },
 });

@@ -125,7 +125,7 @@ export function SymptomCalendar({
                           onClick={() => onSelectDate(cell.date)}
                           className={`flex aspect-square items-center justify-center rounded-sm text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
                             evidence.state === "logged"
-                              ? `${SEVERITY_FILL[evidence.maxSeverity]} ${evidence.maxSeverity === "SEVERE" ? "text-white" : "text-foreground"}`
+                              ? `${SEVERITY_FILL[evidence.maxSeverity]} ${evidence.maxSeverity === "SEVERE" ? "text-pearl-50" : "text-foreground"}`
                               : `${NO_ENTRY_CELL} text-foreground/40`
                           } ${selected ? "ring-2 ring-foreground ring-offset-1" : ""}`}
                         >

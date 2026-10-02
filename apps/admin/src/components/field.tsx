@@ -9,14 +9,14 @@ export function Field({
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
-      <span className="font-medium text-bone">{label}</span>
+      <span className="font-medium text-foreground">{label}</span>
       <input
-        className={`rounded-sm border bg-navy px-3 py-2 text-bone placeholder:text-bone/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brass ${
-          error ? "border-red-400" : "border-bone/20"
+        className={`rounded-sm border bg-background px-3 py-2 text-foreground placeholder:text-foreground/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
+          error ? "border-destructive" : "border-border"
         }`}
         {...props}
       />
-      {error && <span className="text-xs text-red-400">{error}</span>}
+      {error && <span className="text-xs text-destructive">{error}</span>}
     </label>
   );
 }

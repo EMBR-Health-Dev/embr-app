@@ -9,7 +9,7 @@ import { ApiError } from "../../lib/api-client";
 import { Chip } from "../../components/chip";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
-import { theme } from "../../lib/theme";
+import { errorMarker, theme } from "../../lib/theme";
 
 const FLOWS = flowIntensitySchema.options;
 
@@ -207,16 +207,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: theme.colors.textPrimary,
   },
-  error: { color: theme.colors.error, fontSize: 14 },
+  error: { ...errorMarker, fontSize: 14 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 16, fontWeight: "600" },
   entryRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,

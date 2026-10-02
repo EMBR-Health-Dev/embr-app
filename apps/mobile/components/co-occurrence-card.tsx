@@ -57,7 +57,7 @@ export function CoOccurrenceCard({ from, to }: { from?: string; to?: string }) {
       accessibilityRole="summary"
       accessibilityLabel={t("coOccurrence.heading")}
     >
-      <Ionicons name="link-outline" size={20} color={theme.colors.accent} />
+      <Ionicons name="link-outline" size={20} color={theme.colors.textSecondary} />
       <Text style={styles.heading}>{t("coOccurrence.heading")}</Text>
       <Text style={styles.message}>
         {t("coOccurrence.message", {

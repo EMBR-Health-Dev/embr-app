@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   barRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   barLabel: { width: 110, fontSize: 13, color: theme.colors.textPrimary },
   barTrack: { flex: 1, height: 10, borderRadius: 5, backgroundColor: theme.colors.border },
-  barFill: { height: 10, borderRadius: 5, backgroundColor: theme.colors.accent },
+  barFill: { height: 10, borderRadius: 5, backgroundColor: theme.colors.data },
   barCount: { width: 24, textAlign: "right", fontSize: 13, color: theme.colors.textMuted },
   averageText: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 8 },
   lengthRow: {

@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border,
   },
   progressDashActive: {
-    backgroundColor: theme.colors.accent,
+    backgroundColor: theme.colors.textPrimary,
   },
   skipText: {
     fontSize: 12,

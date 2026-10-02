@@ -100,7 +100,7 @@ export default function WhatsGoingOnScreen() {
               aria-pressed={isSelected}
               className={`rounded-sm border px-4 py-3 text-left transition-colors ${
                 isSelected
-                  ? "border-primary bg-primary/10"
+                  ? "border-lilac-700 bg-lilac-100"
                   : "border-border-subtle hover:border-border"
               }`}
             >

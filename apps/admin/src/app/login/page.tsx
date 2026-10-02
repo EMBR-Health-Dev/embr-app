@@ -58,8 +58,8 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl text-bone">EMBR Admin</h1>
-        <p className="mt-2 text-sm text-bone/60">
+        <h1 className="font-display text-3xl text-foreground">EMBR Admin</h1>
+        <p className="mt-2 text-sm text-foreground/60">
           Operations console — account and audit visibility only.
         </p>
 
@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
             error={fieldErrors.password}
           />
 
-          {formError && <p className="text-sm text-red-400">{formError}</p>}
+          {formError && <p className="text-sm text-destructive">{formError}</p>}
 
           <Button type="submit" disabled={submitting} className="mt-2">
             {submitting ? "Logging in…" : "Log in"}

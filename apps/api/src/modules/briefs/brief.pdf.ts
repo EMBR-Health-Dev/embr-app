@@ -11,18 +11,13 @@ import {
   severityLabel,
   treatmentCategoryLabel,
 } from "./brief-locale.js";
+import { PDF_ACCENT, PDF_INK, PDF_INK_FAINT, PDF_INK_MUTED } from "../../lib/pdf-palette.js";
 
-// EMBR Brand Guidelines v1.0 palette (see docs/design-tokens.md) — the
-// same graphite/lilac values apps/web's Tailwind tokens resolve to,
-// hardcoded here as hex because PDFKit has no CSS custom property
-// support. Kept to the same restrained roles the web semantic tokens
-// use: graphite-900 for primary text/headings, graphite-500 for
-// secondary/muted text, graphite-300 for hairline rules, lilac-500 as
-// the single, sparingly-used accent — never a second competing color.
-const INK = "#2A1F39"; // graphite-900 — headings, primary text
-const INK_MUTED = "#746B82"; // graphite-500 — secondary/meta text
-const INK_FAINT = "#B8B2C1"; // graphite-300 — hairline rules
-const ACCENT = "#9270A0"; // lilac-600 — the one accent color, used sparingly (one step bolder than the app's lilac-500 so it holds up in print)
+// Palette shared with the summary export: see lib/pdf-palette.ts.
+const INK = PDF_INK;
+const INK_MUTED = PDF_INK_MUTED;
+const INK_FAINT = PDF_INK_FAINT;
+const ACCENT = PDF_ACCENT;
 
 // The recurring "signal" mark from the brand's visual language — a
 // single point, not a bullet character — set immediately before every

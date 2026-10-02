@@ -284,7 +284,7 @@ function BriefPageContent() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <a
                 href={api.briefs.pdfUrl(justGenerated.id)}
-                className="inline-flex items-center justify-center rounded-sm bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="inline-flex items-center justify-center rounded-sm bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-graphite-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 {t("downloadPdf")}
               </a>

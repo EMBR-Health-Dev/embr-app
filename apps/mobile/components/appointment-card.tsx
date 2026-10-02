@@ -22,7 +22,7 @@ export function AppointmentCard({ appointmentStatus }: { appointmentStatus: stri
 
   return (
     <View style={styles.card}>
-      <Ionicons name="calendar-outline" size={20} color={theme.colors.accent} />
+      <Ionicons name="calendar-outline" size={20} color={theme.colors.textSecondary} />
       <Text style={styles.message}>{t(MESSAGE_KEYS[appointmentStatus])}</Text>
       <Pressable onPress={() => router.push("/(app)/brief")}>
         <Text style={styles.link}>{t("appointmentCard.generateBrief")}</Text>

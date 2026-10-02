@@ -427,14 +427,14 @@ function DashboardContent() {
           </SectionLabel>
           <p className="mt-2 text-sm text-foreground/60">{t("todayDescription")}</p>
 
-          <div className="mt-6 flex flex-col items-center gap-3 rounded border border-primary bg-primary/5 py-12 text-center">
+          <div className="mt-6 flex flex-col items-center gap-3 rounded border border-border-subtle bg-muted/40 py-12 text-center">
             {/* Signature interaction: one tap, no form, for the moment
                 that actually needs it — mid-hot-flash is not when
                 anyone wants to fill out a category picker. */}
             <button
               onClick={() => void logHotFlashNow()}
               disabled={loggingHotFlash || hotFlashCooldown}
-              className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.15)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100"
+              className="flex h-24 w-24 items-center justify-center rounded-full bg-foreground text-background shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.2)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100"
               aria-label={t("hotFlashAriaLabel")}
               aria-busy={loggingHotFlash}
             >
@@ -468,7 +468,7 @@ function DashboardContent() {
                       aria-pressed={hotFlashSeverity === s}
                       className={`rounded-sm border px-3 py-1.5 text-sm disabled:opacity-60 ${
                         hotFlashSeverity === s
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "border-lilac-700 bg-lilac-100 text-foreground"
                           : "border-border bg-background text-foreground"
                       }`}
                     >
@@ -557,7 +557,7 @@ function DashboardContent() {
                         aria-pressed={severity === s}
                         className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
                           severity === s
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-lilac-700 bg-lilac-100 text-foreground"
                             : "border-border text-foreground"
                         }`}
                       >

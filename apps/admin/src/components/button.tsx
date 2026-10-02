@@ -11,10 +11,10 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   const base =
-    "inline-flex items-center justify-center rounded-sm px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center rounded-sm px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50";
   const variants: Record<Variant, string> = {
-    primary: "bg-brass text-navy hover:bg-brass/90",
-    ghost: "bg-transparent text-bone hover:bg-bone/10",
+    primary: "bg-foreground text-background hover:bg-foreground/90",
+    ghost: "bg-transparent text-foreground hover:bg-foreground/10",
   };
   return (
     <button

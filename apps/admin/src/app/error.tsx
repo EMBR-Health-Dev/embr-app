@@ -20,8 +20,8 @@ export default function Error({
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-      <h1 className="font-display text-2xl text-bone">Something went wrong</h1>
-      <p className="max-w-sm text-bone/60">
+      <h1 className="font-display text-2xl text-foreground">Something went wrong</h1>
+      <p className="max-w-sm text-foreground/60">
         This page hit an unexpected error. Nothing was saved or lost because of this.
       </p>
       <div className="mt-2 flex gap-3">

@@ -263,9 +263,9 @@ export default function TimelinePage() {
               type="button"
               onClick={() => toggleFilter(key)}
               aria-pressed={activeFilters.has(key)}
-              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
                 activeFilters.has(key)
-                  ? "border-primary bg-primary/10 text-foreground"
+                  ? "border-lilac-700 bg-lilac-100 text-foreground"
                   : "border-border text-foreground/50"
               }`}
             >

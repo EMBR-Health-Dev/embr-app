@@ -13,7 +13,7 @@ import { Chip } from "../../components/chip";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { ReflectionsSection } from "../../components/reflections-section";
-import { theme } from "../../lib/theme";
+import { errorMarker, destructiveText, theme } from "../../lib/theme";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = symptomCategorySchema.options;
@@ -271,16 +271,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: theme.colors.textPrimary,
   },
-  error: { color: theme.colors.error, fontSize: 14 },
+  error: { ...errorMarker, fontSize: 14 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 16, fontWeight: "600" },
   logRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -292,5 +292,5 @@ const styles = StyleSheet.create({
   logCategory: { fontSize: 15, fontWeight: "500", color: theme.colors.textPrimary },
   logMeta: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
   logNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
-  deleteText: { fontSize: 13, color: theme.colors.error },
+  deleteText: { fontSize: 13, ...destructiveText },
 });

@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chipSelected: {
-    backgroundColor: theme.colors.selected,
+    backgroundColor: theme.colors.accentSoft,
     borderColor: theme.colors.selected,
   },
   label: {
@@ -40,6 +40,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   labelSelected: {
-    color: theme.colors.surface,
+    color: theme.colors.textPrimary,
   },
 });
