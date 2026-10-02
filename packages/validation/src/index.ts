@@ -338,6 +338,23 @@ export const trendsQuerySchema = z.object({
 });
 export type TrendsQuery = z.infer<typeof trendsQuerySchema>;
 
+// Calendar days, not instants: a history is grouped by the person's own
+// local days, so the range is given as YYYY-MM-DD plus the IANA timezone
+// to group in. The timezone itself is checked in the service (Intl),
+// since zod has no notion of valid zone names.
+const isoCalendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
+export const symptomHistoryQuerySchema = z
+  .object({
+    from: isoCalendarDate.optional(),
+    to: isoCalendarDate.optional(),
+    timeZone: z.string().min(1).max(64).optional(),
+  })
+  .refine((q) => !q.from || !q.to || q.from <= q.to, {
+    message: "from must not be after to",
+    path: ["from"],
+  });
+export type SymptomHistoryQuery = z.infer<typeof symptomHistoryQuerySchema>;
+
 // ---- Reflections (Milestone 19) ----
 //
 // Same unpaginated from/to shape as trendsQuerySchema and for the same
