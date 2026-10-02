@@ -687,6 +687,176 @@
       "caveat": "A count of what you've logged during this treatment, not a measure of how well it's working."
     }
   },
+  "Landing": {
+    "meta": {
+      "title": "EMBR | Evidence infrastructure for menopause",
+      "description": "EMBR helps you track symptoms, see patterns over time, and turn your experience into evidence for your healthcare conversations."
+    },
+    "skipToContent": "Skip to content",
+    "mockupCaption": "Illustrative example with sample data",
+    "nav": {
+      "label": "Site",
+      "home": "EMBR home",
+      "product": "Product",
+      "howItWorks": "How it works",
+      "brief": "EMBR BRIEF",
+      "privacy": "Your data",
+      "logIn": "Log in",
+      "start": "Start using EMBR",
+      "dashboard": "Open your dashboard"
+    },
+    "hero": {
+      "eyebrow": "Evidence infrastructure for menopause",
+      "headline": "Make sense of what you're experiencing.",
+      "body": "EMBR helps you track symptoms, see patterns over time, and turn your experience into evidence you can bring into your healthcare conversations.",
+      "primaryCta": "Start using EMBR",
+      "secondaryCta": "See how it works",
+      "trust": "Not a diagnosis. Not medical advice. A clearer record for you and your healthcare conversations.",
+      "loopLabel": "How EMBR works, in four steps",
+      "loop": {
+        "track": "Track",
+        "patterns": "See patterns",
+        "evidence": "Build evidence",
+        "care": "Prepare for care"
+      }
+    },
+    "story": {
+      "eyebrow": "The problem",
+      "headline": "Your symptoms are data.",
+      "moments": {
+        "m1": "The headache last Tuesday.",
+        "m2": "The night you barely slept.",
+        "m3": "The afternoon you could not concentrate.",
+        "m4": "The week your energy disappeared."
+      },
+      "body": "When those moments are scattered across memory, notes and appointments, the bigger picture is easy to lose.",
+      "kicker": "EMBR helps you capture the pattern.",
+      "stepsHeading": "How it works",
+      "steps": {
+        "track": {
+          "label": "Track",
+          "title": "Capture what you're experiencing.",
+          "body": "Log symptoms with severity, cycle entries, daily context like sleep and stress, and the treatments you try. A hot flash can be a single tap."
+        },
+        "patterns": {
+          "label": "See patterns",
+          "title": "Understand changes across time.",
+          "body": "Your timeline and Signals show how often symptoms appear, which ones occur together, and how your cycle has changed."
+        },
+        "brief": {
+          "label": "Build your brief",
+          "title": "Turn your record into a structured summary.",
+          "body": "Choose a date range and EMBR builds an EMBR BRIEF from what you've logged in it."
+        },
+        "care": {
+          "label": "Prepare for care",
+          "title": "Bring clearer evidence into the conversation.",
+          "body": "Review the brief, download it as a PDF, and take it to the conversation with your healthcare provider."
+        }
+      }
+    },
+    "product": {
+      "eyebrow": "The product",
+      "headline": "From symptom tracking to evidence.",
+      "body1": "An ordinary symptom tracker stores entries. EMBR connects them. Every log becomes part of a dated, longitudinal record, and that record feeds directly into a structured summary built for a healthcare conversation.",
+      "body2": "Patterns come from fixed, transparent rules applied to what you've logged, not from guesswork. When EMBR shows a signal, you can see the days it came from.",
+      "points": {
+        "record": {
+          "title": "One dated record",
+          "body": "Symptoms, cycle entries, daily context and treatments sit on the same timeline, so nothing has to be pieced together later."
+        },
+        "signals": {
+          "title": "Signals with their evidence",
+          "body": "When two symptoms are logged on the same day at least three times, EMBR shows it, along with the dates behind it."
+        },
+        "brief": {
+          "title": "Connected to your brief",
+          "body": "The same record becomes the summary you bring to your appointment. Nothing re-entered, nothing reconstructed from memory."
+        }
+      },
+      "mockup": {
+        "timelineLabel": "Your record",
+        "cycleLabel": "Cycle history"
+      }
+    },
+    "brief": {
+      "eyebrow": "EMBR BRIEF",
+      "headline": "A clearer way to walk into the appointment.",
+      "body": "EMBR turns your tracked symptoms, cycle information, patterns and relevant history into a structured EMBR BRIEF that you can review and bring into a healthcare conversation.",
+      "disclaimer": "It is a summary of your recorded data, not a diagnosis and not medical advice.",
+      "points": {
+        "contents": "Symptom frequency, a cycle summary, the treatments you logged, and how the period compares with the one before.",
+        "evidence": "Each pattern links back to the dates it was logged, so it can be checked rather than taken on trust.",
+        "questions": "Suggested questions for you to raise. Not treatment recommendations.",
+        "pdf": "A PDF you can download, print or share with the person you're seeing."
+      },
+      "clinician": "Your healthcare provider makes the clinical decisions. EMBR helps you arrive with a clearer record.",
+      "mockup": {
+        "range": "Jun 1 – Aug 31"
+      }
+    },
+    "evidence": {
+      "eyebrow": "The evidence gap",
+      "headline": "Your experience deserves a record.",
+      "body1": "Menopause symptoms rarely arrive all at once. They unfold over weeks and months, shift in intensity, and overlap with sleep, stress and everything else going on.",
+      "body2": "That makes them hard to remember accurately and hard to describe in a short appointment. What gets said in the room is often a summary of the last few days, not the last few months.",
+      "body3": "A consistent, dated record helps close that gap. Not by interpreting your body for you, but by making sure what you experienced is written down.",
+      "points": {
+        "dated": {
+          "title": "Dated, not remembered",
+          "body": "Each entry is recorded on the day it happens."
+        },
+        "consistent": {
+          "title": "Consistent over time",
+          "body": "The same symptom categories and severity scale every time, so change is visible."
+        },
+        "descriptive": {
+          "title": "Descriptive, not diagnostic",
+          "body": "EMBR describes what you logged. It does not tell you what is causing it."
+        }
+      }
+    },
+    "privacy": {
+      "eyebrow": "Your data",
+      "headline": "Your record belongs to you.",
+      "body": "EMBR is built so that your health record stays under your control.",
+      "points": {
+        "yours": {
+          "title": "Built from your entries",
+          "body": "Every pattern and summary is computed from what you've logged, not blended with anyone else's data."
+        },
+        "export": {
+          "title": "Take it with you",
+          "body": "Export your symptom logs, cycle entries and treatments as CSV, or a clinician summary as PDF, whenever you choose."
+        },
+        "delete": {
+          "title": "Delete your account",
+          "body": "Deleting your account removes your symptom logs, cycle entries, daily context, treatments, briefs and settings from EMBR."
+        },
+        "sessions": {
+          "title": "See where you're signed in",
+          "body": "Review your active sessions and sign out of any device from Settings."
+        },
+        "employer": {
+          "title": "If your employer offers EMBR",
+          "body": "Organization admins see only aggregated, anonymized trends, and nothing at all when a group is too small to keep individuals from being identified. They never see your individual symptom logs or briefs."
+        }
+      }
+    },
+    "cta": {
+      "headline": "Your symptoms are data. Let's make them useful.",
+      "primary": "Start using EMBR",
+      "secondary": "Explore the product"
+    },
+    "footer": {
+      "label": "Footer",
+      "tagline": "Evidence infrastructure for menopause.",
+      "product": "Product",
+      "logIn": "Log in",
+      "createAccount": "Create an account",
+      "disclaimer": "EMBR is not a diagnostic tool and does not provide medical advice. Talk to a qualified healthcare professional about your health."
+    }
+  },
   "Consent": {
     "termsLabel": "I agree to the <link>Terms of Use</link>.",
     "privacyLabel": "I have read and understood the <link>Privacy Policy</link>.",
