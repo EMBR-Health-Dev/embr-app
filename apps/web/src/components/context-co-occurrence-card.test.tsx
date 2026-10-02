@@ -86,7 +86,7 @@ describe("ContextCoOccurrenceCard", () => {
     expect(screen.getByText("Sep 1")).toBeInTheDocument();
     expect(screen.getByText("Sep 5")).toBeInTheDocument();
     expect(screen.getByText("Sep 12")).toBeInTheDocument();
-    expect(screen.getByText("Evidence")).toBeInTheDocument();
+    expect(screen.getByText("Recorded days")).toBeInTheDocument();
   });
 
   it("keeps the interpretation-boundary caveat visible, not hidden behind a disclosure", async () => {

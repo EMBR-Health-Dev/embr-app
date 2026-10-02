@@ -441,7 +441,7 @@ describe("Brief screen — Grounded in your data (Stage 4 citations)", () => {
   });
 });
 
-describe("Brief screen — View evidence (evidence drill-down)", () => {
+describe("Brief screen — View recorded days (evidence drill-down)", () => {
   it("resolves a frequency pattern's citation to its frequencyComparison entry and shows the caveat", async () => {
     mockHistoryOf(
       brief({
@@ -467,7 +467,7 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
     await waitFor(() => expect(screen.getByText("Grounded in your data")).toBeInTheDocument());
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
 
-    const toggle = screen.getByRole("button", { name: "View evidence" });
+    const toggle = screen.getByRole("button", { name: "View recorded days" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(toggle);
 
@@ -489,7 +489,7 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
       ),
     ).toBeInTheDocument();
 
-    const hideToggle = screen.getByRole("button", { name: "Hide evidence" });
+    const hideToggle = screen.getByRole("button", { name: "Hide recorded days" });
     expect(hideToggle).toHaveAttribute("aria-expanded", "true");
     fireEvent.click(hideToggle);
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
@@ -507,7 +507,7 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
     await renderAndExpandBrief();
 
     await waitFor(() => expect(screen.getByText("Grounded in your data")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("View evidence"));
+    fireEvent.click(screen.getByText("View recorded days"));
 
     expect(
       screen.getByText("This reflects self-reported logging frequency only."),
@@ -565,7 +565,7 @@ describe("Brief screen — View evidence (evidence drill-down)", () => {
     await renderAndExpandBrief();
 
     await waitFor(() => expect(screen.getByText("Grounded in your data")).toBeInTheDocument());
-    for (const toggle of screen.getAllByText("View evidence")) {
+    for (const toggle of screen.getAllByText("View recorded days")) {
       fireEvent.click(toggle);
     }
 
