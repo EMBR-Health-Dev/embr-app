@@ -11,7 +11,8 @@ try {
 
 (async () => {
   const source = path.join(__dirname, "field-guide.html");
-  const output = process.argv[2] || path.resolve(__dirname, "../../../../landingpage/embr-guide.pdf");
+  const output =
+    process.argv[2] || path.resolve(__dirname, "../../../../landingpage/embr-guide.pdf");
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(`file://${source}`, { waitUntil: "networkidle" });
