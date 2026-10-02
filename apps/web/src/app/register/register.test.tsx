@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import { LEGAL_DOCUMENT_URLS, LEGAL_DOCUMENT_VERSIONS } from "@embr/validation";
+import { LEGAL_DOCUMENT_VERSIONS } from "@embr/validation";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import { ApiError } from "../../lib/api-client";
@@ -33,8 +33,8 @@ async function fillCredentials(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Password"), "Sup3rSecret!Pass");
 }
 
-const termsBox = () => screen.getByRole("checkbox", { name: /Terms of Use/ });
-const privacyBox = () => screen.getByRole("checkbox", { name: /read and understood/ });
+const termsBox = () => screen.getByRole("checkbox", { name: /private early access/ });
+const privacyBox = () => screen.getByRole("checkbox", { name: /how my information will be used/ });
 const healthBox = () => screen.getByRole("checkbox", { name: /health information I provide/ });
 
 beforeEach(() => {
@@ -51,14 +51,17 @@ describe("Register — consent", () => {
     expect(screen.getByText(/uses the health information you choose to enter/)).toBeInTheDocument();
   });
 
-  it("links to the Terms and Privacy pages in a new tab", async () => {
+  it("does not link to or ask agreement to unpublished Terms or Privacy Policy", async () => {
     await renderPage();
-    const terms = screen.getByRole("link", { name: /Terms of Use/ });
-    expect(terms).toHaveAttribute("href", LEGAL_DOCUMENT_URLS.TERMS);
-    expect(terms).toHaveAttribute("target", "_blank");
-    for (const link of screen.getAllByRole("link", { name: /Privacy Policy/ })) {
-      expect(link).toHaveAttribute("href", LEGAL_DOCUMENT_URLS.PRIVACY);
+    expect(screen.queryByRole("link", { name: /Terms of Use|Privacy Policy/ })).toBeNull();
+    for (const box of screen.getAllByRole("checkbox")) {
+      expect(box).not.toHaveAccessibleName(/Terms of Use|Privacy Policy/);
     }
+    expect(
+      screen.getByText(
+        "The Terms of Use and Privacy Policy will be published before sign-up opens.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("does not submit without Terms and Privacy, and says why", async () => {
@@ -68,10 +71,7 @@ describe("Register — consent", () => {
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(registerMock).not.toHaveBeenCalled();
-    expect(screen.getByText("Please accept the Terms of Use to continue.")).toBeInTheDocument();
-    expect(
-      screen.getByText("Please confirm you have read the Privacy Policy."),
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("Please confirm this item to continue.")).toHaveLength(2);
   });
 
   it("sends each ticked item with the version shown, the language and the client", async () => {
@@ -145,7 +145,10 @@ describe("Register — consent", () => {
     registerMock.mockResolvedValue({});
     const user = userEvent.setup();
     await renderPage("ja");
-    expect(screen.getByRole("checkbox", { name: /利用規約/ })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /テスト段階/ })).not.toBeChecked();
+    expect(
+      screen.getByText(/利用規約とプライバシーポリシーは、新規登録の受付開始前に公開します/),
+    ).toBeInTheDocument();
     // The explanation names what is handled and why, once, right before the box.
     expect(
       screen.getByText(/EMBRの記録の提供、時間による変化の表示、EMBR BRIEFの作成/),
