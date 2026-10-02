@@ -33,7 +33,7 @@ export function SymptomEvidenceCard({
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-medium text-foreground">{name}</h3>
         {state === "not_logged_recently" && (
-          <span className="shrink-0 rounded-full border border-lilac-300 px-2 py-0.5 text-xs text-lilac-700">
+          <span className="shrink-0 rounded-sm border border-lilac-300 px-2 py-0.5 text-xs text-lilac-700">
             {t("notLoggedRecently")}
           </span>
         )}

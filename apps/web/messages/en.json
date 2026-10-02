@@ -533,7 +533,7 @@
   "Brief": {
     "title": "EMBR BRIEF",
     "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
-    "noMinimumEntries": "There's no minimum — even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
+    "noMinimumEntries": "There's no minimum. Even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
     "fromLabel": "From",
     "toLabel": "To",
     "generate": "Generate brief",

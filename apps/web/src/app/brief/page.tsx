@@ -258,7 +258,7 @@ function BriefPageContent() {
               key={preset.label}
               type="button"
               onClick={() => applyPreset(preset.from)}
-              className="rounded-full border border-lilac-300 bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-lilac-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="rounded-sm border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-lilac-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {preset.label}
             </button>

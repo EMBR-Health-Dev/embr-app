@@ -14,7 +14,7 @@ export function Button({
     "inline-flex items-center justify-center rounded-sm px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50";
   const variants: Record<Variant, string> = {
     primary: "bg-foreground text-background hover:bg-graphite-700",
-    ghost: "bg-transparent text-foreground hover:bg-muted",
+    ghost: "border border-border bg-transparent text-foreground hover:bg-muted",
   };
   return (
     <button

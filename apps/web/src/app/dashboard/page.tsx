@@ -750,7 +750,7 @@ function DashboardContent() {
               <ul className="mt-3 divide-y divide-border-subtle">
                 {logs.map((log) => (
                   <li key={log.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                    <div>
+                    <div className="min-w-0 break-words">
                       <span className="font-medium text-foreground">
                         {tEnum(`category.${log.category}`)}
                       </span>
@@ -759,7 +759,7 @@ function DashboardContent() {
                       </span>
                       {log.notes && <p className="mt-1 text-foreground/60">{log.notes}</p>}
                     </div>
-                    <div className="flex shrink-0 items-center gap-3">
+                    <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
                       <time className="text-foreground/40" dateTime={log.occurredAt}>
                         {new Date(log.occurredAt).toLocaleString(locale, {
                           month: "short",

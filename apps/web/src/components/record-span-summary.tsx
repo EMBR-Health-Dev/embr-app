@@ -27,7 +27,7 @@ export function RecordSpanSummary({
   }).format(new Date(`${span.start}T00:00:00`));
 
   return (
-    <div className="mt-4 rounded-sm border-l-[3px] border-l-lilac-600 bg-lilac-100 px-4 py-3">
+    <div className="mt-4 rounded-sm border-l-[3px] border-l-lilac-600 px-4 py-3">
       <p className="text-sm font-medium text-foreground">{t("recordSince", { date: since })}</p>
       <p className="mt-0.5 text-sm text-foreground/70">
         {t("recordSummary", {
