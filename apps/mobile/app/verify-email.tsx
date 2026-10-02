@@ -7,7 +7,7 @@ import { forgotPasswordSchema } from "@embr/validation";
 import { api } from "../lib/api";
 import { ApiError } from "../lib/api-client";
 import { extractToken } from "../lib/reset-token";
-import { theme } from "../lib/theme";
+import { errorMarker, theme } from "../lib/theme";
 
 // Same known limitation as reset-password.tsx: there's no deep-linking
 // set up for this flow on mobile — the verification email always
@@ -183,17 +183,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surface,
   },
-  error: { color: theme.colors.error, fontSize: 14 },
+  error: { ...errorMarker, fontSize: 14 },
   successText: { color: theme.colors.success, fontSize: 14 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 16, fontWeight: "600" },
   resendSection: {
     marginTop: 16,
     paddingTop: 16,

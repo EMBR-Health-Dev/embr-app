@@ -10,7 +10,7 @@ import { Chip } from "../../components/chip";
 import { DatePickerField } from "../../components/date-picker-field";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
-import { theme } from "../../lib/theme";
+import { errorMarker, destructiveText, theme } from "../../lib/theme";
 import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = treatmentCategorySchema.options;
@@ -349,16 +349,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: theme.colors.textPrimary,
   },
-  error: { color: theme.colors.error, fontSize: 14 },
+  error: { ...errorMarker, fontSize: 14 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 16, fontWeight: "600" },
   treatmentItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   treatmentNotes: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
   rowActions: { alignItems: "flex-end", gap: 6 },
   linkText: { fontSize: 13, color: theme.colors.success, fontWeight: "500" },
-  deleteText: { fontSize: 13, color: theme.colors.error },
+  deleteText: { fontSize: 13, ...destructiveText },
   impactPanel: {
     marginTop: 10,
     padding: 12,

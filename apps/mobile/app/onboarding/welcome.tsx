@@ -53,11 +53,11 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 32,
     alignSelf: "flex-start",
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 6,
     paddingHorizontal: 22,
     paddingVertical: 12,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 14, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 14, fontWeight: "600" },
 });

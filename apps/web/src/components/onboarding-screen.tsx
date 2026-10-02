@@ -31,7 +31,7 @@ export function OnboardingScreen({
               <span
                 key={s}
                 className={`h-[3px] w-6 rounded-full transition-colors ${
-                  i <= index ? "bg-primary" : "bg-muted"
+                  i <= index ? "bg-foreground" : "bg-muted"
                 }`}
               />
             ))}

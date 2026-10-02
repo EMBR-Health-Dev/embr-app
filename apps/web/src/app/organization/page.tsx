@@ -496,7 +496,7 @@ export default function OrganizationPage() {
                   onClick={() => setInviteRole(r)}
                   className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
                     inviteRole === r
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? "border-lilac-700 bg-lilac-100 text-foreground"
                       : "border-border text-foreground"
                   }`}
                 >

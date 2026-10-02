@@ -332,7 +332,7 @@
     "reportedDataDescription": "Reported data",
     "symptomsHeader": "Symptoms, last {days} days",
     "noSymptomsYet": "No symptom entries yet",
-    "noSymptomsBody": "Start logging to build your record. As your history grows, EMBR will organize your reported symptoms here.",
+    "noSymptomsBody": "Your record becomes more useful as you log consistently. After several entries, this view shows how often each symptom was recorded.",
     "cycleHistoryLabel": "Cycle history",
     "cycleHistoryDescription": "Recorded cycle information.",
     "cycleLengthHeader": "Cycle length, last {days} days",
@@ -359,7 +359,7 @@
     "questionCaveat": "A suggested question, not medical advice.",
     "briefCta": "View this period in your EMBR BRIEF",
     "emptyTitle": "Your record is still taking shape.",
-    "emptyBody": "EMBR needs more observations before it can surface a signal here. Keep logging over time; this section will update as your record grows."
+    "emptyBody": "Once your record has more entries, symptoms you recorded on the same days will appear here."
   },
   "ContextCoOccurrence": {
     "cardLabel": "Signal",
@@ -533,7 +533,7 @@
   "Brief": {
     "title": "EMBR BRIEF",
     "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
-    "noMinimumEntries": "There's no minimum — even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
+    "noMinimumEntries": "There's no minimum. Even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
     "fromLabel": "From",
     "toLabel": "To",
     "generate": "Generate brief",
@@ -549,7 +549,7 @@
     "downloadSummaryError": "Couldn't prepare the summary. Try again.",
     "pastBriefs": "Past briefs",
     "periodRange": "{from} to {to}",
-    "noBriefsYet": "No briefs generated yet.",
+    "noBriefsYet": "No briefs yet. Your first EMBR BRIEF will summarise the period you choose above.",
     "generatedOn": "generated {date}",
     "pdf": "PDF",
     "delete": "Delete",
@@ -568,7 +568,7 @@
     "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
     "frequencyComparisonTitle": "Compared with the previous period",
     "frequencyComparisonEntry": "Logged {currentCount, plural, one {# time} other {# times}}, compared with {previousCount, plural, one {# time} other {# times}} in the previous period.",
-    "patternsNoticedTitle": "Patterns noticed",
+    "patternsNoticedTitle": "Observed patterns",
     "coOccurrenceEntry": "{categoryA} and {categoryB} were both reported on {days, plural, one {# day} other {# days}}.",
     "treatmentImpactTitle": "Observed changes after starting treatment",
     "treatmentImpactEntry": "{beforeCount, plural, one {# symptom log} other {# symptom logs}} in the {beforeDays} days before starting, compared with {afterCount, plural, one {# symptom log} other {# symptom logs}} in the {afterDays} days after.",
@@ -654,7 +654,7 @@
     "currentAndPast": "Current and past",
     "endToday": "End today",
     "delete": "Delete",
-    "noneYet": "No treatments logged yet.",
+    "noneYet": "No treatments logged yet. Adding one lets your record show what you logged before and after you started it.",
     "showImpact": "See impact",
     "hideImpact": "Hide impact",
     "impactError": "Couldn't load this. Try again in a moment.",

@@ -79,7 +79,7 @@ export function ReflectionCard({
   return (
     <View style={styles.card} accessibilityRole="summary" accessibilityLabel={copy.heading}>
       <View style={styles.headerRow}>
-        <Ionicons name="sparkles-outline" size={18} color={theme.colors.accent} />
+        <Ionicons name="sparkles-outline" size={18} color={theme.colors.textSecondary} />
         <Text style={styles.heading}>{copy.heading}</Text>
         <Pressable
           onPress={onDismiss}

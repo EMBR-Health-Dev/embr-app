@@ -270,7 +270,7 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
     // Section headings.
     expect(text).toContain("前回の期間との比較");
     expect(text).toContain("継続している症状");
-    expect(text).toContain("気づいたパターン");
+    expect(text).toContain("記録に見られるパターン");
     expect(text).toContain("治療開始後の変化");
     expect(text).toContain("データに基づく根拠");
     // Dynamic sentence templates.

@@ -10,7 +10,7 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
-import { theme } from "../../lib/theme";
+import { errorMarker, destructiveText, theme } from "../../lib/theme";
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -381,10 +381,10 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surface,
   },
-  fieldError: { color: theme.colors.error, fontSize: 12, marginTop: 4 },
-  error: { color: theme.colors.error, fontSize: 14, marginTop: 8 },
+  fieldError: { ...errorMarker, fontSize: 12, marginTop: 4 },
+  error: { ...errorMarker, fontSize: 14, marginTop: 8 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
@@ -393,15 +393,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 15, fontWeight: "600" },
   devicesHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 24,
   },
-  dangerText: { fontSize: 14, color: theme.colors.error, fontWeight: "500" },
-  dangerTextSmall: { fontSize: 13, color: theme.colors.error },
+  dangerText: { fontSize: 14, ...destructiveText, fontWeight: "500" },
+  dangerTextSmall: { fontSize: 13, ...destructiveText },
   sessionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   deleteButton: {
-    backgroundColor: theme.colors.error,
+    backgroundColor: theme.colors.destructive,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,

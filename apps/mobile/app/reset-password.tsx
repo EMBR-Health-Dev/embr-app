@@ -7,7 +7,7 @@ import { passwordSchema } from "@embr/validation";
 import { api } from "../lib/api";
 import { ApiError } from "../lib/api-client";
 import { extractToken } from "../lib/reset-token";
-import { theme } from "../lib/theme";
+import { errorMarker, theme } from "../lib/theme";
 
 export default function ResetPasswordScreen() {
   const { t } = useTranslation();
@@ -154,16 +154,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   hint: { fontSize: 12, color: theme.colors.textMuted, marginTop: -8 },
-  error: { color: theme.colors.error, fontSize: 14 },
+  error: { ...errorMarker, fontSize: 14 },
   button: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: "600" },
+  buttonText: { color: theme.colors.primaryForeground, fontSize: 16, fontWeight: "600" },
   link: { marginTop: 8, alignSelf: "center" },
   linkText: { color: theme.colors.success, fontWeight: "500" },
 });

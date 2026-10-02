@@ -201,7 +201,7 @@
     "logConfirmation": "Logged.",
     "recentLogs": "Recent logs",
     "delete": "Delete",
-    "noSymptomsYet": "No symptoms logged yet.",
+    "noSymptomsYet": "Nothing logged yet. Your record becomes more useful as you log consistently.",
     "startingPoint": {
       "understandExperience": "Let's start building your record.",
       "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
@@ -226,7 +226,7 @@
     "noFlowLogged": "No flow logged",
     "periodStart": " · Period start",
     "periodEnd": " · Period end",
-    "noEntriesYet": "No entries yet."
+    "noEntriesYet": "No cycle entries yet. Logging period days lets your record show cycle lengths over time."
   },
   "treatments": {
     "title": "Treatments",
@@ -246,7 +246,7 @@
     "currentAndPast": "Current and past",
     "endToday": "End today",
     "delete": "Delete",
-    "noneYet": "No treatments logged yet.",
+    "noneYet": "No treatments logged yet. Adding one lets your record show what you logged before and after you started it.",
     "showImpact": "See impact",
     "hideImpact": "Hide impact",
     "impactError": "Couldn't load this. Try again in a moment.",
@@ -260,7 +260,7 @@
   "trends": {
     "title": "Trends",
     "symptomsHeader": "Symptoms, last {{days}} days",
-    "noSymptomsYet": "Nothing logged in this window yet. Patterns will show up here as you go.",
+    "noSymptomsYet": "Nothing logged in this window yet. After several entries, this view shows how often each symptom was recorded.",
     "cycleLengthHeader": "Cycle length, last {{days}} days",
     "noCycleDataYet": "Log at least two period-start days to see cycle lengths here. Irregular or absent cycles are common in perimenopause. This is a record for you and your provider, not a diagnosis.",
     "averagingPrefix": "Averaging ",
@@ -282,7 +282,7 @@
     "preparing": "Preparing…",
     "sharePdf": "Share / Save PDF",
     "pastBriefs": "Past briefs",
-    "noBriefsYet": "No briefs generated yet.",
+    "noBriefsYet": "No briefs yet. Your first EMBR BRIEF will summarise the period you choose.",
     "generatedOn": "generated {{date}}",
     "pdf": "PDF",
     "delete": "Delete",
@@ -303,7 +303,7 @@
     "frequencyComparisonDayCount_one": "{{count}} time",
     "frequencyComparisonDayCount_other": "{{count}} times",
     "frequencyComparisonEntry": "Logged {{current}}, compared with {{previous}} in the previous period.",
-    "patternsNoticedTitle": "Patterns noticed",
+    "patternsNoticedTitle": "Observed patterns",
     "coOccurrenceEntry_one": "{{categoryA}} and {{categoryB}} were both reported on {{count}} day.",
     "coOccurrenceEntry_other": "{{categoryA}} and {{categoryB}} were both reported on {{count}} days.",
     "treatmentImpactTitle": "Observed changes after starting treatment",

@@ -81,7 +81,7 @@ describe("Patterns page — empty states", () => {
     expect(await screen.findByText("No symptom entries yet")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Start logging to build your record. As your history grows, EMBR will organize your reported symptoms here.",
+        "Your record becomes more useful as you log consistently. After several entries, this view shows how often each symptom was recorded.",
       ),
     ).toBeInTheDocument();
   });
