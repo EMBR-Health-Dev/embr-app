@@ -243,7 +243,7 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
-  // ---- Patterns noticed (symptom co-occurrence, descriptive only) ----
+  // ---- Observed patterns (symptom co-occurrence, descriptive only) ----
   // Only rendered when present — coOccurrence is null both for a
   // brief predating this field and for one where no pair reached the
   // existing threshold; see ClinicalBriefDto's own doc comment for

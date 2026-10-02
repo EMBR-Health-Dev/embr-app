@@ -695,7 +695,9 @@ describe("Brief screen — Your recent trends", () => {
       </I18nextProvider>,
     );
 
-    await screen.findByText("No briefs generated yet.");
+    await screen.findByText(
+      "No briefs yet. Your first EMBR BRIEF will summarise the period you choose.",
+    );
     expect(screen.queryByText("Your recent trends")).not.toBeInTheDocument();
   });
 });
@@ -1018,7 +1020,11 @@ describe("Brief screen — history", () => {
       </I18nextProvider>,
     );
 
-    expect(await screen.findByText("No briefs generated yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "No briefs yet. Your first EMBR BRIEF will summarise the period you choose.",
+      ),
+    ).toBeInTheDocument();
   });
 });
 

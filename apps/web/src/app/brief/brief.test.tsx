@@ -604,7 +604,9 @@ describe("Brief page — Your recent trends", () => {
     const { default: BriefPage } = await import("./page");
     renderWithIntl(<BriefPage />);
 
-    await screen.findByText("No briefs generated yet.");
+    await screen.findByText(
+      "No briefs yet. Your first EMBR BRIEF will summarise the period you choose above.",
+    );
     expect(screen.queryByText("Your recent trends")).not.toBeInTheDocument();
   });
 });
@@ -955,7 +957,11 @@ describe("Brief page — history", () => {
     const { default: BriefPage } = await import("./page");
     renderWithIntl(<BriefPage />);
 
-    expect(await screen.findByText("No briefs generated yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "No briefs yet. Your first EMBR BRIEF will summarise the period you choose above.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("lists past briefs and expands one on click", async () => {

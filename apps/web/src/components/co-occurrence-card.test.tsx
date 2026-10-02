@@ -44,7 +44,7 @@ describe("CoOccurrenceCard", () => {
     await waitFor(() => expect(mockCoOccurrence).toHaveBeenCalled());
     expect(await screen.findByText("Your record is still taking shape.")).toBeInTheDocument();
     expect(
-      screen.getByText(/EMBR needs more observations before it can surface a signal here/),
+      screen.getByText(/symptoms you recorded on the same days will appear here/),
     ).toBeInTheDocument();
   });
 

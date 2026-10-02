@@ -158,7 +158,7 @@ const EN: PdfStrings = {
     ` ${previousCount} time${previousCount === 1 ? "" : "s"} in the previous period.`,
   ongoingSymptomsHeading: "Ongoing symptoms",
   persistentSymptomLine: (category) => `${category} remained present across both periods.`,
-  patternsNoticedHeading: "Patterns noticed",
+  patternsNoticedHeading: "Observed patterns",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA} and ${categoryB} were both reported on the same day on ${days}` +
     ` occasion${days === 1 ? "" : "s"}.`,
@@ -229,7 +229,7 @@ const JA: PdfStrings = {
     `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
   ongoingSymptomsHeading: "継続している症状",
   persistentSymptomLine: (category) => `${category}は両方の期間で継続して記録されました。`,
-  patternsNoticedHeading: "気づいたパターン",
+  patternsNoticedHeading: "記録に見られるパターン",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA}と${categoryB}が同じ日に記録された日は${days}日でした。`,
   cycleSummaryHeading: "周期の要約",

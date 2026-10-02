@@ -18,6 +18,7 @@ import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
 const CATEGORIES = symptomCategorySchema.options;
 const SEVERITIES = severityLevelSchema.options;
+const SEVERITY_INTENSITY = { MILD: 1, MODERATE: 2, SEVERE: 3 } as const;
 
 function isCategory(value: unknown): value is (typeof CATEGORIES)[number] {
   return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
@@ -170,6 +171,7 @@ export default function HomeScreen() {
                   label={t(`enums.severity.${s}`)}
                   selected={severity === s}
                   onPress={() => setSeverity(s)}
+                  intensity={SEVERITY_INTENSITY[s]}
                 />
               ))}
             </View>

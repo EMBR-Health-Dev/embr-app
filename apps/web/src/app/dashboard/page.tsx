@@ -22,6 +22,7 @@ import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { DailyCheckIn } from "../../components/daily-check-in";
+import { SeverityMark } from "../../components/severity-mark";
 import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
 
 const CATEGORIES = [
@@ -466,12 +467,13 @@ function DashboardContent() {
                       onClick={() => void adjustHotFlashSeverity(s)}
                       disabled={severitySaving}
                       aria-pressed={hotFlashSeverity === s}
-                      className={`rounded-sm border px-3 py-1.5 text-sm disabled:opacity-60 ${
+                      className={`inline-flex min-h-11 items-center gap-2 rounded-sm border px-3 text-sm disabled:opacity-60 ${
                         hotFlashSeverity === s
-                          ? "border-lilac-700 bg-lilac-100 text-foreground"
-                          : "border-border bg-background text-foreground"
+                          ? "border-lilac-700 bg-lilac-100 font-medium text-foreground"
+                          : "border-border bg-background text-foreground/80"
                       }`}
                     >
+                      <SeverityMark severity={s} />
                       {tEnum(`severity.${s}`)}
                     </button>
                   ))}
@@ -555,12 +557,13 @@ function DashboardContent() {
                         type="button"
                         onClick={() => setSeverity(s)}
                         aria-pressed={severity === s}
-                        className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
+                        className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm border px-3 text-sm ${
                           severity === s
-                            ? "border-lilac-700 bg-lilac-100 text-foreground"
-                            : "border-border text-foreground"
+                            ? "border-lilac-700 bg-lilac-100 font-medium text-foreground"
+                            : "border-border text-foreground/80"
                         }`}
                       >
+                        <SeverityMark severity={s} />
                         {tEnum(`severity.${s}`)}
                       </button>
                     ))}
