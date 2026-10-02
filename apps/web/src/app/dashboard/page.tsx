@@ -24,6 +24,7 @@ import { RecordSpanSummary } from "../../components/record-span-summary";
 import { DailyCheckIn } from "../../components/daily-check-in";
 import { SeverityMark } from "../../components/severity-mark";
 import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
+import { richText } from "../../lib/rich-text";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -549,6 +550,9 @@ function DashboardContent() {
                 >
                   <span id="severity-group-label" className="font-medium text-foreground">
                     {t("severityLabel")}
+                  </span>
+                  <span className="text-xs text-foreground/60">
+                    {t.rich("severityGuide", richText)}
                   </span>
                   <div className="flex gap-2">
                     {SEVERITIES.map((s) => (

@@ -14,6 +14,7 @@ import { Field } from "../../components/field";
 import { AppNav } from "../../components/app-nav";
 import { LanguageSwitcher } from "../../components/language-switcher";
 import { formatDeviceLabel } from "../../lib/user-agent";
+import { richText } from "../../lib/rich-text";
 
 export default function SettingsPage() {
   const t = useTranslations("Settings");
@@ -313,7 +314,9 @@ export default function SettingsPage() {
 
         <section className="mt-10 border-t border-destructive/30 pt-8">
           <h2 className="font-display text-heading-m text-foreground">{t("deleteAccountTitle")}</h2>
-          <p className="mt-2 text-sm text-foreground/60">{t("deleteAccountDescription")}</p>
+          <p className="mt-2 text-sm text-foreground/60">
+            {t.rich("deleteAccountDescription", richText)}
+          </p>
 
           {!deleteConfirming ? (
             <button

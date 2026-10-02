@@ -68,7 +68,15 @@ describe("Patterns page — empty states", () => {
       await screen.findByText("See what your record is beginning to show over time."),
     ).toBeInTheDocument();
     expect(screen.getByText("Your record")).toBeInTheDocument();
-    expect(screen.getByText("Reported data")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_content: string, el: Element | null) =>
+          el?.textContent === "Entries you recorded for each symptom in this period." &&
+          ![...(el?.children ?? [])].some(
+            (c) => c.textContent === "Entries you recorded for each symptom in this period.",
+          ),
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Cycle history")).toBeInTheDocument();
     expect(screen.getByText("Recorded cycle information.")).toBeInTheDocument();
   });

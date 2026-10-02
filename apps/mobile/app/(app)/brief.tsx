@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type {
   BriefTrendsDto,
   ClinicalBriefDto,
@@ -138,7 +138,14 @@ export default function BriefScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>{t("brief.title")}</Text>
-            <Text style={styles.hint}>{t("brief.hint")}</Text>
+            <Text style={styles.hint}>
+              <Trans
+                i18nKey="brief.hint"
+                components={{
+                  b: <Text style={{ fontWeight: "600", color: theme.colors.textPrimary }} />,
+                }}
+              />
+            </Text>
 
             <View style={styles.dateRow}>
               <DatePickerField

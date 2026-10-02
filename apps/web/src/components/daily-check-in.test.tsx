@@ -100,7 +100,18 @@ describe("DailyCheckIn", () => {
       ],
     });
     expect(await screen.findByRole("heading", { name: "Today's symptoms" })).toBeInTheDocument();
-    expect(screen.getByText("Today's check in is saved.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_content: string, el: Element | null) =>
+          el?.textContent ===
+            "Today's check in is saved. You can edit it until the end of today." &&
+          ![...(el?.children ?? [])].some(
+            (c) =>
+              c.textContent ===
+              "Today's check in is saved. You can edit it until the end of today.",
+          ),
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Brain Fog").parentElement).toHaveTextContent("Brain Fog · Moderate");
     expect(onSaved).toHaveBeenCalled();
   });

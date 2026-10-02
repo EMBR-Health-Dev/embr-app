@@ -288,7 +288,8 @@
     "evidenceBody": "EMBR BRIEFは、あなたの記録の履歴を、担当医に伝えられる形にまとめます。",
     "evidenceLatestMeta": "{from} → {to}・作成日：{date}",
     "viewClinicalBrief": "EMBR BRIEFを見る",
-    "generateFirstBrief": "最初のEMBR BRIEFを作成する"
+    "generateFirstBrief": "最初のEMBR BRIEFを作成する",
+    "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。"
   },
   "Nav": {
     "navigationLabel": "メインナビゲーション",
@@ -329,7 +330,7 @@
     "title": "シグナル",
     "subtitle": "あなたの記録から、時間とともに見えてくるものを確認できます。",
     "reportedDataLabel": "あなたの記録",
-    "reportedDataDescription": "記録したデータ",
+    "reportedDataDescription": "この期間に各症状を記録した<b>件数</b>です。",
     "symptomsHeader": "過去{days}日間の症状",
     "noSymptomsYet": "症状の記録はまだありません",
     "noSymptomsBody": "記録を続けるほど、あなたの記録は役立つものになります。いくつか記録すると、各症状が記録された頻度がここに表示されます。",
@@ -523,7 +524,7 @@
     "revoking": "削除中…",
     "revoke": "削除",
     "deleteAccountTitle": "アカウントの削除",
-    "deleteAccountDescription": "アカウントとその中のすべてのデータ（症状の記録、周期の記録、日々の状況、治療の記録、BRIEF、設定など）を完全に削除します。この操作は取り消せません。",
+    "deleteAccountDescription": "アカウントとその中のすべてのデータ（症状の記録、周期の記録、日々の状況、治療の記録、BRIEF、設定など）を完全に削除します。<b>この操作は取り消せません。</b>",
     "deleteMyAccount": "アカウントを削除する",
     "confirmPasswordLabel": "パスワードを確認",
     "forgotPasswordHint": "パスワードをお忘れですか？",
@@ -535,8 +536,8 @@
   },
   "Brief": {
     "title": "EMBR BRIEF",
-    "description": "あなたの記録を整理した要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、診断や医学的助言ではありません。",
-    "noMinimumEntries": "記録の件数に最低条件はありません。1件の記録からでもBRIEFを作成できます。記録が非常に少ない場合は、推測せずにその旨をそのまま伝えます。",
+    "description": "あなたの記録を整理した要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、<b>診断や医学的助言ではありません</b>。",
+    "noMinimumEntries": "EMBR BRIEFは、<b>選んだ期間</b>について、各症状の記録頻度、記録に見られるパターン、周期の長さ、記録した治療、<b>医師に尋ねたい質問</b>をまとめます。記録の件数に最低条件はありません。記録が非常に少ない場合は、<b>推測せずに</b>その旨を伝えます。",
     "fromLabel": "開始日",
     "toLabel": "終了日",
     "generate": "EMBR BRIEFを作成",
@@ -545,7 +546,7 @@
     "generateError": "BRIEFを作成できませんでした。もう一度お試しください。",
     "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBRIEFは以下からそのままご覧いただけます。",
     "briefReady": "BRIEFが完成しました",
-    "aiAuthorshipNote": "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
+    "aiAuthorshipNote": "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。<b>メモの内容は使用していません。</b>",
     "downloadPdf": "PDFをダウンロード",
     "downloadSummary": "診察用サマリーをダウンロード",
     "downloadingSummary": "準備中…",
@@ -732,7 +733,7 @@
   },
   "SymptomHistory": {
     "sectionTitle": "症状の記録履歴",
-    "sectionIntro": "あなたの記録から数えた、記録のある日数です。記録のない日は「記録なし」と表示し、症状がなかった日としては扱いません。",
+    "sectionIntro": "あなたの記録から数えた、記録のある日数です。記録のない日は「<b>記録なし</b>」と表示し、症状がなかった日としては扱いません。",
     "firstLogged": "初回記録",
     "lastLogged": "最終記録",
     "period": "{from} → {to}",
@@ -744,7 +745,7 @@
     "notLoggedInLast": "過去{days}日間は記録されていません。",
     "notLoggedRecentlyRule": "{min}日以上記録のある症状に{days}日間記録がなく、ほかの症状は記録が続いている場合に表示します。",
     "noEntry": "記録なし",
-    "noEntryForDay": "この日の症状の記録はありません。",
+    "noEntryForDay": "この日の<b>症状の記録はありません</b>。",
     "noHistoryTitle": "記録履歴はありません",
     "noHistoryBody": "この症状の記録はまだありません。記録すると、ここに履歴が表示されます。",
     "viewHistory": "履歴を見る",
@@ -765,7 +766,7 @@
   },
   "CheckIn": {
     "title": "今日の体調はいかがですか？",
-    "intro": "今日ある症状を選び、それぞれの重症度を選んでください。選ばなかった症状は、今日の記録には含まれません。",
+    "intro": "今日ある症状を選び、それぞれの重症度を選んでください。選ばなかった症状は、今日の記録には<b>含まれません</b>。",
     "symptomsLabel": "今日の症状",
     "addAnother": "ほかの症状を追加",
     "showFewer": "表示する症状を減らす",
@@ -773,12 +774,13 @@
     "severityRequired": "選んだ症状ごとに、軽度・中等度・重度のいずれかを選んでください。",
     "save": "今日の記録を保存",
     "saving": "保存しています…",
-    "saved": "今日の記録を保存しました。",
+    "saved": "今日の記録を保存しました。<b>今日の終わりまで</b>編集できます。",
     "savedEmpty": "今日の記録に含まれる症状はありません。",
     "todayHeading": "今日の症状",
     "edit": "今日の記録を編集",
     "cancel": "キャンセル",
     "saveError": "記録を保存できませんでした。もう一度お試しください。",
-    "loadError": "今日の記録を読み込めませんでした。もう一度お試しください。"
+    "loadError": "今日の記録を読み込めませんでした。もう一度お試しください。",
+    "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。"
   }
 }

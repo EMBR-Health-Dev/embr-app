@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { severityLevelSchema, symptomCategorySchema } from "@embr/validation";
 import type { OnboardingProfileDto, SymptomLogDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
@@ -164,6 +164,14 @@ export default function HomeScreen() {
             </View>
 
             <Text style={styles.sectionLabel}>{t("home.severity")}</Text>
+            <Text style={styles.severityGuide}>
+              <Trans
+                i18nKey="home.severityGuide"
+                components={{
+                  b: <Text style={{ fontWeight: "600", color: theme.colors.textPrimary }} />,
+                }}
+              />
+            </Text>
             <View style={styles.chipRow}>
               {SEVERITIES.map((s) => (
                 <Chip
@@ -231,6 +239,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  severityGuide: { fontSize: 12, lineHeight: 16, color: theme.colors.textMuted, marginBottom: 8 },
   screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 10, marginBottom: 8 },

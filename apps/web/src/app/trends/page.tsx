@@ -20,6 +20,7 @@ import {
   rangeStartDate,
   type HistoryRange,
 } from "../../lib/record-history";
+import { richText } from "../../lib/rich-text";
 
 // Cycle length needs several period starts to say anything, so the
 // default 90-day view reads cycles over a longer 180 days; the wider
@@ -154,7 +155,7 @@ export default function TrendsPage() {
                 <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-6">
                   <SectionLabel>{t("reportedDataLabel")}</SectionLabel>
                   <p className="mt-2 text-body-s text-foreground/60">
-                    {t("reportedDataDescription")}
+                    {t.rich("reportedDataDescription", richText)}
                   </p>
                   <h2 className="mt-4 font-display text-heading-m text-foreground">
                     {range === "all"

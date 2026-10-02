@@ -288,7 +288,8 @@
     "evidenceBody": "Your EMBR BRIEF turns your recorded history into what you can bring to your GP.",
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
     "viewClinicalBrief": "View EMBR BRIEF",
-    "generateFirstBrief": "Generate your first EMBR BRIEF"
+    "generateFirstBrief": "Generate your first EMBR BRIEF",
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
   },
   "Nav": {
     "navigationLabel": "Main navigation",
@@ -329,7 +330,7 @@
     "title": "Signals",
     "subtitle": "See what your record is beginning to show over time.",
     "reportedDataLabel": "Your record",
-    "reportedDataDescription": "Reported data",
+    "reportedDataDescription": "<b>Entries</b> you recorded for each symptom in this period.",
     "symptomsHeader": "Symptoms, last {days} days",
     "noSymptomsYet": "No symptom entries yet",
     "noSymptomsBody": "Your record becomes more useful as you log consistently. After several entries, this view shows how often each symptom was recorded.",
@@ -523,7 +524,7 @@
     "revoking": "Revoking…",
     "revoke": "Revoke",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, daily context, treatments, briefs, and settings. This cannot be undone.",
+    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, daily context, treatments, briefs, and settings. <b>This cannot be undone.</b>",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordLabel": "Confirm your password",
     "forgotPasswordHint": "Don't know your password?",
@@ -535,8 +536,8 @@
   },
   "Brief": {
     "title": "EMBR BRIEF",
-    "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
-    "noMinimumEntries": "There's no minimum. Even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
+    "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation, <b>not a diagnosis, and not medical advice</b>.",
+    "noMinimumEntries": "Each EMBR BRIEF covers <b>the period you choose</b>: how often each symptom was recorded, observed patterns, cycle lengths and treatments you logged, and <b>questions to ask</b>. There's no minimum. With very little logged, it says so <b>rather than guess</b>.",
     "fromLabel": "From",
     "toLabel": "To",
     "generate": "Generate EMBR BRIEF",
@@ -545,7 +546,7 @@
     "generateError": "Couldn't generate a brief. Try again.",
     "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
     "briefReady": "Your brief is ready",
-    "aiAuthorshipNote": "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
+    "aiAuthorshipNote": "This summary and the questions are written by AI from the counts and patterns in this brief. <b>Your notes are not used.</b>",
     "downloadPdf": "Download PDF",
     "downloadSummary": "Download clinician summary",
     "downloadingSummary": "Preparing…",
@@ -732,7 +733,7 @@
   },
   "SymptomHistory": {
     "sectionTitle": "Symptom history",
-    "sectionIntro": "Days with an entry, counted from your own records. A day without an entry is shown as no entry recorded, never as a day without symptoms.",
+    "sectionIntro": "Days with an entry, counted from your own records. A day without an entry is shown as <b>no entry recorded</b>, never as a day without symptoms.",
     "firstLogged": "First logged",
     "lastLogged": "Last logged",
     "period": "{from} → {to}",
@@ -744,7 +745,7 @@
     "notLoggedInLast": "Not logged in the last {days} days.",
     "notLoggedRecentlyRule": "Shown when a symptom logged on at least {min} days has had no entry for {days} days, while other symptoms are still being logged.",
     "noEntry": "No entry recorded",
-    "noEntryForDay": "No symptom entry recorded for this day.",
+    "noEntryForDay": "<b>No symptom entry</b> recorded for this day.",
     "noHistoryTitle": "No history recorded",
     "noHistoryBody": "There are no entries for this symptom yet. Once you log it, its history will appear here.",
     "viewHistory": "View history",
@@ -765,7 +766,7 @@
   },
   "CheckIn": {
     "title": "How are you feeling today?",
-    "intro": "Select any symptoms you have today, then choose how severe each one is. Anything you don't select is simply not recorded today.",
+    "intro": "Select any symptoms you have today, then choose how severe each one is. Anything you don't select is <b>simply not recorded</b> today.",
     "symptomsLabel": "Symptoms today",
     "addAnother": "Add another symptom",
     "showFewer": "Show fewer symptoms",
@@ -773,12 +774,13 @@
     "severityRequired": "Choose Mild, Moderate or Severe for each selected symptom.",
     "save": "Save today's check in",
     "saving": "Saving…",
-    "saved": "Today's check in is saved.",
+    "saved": "Today's check in is saved. You can edit it <b>until the end of today</b>.",
     "savedEmpty": "Today's check in now has no symptoms recorded.",
     "todayHeading": "Today's symptoms",
     "edit": "Edit today's check in",
     "cancel": "Cancel",
     "saveError": "Your check in could not be saved. Please try again.",
-    "loadError": "Today's check in could not be loaded. Please try again."
+    "loadError": "Today's check in could not be loaded. Please try again.",
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
   }
 }

@@ -1043,7 +1043,14 @@ describe("Brief screen — medical disclaimer", () => {
     // the two platforms, not just presence.
     expect(
       await screen.findByText(
-        "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
+        (_content: string, el: Element | null) =>
+          el?.textContent ===
+            "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice." &&
+          ![...(el?.children ?? [])].some(
+            (c) =>
+              c.textContent ===
+              "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
+          ),
       ),
     ).toBeInTheDocument();
   });

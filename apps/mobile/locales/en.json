@@ -208,7 +208,8 @@
       "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
-    }
+    },
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
   },
   "cycle": {
     "title": "Today's cycle entry",
@@ -270,7 +271,7 @@
   },
   "brief": {
     "title": "EMBR BRIEF",
-    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
+    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, <b>not a diagnosis, and not medical advice</b>.",
     "fromPlaceholder": "From",
     "toPlaceholder": "To",
     "invalidDates": "Pick a start and end date, with the start before the end.",
@@ -366,7 +367,7 @@
     "confirmLogoutAllMessage": "Every device, including this one, will be signed out.",
     "logout": "Log out",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountHint": "This permanently deletes your account and everything in it: symptom logs, cycle entries, briefs, and settings. This cannot be undone.",
+    "deleteAccountHint": "This permanently deletes your account and everything in it: symptom logs, cycle entries, briefs, and settings. <b>This cannot be undone.</b>",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordPlaceholder": "Confirm your password",
     "forgotPasswordHint": "Don't know your password?",
