@@ -557,7 +557,7 @@ function DashboardContent() {
                         type="button"
                         onClick={() => setSeverity(s)}
                         aria-pressed={severity === s}
-                        className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm border px-3 text-sm ${
+                        className={`inline-flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-sm sm:flex-row sm:gap-2 sm:px-3 ${
                           severity === s
                             ? "border-lilac-700 bg-lilac-100 font-medium text-foreground"
                             : "border-border text-foreground/80"

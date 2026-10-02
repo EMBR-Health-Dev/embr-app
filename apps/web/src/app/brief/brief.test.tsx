@@ -530,7 +530,7 @@ describe("Brief page — Your recent trends", () => {
     expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
     expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
     expect(
-      screen.getByText("Hot Flash: reported in 3 of 3 briefs, marked persistent in 2."),
+      screen.getByText("Hot Flash: recorded in 3 of 3 briefs, listed as ongoing in 2."),
     ).toBeInTheDocument();
   });
 
@@ -818,10 +818,10 @@ describe("Brief page — multiple items", () => {
     renderWithIntl(<BriefPage />);
 
     expect(
-      await screen.findByText("Hot Flash: reported in 4 of 4 briefs, marked persistent in 3."),
+      await screen.findByText("Hot Flash: recorded in 4 of 4 briefs, listed as ongoing in 3."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Fatigue: reported in 2 of 4 briefs, marked persistent in 0."),
+      screen.getByText("Fatigue: recorded in 2 of 4 briefs, listed as ongoing in 0."),
     ).toBeInTheDocument();
   });
 });
@@ -1129,7 +1129,7 @@ describe("Brief page — history", () => {
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("From"), "2026-01-01");
     await user.type(screen.getByLabelText("To"), "2026-02-01");
-    await user.click(screen.getByRole("button", { name: "Generate brief" }));
+    await user.click(screen.getByRole("button", { name: "Generate EMBR BRIEF" }));
     expect(await screen.findByText("Fresh brief text.")).toBeInTheDocument();
 
     // Deletes via the history row's own delete button, for the same

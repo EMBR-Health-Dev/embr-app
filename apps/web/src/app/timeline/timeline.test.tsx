@@ -332,7 +332,7 @@ describe("Timeline page — symptom evidence cards", () => {
 
     const joint = within(section).getByRole("heading", { name: "Joint Pain" }).closest("li")!;
     expect(within(joint).getByText("Not logged recently")).toBeInTheDocument();
-    expect(within(joint).getByText("Not logged in the last 21 days.")).toBeInTheDocument();
+    expect(joint).toHaveTextContent("Not logged recently. Not logged in the last 21 days.");
     for (const word of [/resolved/i, /improved/i, /gone/i]) {
       expect(section).not.toHaveTextContent(word);
     }

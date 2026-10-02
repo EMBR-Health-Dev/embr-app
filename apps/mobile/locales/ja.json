@@ -204,7 +204,7 @@
     "noSymptomsYet": "まだ記録がありません。記録を続けるほど、あなたの記録は役立つものになります。",
     "startingPoint": {
       "understandExperience": "記録を始めましょう。",
-      "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
+      "understandPatterns": "パターンを知りたい方へ。記録が増えると、記録に見られるパターンがシグナルに表示されます。",
       "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
       "keepRecord": "長期的な記録を始めましょう。",
       "notSure": "記録を続けると見えてくるものがあります。"
@@ -273,7 +273,7 @@
     "fromPlaceholder": "開始日",
     "toPlaceholder": "終了日",
     "invalidDates": "開始日が終了日より前になるように、両方の日付を選択してください。",
-    "generate": "BRIEFを作成",
+    "generate": "EMBR BRIEFを作成",
     "generating": "作成中…",
     "generateError": "BRIEFを作成できませんでした。",
     "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBRIEFは以下からそのままご覧いただけます。",
@@ -323,7 +323,7 @@
     "trendsTitle": "最近の傾向",
     "briefCountPhrase_other": "{{count}}件のBRIEF",
     "trendsAcrossBriefs_other": "直近{{count}}件のBRIEFについて",
-    "trendsCategoryLine": "{{category}}：{{totalPhrase}}中{{present}}件で記録（うち{{persistent}}件で継続）。",
+    "trendsCategoryLine": "{{category}}：{{totalPhrase}}中{{present}}件で記録（うち{{persistent}}件で継続している症状として記載）。",
     "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
     "longitudinalPatternsLine": "{{category}}は直近{{totalPhrase}}すべてで記録されています。"
   },

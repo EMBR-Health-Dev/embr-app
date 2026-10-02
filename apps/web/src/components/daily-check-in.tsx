@@ -223,7 +223,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
                         checked={severity === level}
                         onChange={() => choose(category, level)}
                       />
-                      <span className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-border px-3 text-sm text-foreground/80 transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-100 peer-checked:font-medium peer-checked:text-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+                      <span className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-sm border border-border px-1 py-1.5 text-sm sm:flex-row sm:gap-2 sm:px-3 text-foreground/80 transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-100 peer-checked:font-medium peer-checked:text-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
                         <SeverityMark severity={level} />
                         {tEnum(`severity.${level}`)}
                       </span>

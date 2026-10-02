@@ -267,7 +267,7 @@
     "mostCommon": "最も多い症状：{category}",
     "startingPoint": {
       "understandExperience": "記録を始めましょう。",
-      "understandPatterns": "パターンを知りたい方へ。記録が増えるにつれて、パターンを表示していきます。",
+      "understandPatterns": "パターンを知りたい方へ。記録が増えると、記録に見られるパターンがシグナルに表示されます。",
       "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
       "keepRecord": "長期的な記録を始めましょう。",
       "notSure": "記録を続けると見えてくるものがあります。"
@@ -342,18 +342,21 @@
     "daysUnit": "日",
     "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。",
     "symptomsHeaderAll": "すべての記録の症状",
-    "cycleLengthHeaderAll": "すべての記録の周期の長さ"
+    "cycleLengthHeaderAll": "すべての記録の周期の長さ",
+    "emptyRecordTitle": "まだ記録がありません。",
+    "emptyRecordBody": "記録を続けるほど、あなたの記録は役立つものになります。いくつか記録すると、シグナルには各症状が記録された頻度、同じ日に記録された症状、周期の長さが表示されます。",
+    "emptyRecordAction": "今日の症状を記録する"
   },
   "CoOccurrence": {
     "cardLabel": "シグナル",
-    "cardDescription": "十分な記録が集まると、EMBRがあなたの記録からシグナルを示します。",
+    "cardDescription": "同じ日に記録された症状。",
     "findingHeading": "{categoryA}と{categoryB}が一緒に記録されました",
     "evidenceLabel": "エビデンス",
     "sharedDaysCount": "同じ日に記録：{days}日",
     "observedLabel": "観察された記録",
     "observedText": "{categoryA}は過去{days}日間で{countA}回記録されました。{categoryB}は{countB}回記録されました。",
     "caveat": "これはあなたが記録した内容の説明であり、診断や原因についての主張ではありません。",
-    "whyReasoning": "EMBRは、2つの症状が同じ日に記録された日が3日以上あると、このようなシグナルを表示します。現在、{categoryA}と{categoryB}が同じ日に記録された日は{days}日です。",
+    "whyReasoning": "2つの症状が同じ日に記録された日が3日以上になると、ここに表示されます。現在、{categoryA}と{categoryB}が同じ日に記録された日は{days}日です。",
     "questionLabel": "担当医に相談してみましょう",
     "questionText": "この時期に{categoryA}と{categoryB}が一緒に起こるのはよくあることですか？",
     "questionCaveat": "これは質問の提案であり、医学的助言ではありません。",
@@ -367,7 +370,7 @@
     "evidenceLabel": "エビデンス",
     "sharedDaysCount": "同じ日に記録：{days}日",
     "caveat": "これはあなたが記録した内容の説明であり、診断や一方が他方を引き起こしたという主張ではありません。",
-    "whyReasoning": "EMBRは、症状と状況の要因が同じ日に記録された日が3日以上あると、このようなシグナルを表示します。現在、{category}と{factor}が同じ日に記録された日は{days}日です。",
+    "whyReasoning": "症状と状況の要因が同じ日に記録された日が3日以上になると、ここに表示されます。現在、{category}と{factor}が同じ日に記録された日は{days}日です。",
     "briefCta": "この期間をEMBR BRIEFで見る"
   },
   "EvidenceStrength": {
@@ -378,7 +381,7 @@
       "ESTABLISHED": "十分な記録が蓄積されています"
     },
     "caption": {
-      "EARLY": "あなたは記録を作っている最中です。継続して記録することで、EMBRは症状や時間の経過にわたるより確かなシグナルを示せるようになります。",
+      "EARLY": "記録を続けるほど、あなたの記録は役立つものになります。",
       "EMERGING": "あなたの記録は形になり始めています。記録を続けると、より詳しい全体像が見えてきます。",
       "ESTABLISHED": "頼りになる、しっかりとした記録が集まっています。"
     }
@@ -536,7 +539,7 @@
     "noMinimumEntries": "記録の件数に最低条件はありません。1件の記録からでもBRIEFを作成できます。記録が非常に少ない場合は、推測せずにその旨をそのまま伝えます。",
     "fromLabel": "開始日",
     "toLabel": "終了日",
-    "generate": "BRIEFを作成",
+    "generate": "EMBR BRIEFを作成",
     "generating": "作成中…",
     "pickDates": "開始日と終了日の両方を選択してください。",
     "generateError": "BRIEFを作成できませんでした。もう一度お試しください。",
@@ -590,7 +593,7 @@
     "evidenceDatesInterpretation": "これはあなたが記録したデータの傾向を示すものであり、医学的な因果関係を証明するものではありません。",
     "trendsTitle": "最近の傾向",
     "trendsAcrossBriefs": "直近{count}件のBRIEFについて",
-    "trendsCategoryLine": "{category}：{total}件中{present}件のBRIEFで記録（うち{persistent}件で継続）。",
+    "trendsCategoryLine": "{category}：{total}件中{present}件のBRIEFで記録（うち{persistent}件で継続している症状として記載）。",
     "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
     "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで記録されています。",
     "presetsLabel": "期間を選ぶ",

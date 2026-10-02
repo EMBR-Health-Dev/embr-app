@@ -205,7 +205,7 @@ describe("Brief screen — generation", () => {
       </I18nextProvider>,
     );
 
-    fireEvent.click(screen.getByText("Generate brief"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
 
     expect(
       await screen.findByText("Pick a start and end date, with the start before the end."),
@@ -229,7 +229,7 @@ describe("Brief screen — generation", () => {
 
     fireEvent.click(screen.getByText("From"));
     fireEvent.click(screen.getByText("To"));
-    fireEvent.click(screen.getByText("Generate brief"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
 
     expect(await screen.findByText("Freshly generated.")).toBeInTheDocument();
     // Sent as precise start/end-of-local-day instants, not bare
@@ -260,7 +260,7 @@ describe("Brief screen — generation", () => {
 
     fireEvent.click(screen.getByText("From"));
     fireEvent.click(screen.getByText("To"));
-    fireEvent.click(screen.getByText("Generate brief"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
 
     expect(await screen.findByText("Date range too large")).toBeInTheDocument();
     expect(screen.queryByText("Your brief is ready")).not.toBeInTheDocument();
@@ -290,7 +290,7 @@ describe("Brief screen — generation", () => {
 
     fireEvent.click(screen.getByText("From"));
     fireEvent.click(screen.getByText("To"));
-    fireEvent.click(screen.getByText("Generate brief"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
 
     expect(
       await screen.findByText("Brief generation is temporarily unavailable."),
@@ -606,7 +606,7 @@ describe("Brief screen — Your recent trends", () => {
     expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
     expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
     expect(
-      screen.getByText("Hot Flash: reported in 3 of 3 briefs, marked persistent in 2."),
+      screen.getByText("Hot Flash: recorded in 3 of 3 briefs, listed as ongoing in 2."),
     ).toBeInTheDocument();
   });
 
@@ -881,10 +881,10 @@ describe("Brief screen — multiple items", () => {
     );
 
     expect(
-      await screen.findByText("Hot Flash: reported in 4 of 4 briefs, marked persistent in 3."),
+      await screen.findByText("Hot Flash: recorded in 4 of 4 briefs, listed as ongoing in 3."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Fatigue: reported in 2 of 4 briefs, marked persistent in 0."),
+      screen.getByText("Fatigue: recorded in 2 of 4 briefs, listed as ongoing in 0."),
     ).toBeInTheDocument();
   });
 });
@@ -992,7 +992,7 @@ describe("Brief screen — deletion", () => {
     await screen.findByText("2026-01-01 to 2026-02-01");
     fireEvent.click(screen.getByText("From"));
     fireEvent.click(screen.getByText("To"));
-    fireEvent.click(screen.getByText("Generate brief"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
     expect(await screen.findByText("Fresh brief text.")).toBeInTheDocument();
 
     // Deletes via the history row's own delete control, for the same

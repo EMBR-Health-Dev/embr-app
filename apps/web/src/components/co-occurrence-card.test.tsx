@@ -54,11 +54,7 @@ describe("CoOccurrenceCard", () => {
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
     renderWithIntl(<CoOccurrenceCard />);
 
-    expect(
-      await screen.findByText(
-        "What EMBR can surface from your record once there's enough to show a signal.",
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Symptoms you recorded on the same days.")).toBeInTheDocument();
   });
 
   it("renders nothing on an API error — fails gracefully, no error banner", async () => {
@@ -210,7 +206,7 @@ describe("CoOccurrenceCard", () => {
 
     expect(
       screen.getByText(
-        "EMBR surfaces a signal like this once two symptoms have been recorded together on at least 3 separate days. Hot Flash and Fatigue currently share 3 days.",
+        "This appears once two symptoms have been recorded on the same day on at least 3 separate days. Hot Flash and Fatigue currently share 3 days.",
       ),
     ).toBeInTheDocument();
   });
@@ -264,7 +260,7 @@ describe("CoOccurrenceCard", () => {
     expect(await screen.findByText("なぜこれが表示されているのですか？")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "EMBRは、2つの症状が同じ日に記録された日が3日以上あると、このようなシグナルを表示します。現在、ホットフラッシュと倦怠感が同じ日に記録された日は2日です。",
+        "2つの症状が同じ日に記録された日が3日以上になると、ここに表示されます。現在、ホットフラッシュと倦怠感が同じ日に記録された日は2日です。",
       ),
     ).toBeInTheDocument();
   });

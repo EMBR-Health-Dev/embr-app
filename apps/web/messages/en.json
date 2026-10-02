@@ -267,7 +267,7 @@
     "mostCommon": "Most common: {category}",
     "startingPoint": {
       "understandExperience": "Let's start building your record.",
-      "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
+      "understandPatterns": "You're here to understand patterns. Observed patterns appear in Signals as your record grows.",
       "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
@@ -342,18 +342,21 @@
     "daysUnit": "days",
     "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem.",
     "symptomsHeaderAll": "Symptoms, full record",
-    "cycleLengthHeaderAll": "Cycle length, full record"
+    "cycleLengthHeaderAll": "Cycle length, full record",
+    "emptyRecordTitle": "Nothing recorded yet.",
+    "emptyRecordBody": "Your record becomes more useful as you log consistently. After several entries, Signals shows how often each symptom was recorded, which symptoms you recorded on the same days, and your cycle lengths.",
+    "emptyRecordAction": "Log today's symptoms"
   },
   "CoOccurrence": {
     "cardLabel": "Signal",
-    "cardDescription": "What EMBR can surface from your record once there's enough to show a signal.",
+    "cardDescription": "Symptoms you recorded on the same days.",
     "findingHeading": "{categoryA} and {categoryB} appeared together",
     "evidenceLabel": "Evidence",
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "observedLabel": "Observed",
     "observedText": "{categoryA} was logged {countA, plural, one {# time} other {# times}} in the last {days} days. {categoryB} was logged {countB, plural, one {# time} other {# times}}.",
     "caveat": "A description of what you've logged: not a diagnosis, and not a claim about cause.",
-    "whyReasoning": "EMBR surfaces a signal like this once two symptoms have been recorded together on at least 3 separate days. {categoryA} and {categoryB} currently share {days, plural, one {# day} other {# days}}.",
+    "whyReasoning": "This appears once two symptoms have been recorded on the same day on at least 3 separate days. {categoryA} and {categoryB} currently share {days, plural, one {# day} other {# days}}.",
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
@@ -367,7 +370,7 @@
     "evidenceLabel": "Evidence",
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "caveat": "A description of what you've recorded: not a diagnosis, and not a claim that one caused the other.",
-    "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
+    "whyReasoning": "This appears once a symptom and a context factor have been recorded on the same day on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
     "briefCta": "View this period in your EMBR BRIEF"
   },
   "EvidenceStrength": {
@@ -378,7 +381,7 @@
       "ESTABLISHED": "Established record"
     },
     "caption": {
-      "EARLY": "You're building your record. As you log more consistently, EMBR can surface stronger signals across symptoms and time.",
+      "EARLY": "Your record becomes more useful as you log consistently.",
       "EMERGING": "Your record is starting to take shape. Keep logging to build a fuller picture.",
       "ESTABLISHED": "You have a solid record to draw on."
     }
@@ -536,7 +539,7 @@
     "noMinimumEntries": "There's no minimum. Even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
     "fromLabel": "From",
     "toLabel": "To",
-    "generate": "Generate brief",
+    "generate": "Generate EMBR BRIEF",
     "generating": "Generating…",
     "pickDates": "Pick both a start and end date.",
     "generateError": "Couldn't generate a brief. Try again.",
@@ -590,7 +593,7 @@
     "evidenceDatesInterpretation": "This describes a pattern in your logged data. It does not establish a medical cause.",
     "trendsTitle": "Your recent trends",
     "trendsAcrossBriefs": "Across your last {count, plural, one {# brief} other {# briefs}}",
-    "trendsCategoryLine": "{category}: reported in {present} of {total, plural, one {# brief} other {# briefs}}, marked persistent in {persistent}.",
+    "trendsCategoryLine": "{category}: recorded in {present} of {total, plural, one {# brief} other {# briefs}}, listed as ongoing in {persistent}.",
     "longitudinalPatternsTitle": "Recurring across your briefs",
     "longitudinalPatternsLine": "{category} has appeared in every one of your last {total, plural, one {# brief} other {# briefs}}.",
     "presetsLabel": "Quick ranges",

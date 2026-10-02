@@ -242,7 +242,7 @@ export default function TimelinePage() {
               {tHistory("sectionTitle")}
             </h2>
             <p className="mt-2 text-sm text-foreground/60">{tHistory("sectionIntro")}</p>
-            <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+            <ul className="mt-5 border-b border-border-subtle">
               {symptomHistory.categories.map((category) => (
                 <SymptomEvidenceCard
                   key={category.category}
