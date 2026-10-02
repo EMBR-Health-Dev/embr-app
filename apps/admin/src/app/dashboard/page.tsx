@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { AuditLogDto, UserDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
+import { BrandWordmark } from "../../components/brand-wordmark";
 
 type Tab = "users" | "audit";
 
@@ -73,7 +74,12 @@ export default function AdminDashboardPage() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">EMBR Admin</h1>
+        <h1 className="flex items-baseline gap-3 text-foreground">
+          <BrandWordmark className="h-5" />
+          <span className="text-sm font-medium uppercase tracking-[0.14em] text-foreground/70">
+            Admin
+          </span>
+        </h1>
         <div className="flex items-center gap-4 text-sm text-foreground/60">
           <Link href="/settings" className="underline underline-offset-2 hover:text-foreground">
             Settings

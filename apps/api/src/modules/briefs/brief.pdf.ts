@@ -12,6 +12,7 @@ import {
   treatmentCategoryLabel,
 } from "./brief-locale.js";
 import { PDF_ACCENT, PDF_INK, PDF_INK_FAINT, PDF_INK_MUTED } from "../../lib/pdf-palette.js";
+import { EMBR_WORDMARK } from "../../lib/brand-wordmark.js";
 
 // Palette shared with the summary export: see lib/pdf-palette.ts.
 const INK = PDF_INK;
@@ -81,19 +82,25 @@ export function buildClinicalBriefPdf(
   registerEmbrPdfFonts(doc);
 
   // ---- Masthead ----
-  // "EMBR" as a small, letter-spaced eyebrow above the actual document
+  // The EMBR wordmark as a small eyebrow above the actual document
   // title — the same relationship the wordmark has to a section label
   // elsewhere in this file — rather than one undifferentiated heading
   // line, so the document reads as an instrument with its own
   // identity, not a generic report with a logo pasted on top. "EMBR"
   // itself is never translated, in either locale — the same brand-name
   // treatment the rest of the product already uses.
+  // The wordmark is drawn from the master asset (assets/brand), not set
+  // as text, so it matches the website and the apps exactly.
+  const wordmarkHeight = 9;
+  const scale = wordmarkHeight / EMBR_WORDMARK.height;
   doc
-    .fillColor(INK_MUTED)
-    .fontSize(9)
-    .font(EMBR_PDF_HEADING_FONT)
-    .text("EMBR", { characterSpacing: 2 });
-  doc.moveDown(0.15);
+    .save()
+    .translate(doc.x - EMBR_WORDMARK.x * scale, doc.y - EMBR_WORDMARK.y * scale)
+    .scale(scale)
+    .path(EMBR_WORDMARK.path)
+    .fill(INK)
+    .restore();
+  doc.y += wordmarkHeight + 8;
   doc.fillColor(INK).fontSize(22).font(EMBR_PDF_HEADING_FONT).text(t.documentTitle);
   doc.moveDown(0.8);
 

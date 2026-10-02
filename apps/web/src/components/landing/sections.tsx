@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { CtaLink, Eyebrow, START_HREF, container } from "./cta-link";
 import { BriefMockup, RecordMockup } from "./mockups";
+import { BrandWordmark } from "../brand-wordmark";
 
 const PRODUCT_POINTS = ["record", "signals", "brief"] as const;
 const BRIEF_POINTS = ["contents", "evidence", "questions", "pdf"] as const;
@@ -182,8 +183,10 @@ export function LandingFooter() {
         className={`${container} flex flex-col gap-10 py-12 sm:flex-row sm:items-start sm:justify-between`}
       >
         <div>
-          <p className="font-display text-heading-l text-foreground">EMBR</p>
-          <p className="mt-1 text-body-s text-graphite-700">{t("tagline")}</p>
+          <p className="text-foreground">
+            <BrandWordmark className="h-5" />
+          </p>
+          <p className="mt-3 text-body-s text-graphite-700">{t("tagline")}</p>
         </div>
         <nav aria-label={t("label")}>
           <ul className="flex flex-wrap gap-x-6 gap-y-3">

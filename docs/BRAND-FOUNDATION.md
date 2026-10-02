@@ -134,6 +134,9 @@ not a medical conclusion."_
 | Graphite | Text                                  |
 | Rose     | Errors only                           |
 
+The logo (wordmark, compact mark, descriptor) and its rules are in
+`docs/BRAND-ASSETS.md`; every logo file comes from one generator.
+
 Display type: Instrument Serif (Noto Serif JP). Body: Inter (Noto Sans
 JP). Documents such as the EMBR BRIEF should look like documents, not
 dashboards. Severity is readable without colour.

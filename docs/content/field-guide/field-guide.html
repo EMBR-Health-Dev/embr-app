@@ -33,7 +33,7 @@
 
   /* Cover: the website's Field Guide card */
   .cover { height: 262mm; background: var(--gradient-signature); border-radius: var(--radius); padding: 16mm 15mm 14mm; color: var(--on-dark); display: flex; flex-direction: column; justify-content: space-between; }
-  .brand { font-family: "Instrument Serif", Georgia, serif; font-size: 22pt; color: var(--on-dark); }
+  .brand { display: block; height: 5mm; width: auto; }
   .tag { font-size: 8.5pt; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-dark-accent); margin-top: 30mm; }
   .cover h1 { font-size: 42pt; line-height: 1.08; margin: 5mm 0 7mm; color: var(--on-dark); }
   .cover .lede { font-size: 13pt; line-height: 1.55; color: var(--on-dark-muted); max-width: 135mm; }
@@ -90,7 +90,7 @@
 
 <div class="cover">
   <div>
-    <div class="brand">EMBR</div>
+    <img class="brand" src="embr-wordmark-light.svg" alt="EMBR">
     <div class="tag">Field Guide</div>
     <h1>Working through<br><em>the menopause transition.</em></h1>
     <p class="lede">A practical guide to recording what you experience, preparing for healthcare appointments, and asking for the support you need at work.</p>
