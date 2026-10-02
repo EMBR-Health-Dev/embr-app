@@ -182,6 +182,17 @@ jobs:
       # https://github.com/advisories/GHSA-5p2g-fcmc-qvqq for a fix
       # release, then remove the ignores in the same PR as the bump.
       #
+      # GHSA-86w9-cpqp-85rv: node-forge@<=1.4.0 (RSA PKCS#1 v1.5
+      # signature verification accepts extra nested DigestAlgorithm
+      # elements), reached only through @expo/cli and
+      # @expo/code-signing-certificates in apps/mobile's dev tooling --
+      # none of it ships in the api/web/admin/worker production images.
+      # Patched range is `<0.0.0` and 1.4.0 is the latest release, so
+      # there is nothing to upgrade to.
+      # REMOVE-BY: drop it from IGNORED_GHSAS once node-forge publishes a
+      # fixed release (watch https://github.com/advisories/GHSA-86w9-cpqp-85rv)
+      # and Expo picks it up, or add a node-forge override to that release.
+      #
       # Two additional MODERATE advisories currently exist
       # (decode-uri-component GHSA-vcc3-ghjq-m6fr, @opentelemetry/core
       # GHSA-8988-4f7v-96qf) -- both DO have patched releases available
@@ -197,7 +208,7 @@ jobs:
       # release exists.
       - name: Dependency audit (pnpm audit)
         run: |
-          IGNORED_GHSAS=("GHSA-w3rx-r6r6-pgpr" "GHSA-5p2g-fcmc-qvqq")
+          IGNORED_GHSAS=("GHSA-w3rx-r6r6-pgpr" "GHSA-5p2g-fcmc-qvqq" "GHSA-86w9-cpqp-85rv")
 
           REPORT="$(pnpm audit --json || true)"
 

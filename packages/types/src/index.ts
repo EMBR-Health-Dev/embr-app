@@ -303,6 +303,74 @@ export interface SymptomFrequencyDto {
   count: number;
 }
 
+/**
+ * A per-symptom history of what was *recorded* — every number here is a
+ * count of entries or of days with at least one entry. A day without an
+ * entry is never reported as "absent": it is simply not in `days`.
+ * Days are local calendar days in the timezone the request names.
+ */
+/** One symptom saved through the daily check in. */
+export interface SymptomCheckInEntryDto {
+  id: string;
+  category: SymptomCategory;
+  severity: SeverityLevel;
+  occurredAt: string;
+}
+
+/**
+ * The daily check in for one local calendar date. Symptoms not in
+ * `entries` were simply not recorded that day: never "absent".
+ */
+export interface SymptomCheckInDto {
+  date: string;
+  entries: SymptomCheckInEntryDto[];
+}
+
+export interface SymptomHistoryDayDto {
+  /** YYYY-MM-DD, local to the requested timezone. */
+  date: string;
+  /** Highest severity recorded that day for this symptom. */
+  maxSeverity: SeverityLevel;
+  entries: number;
+}
+
+export interface SymptomHistoryCategoryDto {
+  category: SymptomCategory;
+  /** First and most recent day this symptom was ever recorded (whole record, not just the range). */
+  firstLoggedOn: string;
+  lastLoggedOn: string;
+  totalEntries: number;
+  totalDaysLogged: number;
+  /** Days with an entry in the last 7 / 42 days, today included. */
+  daysLoggedLast7: number;
+  daysLoggedLast42: number;
+  /** Within the requested range. */
+  rangeEntries: number;
+  rangeDaysLogged: number;
+  /** Days in range whose highest recorded severity was each level. */
+  rangeSeverityDays: Record<SeverityLevel, number>;
+  /**
+   * True when this symptom was recorded on enough days before, none in
+   * the recent gap window, while other entries were still being made in
+   * that window. A description of the record, not a claim that the
+   * symptom has stopped.
+   */
+  notLoggedRecently: boolean;
+  /** Days with an entry in range, oldest first. */
+  days: SymptomHistoryDayDto[];
+}
+
+export interface SymptomHistoryDto {
+  timeZone: string;
+  /** YYYY-MM-DD bounds of the range the `range*` fields and `days` cover. */
+  rangeFrom: string;
+  rangeTo: string;
+  today: string;
+  /** Rule parameters, so every surface can state them. */
+  rules: { notLoggedRecentlyGapDays: number; notLoggedRecentlyMinDays: number };
+  categories: SymptomHistoryCategoryDto[];
+}
+
 export interface CycleLengthEntryDto {
   from: string;
   to: string;

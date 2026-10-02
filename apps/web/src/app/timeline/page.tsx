@@ -3,18 +3,43 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { CycleEntryDto, SymptomLogDto, TreatmentDto } from "@embr/types";
+import type { CycleEntryDto, SymptomHistoryDto, SymptomLogDto, TreatmentDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
 import { SectionLabel } from "../../components/section-label";
 import { toIsoDate } from "../../lib/date-format";
+import { HistoryRangeSwitch } from "../../components/history-range-switch";
+import { RecordSpanSummary } from "../../components/record-span-summary";
+import { SymptomEvidenceCard } from "../../components/symptom-evidence-card";
+import { browserTimeZone } from "../../lib/symptom-evidence";
+import {
+  daysSince,
+  fetchRecordSpan,
+  rangeStartDate,
+  type HistoryRange,
+  type RecordSpan,
+} from "../../lib/record-history";
 
-// Matches Signals' own WINDOW_DAYS (apps/web/src/app/trends/page.tsx) —
-// the same default recency window used everywhere else records are
-// summarized, not a new convention invented for this page.
-const WINDOW_DAYS = 90;
+// The list endpoints cap a page at 100 items; a long record is read page
+// by page up to this many pages per source (1,000 entries), and the page
+// says so if anything older was left out.
 const PAGE_SIZE = 100;
+const MAX_PAGES = 10;
+
+async function fetchAllPages<T>(
+  fetchPage: (page: number) => Promise<{ items: T[]; total: number }>,
+): Promise<{ items: T[]; truncated: boolean }> {
+  const items: T[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const result = await fetchPage(page);
+    items.push(...result.items);
+    if (items.length >= result.total || result.items.length === 0) {
+      return { items, truncated: false };
+    }
+  }
+  return { items, truncated: true };
+}
 
 type FilterKey = "symptoms" | "cycle" | "treatments";
 const FILTER_KEYS: FilterKey[] = ["symptoms", "cycle", "treatments"];
@@ -26,15 +51,10 @@ interface DayGroup {
   treatmentEvents: Array<{ treatment: TreatmentDto; kind: "started" | "ended" }>;
 }
 
-function daysAgoIsoDate(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return toIsoDate(d);
-}
-
 export default function TimelinePage() {
   const t = useTranslations("Timeline");
   const tEnum = useTranslations("Enums");
+  const tHistory = useTranslations("SymptomHistory");
   const tCommon = useTranslations("Common");
   const locale = useLocale();
   const router = useRouter();
@@ -43,11 +63,12 @@ export default function TimelinePage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLogDto[]>([]);
   const [cycleEntries, setCycleEntries] = useState<CycleEntryDto[]>([]);
   const [treatments, setTreatments] = useState<TreatmentDto[]>([]);
-  // True if any source returned more than PAGE_SIZE items — this page
-  // deliberately doesn't implement further pagination (a 90-day/100-item
-  // window is enough for a first version), but must say so rather than
-  // silently showing a partial record.
+  // True if any source had more than MAX_PAGES pages in range: the page
+  // must say so rather than silently showing a partial record.
   const [truncated, setTruncated] = useState(false);
+  const [range, setRange] = useState<HistoryRange>("90d");
+  const [recordSpan, setRecordSpan] = useState<RecordSpan | null>(null);
+  const [symptomHistory, setSymptomHistory] = useState<SymptomHistoryDto | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [managesOrg, setManagesOrg] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(() => new Set(FILTER_KEYS));
@@ -64,35 +85,68 @@ export default function TimelinePage() {
       .catch(() => setManagesOrg(false));
   }, [user]);
 
+  // /timeline?range=all (the dashboard's "See your full timeline")
+  // opens straight onto the full record. Read once on mount rather than
+  // through useSearchParams, which would need a Suspense boundary here.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("range");
+    if (requested === "all" || requested === "12m") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRange(requested);
+    }
+  }, []);
+
+  // Per-symptom evidence cards: whole-record figures, independent of
+  // the range below, so fetched once.
+  useEffect(() => {
+    if (!user) return;
+    api.trends
+      .symptomHistory({ timeZone: browserTimeZone() })
+      .then(setSymptomHistory)
+      .catch(() => setSymptomHistory(null));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchRecordSpan()
+      .then(setRecordSpan)
+      .catch(() => setRecordSpan(null));
+  }, [user]);
+
+  // Depends on the start date itself, not on recordSpan: the span
+  // arriving must not refetch (and flash) a view that doesn't use it.
+  const awaitingRecordStart = range === "all" && !recordSpan;
+  const fetchStart = rangeStartDate(range, recordSpan?.start ?? null);
+
   useEffect(() => {
     // Matches React's own documented fetch-on-mount pattern — same
     // suppression reasoning as trends/page.tsx and dashboard/page.tsx.
     if (!user) return;
+    // "Full record" needs the record's start date first.
+    if (awaitingRecordStart) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDataLoading(true);
-    const from = new Date(`${daysAgoIsoDate(WINDOW_DAYS)}T00:00:00`).toISOString();
+    const from = new Date(`${fetchStart}T00:00:00`).toISOString();
 
     Promise.all([
-      api.symptomLogs.list({ from, pageSize: PAGE_SIZE }),
-      api.cycleEntries.list({ from, pageSize: PAGE_SIZE }),
+      fetchAllPages((page) => api.symptomLogs.list({ from, page, pageSize: PAGE_SIZE })),
+      fetchAllPages((page) => api.cycleEntries.list({ from, page, pageSize: PAGE_SIZE })),
       // Treatments has no from/to range filter (it's built for "what am
       // I on right now," not chronological listing — see
       // apps/api/src/modules/treatments/treatment.routes.ts) — fetched
       // in full and filtered to this window client-side below.
-      api.treatments.list({ pageSize: PAGE_SIZE }),
+      fetchAllPages((page) => api.treatments.list({ page, pageSize: PAGE_SIZE })),
     ])
-      .then(([symptomsPage, cyclePage, treatmentsPage]) => {
-        setSymptomLogs(symptomsPage.items);
-        setCycleEntries(cyclePage.items);
-        setTreatments(treatmentsPage.items);
+      .then(([symptomsResult, cycleResult, treatmentsResult]) => {
+        setSymptomLogs(symptomsResult.items);
+        setCycleEntries(cycleResult.items);
+        setTreatments(treatmentsResult.items);
         setTruncated(
-          symptomsPage.total > symptomsPage.items.length ||
-            cyclePage.total > cyclePage.items.length ||
-            treatmentsPage.total > treatmentsPage.items.length,
+          symptomsResult.truncated || cycleResult.truncated || treatmentsResult.truncated,
         );
       })
       .finally(() => setDataLoading(false));
-  }, [user]);
+  }, [user, fetchStart, awaitingRecordStart]);
 
   async function handleLogout() {
     await logout();
@@ -107,7 +161,7 @@ export default function TimelinePage() {
     );
   }
 
-  const windowStart = daysAgoIsoDate(WINDOW_DAYS);
+  const windowStart = rangeStartDate(range, recordSpan?.start ?? null);
   const groups = new Map<string, DayGroup>();
 
   function getGroup(date: string): DayGroup {
@@ -154,8 +208,18 @@ export default function TimelinePage() {
     );
   });
 
+  const currentYear = new Date().getFullYear();
   function formatDateHeading(date: string): string {
-    return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(
+    const d = new Date(`${date}T00:00:00`);
+    // The year only appears once history reaches back past this year.
+    return new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      ...(d.getFullYear() !== currentYear ? { year: "numeric" } : {}),
+    }).format(d);
+  }
+  function formatMonthHeading(date: string): string {
+    return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
       new Date(`${date}T00:00:00`),
     );
   }
@@ -167,8 +231,32 @@ export default function TimelinePage() {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
         <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
+        {recordSpan && <RecordSpanSummary span={recordSpan} />}
 
-        <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label={t("filterGroupLabel")}>
+        {symptomHistory && symptomHistory.categories.length > 0 && (
+          <section className="mt-10" aria-labelledby="symptom-history-heading">
+            <h2
+              id="symptom-history-heading"
+              className="font-display text-heading-m text-foreground"
+            >
+              {tHistory("sectionTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-foreground/60">{tHistory("sectionIntro")}</p>
+            <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+              {symptomHistory.categories.map((category) => (
+                <SymptomEvidenceCard
+                  key={category.category}
+                  history={category}
+                  gapDays={symptomHistory.rules.notLoggedRecentlyGapDays}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <HistoryRangeSwitch value={range} onChange={setRange} disabled={dataLoading} />
+
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t("filterGroupLabel")}>
           {FILTER_KEYS.map((key) => (
             <button
               key={key}
@@ -199,14 +287,23 @@ export default function TimelinePage() {
           </div>
         ) : (
           <ul className="mt-10 flex flex-col gap-8">
-            {visibleDates.map((date) => {
+            {visibleDates.map((date, index) => {
               const group = groups.get(date)!;
               const categories = [
                 ...new Set(group.symptoms.map((s) => tEnum(`category.${s.category}`))),
               ];
+              // A month marker wherever the month changes, so a long
+              // record reads as history rather than one undifferentiated list.
+              const newMonth =
+                index === 0 || visibleDates[index - 1]!.slice(0, 7) !== date.slice(0, 7);
               return (
                 <li key={date}>
-                  <SectionLabel as="h2">{formatDateHeading(date)}</SectionLabel>
+                  {newMonth && (
+                    <h2 className="mb-4 font-display text-heading-m text-lilac-700">
+                      {formatMonthHeading(date)}
+                    </h2>
+                  )}
+                  <SectionLabel as="h3">{formatDateHeading(date)}</SectionLabel>
                   <div className="mt-3 flex flex-col gap-2 border-l border-border-subtle pl-4">
                     {activeFilters.has("symptoms") && categories.length > 0 && (
                       <p className="text-sm text-foreground">{categories.join(" · ")}</p>
@@ -241,7 +338,9 @@ export default function TimelinePage() {
 
         {!dataLoading && truncated && (
           <p className="mt-10 text-xs text-foreground/40">
-            {t("truncatedNotice", { days: WINDOW_DAYS })}
+            {range === "all"
+              ? t("truncatedNoticeAll")
+              : t("truncatedNotice", { days: daysSince(windowStart) - 1 })}
           </p>
         )}
       </main>

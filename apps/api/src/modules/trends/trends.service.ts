@@ -1,4 +1,4 @@
-import type { TrendsQuery } from "@embr/validation";
+import type { SymptomHistoryQuery, TrendsQuery } from "@embr/validation";
 import type {
   CycleLengthTrendDto,
   EvidenceStrengthDto,
@@ -7,8 +7,12 @@ import type {
   SymptomCategory,
   SymptomCoOccurrenceDto,
   SymptomContextCoOccurrenceDto,
+  SeverityLevel,
   SymptomFrequencyDto,
+  SymptomHistoryDto,
 } from "@embr/types";
+import { AppError } from "@embr/shared";
+import { computeSymptomHistory, isValidTimeZone } from "./symptom-history.js";
 import { averageCycleLengthDays, computeCycleLengths } from "../../lib/cycle-length.js";
 import { trendsRepository } from "./trends.repository.js";
 import { detectSymptomCoOccurrence } from "./co-occurrence.js";
@@ -20,6 +24,32 @@ function toIsoDate(date: Date): string {
 }
 
 export const trendsService = {
+  /** Per-symptom history (first/last logged, days logged over fixed
+   * windows, calendar days in range); the logic is the pure
+   * computeSymptomHistory, this method only does the I/O. */
+  async symptomHistory(
+    userId: string,
+    query: SymptomHistoryQuery,
+    now: Date = new Date(),
+  ): Promise<SymptomHistoryDto> {
+    const timeZone = query.timeZone ?? "UTC";
+    if (!isValidTimeZone(timeZone)) {
+      throw AppError.validation(`Unknown time zone: ${timeZone}`);
+    }
+    const logs = await trendsRepository.symptomLogsForHistory(userId);
+    return computeSymptomHistory({
+      logs: logs.map((log) => ({
+        category: log.category as SymptomCategory,
+        severity: log.severity as SeverityLevel,
+        occurredAt: log.occurredAt,
+      })),
+      timeZone,
+      now,
+      rangeFrom: query.from,
+      rangeTo: query.to,
+    });
+  },
+
   async symptomFrequency(userId: string, query: TrendsQuery): Promise<SymptomFrequencyDto[]> {
     const rows = await trendsRepository.symptomFrequency(userId, query);
     return rows

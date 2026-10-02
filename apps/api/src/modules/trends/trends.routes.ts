@@ -1,5 +1,10 @@
 import { Router, type Router as ExpressRouter } from "express";
-import { trendsQuerySchema, type TrendsQuery } from "@embr/validation";
+import {
+  symptomHistoryQuerySchema,
+  trendsQuerySchema,
+  type SymptomHistoryQuery,
+  type TrendsQuery,
+} from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireAuth } from "../auth/auth.middleware.js";
@@ -17,6 +22,18 @@ router.get(
     const data = await trendsService.symptomFrequency(
       req.user!.sub,
       req.query as unknown as TrendsQuery,
+    );
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
+router.get(
+  "/trends/symptom-history",
+  validate(symptomHistoryQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const data = await trendsService.symptomHistory(
+      req.user!.sub,
+      req.query as unknown as SymptomHistoryQuery,
     );
     res.status(200).json({ data, requestId: req.requestId });
   }),

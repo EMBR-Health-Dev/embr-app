@@ -52,6 +52,20 @@ const contextLogsUpsert = vi.fn().mockResolvedValue({
   updatedAt: "2026-01-01T00:00:00Z",
 });
 
+// The "your record goes back to" summary makes its own list requests;
+// mocked here so these tests keep asserting the dashboard's own calls.
+// The daily check in has its own suite (daily-check-in.test.tsx); here
+// it is a stub so these tests keep counting only the page's own requests.
+vi.mock("../../components/daily-check-in", () => ({
+  DailyCheckIn: () => null,
+}));
+
+vi.mock("../../lib/record-history", () => ({
+  fetchRecordSpan: vi
+    .fn()
+    .mockResolvedValue({ start: null, symptomCount: 0, cycleCount: 0, treatmentCount: 0 }),
+}));
+
 vi.mock("../../lib/api", () => ({
   api: {
     symptomLogs: {

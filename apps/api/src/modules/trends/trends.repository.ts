@@ -151,6 +151,17 @@ export const trendsRepository = {
    * recency-limited slice of it. Capped the same way
    * symptomLogsForCoOccurrence and periodStartDates are: a generous
    * safety ceiling, not a real pagination story. */
+  /** Every symptom entry for the user (category, severity and time only:
+   * no notes), for the per-symptom history. The whole record is needed
+   * because "first logged" and "not logged recently" look past any range. */
+  symptomLogsForHistory(userId: string) {
+    return prisma.symptomLog.findMany({
+      where: { userId },
+      select: { category: true, severity: true, occurredAt: true },
+      orderBy: { occurredAt: "asc" },
+    });
+  },
+
   async loggedDates(userId: string): Promise<{ symptomDates: Date[]; cycleDates: Date[] }> {
     const [symptomRows, cycleRows] = await Promise.all([
       prisma.symptomLog.findMany({

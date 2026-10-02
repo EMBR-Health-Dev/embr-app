@@ -33,6 +33,7 @@ const config = {
           400: withOpacity("--color-lilac-400"),
           500: withOpacity("--color-lilac-500"),
           600: withOpacity("--color-lilac-600"),
+          700: withOpacity("--color-lilac-700"),
         },
         rose: { 500: withOpacity("--color-rose-500") },
         ice: { 500: withOpacity("--color-ice-500") },

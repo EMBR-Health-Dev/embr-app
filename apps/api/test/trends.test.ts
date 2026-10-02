@@ -181,7 +181,11 @@ vi.mock("../src/lib/prisma.js", () => ({
           (l) => l.userId === where.userId && inRange(l.occurredAt, where.occurredAt),
         );
         return Promise.resolve(
-          matching.map((l) => ({ category: l.category, occurredAt: l.occurredAt })),
+          matching.map((l) => ({
+            category: l.category,
+            severity: l.severity,
+            occurredAt: l.occurredAt,
+          })),
         );
       }),
     },
@@ -636,5 +640,57 @@ describe("GET /trends/evidence-strength", () => {
 
     const established = await agentA.get("/trends/evidence-strength");
     expect(established.body.data).toEqual({ strength: "ESTABLISHED", distinctDaysLogged: 45 });
+  });
+});
+
+describe("GET /trends/symptom-history", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/trends/symptom-history");
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects an unknown time zone and a reversed range", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "history-invalid@embr.health");
+
+    const tz = await agent.get("/trends/symptom-history").query({ timeZone: "Mars/Olympus" });
+    expect(tz.status).toBe(400);
+    const range = await agent
+      .get("/trends/symptom-history")
+      .query({ from: "2026-02-01", to: "2026-01-01" });
+    expect(range.status).toBe(400);
+  });
+
+  it("returns per-symptom days in the person's time zone, scoped to them", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "history-a@embr.health");
+    await registerAndLogin(agentB, "history-b@embr.health");
+
+    // 23:30 UTC on 1 Jan is 08:30 on 2 Jan in Tokyo.
+    await agentA.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "MILD",
+      occurredAt: "2026-01-01T23:30:00.000Z",
+    });
+    await agentB.post("/symptom-logs").send({
+      category: "FATIGUE",
+      severity: "SEVERE",
+      occurredAt: "2026-01-01T10:00:00.000Z",
+    });
+
+    const res = await agentA
+      .get("/trends/symptom-history")
+      .query({ from: "2026-01-01", to: "2026-01-31", timeZone: "Asia/Tokyo" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.timeZone).toBe("Asia/Tokyo");
+    expect(res.body.data.categories).toHaveLength(1);
+    const [hot] = res.body.data.categories;
+    expect(hot.category).toBe("HOT_FLASH");
+    expect(hot.firstLoggedOn).toBe("2026-01-02");
+    expect(hot.days).toEqual([{ date: "2026-01-02", maxSeverity: "MILD", entries: 1 }]);
   });
 });

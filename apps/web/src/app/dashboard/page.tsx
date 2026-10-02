@@ -20,6 +20,9 @@ import { ReflectionsSection } from "../../components/reflections-section";
 import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
+import { RecordSpanSummary } from "../../components/record-span-summary";
+import { DailyCheckIn } from "../../components/daily-check-in";
+import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -94,6 +97,7 @@ function DashboardContent() {
   // logging" contract as apps/mobile/app/(app)/index.tsx's identical
   // refreshKey.
   const [reflectionsRefreshKey, setReflectionsRefreshKey] = useState(0);
+  const [recordSpan, setRecordSpan] = useState<RecordSpan | null>(null);
 
   const suggestedCategory = searchParams.get("logCategory");
   const wantsFirstLog = searchParams.get("firstLog") !== null || Boolean(suggestedCategory);
@@ -118,6 +122,15 @@ function DashboardContent() {
   const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextSaved, setContextSaved] = useState(false);
+
+  // How far back the record goes; refreshed whenever a new entry lands
+  // (same signal the weekly reflection uses).
+  useEffect(() => {
+    if (!user) return;
+    fetchRecordSpan()
+      .then(setRecordSpan)
+      .catch(() => setRecordSpan(null));
+  }, [user, reflectionsRefreshKey]);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -329,6 +342,13 @@ function DashboardContent() {
     }
   }
 
+  // The check in saves several entries at once: refresh what this page shows from the record.
+  async function refreshAfterCheckIn() {
+    const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+    setWeeklyFrequency(frequency);
+    setReflectionsRefreshKey((key) => key + 1);
+  }
+
   async function saveCycleEntry() {
     setCycleSaving(true);
     try {
@@ -477,12 +497,15 @@ function DashboardContent() {
               <p className="max-w-xs text-xs text-foreground/45">{t("todayEmptyHint")}</p>
             )}
           </div>
+
+          <DailyCheckIn onSaved={() => void refreshAfterCheckIn()} />
         </section>
 
         {/* ---- YOUR RECORD ---- */}
         <section className="mt-14">
           <SectionLabel>{t("yourRecordLabel")}</SectionLabel>
           <p className="mt-2 text-sm text-foreground/60">{t("recordDescription")}</p>
+          {recordSpan && <RecordSpanSummary span={recordSpan} showTimelineLink />}
 
           <div className="mt-6">
             <button

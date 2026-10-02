@@ -2,6 +2,8 @@ import { Router, type Router as ExpressRouter } from "express";
 import {
   createSymptomLogSchema,
   idParamSchema,
+  saveSymptomCheckInSchema,
+  symptomCheckInParamsSchema,
   symptomLogQuerySchema,
   updateSymptomLogSchema,
   type SymptomLogQuery,
@@ -38,6 +40,33 @@ router.get(
   asyncHandler(async (req, res) => {
     const page = await symptomService.list(req.user!.sub, req.query as unknown as SymptomLogQuery);
     res.status(200).json({ data: page, requestId: req.requestId });
+  }),
+);
+
+// The daily check in for one local calendar date (YYYY-MM-DD).
+router.get(
+  "/symptom-logs/check-ins/:date",
+  validate(symptomCheckInParamsSchema, "params"),
+  asyncHandler(async (req, res) => {
+    const data = await symptomService.getCheckIn(req.user!.sub, requireParam(req, "date"));
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
+router.put(
+  "/symptom-logs/check-ins/:date",
+  symptomLogWriteLimiter,
+  requireCsrfToken(),
+  validate(symptomCheckInParamsSchema, "params"),
+  validate(saveSymptomCheckInSchema),
+  asyncHandler(async (req, res) => {
+    const date = requireParam(req, "date");
+    const data = await symptomService.saveCheckIn(req.user!.sub, date, req.body);
+    await writeAuditLog(req, "SYMPTOM_CHECK_IN_SAVED", req.user!.sub, {
+      date,
+      symptomCount: data.entries.length,
+    });
+    res.status(200).json({ data, requestId: req.requestId });
   }),
 );
 

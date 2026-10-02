@@ -322,7 +322,8 @@
     "emptyBody": "症状、周期、治療を記録すると、日付順にここに表示されます。",
     "filteredEmptyTitle": "この条件に一致する記録はありません。",
     "filteredEmptyBody": "上の項目を追加で選択してみてください。",
-    "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。"
+    "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。",
+    "truncatedNoticeAll": "すべての記録のうち、最近記録された内容を表示しています。"
   },
   "Trends": {
     "title": "シグナル",
@@ -339,7 +340,9 @@
     "noCycleDataCaveat": "周閉経期には周期が不規則になったり、なくなったりすることはよくあります。これはあなたと担当医のための記録であり、診断ではありません。",
     "averagingDays": "この期間、生理開始日の間隔は平均<strong>{days}日</strong>です。",
     "daysUnit": "日",
-    "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。"
+    "irregularityNote": "周閉経期に周期が不規則になるのはよくあることです。この画面は、問題として指摘するためではなく、自分自身のパターンに気づく手助けをするためのものです。",
+    "symptomsHeaderAll": "すべての記録の症状",
+    "cycleLengthHeaderAll": "すべての記録の周期の長さ"
   },
   "CoOccurrence": {
     "cardLabel": "シグナル",
@@ -589,7 +592,11 @@
     "trendsAcrossBriefs": "直近{count}件のBRIEFについて",
     "trendsCategoryLine": "{category}：{total}件中{present}件のBRIEFで記録（うち{persistent}件で継続）。",
     "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
-    "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで記録されています。"
+    "longitudinalPatternsLine": "{category}は直近{total}件のBRIEFすべてで記録されています。",
+    "presetsLabel": "期間を選ぶ",
+    "preset30": "過去30日間",
+    "preset90": "過去90日間",
+    "presetAll": "最初の記録から"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",
@@ -708,5 +715,67 @@
     "heading": "緊急のときは",
     "body": "EMBRは記録を残すためのものです。緊急かどうかを判断することはできません。胸の痛み、息苦しさ、非常に多い出血、突然の強い症状がある場合は、すぐにお住まいの地域の緊急番号に連絡してください（例：日本 119、EU 112、英国 999）。",
     "selfHarm": "自分を傷つけたい気持ちがあるときは、すぐに救急、またはお住まいの地域の相談窓口に連絡してください。"
+  },
+  "History": {
+    "rangeLabel": "表示する期間",
+    "range": {
+      "90d": "過去90日間",
+      "12m": "過去12か月",
+      "all": "すべての記録"
+    },
+    "recordSince": "あなたの記録は{date}から続いています。",
+    "recordSummary": "これまでに、症状の記録{symptoms}件、周期の記録{cycle}件、治療{treatments}件。",
+    "viewFullTimeline": "すべての記録をタイムラインで見る"
+  },
+  "SymptomHistory": {
+    "sectionTitle": "症状の記録履歴",
+    "sectionIntro": "あなたの記録から数えた、記録のある日数です。記録のない日は「記録なし」と表示し、症状がなかった日としては扱いません。",
+    "firstLogged": "初回記録",
+    "lastLogged": "最終記録",
+    "period": "{from} → {to}",
+    "recentFrequency": "直近7日間の頻度",
+    "longFrequency": "42日間の頻度",
+    "daysOfLast": "過去{total}日間のうち{count}日",
+    "loggedOnDaysOfLast": "過去{total}日間のうち{count}日記録",
+    "notLoggedRecently": "最近は記録されていません",
+    "notLoggedInLast": "過去{days}日間は記録されていません。",
+    "notLoggedRecentlyRule": "{min}日以上記録のある症状に{days}日間記録がなく、ほかの症状は記録が続いている場合に表示します。",
+    "noEntry": "記録なし",
+    "noEntryForDay": "この日の症状の記録はありません。",
+    "noHistoryTitle": "記録履歴はありません",
+    "noHistoryBody": "この症状の記録はまだありません。記録すると、ここに履歴が表示されます。",
+    "viewHistory": "履歴を見る",
+    "viewHistoryFor": "{symptom}の履歴を見る",
+    "backToTimeline": "タイムラインに戻る",
+    "calendarTitle": "カレンダー",
+    "calendarLabel": "{symptom}、{month}",
+    "legendLabel": "凡例",
+    "highestSeverityNote": "記録のある日は、その日に記録された最も高い重症度で表示しています。",
+    "dayLogged": "{date}：{severity}",
+    "dayNoEntry": "{date}：記録なし",
+    "dayOutOfRange": "{date}：この期間外",
+    "note": "メモ",
+    "entryCount": "{count}件の記録",
+    "dayLoading": "この日の記録を読み込んでいます…",
+    "loadError": "症状の記録履歴を読み込めませんでした。もう一度お試しください。",
+    "closeDay": "閉じる"
+  },
+  "CheckIn": {
+    "title": "今日の体調はいかがですか？",
+    "intro": "今日ある症状を選び、それぞれの重症度を選んでください。選ばなかった症状は、今日の記録には含まれません。",
+    "symptomsLabel": "今日の症状",
+    "addAnother": "ほかの症状を追加",
+    "showFewer": "表示する症状を減らす",
+    "severityFor": "{symptom}の重症度",
+    "severityRequired": "選んだ症状ごとに、軽度・中等度・重度のいずれかを選んでください。",
+    "save": "今日の記録を保存",
+    "saving": "保存しています…",
+    "saved": "今日の記録を保存しました。",
+    "savedEmpty": "今日の記録に含まれる症状はありません。",
+    "todayHeading": "今日の症状",
+    "edit": "今日の記録を編集",
+    "cancel": "キャンセル",
+    "saveError": "記録を保存できませんでした。もう一度お試しください。",
+    "loadError": "今日の記録を読み込めませんでした。もう一度お試しください。"
   }
 }
