@@ -59,7 +59,24 @@ export type ConsentTypeValue = z.infer<typeof consentTypeSchema>;
 export const LEGAL_DOCUMENT_VERSIONS: Record<ConsentTypeValue, string> = {
   TERMS: "0.1-draft",
   PRIVACY: "0.1-draft",
-  HEALTH_PROCESSING: "0.1-draft",
+  // 0.2-draft: explicit consent wording ("I consent to EMBR processing
+  // the health information I provide for these purposes"), pending
+  // counsel's confirmation of consent vs acknowledgement.
+  HEALTH_PROCESSING: "0.2-draft",
+};
+
+/**
+ * Earlier versions whose acceptance still counts as current, so a
+ * wording change does not by itself send existing people back through
+ * the consent screen. New acceptances must still match the current
+ * version exactly. 0.1-draft stays here until counsel decides whether
+ * people who accepted it need to confirm 0.2 (decision sheet, Q1);
+ * removing it is what triggers that re-confirmation.
+ */
+export const STILL_ACCEPTED_VERSIONS: Record<ConsentTypeValue, readonly string[]> = {
+  TERMS: [],
+  PRIVACY: [],
+  HEALTH_PROCESSING: ["0.1-draft"],
 };
 
 export const LEGAL_DOCUMENT_URLS = {

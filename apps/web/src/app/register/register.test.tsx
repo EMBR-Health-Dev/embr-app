@@ -48,9 +48,7 @@ describe("Register — consent", () => {
     expect(termsBox()).not.toBeChecked();
     expect(privacyBox()).not.toBeChecked();
     expect(healthBox()).not.toBeChecked();
-    expect(
-      screen.getByText(/stores and uses the health information you enter/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/uses the health information you choose to enter/)).toBeInTheDocument();
   });
 
   it("links to the Terms and Privacy pages in a new tab", async () => {
@@ -148,11 +146,14 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage("ja");
     expect(screen.getByRole("checkbox", { name: /利用規約/ })).not.toBeChecked();
-    // The health item names what is handled and why, in plain Japanese.
-    const health = screen.getByRole("checkbox", { name: /症状、周期、治療などの健康情報/ });
-    expect(health).toHaveAccessibleName(/記録の作成、パターンの表示、EMBR BRIEFの作成/);
+    // The explanation names what is handled and why, once, right before the box.
+    expect(
+      screen.getByText(/EMBRの記録の提供、時間による変化の表示、EMBR BRIEFの作成/),
+    ).toBeInTheDocument();
+    const health = screen.getByRole("checkbox", { name: /私が提供する健康情報/ });
+    expect(health).toHaveAccessibleName(/これらの目的のためにEMBRが取り扱うことに同意します/);
     expect(health).not.toBeChecked();
-    expect(screen.getByText(/同意に基づく情報の取り扱いについては/)).toBeInTheDocument();
+    expect(screen.getByText(/同意に基づく取り扱いについては/)).toBeInTheDocument();
     await user.type(screen.getByLabelText("メールアドレス"), "person@embr.health");
     await user.type(screen.getByLabelText("パスワード"), "Sup3rSecret!Pass");
     const boxes = screen.getAllByRole("checkbox");

@@ -154,6 +154,10 @@ function RegisterForm() {
             errors={consentErrors}
           />
           <p className="text-xs text-foreground/50">{tConsent("manageNote")}</p>
+          <p className="border-l-2 border-lilac-300 pl-3 text-xs text-foreground/70">
+            <span className="font-medium text-foreground">{t("reassuranceTitle")}</span>{" "}
+            {t("reassuranceBody")}
+          </p>
 
           {formError && (
             <p role="alert" className="text-sm font-medium text-foreground">
