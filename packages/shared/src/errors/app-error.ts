@@ -58,6 +58,12 @@ export class AppError extends Error {
     return new AppError({ code: ErrorCode.CONSENT_VERSION_OUTDATED, message });
   }
 
+  static registrationClosed(
+    message = "EMBR is in private early access. New accounts are not open yet.",
+  ) {
+    return new AppError({ code: ErrorCode.REGISTRATION_CLOSED, message });
+  }
+
   static notFound(resource: string) {
     return new AppError({ code: ErrorCode.NOT_FOUND, message: `${resource} not found` });
   }

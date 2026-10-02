@@ -6,6 +6,9 @@ import { View, type StyleProp, type ViewStyle } from "react-native";
 
 expect.extend(matchers);
 
+// The sign up form is under test; its closed state has its own test.
+process.env.EXPO_PUBLIC_REGISTRATION_OPEN ??= "true";
+
 afterEach(() => {
   cleanup();
 });

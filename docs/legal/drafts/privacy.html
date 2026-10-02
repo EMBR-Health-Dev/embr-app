@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- DRAFT: remove the noindex tag and the draft banner once legal review is complete. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Privacy Policy | EMBR</title>
+<meta name="description" content="How EMBR collects, uses and protects your information.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* EMBR Brand Guidelines v1.0 tokens: same values as index.html and the app. */
+  :root { --graphite-900: #2A1F39; --graphite-700: #4A4058; --graphite-500: #746B82; --graphite-300: #B8B2C1; --graphite-100: #F1EEF4; --lilac-100: #F1EAF5; --lilac-200: #E2D7EA; --lilac-500: #A888B6; --lilac-600: #9270A0; --pearl-50: #FAF7FB;
+    --background: var(--pearl-50); --foreground: var(--graphite-900); --muted: var(--graphite-100); --muted-foreground: var(--graphite-500); --border: var(--graphite-300); --border-subtle: var(--graphite-100); --ring: var(--lilac-500);
+    --font-display: 'Instrument Serif', Georgia, serif; --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  body { font-family: var(--font-body); background: var(--background); color: var(--foreground); line-height: 1.65; -webkit-font-smoothing: antialiased; }
+  a { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--lilac-500); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--foreground); }
+  a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .draft-banner { background: var(--lilac-200); color: var(--foreground); padding: 10px 20px; font-size: 14px; font-weight: 500; text-align: center; }
+  header { border-bottom: 1px solid var(--border-subtle); }
+  .bar { max-width: 760px; margin: 0 auto; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-family: var(--font-display); font-size: 24px; font-weight: 400; color: var(--foreground); text-decoration: none; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(40px, 6vw, 56px); line-height: 1.1; }
+  .updated { margin-top: 12px; color: var(--muted-foreground); font-size: 14px; }
+  .summary { margin-top: 32px; background: var(--muted); border-left: 3px solid var(--lilac-500); border-radius: 0 12px 12px 0; padding: 20px 24px; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; line-height: 1.25; margin-top: 48px; }
+  .summary ul { margin: 8px 0 0 18px; }
+  h3 { font-size: 16px; font-weight: 500; margin-top: 24px; }
+  p, ul, table { margin-top: 12px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { font-weight: 500; }
+  ul { padding-left: 20px; }
+  li + li { margin-top: 6px; }
+  /* Draft placeholders awaiting a decision. */
+  .todo { background: var(--lilac-200); padding: 0 4px; border-radius: 4px; }
+  footer { border-top: 1px solid var(--border-subtle); }
+  footer .bar { font-size: 14px; color: var(--muted-foreground); flex-wrap: wrap; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="draft-banner" role="note">DRAFT for legal review. Not yet in effect. Highlighted items need a decision before publishing.</div>
+<header>
+  <div class="bar">
+    <a class="logo" href="/">EMBR</a>
+    <a href="/">Back to home</a>
+  </div>
+</header>
+
+<main>
+  <h1>Privacy Policy</h1>
+  <!-- The version string must match LEGAL_DOCUMENT_VERSIONS in EMBR-Health-Dev/embr-app
+       (packages/validation/src/index.ts). Consent records store it, so change both together. -->
+  <p class="updated">Version 0.1-draft · Effective date: <span class="todo">[EFFECTIVE DATE]</span></p>
+
+  <div class="summary">
+    <strong>The short version</strong>
+    <ul>
+      <li>Your health record belongs to you. You can export it or delete it at any time.</li>
+      <li>We use your information to run EMBR for you. We do not sell it, and we do not use it for advertising.</li>
+      <li>Patterns in EMBR are calculated by fixed rules from what you log. When you create an EMBR BRIEF, an AI service helps write the summary in plain language using aggregated figures only. It never receives your notes, your name or your email address.</li>
+      <li>If your employer offers EMBR, they never see your individual record.</li>
+      <li>EMBR is not a diagnostic tool and does not give medical advice.</li>
+    </ul>
+  </div>
+
+  <h2>1. Who we are</h2>
+  <p>EMBR is provided by <span class="todo">[LEGAL ENTITY NAME]</span>, <span class="todo">[REGISTERED ADDRESS]</span> (“EMBR”, “we”, “us”). We are the controller of the personal information described in this policy.</p>
+  <p>Questions about privacy: <a href="mailto:info@embrhealthcare.com">info@embrhealthcare.com</a>. <span class="todo">[Add a data protection contact or DPO if one is appointed, and a UK/EU representative if required.]</span></p>
+  <p>This policy covers the EMBR website (embrhealthcare.com) and the EMBR app.</p>
+
+  <h2>2. What we collect</h2>
+
+  <h3>Account information</h3>
+  <ul>
+    <li>Your email address.</li>
+    <li>Your password, which we store only in hashed form. We cannot read it.</li>
+    <li>Whether you have verified your email address, and when your account was created.</li>
+  </ul>
+
+  <h3>Your health record</h3>
+  <p>This is the information you choose to enter. It is health information, which the law treats as especially sensitive.</p>
+  <ul>
+    <li><strong>Symptom entries:</strong> the symptom, its severity, when it happened, and any notes you add.</li>
+    <li><strong>Cycle entries:</strong> dates, flow, period start and end, and any notes.</li>
+    <li><strong>Daily context:</strong> sleep duration, stress level, afternoon caffeine and alcohol, if you choose to log them.</li>
+    <li><strong>Treatments:</strong> the name, type, start and end dates, and any notes you add.</li>
+    <li><strong>Onboarding answers:</strong> what you want EMBR to help with, the areas you have noticed changes in, and whether you have an appointment coming up.</li>
+    <li><strong>EMBR BRIEFs</strong> you generate, and the summaries they contain.</li>
+  </ul>
+
+  <h3>Security and technical information</h3>
+  <ul>
+    <li>For each signed-in session: your device's IP address and browser type (user agent), so you can review and sign out of sessions in Settings.</li>
+    <li>A security log of account events such as sign-ins, password changes and account deletion, including IP address and user agent.</li>
+  </ul>
+
+  <h3>If you join through an organization</h3>
+  <p>Your membership of the organization and your role in it. See section 5.</p>
+
+  <h3>On our website</h3>
+  <ul>
+    <li>If you use our contact form: your name, email address, enquiry type and message.</li>
+    <li>If you joined our waitlist: your email address and the field you selected.</li>
+    <li>Your language preference, stored in your own browser (see section 10).</li>
+  </ul>
+
+  <h2>3. How we use it, and why we are allowed to</h2>
+  <p><span class="todo">[The legal bases below are the intended bases and must be confirmed by counsel for each processing activity and jurisdiction before publication.]</span></p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Purpose</th><th scope="col">Information</th><th scope="col">Intended legal basis (UK GDPR / EU GDPR)</th></tr></thead>
+    <tbody>
+      <tr><td>Create and run your account</td><td>Account information</td><td>Performance of our contract with you</td></tr>
+      <tr><td>Store your record, show your timeline and patterns, and generate your EMBR BRIEF and exports</td><td>Health record</td><td>Performance of our contract with you, together with a condition for processing health information under Article 9, <span class="todo">[e.g. explicit consent, Article 9(2)(a); confirm with counsel]</span></td></tr>
+      <tr><td>Send verification, password-reset and invitation emails</td><td>Email address</td><td>Performance of our contract</td></tr>
+      <tr><td>Keep EMBR secure and prevent misuse</td><td>Security and technical information</td><td>Our legitimate interest in protecting you and the service</td></tr>
+      <tr><td>Reply to enquiries and manage the waitlist</td><td>Website form information</td><td>Our legitimate interest in responding to you <span class="todo">[or consent, confirm with counsel]</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>For users in Japan, we handle health information as special care-required personal information under the Act on the Protection of Personal Information (APPI) and obtain your consent before acquiring it. <span class="todo">[Confirm APPI wording with counsel.]</span></p>
+  <p>When you create an account, we ask you to accept our Terms of Use, acknowledge this Privacy Policy and, where required, give your explicit consent to processing your health information. We record which versions you agreed to and when. <span class="todo">[This sign-up step is being added to the app; publish this paragraph only once it is live.]</span></p>
+
+  <h2>4. How patterns and the EMBR BRIEF work</h2>
+  <p>Patterns in EMBR, such as how often a symptom appears or which symptoms were logged on the same days, are calculated by fixed, transparent rules from the entries you make. They describe your data. They are not a diagnosis and do not identify causes.</p>
+  <p>When you generate an EMBR BRIEF, we send a summary to Anthropic, our AI service provider, so it can help phrase the brief in plain language. That summary contains only:</p>
+  <ul>
+    <li>the date range you chose;</li>
+    <li>counts of each symptom category and their severity;</li>
+    <li>a cycle summary (average cycle length and counts); and</li>
+    <li>the patterns our rules already found, with treatments described only generically (for example, “a treatment”).</li>
+  </ul>
+  <p>It never includes your notes, treatment names, name, email address or account identifiers. The AI service is instructed not to diagnose, suggest causes or recommend treatment, and its output is checked against those rules before it reaches you. <span class="todo">[Confirm Anthropic's contractual data-use and retention terms (e.g. no training on API data) and state them here.]</span></p>
+
+  <h2>5. Employers and organizations</h2>
+  <p>Some organizations offer EMBR to their people. If you join through an organization:</p>
+  <ul>
+    <li>Organization administrators can see that you are a member (your email address and role).</li>
+    <li>They can see only aggregated, anonymized trends across members. If too few people are included to protect individuals (currently fewer than 5), nothing is shown.</li>
+    <li>They can never see your individual symptom entries, cycle entries, notes, treatments or briefs.</li>
+  </ul>
+
+  <h2>6. Who we share it with</h2>
+  <p>We do not sell your personal information and we do not share it for advertising. We use the following service providers, who process information only on our instructions:</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Provider</th><th scope="col">What for</th><th scope="col">Information involved</th><th scope="col">Location</th></tr></thead>
+    <tbody>
+      <tr><td>Railway</td><td>Hosting the EMBR app, database and encrypted backups</td><td>All app information</td><td>EU (Amsterdam region) <span class="todo">[confirm backup bucket location]</span></td></tr>
+      <tr><td>Anthropic</td><td>Wording the EMBR BRIEF (section 4)</td><td>Aggregated summary only</td><td>United States</td></tr>
+      <tr><td>Resend</td><td>Sending account emails</td><td>Email address and email content</td><td>United States</td></tr>
+      <tr><td>Netlify</td><td>Hosting this website</td><td>Standard web request data (e.g. IP address)</td><td>United States</td></tr>
+      <tr><td>Formspree</td><td>Website contact and waitlist forms</td><td>What you submit in those forms</td><td>United States</td></tr>
+      <tr><td>Google Fonts</td><td>Displaying fonts on this website</td><td>IP address and browser information</td><td>United States</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><span class="todo">[Add Sentry if error monitoring is enabled in production, and Stripe if organization billing is switched on.]</span></p>
+  <p>We may also disclose information if required by law, or to protect the rights and safety of our users or others.</p>
+
+  <h2>7. International transfers</h2>
+  <p>Some providers above are based in the United States. Where information is transferred outside the UK or EEA, we rely on appropriate safeguards such as the UK International Data Transfer Addendum or the EU Standard Contractual Clauses. <span class="todo">[Confirm the mechanism for each provider.]</span></p>
+
+  <h2>8. How long we keep it</h2>
+  <ul>
+    <li><strong>Your health record and account:</strong> until you delete your account. EMBR is a long-term record, so we do not delete old entries automatically.</li>
+    <li><strong>When you delete your account:</strong> your account and health record are removed from our live database immediately. Encrypted backups are kept for up to 30 days and then overwritten.</li>
+    <li><strong>Sessions and one-time email links:</strong> deleted automatically about 30 days after they expire.</li>
+    <li><strong>Security log:</strong> kept for security purposes. When you delete your account, entries are no longer linked to it. <span class="todo">[Set a retention period.]</span></li>
+    <li><strong>Website form submissions:</strong> <span class="todo">[Set a retention period.]</span></li>
+  </ul>
+
+  <h2>9. Your rights and choices</h2>
+  <p>Many of these you can do yourself in the app:</p>
+  <ul>
+    <li><strong>Access and portability:</strong> export your symptom entries, cycle entries and treatments as CSV, or a clinician summary as PDF, from the Export page.</li>
+    <li><strong>Correction:</strong> edit or delete individual entries.</li>
+    <li><strong>Deletion:</strong> delete your account from Settings. Where we rely on your consent, you can withdraw it at any time, and deleting your account ends our processing of your health record.</li>
+    <li><strong>Sessions:</strong> review your signed-in devices and sign them out from Settings.</li>
+  </ul>
+  <p>You also have the right to object to or restrict certain processing. To make a request, email <a href="mailto:info@embrhealthcare.com">info@embrhealthcare.com</a>. You can complain to a supervisory authority: in the UK, the Information Commissioner's Office (ico.org.uk); in the EU, your local data protection authority; in Japan, the Personal Information Protection Commission.</p>
+
+  <h2>10. Cookies and local storage</h2>
+  <p>We use only what is needed for EMBR to work and to remember your language. We do not use advertising or analytics cookies.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Name</th><th scope="col">Where</th><th scope="col">Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>embr_at, embr_rt</td><td>App (cookie)</td><td>Keep you signed in. Strictly necessary.</td></tr>
+      <tr><td>embr_csrf</td><td>App (cookie)</td><td>Protect your account against cross-site request forgery. Strictly necessary.</td></tr>
+      <tr><td>EMBR_LOCALE</td><td>App (cookie)</td><td>Remember your language.</td></tr>
+      <tr><td>embr_had_session</td><td>App (browser storage)</td><td>Tell you when a session has expired.</td></tr>
+      <tr><td>embr-lang</td><td>Website (browser storage)</td><td>Remember your language.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>11. Security</h2>
+  <p>We protect your information with measures including encrypted connections (HTTPS), hashed passwords and tokens, sign-in cookies that scripts on the page cannot read, rate limiting, and encrypted database backups. No system is perfectly secure, and we will notify you and the relevant authorities of a breach where the law requires.</p>
+
+  <h2>12. Who EMBR is for</h2>
+  <p>EMBR is intended for adults aged <span class="todo">[18]</span> and over. We do not knowingly collect information from children.</p>
+
+  <h2>13. Changes to this policy</h2>
+  <p>If we make material changes, we will tell you in the app or by email before they take effect. The date at the top shows when this policy was last updated.</p>
+
+  <h2>14. Contact</h2>
+  <p><span class="todo">[LEGAL ENTITY NAME]</span>, <span class="todo">[REGISTERED ADDRESS]</span>. Email: <a href="mailto:info@embrhealthcare.com">info@embrhealthcare.com</a>.</p>
+</main>
+
+<footer>
+  <div class="bar">
+    <span>EMBR</span>
+    <span><a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></span>
+  </div>
+</footer>
+</body>
+</html>

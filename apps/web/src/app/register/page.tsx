@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { ConsentType } from "@embr/types";
 import { CONSENT_TYPES, LEGAL_DOCUMENT_VERSIONS, registerSchema } from "@embr/validation";
 import { api } from "../../lib/api";
+import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
@@ -176,7 +177,30 @@ function RegisterForm() {
   );
 }
 
+function EarlyAccess() {
+  const t = useTranslations("Register");
+  return (
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-8">
+      <h1 className="font-display text-heading-xl text-foreground">{t("earlyAccessTitle")}</h1>
+      <p className="mt-3 text-sm text-foreground/70">{t("earlyAccessBody")}</p>
+      <a
+        href={EARLY_ACCESS_HREF}
+        className="mt-8 inline-flex min-h-11 items-center justify-center rounded-sm bg-foreground px-5 text-sm font-medium text-background hover:bg-graphite-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        {t("earlyAccessAction")}
+      </a>
+      <p className="mt-6 text-center text-sm text-foreground/60">
+        {t("alreadyHaveAccount")}{" "}
+        <Link href="/login" className="font-medium text-foreground underline underline-offset-2">
+          {t("logIn")}
+        </Link>
+      </p>
+    </main>
+  );
+}
+
 export default function RegisterPage() {
+  if (!REGISTRATION_OPEN) return <EarlyAccess />;
   return (
     <Suspense fallback={null}>
       <RegisterForm />

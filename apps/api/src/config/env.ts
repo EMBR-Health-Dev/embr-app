@@ -130,6 +130,12 @@ const apiEnvSchema = z.object({
   // changes what happens when it's left unset.
   COOKIE_SECURE: booleanEnvVar().default(process.env.NODE_ENV === "production"),
 
+  // Whether anyone can create an account. Off by default: EMBR is in
+  // private early access until the company is incorporated and the
+  // Privacy Policy and Terms are final (docs/legal/drafts). Existing
+  // accounts sign in as normal. Set to true only once those are live.
+  PUBLIC_REGISTRATION_ENABLED: booleanEnvVar().default(false),
+
   // Whether creating an account requires the HEALTH_PROCESSING item at
   // the same time. A legal decision, not a product one (see
   // docs/legal/consent-decision-sheet.md, question 2), so it's config.

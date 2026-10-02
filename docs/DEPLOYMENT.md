@@ -269,6 +269,24 @@ Run `scripts/setup-branch-protection.mjs` once (see the script's header
 comment for usage) to require CI to pass, require one PR approval, and
 block force-pushes/deletion on `main`.
 
+## Sign up (private early access)
+
+New accounts are closed until EMBR is incorporated and the Privacy Policy
+and Terms are final and published (drafts: `docs/legal/drafts/`). Existing
+accounts sign in as normal.
+
+| Where  | Variable                        | Default        | Effect                                                                             |
+| ------ | ------------------------------- | -------------- | ---------------------------------------------------------------------------------- |
+| API    | `PUBLIC_REGISTRATION_ENABLED`   | `false`        | `POST /auth/register` returns `403 REGISTRATION_CLOSED` before reading the request |
+| Web    | `NEXT_PUBLIC_REGISTRATION_OPEN` | unset (closed) | `/register` shows an early access page; login links to early access                |
+| Mobile | `EXPO_PUBLIC_REGISTRATION_OPEN` | unset (closed) | Register screen shows early access                                                 |
+
+Organization invites also need an account, so they are paused too.
+
+To reopen: publish the final legal documents at `LEGAL_DOCUMENT_URLS`, set
+the final `LEGAL_DOCUMENT_VERSIONS`, then set all three to `true` (web and
+mobile need a rebuild, since public env values are baked in at build time).
+
 ## Production configuration checklist
 
 A human operator's checklist for verifying a real deployment's

@@ -13,7 +13,8 @@
     "submitting": "Logging in…",
     "newToEmbr": "New to EMBR?",
     "createAccount": "Create an account",
-    "sessionExpired": "Your session expired. Log in again to continue."
+    "sessionExpired": "Your session expired. Log in again to continue.",
+    "requestEarlyAccess": "Request early access"
   },
   "languageSwitcher": {
     "label": "Language",
@@ -31,7 +32,10 @@
     "submit": "Create account",
     "submitting": "Creating account…",
     "alreadyHaveAccount": "Already have an account?",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "earlyAccessTitle": "EMBR is in private early access",
+    "earlyAccessBody": "New accounts are not open yet. We are preparing EMBR for public use, including the privacy and legal documents that will apply when it opens. Request early access and we will be in touch.",
+    "earlyAccessAction": "Request early access"
   },
   "forgotPassword": {
     "title": "Reset your password",

@@ -21,7 +21,8 @@
     "newToEmbr": "EMBRは初めてですか？",
     "createAccount": "アカウントを作成",
     "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
-    "accountDeleted": "アカウントとその中のすべてのデータを削除しました。"
+    "accountDeleted": "アカウントとその中のすべてのデータを削除しました。",
+    "requestEarlyAccess": "早期アクセスを申し込む"
   },
   "LanguageSwitcher": {
     "label": "言語",
@@ -44,7 +45,10 @@
     "submit": "アカウントを作成",
     "submitting": "作成中…",
     "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
-    "logIn": "ログイン"
+    "logIn": "ログイン",
+    "earlyAccessTitle": "EMBRは現在、限定公開中です",
+    "earlyAccessBody": "新規アカウントの受付はまだ開始していません。一般公開に向けて、公開時に適用されるプライバシーや法的な文書を含め、準備を進めています。早期アクセスをお申し込みいただければ、こちらからご連絡します。",
+    "earlyAccessAction": "早期アクセスを申し込む"
   },
   "ForgotPassword": {
     "title": "パスワードを再設定",
