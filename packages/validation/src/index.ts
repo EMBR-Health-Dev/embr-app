@@ -79,10 +79,9 @@ export const STILL_ACCEPTED_VERSIONS: Record<ConsentTypeValue, readonly string[]
   HEALTH_PROCESSING: ["0.1-draft"],
 };
 
-export const LEGAL_DOCUMENT_URLS = {
-  TERMS: "https://embrhealthcare.com/terms.html",
-  PRIVACY: "https://embrhealthcare.com/privacy.html",
-} as const;
+// No LEGAL_DOCUMENT_URLS while the Terms of Use and Privacy Policy are
+// unpublished (docs/legal/drafts). Add them back, with the final document
+// versions above, in the release that publishes the counsel approved pages.
 
 export const consentLocaleSchema = z.enum(["en", "ja"]);
 

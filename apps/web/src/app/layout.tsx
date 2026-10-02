@@ -31,7 +31,8 @@ const jetbrainsMono = localFont({
 
 export const metadata: Metadata = {
   title: "EMBR",
-  description: "Perimenopause and menopause health, understood.",
+  description:
+    "EMBR helps you track symptoms, see patterns over time, and turn your experience into evidence for your healthcare conversations.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,9 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type { ConsentType } from "@embr/types";
-import { LEGAL_DOCUMENT_URLS } from "@embr/validation";
 
 const LABEL_KEY: Record<ConsentType, "termsLabel" | "privacyLabel" | "healthLabel"> = {
   TERMS: "termsLabel",
@@ -11,17 +9,16 @@ const LABEL_KEY: Record<ConsentType, "termsLabel" | "privacyLabel" | "healthLabe
   HEALTH_PROCESSING: "healthLabel",
 };
 
-const LINK_URL: Record<ConsentType, string> = {
-  TERMS: LEGAL_DOCUMENT_URLS.TERMS,
-  PRIVACY: LEGAL_DOCUMENT_URLS.PRIVACY,
-  HEALTH_PROCESSING: LEGAL_DOCUMENT_URLS.PRIVACY,
-};
-
 /**
  * One separate, unchecked-by-default checkbox per consent item. Shared
  * by the registration form and the consent screen so the wording and
  * behaviour can never drift between them. Checked state is always
  * owned by the caller and starts false — nothing here pre-ticks a box.
+ *
+ * The Terms of Use and Privacy Policy are not published yet, so nothing
+ * here links to them or asks anyone to agree to them; a note says they
+ * will be published before sign-up opens. Linking them again is a
+ * separate release, together with their final versions.
  */
 export function ConsentItems({
   items,
@@ -37,23 +34,6 @@ export function ConsentItems({
   notes?: Partial<Record<ConsentType, string>>;
 }) {
   const t = useTranslations("Consent");
-
-  function link(type: ConsentType) {
-    function DocumentLink(chunks: ReactNode) {
-      return (
-        <a
-          href={LINK_URL[type]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-foreground underline underline-offset-2"
-        >
-          {chunks}
-          <span className="sr-only"> {t("opensInNewTab")}</span>
-        </a>
-      );
-    }
-    return DocumentLink;
-  }
 
   return (
     <fieldset className="flex flex-col gap-4">
@@ -77,7 +57,7 @@ export function ConsentItems({
                 className="mt-0.5 h-4 w-4 shrink-0 accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               />
               <label htmlFor={id} className="text-sm text-foreground">
-                {t.rich(LABEL_KEY[type], { link: link(type) })}
+                {t(LABEL_KEY[type])}
               </label>
             </div>
             {note && (
@@ -97,6 +77,7 @@ export function ConsentItems({
           </div>
         );
       })}
+      <p className="text-xs text-foreground/60">{t("documentsPending")}</p>
     </fieldset>
   );
 }

@@ -77,3 +77,21 @@ version asks every existing user to review the item again at next sign-in.
   情報、睡眠、ストレス、治療・服薬等に関する情報、メモその他ユーザーが入力す
   る健康関連情報. The English and Japanese documents must carry the same
   legal meaning.
+
+## Interim wording while the documents are unpublished
+
+The Terms of Use and Privacy Policy are not public (drafts in
+`docs/legal/drafts/`), so the consent UI does not link to them or ask
+anyone to agree to them. Until they are published:
+
+- **TERMS** item: "I understand that EMBR is in private early access and is still being tested."
+- **PRIVACY** item: "I understand how my information will be used for testing EMBR."
+- **HEALTH_PROCESSING** item: the 0.2 wording, without the Privacy Policy link.
+- A note: "The Terms of Use and Privacy Policy will be published before sign-up opens."
+
+Versions, stored records and the still-accepted logic are unchanged. A
+TERMS or PRIVACY record granted under this wording is an acknowledgement
+of early access testing, not acceptance of a published document. When
+counsel-approved documents are published, set their final versions in
+`LEGAL_DOCUMENT_VERSIONS` and restore the links in the same release, so
+everyone accepts the published text.

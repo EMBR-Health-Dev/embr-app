@@ -1248,7 +1248,9 @@ describe("POST /organizations/:organizationId/leave", () => {
   });
 });
 
-describe("GET /organizations/:organizationId/trends/symptom-frequency", () => {
+// Each test signs up, verifies and logs in seven accounts before its
+// assertion (about 3.5s locally), too close to the 5s default on CI.
+describe("GET /organizations/:organizationId/trends/symptom-frequency", { timeout: 20_000 }, () => {
   async function setupOrgWithLoggingMembers(memberCount: number) {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
