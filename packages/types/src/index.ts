@@ -309,6 +309,23 @@ export interface SymptomFrequencyDto {
  * entry is never reported as "absent": it is simply not in `days`.
  * Days are local calendar days in the timezone the request names.
  */
+/** One symptom saved through the daily check in. */
+export interface SymptomCheckInEntryDto {
+  id: string;
+  category: SymptomCategory;
+  severity: SeverityLevel;
+  occurredAt: string;
+}
+
+/**
+ * The daily check in for one local calendar date. Symptoms not in
+ * `entries` were simply not recorded that day: never "absent".
+ */
+export interface SymptomCheckInDto {
+  date: string;
+  entries: SymptomCheckInEntryDto[];
+}
+
 export interface SymptomHistoryDayDto {
   /** YYYY-MM-DD, local to the requested timezone. */
   date: string;

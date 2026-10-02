@@ -54,6 +54,12 @@ const contextLogsUpsert = vi.fn().mockResolvedValue({
 
 // The "your record goes back to" summary makes its own list requests;
 // mocked here so these tests keep asserting the dashboard's own calls.
+// The daily check in has its own suite (daily-check-in.test.tsx); here
+// it is a stub so these tests keep counting only the page's own requests.
+vi.mock("../../components/daily-check-in", () => ({
+  DailyCheckIn: () => null,
+}));
+
 vi.mock("../../lib/record-history", () => ({
   fetchRecordSpan: vi
     .fn()

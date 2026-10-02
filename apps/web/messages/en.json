@@ -759,5 +759,23 @@
     "dayLoading": "Loading this day…",
     "loadError": "Your symptom history could not be loaded. Please try again.",
     "closeDay": "Close"
+  },
+  "CheckIn": {
+    "title": "How are you feeling today?",
+    "intro": "Select any symptoms you have today, then choose how severe each one is. Anything you don't select is simply not recorded today.",
+    "symptomsLabel": "Symptoms today",
+    "addAnother": "Add another symptom",
+    "showFewer": "Show fewer symptoms",
+    "severityFor": "Severity for {symptom}",
+    "severityRequired": "Choose Mild, Moderate or Severe for each selected symptom.",
+    "save": "Save today's check in",
+    "saving": "Saving…",
+    "saved": "Today's check in is saved.",
+    "savedEmpty": "Today's check in now has no symptoms recorded.",
+    "todayHeading": "Today's symptoms",
+    "edit": "Edit today's check in",
+    "cancel": "Cancel",
+    "saveError": "Your check in could not be saved. Please try again.",
+    "loadError": "Today's check in could not be loaded. Please try again."
   }
 }

@@ -21,6 +21,7 @@ import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
+import { DailyCheckIn } from "../../components/daily-check-in";
 import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
 
 const CATEGORIES = [
@@ -341,6 +342,13 @@ function DashboardContent() {
     }
   }
 
+  // The check in saves several entries at once: refresh what this page shows from the record.
+  async function refreshAfterCheckIn() {
+    const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
+    setWeeklyFrequency(frequency);
+    setReflectionsRefreshKey((key) => key + 1);
+  }
+
   async function saveCycleEntry() {
     setCycleSaving(true);
     try {
@@ -489,6 +497,8 @@ function DashboardContent() {
               <p className="max-w-xs text-xs text-foreground/45">{t("todayEmptyHint")}</p>
             )}
           </div>
+
+          <DailyCheckIn onSaved={() => void refreshAfterCheckIn()} />
         </section>
 
         {/* ---- YOUR RECORD ---- */}

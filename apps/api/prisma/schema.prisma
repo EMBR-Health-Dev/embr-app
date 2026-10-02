@@ -175,16 +175,22 @@ enum SeverityLevel {
 /// symptoms are very often logged after the fact, sometimes the next
 /// morning for a night-time hot flash.
 model SymptomLog {
-  id         String          @id @default(uuid())
-  userId     String
-  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category   SymptomCategory
-  severity   SeverityLevel
-  occurredAt DateTime
-  notes      String?
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    SymptomCategory
+  severity    SeverityLevel
+  occurredAt  DateTime
+  notes       String?
+  /// Set only for rows saved through the daily check in: the person's
+  /// local calendar date the entry belongs to. One row per user,
+  /// symptom and date, so editing a check in updates rather than
+  /// duplicates. Null for every individually logged symptom.
+  checkInDate DateTime?       @db.Date
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
+  @@unique([userId, category, checkInDate])
   @@index([userId, occurredAt])
   @@map("symptom_logs")
 }

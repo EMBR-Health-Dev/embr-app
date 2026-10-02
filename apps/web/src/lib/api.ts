@@ -20,6 +20,7 @@ import type {
   ReflectionDto,
   ReflectionType,
   SsoConnectionDto,
+  SymptomCheckInDto,
   SymptomCoOccurrenceDto,
   SymptomContextCoOccurrenceDto,
   SymptomFrequencyDto,
@@ -94,6 +95,19 @@ export const api = {
 
     create: (input: { category: string; severity: string; occurredAt: string; notes?: string }) =>
       apiFetch<SymptomLogDto>("/symptom-logs", { method: "POST", body: input }),
+
+    /** The daily check in for a local YYYY-MM-DD. */
+    getCheckIn: (date: string) => apiFetch<SymptomCheckInDto>(`/symptom-logs/check-ins/${date}`),
+
+    /** Replaces that date's check in: listed symptoms are saved, others in it removed. */
+    saveCheckIn: (
+      date: string,
+      input: { timeZone: string; entries: Array<{ category: string; severity: string }> },
+    ) =>
+      apiFetch<SymptomCheckInDto>(`/symptom-logs/check-ins/${date}`, {
+        method: "PUT",
+        body: input,
+      }),
 
     update: (id: string, input: { severity?: string; notes?: string }) =>
       apiFetch<SymptomLogDto>(`/symptom-logs/${id}`, { method: "PATCH", body: input }),

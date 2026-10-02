@@ -355,6 +355,24 @@ export const symptomHistoryQuerySchema = z
   });
 export type SymptomHistoryQuery = z.infer<typeof symptomHistoryQuerySchema>;
 
+export const symptomCheckInParamsSchema = z.object({ date: isoCalendarDate });
+
+/**
+ * Saving a check in replaces that date's check in: listed symptoms are
+ * created or updated, check in symptoms left out are removed. Severity
+ * is required for every listed symptom; there is no "absent" value.
+ */
+export const saveSymptomCheckInSchema = z.object({
+  timeZone: z.string().min(1).max(64),
+  entries: z
+    .array(z.object({ category: symptomCategorySchema, severity: severityLevelSchema }))
+    .max(symptomCategorySchema.options.length)
+    .refine((entries) => new Set(entries.map((e) => e.category)).size === entries.length, {
+      message: "Each symptom can appear only once",
+    }),
+});
+export type SaveSymptomCheckInInput = z.infer<typeof saveSymptomCheckInSchema>;
+
 // ---- Reflections (Milestone 19) ----
 //
 // Same unpaginated from/to shape as trendsQuerySchema and for the same

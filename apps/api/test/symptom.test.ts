@@ -23,6 +23,7 @@ const { state, nextId } = vi.hoisted(() => {
         severity: string;
         occurredAt: Date;
         notes: string | null;
+        checkInDate?: Date | null;
         createdAt: Date;
         updatedAt: Date;
       }>,
@@ -45,8 +46,12 @@ vi.mock("../src/modules/auth/mailer.js", () => ({
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
+const sameDay = (a: Date | null | undefined, b: Date) => !!a && a.getTime() === b.getTime();
+
 vi.mock("../src/lib/prisma.js", () => ({
   prisma: {
+    // Array-form transaction: the operations below resolve immediately.
+    $transaction: vi.fn((ops: Array<Promise<unknown>>) => Promise.all(ops)),
     user: {
       findUnique: vi.fn(({ where }: { where: { email?: string; id?: string } }) => {
         const found = state.users.find((u) => u.email === where.email || u.id === where.id);
@@ -128,13 +133,20 @@ vi.mock("../src/lib/prisma.js", () => ({
           skip = 0,
           take = 20,
         }: {
-          where: { userId: string; category?: string; occurredAt?: { gte?: Date; lte?: Date } };
+          where: {
+            userId: string;
+            category?: string;
+            occurredAt?: { gte?: Date; lte?: Date };
+            checkInDate?: Date;
+          };
           orderBy?: { occurredAt: "asc" | "desc" };
           skip?: number;
           take?: number;
         }) => {
           let items = state.logs.filter((l) => l.userId === where.userId);
           if (where.category) items = items.filter((l) => l.category === where.category);
+          if (where.checkInDate)
+            items = items.filter((l) => sameDay(l.checkInDate, where.checkInDate!));
           if (where.occurredAt?.gte)
             items = items.filter((l) => l.occurredAt >= where.occurredAt!.gte!);
           if (where.occurredAt?.lte)
@@ -168,12 +180,63 @@ vi.mock("../src/lib/prisma.js", () => ({
           return Promise.resolve({ count: 1 });
         },
       ),
-      deleteMany: vi.fn(({ where }: { where: { id: string; userId: string } }) => {
-        const idx = state.logs.findIndex((l) => l.id === where.id && l.userId === where.userId);
-        if (idx === -1) return Promise.resolve({ count: 0 });
-        state.logs.splice(idx, 1);
-        return Promise.resolve({ count: 1 });
-      }),
+      upsert: vi.fn(
+        ({
+          where,
+          update,
+          create,
+        }: {
+          where: {
+            userId_category_checkInDate: { userId: string; category: string; checkInDate: Date };
+          };
+          update: Record<string, unknown>;
+          create: (typeof state.logs)[number];
+        }) => {
+          const key = where.userId_category_checkInDate;
+          const found = state.logs.find(
+            (l) =>
+              l.userId === key.userId &&
+              l.category === key.category &&
+              sameDay(l.checkInDate, key.checkInDate),
+          );
+          if (found) {
+            Object.assign(found, update, { updatedAt: now() });
+            return Promise.resolve(found);
+          }
+          const log = { notes: null, ...create, id: nextId(), createdAt: now(), updatedAt: now() };
+          state.logs.push(log);
+          return Promise.resolve(log);
+        },
+      ),
+      deleteMany: vi.fn(
+        ({
+          where,
+        }: {
+          where: {
+            id?: string;
+            userId: string;
+            checkInDate?: Date;
+            category?: { notIn: string[] };
+          };
+        }) => {
+          if (where.checkInDate) {
+            const before = state.logs.length;
+            state.logs = state.logs.filter(
+              (l) =>
+                !(
+                  l.userId === where.userId &&
+                  sameDay(l.checkInDate, where.checkInDate!) &&
+                  !where.category!.notIn.includes(l.category)
+                ),
+            );
+            return Promise.resolve({ count: before - state.logs.length });
+          }
+          const idx = state.logs.findIndex((l) => l.id === where.id && l.userId === where.userId);
+          if (idx === -1) return Promise.resolve({ count: 0 });
+          state.logs.splice(idx, 1);
+          return Promise.resolve({ count: 1 });
+        },
+      ),
     },
   },
 }));
@@ -421,5 +484,136 @@ describe("audit log coverage for symptom log mutations", () => {
     expect((entry?.metadata as { symptomLogId?: string })?.symptomLogId).toBe(
       createRes.body.data.id,
     );
+  });
+});
+
+describe("daily check in: GET/PUT /symptom-logs/check-ins/:date", () => {
+  function localToday(timeZone: string): string {
+    return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+  }
+
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/symptom-logs/check-ins/2026-10-01");
+    expect(res.status).toBe(401);
+  });
+
+  it("saves several symptoms with one request, and editing updates rather than duplicates", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "checkin@embr.health");
+    const today = localToday("Asia/Tokyo");
+
+    const first = await agent.put(`/symptom-logs/check-ins/${today}`).send({
+      timeZone: "Asia/Tokyo",
+      entries: [
+        { category: "BRAIN_FOG", severity: "MODERATE" },
+        { category: "FATIGUE", severity: "SEVERE" },
+        { category: "SLEEP_DISTURBANCE", severity: "MILD" },
+      ],
+    });
+    expect(first.status).toBe(200);
+    expect(first.body.data.date).toBe(today);
+    expect(first.body.data.entries).toHaveLength(3);
+
+    const edited = await agent.put(`/symptom-logs/check-ins/${today}`).send({
+      timeZone: "Asia/Tokyo",
+      entries: [
+        { category: "BRAIN_FOG", severity: "SEVERE" },
+        { category: "FATIGUE", severity: "SEVERE" },
+      ],
+    });
+    expect(edited.status).toBe(200);
+    expect(edited.body.data.entries).toHaveLength(2);
+    const fogBefore = first.body.data.entries.find(
+      (e: { category: string }) => e.category === "BRAIN_FOG",
+    );
+    const fogAfter = edited.body.data.entries.find(
+      (e: { category: string }) => e.category === "BRAIN_FOG",
+    );
+    expect(fogAfter.id).toBe(fogBefore.id);
+    expect(fogAfter.severity).toBe("SEVERE");
+    expect(fogAfter.occurredAt).toBe(fogBefore.occurredAt);
+
+    // The same rows are what the symptom log list sees: no duplicates.
+    const list = await agent.get("/symptom-logs");
+    expect(list.body.data.total).toBe(2);
+
+    const read = await agent.get(`/symptom-logs/check-ins/${today}`);
+    expect(read.body.data.entries.map((e: { category: string }) => e.category).sort()).toEqual([
+      "BRAIN_FOG",
+      "FATIGUE",
+    ]);
+    expect(state.auditLogEntries.filter((e) => e.action === "SYMPTOM_CHECK_IN_SAVED")).toHaveLength(
+      2,
+    );
+  });
+
+  it("does not record unselected symptoms at all", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "checkin-unselected@embr.health");
+    const today = localToday("UTC");
+
+    await agent
+      .put(`/symptom-logs/check-ins/${today}`)
+      .send({ timeZone: "UTC", entries: [{ category: "ANXIETY", severity: "MILD" }] });
+    const list = await agent.get("/symptom-logs");
+    expect(list.body.data.items.map((l: { category: string }) => l.category)).toEqual(["ANXIETY"]);
+  });
+
+  it("leaves individually logged symptoms alone when a check in is edited", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "checkin-single@embr.health");
+    const today = localToday("UTC");
+    await agent
+      .post("/symptom-logs")
+      .send({ category: "HOT_FLASH", severity: "MODERATE", occurredAt: new Date().toISOString() });
+
+    await agent
+      .put(`/symptom-logs/check-ins/${today}`)
+      .send({ timeZone: "UTC", entries: [{ category: "HOT_FLASH", severity: "SEVERE" }] });
+    await agent.put(`/symptom-logs/check-ins/${today}`).send({ timeZone: "UTC", entries: [] });
+
+    const list = await agent.get("/symptom-logs");
+    expect(list.body.data.items).toHaveLength(1);
+    expect(list.body.data.items[0].severity).toBe("MODERATE");
+  });
+
+  it("requires a severity for every symptom and rejects duplicates, unknown zones and bad dates", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "checkin-invalid@embr.health");
+    const today = localToday("UTC");
+    const put = (date: string, body: unknown) =>
+      agent.put(`/symptom-logs/check-ins/${date}`).send(body as object);
+
+    expect((await put(today, { timeZone: "UTC", entries: [{ category: "FATIGUE" }] })).status).toBe(
+      400,
+    );
+    expect(
+      (
+        await put(today, {
+          timeZone: "UTC",
+          entries: [{ category: "FATIGUE", severity: "NONE" }],
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await put(today, {
+          timeZone: "UTC",
+          entries: [
+            { category: "FATIGUE", severity: "MILD" },
+            { category: "FATIGUE", severity: "SEVERE" },
+          ],
+        })
+      ).status,
+    ).toBe(400);
+    expect((await put(today, { timeZone: "Mars/Olympus", entries: [] })).status).toBe(400);
+    expect((await put("2099-01-01", { timeZone: "UTC", entries: [] })).status).toBe(400);
+    expect((await put("2020-01-01", { timeZone: "UTC", entries: [] })).status).toBe(400);
+    expect((await put("not-a-date", { timeZone: "UTC", entries: [] })).status).toBe(400);
   });
 });

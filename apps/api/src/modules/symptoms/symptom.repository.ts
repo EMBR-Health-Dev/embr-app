@@ -1,5 +1,6 @@
 import type {
   CreateSymptomLogInput,
+  SaveSymptomCheckInInput,
   SymptomLogQuery,
   UpdateSymptomLogInput,
 } from "@embr/validation";
@@ -73,6 +74,49 @@ export const symptomRepository = {
     });
     if (result.count === 0) return null;
     return prisma.symptomLog.findFirst({ where: { id, userId } });
+  },
+
+  findCheckIn(userId: string, checkInDate: Date) {
+    return prisma.symptomLog.findMany({
+      where: { userId, checkInDate },
+      orderBy: { occurredAt: "asc" },
+    });
+  },
+
+  /**
+   * Replaces one date's check in, atomically: each listed symptom is
+   * upserted on (user, symptom, date), so saving again never creates a
+   * duplicate and an existing entry keeps its time and notes; check in
+   * symptoms no longer listed are removed. Individually logged symptoms
+   * (checkInDate null) are never touched.
+   */
+  async saveCheckIn(
+    userId: string,
+    checkInDate: Date,
+    entries: SaveSymptomCheckInInput["entries"],
+    occurredAtForNew: Date,
+  ) {
+    await prisma.$transaction([
+      ...entries.map((entry) =>
+        prisma.symptomLog.upsert({
+          where: {
+            userId_category_checkInDate: { userId, category: entry.category, checkInDate },
+          },
+          update: { severity: entry.severity },
+          create: {
+            userId,
+            category: entry.category,
+            severity: entry.severity,
+            occurredAt: occurredAtForNew,
+            checkInDate,
+          },
+        }),
+      ),
+      prisma.symptomLog.deleteMany({
+        where: { userId, checkInDate, category: { notIn: entries.map((e) => e.category) } },
+      }),
+    ]);
+    return this.findCheckIn(userId, checkInDate);
   },
 
   async delete(userId: string, id: string): Promise<boolean> {
