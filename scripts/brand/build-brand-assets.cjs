@@ -139,8 +139,10 @@ for (const to of [
     m + "android-icon-background.png",
   );
   await png(markSvg(PLUM), 512, m + "splash-icon.png", true);
+  // Touch icon for the website (phones saving it to the home screen).
+  await png(markSvg(PEARL, ICON, PLUM), 180, "assets/brand/embr-touch-icon.png");
   await browser.close();
   console.log(
-    `Wrote ${Object.keys(files).length} SVGs to assets/brand, ${copies.length} copies, brand-wordmark.ts and 6 mobile PNGs.`,
+    `Wrote ${Object.keys(files).length} SVGs to assets/brand, ${copies.length} copies, brand-wordmark.ts, 6 mobile PNGs and the touch icon.`,
   );
 })();

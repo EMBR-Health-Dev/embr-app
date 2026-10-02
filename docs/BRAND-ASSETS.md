@@ -21,7 +21,7 @@ script, commit the output. The script writes:
 | `assets/brand/embr-wordmark-dark.svg`                      | Plum wordmark for light grounds    |
 | `assets/brand/embr-wordmark-light.svg`                     | Pearl wordmark for dark grounds    |
 | `assets/brand/embr-mark.svg`, `-dark`, `-light`            | Compact mark, same three variants  |
-| `assets/brand/embr-favicon.svg`                            | Browser tabs, small avatars        |
+| `assets/brand/embr-favicon.svg`, `embr-touch-icon.png`     | Browser tabs, home screen, avatars |
 | `apps/web/src/app/icon.svg`, `apps/admin/src/app/icon.svg` | App favicons                       |
 | `apps/{web,admin,api}/src/lib/brand-wordmark.ts`           | Web and admin headers, BRIEF PDF   |
 | `apps/mobile/assets/*.png`                                 | App icon, Android adaptive, splash |
