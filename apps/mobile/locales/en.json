@@ -13,7 +13,8 @@
     "submitting": "Logging in…",
     "newToEmbr": "New to EMBR?",
     "createAccount": "Create an account",
-    "sessionExpired": "Your session expired. Log in again to continue."
+    "sessionExpired": "Your session expired. Log in again to continue.",
+    "requestEarlyAccess": "Request early access"
   },
   "languageSwitcher": {
     "label": "Language",
@@ -31,7 +32,10 @@
     "submit": "Create account",
     "submitting": "Creating account…",
     "alreadyHaveAccount": "Already have an account?",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "earlyAccessTitle": "EMBR is in private early access",
+    "earlyAccessBody": "New accounts are not open yet. We are preparing EMBR for public use, including the privacy and legal documents that will apply when it opens. Request early access and we will be in touch.",
+    "earlyAccessAction": "Request early access"
   },
   "forgotPassword": {
     "title": "Reset your password",
@@ -132,7 +136,7 @@
       "patternsCaveat": "These are patterns in your records, not diagnoses. EMBR does not tell you what is causing your symptoms.",
       "trackLabel": "Track",
       "briefLabel": "Brief",
-      "briefTitle": "Evidence · Patterns · Questions",
+      "briefTitle": "Record · Patterns · Questions",
       "briefBody": "When you want one, EMBR turns your records into a simple summary you can take to a healthcare appointment.",
       "briefControlNote": "You decide when to create it. Nothing is generated automatically.",
       "conversationLabel": "Healthcare conversation",
@@ -204,11 +208,12 @@
     "noSymptomsYet": "Nothing logged yet. Your record becomes more useful as you log consistently.",
     "startingPoint": {
       "understandExperience": "Let's start building your record.",
-      "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
+      "understandPatterns": "You're here to understand patterns. Observed patterns appear in Signals as your record grows.",
       "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
-    }
+    },
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
   },
   "cycle": {
     "title": "Today's cycle entry",
@@ -270,11 +275,11 @@
   },
   "brief": {
     "title": "EMBR BRIEF",
-    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
+    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, <b>not a diagnosis, and not medical advice</b>.",
     "fromPlaceholder": "From",
     "toPlaceholder": "To",
     "invalidDates": "Pick a start and end date, with the start before the end.",
-    "generate": "Generate brief",
+    "generate": "Generate EMBR BRIEF",
     "generating": "Generating…",
     "generateError": "Couldn't generate a brief.",
     "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
@@ -314,8 +319,8 @@
     "persistentSymptomsTitle": "Ongoing symptoms",
     "persistentSymptomsEntry": "{{category}} remained present across both periods.",
     "groundedInTitle": "Grounded in your data",
-    "viewEvidence": "View evidence",
-    "hideEvidence": "Hide evidence",
+    "viewEvidence": "View recorded days",
+    "hideEvidence": "Hide recorded days",
     "evidenceSourceLabel": "Source",
     "evidenceSourceSelfReported": "Self-reported symptom logs",
     "evidenceConfidenceLabel": "Interpretation level",
@@ -331,7 +336,7 @@
     "briefCountPhrase_other": "{{count}} briefs",
     "trendsAcrossBriefs_one": "Across your last {{count}} brief",
     "trendsAcrossBriefs_other": "Across your last {{count}} briefs",
-    "trendsCategoryLine": "{{category}}: reported in {{present}} of {{totalPhrase}}, marked persistent in {{persistent}}.",
+    "trendsCategoryLine": "{{category}}: recorded in {{present}} of {{totalPhrase}}, listed as ongoing in {{persistent}}.",
     "longitudinalPatternsTitle": "Recurring across your briefs",
     "longitudinalPatternsLine": "{{category}} has appeared in every one of your last {{totalPhrase}}."
   },
@@ -366,7 +371,7 @@
     "confirmLogoutAllMessage": "Every device, including this one, will be signed out.",
     "logout": "Log out",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountHint": "This permanently deletes your account and everything in it: symptom logs, cycle entries, briefs, and settings. This cannot be undone.",
+    "deleteAccountHint": "This permanently deletes your account and everything in it: symptom logs, cycle entries, briefs, and settings. <b>This cannot be undone.</b>",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordPlaceholder": "Confirm your password",
     "forgotPasswordHint": "Don't know your password?",

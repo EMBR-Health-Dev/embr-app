@@ -4,6 +4,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 import { loginSchema } from "@embr/validation";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -181,9 +182,21 @@ function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-foreground/60">
         {t("newToEmbr")}{" "}
-        <Link href={registerHref} className="font-medium text-primary underline underline-offset-2">
-          {t("createAccount")}
-        </Link>
+        {REGISTRATION_OPEN ? (
+          <Link
+            href={registerHref}
+            className="font-medium text-primary underline underline-offset-2"
+          >
+            {t("createAccount")}
+          </Link>
+        ) : (
+          <a
+            href={EARLY_ACCESS_HREF}
+            className="font-medium text-foreground underline underline-offset-2"
+          >
+            {t("requestEarlyAccess")}
+          </a>
+        )}
       </p>
     </div>
   );

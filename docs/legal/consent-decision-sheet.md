@@ -38,11 +38,30 @@ acknowledgement formulation.** This is where translation and legal
 characterization meet. The "item not yet ticked" message is deliberately
 "review", not "required", for the same reason.
 
+### Draft 0.2 (in code, sign up closed)
+
+`HEALTH_PROCESSING` is at `0.2-draft` with explicit consent wording, the
+explanation shown once right before the box, and the label referring to
+"these purposes". Still a draft for counsel to confirm (consent vs
+acknowledgement), and sign up is closed until the documents are final.
+
+| Item               | English (0.2-draft)                                                                                                                                                                                    | Japanese (0.2-draft)                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Health explanation | EMBR uses the health information you choose to enter, including symptoms, cycle details, daily context and treatments, to provide your EMBR record, show changes over time and create your EMBR BRIEF. | EMBRは、あなたが入力する症状、周期、日々の状況、治療などの健康情報を、EMBRの記録の提供、時間による変化の表示、EMBR BRIEFの作成のために利用します。 |
+| Health checkbox    | I consent to EMBR processing the health information I provide for these purposes, as described in the Privacy Policy.                                                                                  | 私が提供する健康情報を、プライバシーポリシーに記載のとおり、これらの目的のためにEMBRが取り扱うことに同意します。                                   |
+| Managing choices   | You can manage your privacy choices in your account settings. Where processing is based on consent, you can withdraw your consent at any time.                                                         | プライバシーに関する設定は、アカウント設定から管理できます。同意に基づく取り扱いについては、いつでも同意を撤回できます。                           |
+
+Existing testers who accepted `0.1-draft` are not sent back through the
+consent screen: `STILL_ACCEPTED_VERSIONS.HEALTH_PROCESSING` lists
+`0.1-draft`, so it still counts as current. New acceptances must match
+`0.2-draft` exactly. **Counsel decides whether 0.1 acceptances need
+re-confirmation; if so, remove `0.1-draft` from that list.**
+
 ## Versions
 
 Each item is versioned independently (`TERMS`, `PRIVACY`,
 `HEALTH_PROCESSING`) in `packages/validation/src/index.ts` (`LEGAL_DOCUMENT_VERSIONS`). Current
-values are `0.1-draft`. When the documents are final, each gets a version
+values are `0.1-draft` (Terms, Privacy) and `0.2-draft` (health processing). When the documents are final, each gets a version
 and effective date shown on the published page (for example "Version 1.0,
 effective 1 October 2026"), and the same string is set in code. Raising a
 version asks every existing user to review the item again at next sign-in.

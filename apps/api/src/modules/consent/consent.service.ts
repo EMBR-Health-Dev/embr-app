@@ -1,6 +1,11 @@
 import { AppError } from "@embr/shared";
 import type { ConsentRecordDto, ConsentState, ConsentStatusDto, ConsentType } from "@embr/types";
-import { CONSENT_TYPES, LEGAL_DOCUMENT_VERSIONS, type ConsentAcceptance } from "@embr/validation";
+import {
+  CONSENT_TYPES,
+  LEGAL_DOCUMENT_VERSIONS,
+  STILL_ACCEPTED_VERSIONS,
+  type ConsentAcceptance,
+} from "@embr/validation";
 import type { ConsentRecord } from "../../generated/prisma/index.js";
 import { env } from "../../config/env.js";
 import { consentRepository, type NewConsentRecord } from "./consent.repository.js";
@@ -12,7 +17,10 @@ type Source = NewConsentRecord["source"];
 function stateFor(type: ConsentType, latest: ConsentRecord | undefined): ConsentState {
   if (!latest) return "MISSING";
   if (latest.action === "WITHDRAWN") return "WITHDRAWN";
-  return latest.version === LEGAL_DOCUMENT_VERSIONS[type] ? "CURRENT" : "OUTDATED";
+  return latest.version === LEGAL_DOCUMENT_VERSIONS[type] ||
+    STILL_ACCEPTED_VERSIONS[type].includes(latest.version)
+    ? "CURRENT"
+    : "OUTDATED";
 }
 
 function statesFromLatest(records: ConsentRecord[]): ConsentStates {

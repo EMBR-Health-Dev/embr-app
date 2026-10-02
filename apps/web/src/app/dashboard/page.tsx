@@ -24,6 +24,7 @@ import { RecordSpanSummary } from "../../components/record-span-summary";
 import { DailyCheckIn } from "../../components/daily-check-in";
 import { SeverityMark } from "../../components/severity-mark";
 import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
+import { richText } from "../../lib/rich-text";
 
 const CATEGORIES = [
   "HOT_FLASH",
@@ -550,6 +551,9 @@ function DashboardContent() {
                   <span id="severity-group-label" className="font-medium text-foreground">
                     {t("severityLabel")}
                   </span>
+                  <span className="text-xs text-foreground/60">
+                    {t.rich("severityGuide", richText)}
+                  </span>
                   <div className="flex gap-2">
                     {SEVERITIES.map((s) => (
                       <button
@@ -557,7 +561,7 @@ function DashboardContent() {
                         type="button"
                         onClick={() => setSeverity(s)}
                         aria-pressed={severity === s}
-                        className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm border px-3 text-sm ${
+                        className={`inline-flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-sm sm:flex-row sm:gap-2 sm:px-3 ${
                           severity === s
                             ? "border-lilac-700 bg-lilac-100 font-medium text-foreground"
                             : "border-border text-foreground/80"

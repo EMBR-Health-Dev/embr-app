@@ -18,6 +18,7 @@ import { AppNav } from "../../components/app-nav";
 import { EmailVerificationRequired } from "../../components/email-verification-required";
 import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
 import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
+import { richText } from "../../lib/rich-text";
 
 function BriefPageContent() {
   const t = useTranslations("Brief");
@@ -224,8 +225,8 @@ function BriefPageContent() {
       <main className="mx-auto max-w-2xl px-6 py-10">
         <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
 
-        <p className="mt-3 text-sm text-foreground/60">{t("description")}</p>
-        <p className="mt-1 text-xs text-foreground/45">{t("noMinimumEntries")}</p>
+        <p className="mt-3 text-sm text-foreground/60">{t.rich("description", richText)}</p>
+        <p className="mt-1 text-xs text-foreground/45">{t.rich("noMinimumEntries", richText)}</p>
 
         <form onSubmit={handleGenerate} className="mt-8 flex flex-wrap items-end gap-4">
           <Field
@@ -604,7 +605,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
     <div className="mt-4 flex flex-col gap-4 text-sm">
       <div>
         <p className="text-foreground/80">{brief.aiNarrative}</p>
-        <p className="mt-1 text-xs text-foreground/50">{t("aiAuthorshipNote")}</p>
+        <p className="mt-1 text-xs text-foreground/50">{t.rich("aiAuthorshipNote", richText)}</p>
       </div>
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (

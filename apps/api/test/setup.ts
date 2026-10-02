@@ -22,6 +22,8 @@ process.env.STRIPE_SECRET_KEY ??= "sk_test_placeholder";
 process.env.STRIPE_WEBHOOK_SECRET ??= "whsec_test_placeholder";
 process.env.STRIPE_SEAT_PRICE_ID ??= "price_test_placeholder";
 process.env.NODE_ENV = "test";
+// Most suites create accounts; the closed state has its own test.
+process.env.PUBLIC_REGISTRATION_ENABLED ??= "true";
 process.env.LOG_LEVEL = "fatal";
 
 // Consent ledger: replaced for every suite with a realistic in-memory

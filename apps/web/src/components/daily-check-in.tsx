@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { SeverityLevel, SymptomCategory, SymptomCheckInEntryDto } from "@embr/types";
 import { symptomCategorySchema } from "@embr/validation";
@@ -10,6 +10,7 @@ import { toIsoDate } from "../lib/date-format";
 import { browserTimeZone } from "../lib/symptom-evidence";
 import { Button } from "./button";
 import { SeverityMark } from "./severity-mark";
+import { richText } from "../lib/rich-text";
 
 const SEVERITIES: SeverityLevel[] = ["MILD", "MODERATE", "SEVERE"];
 // "Other" needs words to mean anything, so it stays in the single
@@ -50,7 +51,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
   const [showAll, setShowAll] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<ReactNode>(null);
 
   useEffect(() => {
     api.symptomLogs
@@ -109,7 +110,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
       setSelection([]);
       setShowAll(false);
       setEditing(result.entries.length === 0);
-      setStatus(result.entries.length > 0 ? t("saved") : t("savedEmpty"));
+      setStatus(result.entries.length > 0 ? t.rich("saved", richText) : t("savedEmpty"));
       onSaved();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("saveError"));
@@ -174,7 +175,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
       }}
     >
       <h2 className="font-display text-heading-m text-foreground">{t("title")}</h2>
-      <p className="mt-1 text-sm text-foreground/60">{t("intro")}</p>
+      <p className="mt-1 text-sm text-foreground/60">{t.rich("intro", richText)}</p>
 
       <fieldset className="mt-4">
         <legend className="sr-only">{t("symptomsLabel")}</legend>
@@ -208,6 +209,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
 
       {selection.length > 0 && (
         <div className="mt-5 flex flex-col gap-4 border-t border-border-subtle pt-5">
+          <p className="text-xs text-foreground/60">{t.rich("severityGuide", richText)}</p>
           {selection.map(({ category, severity }) => {
             const name = tEnum(`category.${category}`);
             return (
@@ -223,7 +225,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
                         checked={severity === level}
                         onChange={() => choose(category, level)}
                       />
-                      <span className="flex min-h-11 items-center justify-center gap-2 rounded-sm border border-border px-3 text-sm text-foreground/80 transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-100 peer-checked:font-medium peer-checked:text-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+                      <span className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-sm border border-border px-1 py-1.5 text-sm sm:flex-row sm:gap-2 sm:px-3 text-foreground/80 transition-colors peer-checked:border-lilac-700 peer-checked:bg-lilac-100 peer-checked:font-medium peer-checked:text-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
                         <SeverityMark severity={level} />
                         {tEnum(`severity.${level}`)}
                       </span>

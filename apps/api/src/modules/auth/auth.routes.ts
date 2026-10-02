@@ -1,5 +1,6 @@
 import { Router, type Router as ExpressRouter } from "express";
 import { AppError } from "@embr/shared";
+import { env } from "../../config/env.js";
 import {
   changePasswordSchema,
   deleteAccountSchema,
@@ -52,6 +53,11 @@ router.get("/auth/csrf", (_req, res) => {
 router.post(
   "/auth/register",
   registerLimiter,
+  (_req, _res, next) => {
+    // Checked before validation so a closed sign up never reads or
+    // stores anything from the request.
+    next(env.PUBLIC_REGISTRATION_ENABLED ? undefined : AppError.registrationClosed());
+  },
   validate(registerSchema),
   asyncHandler(async (req, res) => {
     const user = await authService.register(req, req.body);

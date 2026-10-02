@@ -11,9 +11,10 @@ import {
 import { formatHistoryDate } from "../lib/symptom-history-format";
 
 /**
- * One symptom's record, in four answers and nothing else: what, when,
- * how often, and what is happening recently. The numbers are the
- * evidence; there is deliberately no interpretation around them.
+ * One symptom's record as a ruled row, in four answers and nothing
+ * else: what, how often, what is happening recently, and when. Plain
+ * type rather than a card or a large figure, so a short record does
+ * not look more significant than it is. No interpretation around it.
  */
 export function SymptomEvidenceCard({
   history,
@@ -29,37 +30,41 @@ export function SymptomEvidenceCard({
   const name = tEnum(`category.${history.category}`);
 
   return (
-    <li className="flex flex-col rounded-lg border border-border-subtle border-l-4 border-l-lilac-500 bg-background p-4">
-      <div className="flex items-start justify-between gap-3">
+    <li className="border-t border-border-subtle py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-medium text-foreground">{name}</h3>
-        {state === "not_logged_recently" && (
-          <span className="shrink-0 rounded-sm border border-lilac-300 px-2 py-0.5 text-xs text-lilac-700">
-            {t("notLoggedRecently")}
-          </span>
-        )}
+        <p className="text-sm text-foreground">
+          {t("daysOfLast", { count: history.daysLoggedLast42, total: FREQUENCY_WINDOW_DAYS })}
+        </p>
       </div>
 
-      <p className="mt-2 font-display text-heading-m text-lilac-700">
-        {t("daysOfLast", { count: history.daysLoggedLast42, total: FREQUENCY_WINDOW_DAYS })}
+      <p className="mt-1 text-sm text-foreground/70">
+        {state === "not_logged_recently" ? (
+          <>
+            <span className="font-medium text-foreground">{t("notLoggedRecently")}</span>
+            {". "}
+            {t("notLoggedInLast", { days: gapDays })}
+          </>
+        ) : (
+          t("loggedOnDaysOfLast", { count: history.daysLoggedLast7, total: RECENT_WINDOW_DAYS })
+        )}
       </p>
 
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-        <dt className="text-foreground/60">{t("firstLogged")}</dt>
-        <dd className="text-foreground">{formatHistoryDate(locale, history.firstLoggedOn)}</dd>
-        <dt className="text-foreground/60">{t("lastLogged")}</dt>
-        <dd className="text-foreground">{formatHistoryDate(locale, history.lastLoggedOn)}</dd>
+      <dl className="mt-1 flex flex-wrap gap-x-4 text-xs text-foreground/60">
+        <div className="flex gap-1">
+          <dt>{t("firstLogged")}</dt>
+          <dd className="text-foreground/80">{formatHistoryDate(locale, history.firstLoggedOn)}</dd>
+        </div>
+        <div className="flex gap-1">
+          <dt>{t("lastLogged")}</dt>
+          <dd className="text-foreground/80">{formatHistoryDate(locale, history.lastLoggedOn)}</dd>
+        </div>
       </dl>
-
-      <p className="mt-3 text-sm text-foreground/80">
-        {state === "not_logged_recently"
-          ? t("notLoggedInLast", { days: gapDays })
-          : t("loggedOnDaysOfLast", { count: history.daysLoggedLast7, total: RECENT_WINDOW_DAYS })}
-      </p>
 
       <Link
         href={`/timeline/${history.category}`}
         aria-label={t("viewHistoryFor", { symptom: name })}
-        className="mt-3 self-start text-sm font-medium text-lilac-700 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-lilac-700 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         {t("viewHistory")}
       </Link>

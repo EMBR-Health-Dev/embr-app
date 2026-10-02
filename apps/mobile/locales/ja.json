@@ -13,7 +13,8 @@
     "submitting": "ログイン中…",
     "newToEmbr": "EMBRは初めてですか？",
     "createAccount": "アカウントを作成",
-    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
+    "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
+    "requestEarlyAccess": "早期アクセスを申し込む"
   },
   "languageSwitcher": {
     "label": "言語",
@@ -31,7 +32,10 @@
     "submit": "アカウントを作成",
     "submitting": "作成中…",
     "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
-    "logIn": "ログイン"
+    "logIn": "ログイン",
+    "earlyAccessTitle": "EMBRは現在、限定公開中です",
+    "earlyAccessBody": "新規アカウントの受付はまだ開始していません。一般公開に向けて、公開時に適用されるプライバシーや法的な文書を含め、準備を進めています。早期アクセスをお申し込みいただければ、こちらからご連絡します。",
+    "earlyAccessAction": "早期アクセスを申し込む"
   },
   "forgotPassword": {
     "title": "パスワードを再設定",
@@ -132,7 +136,7 @@
       "patternsCaveat": "これはあなたの記録の中のパターンであり、診断ではありません。EMBRは症状の原因を教えるものではありません。",
       "trackLabel": "記録",
       "briefLabel": "BRIEF",
-      "briefTitle": "エビデンス・シグナル・質問",
+      "briefTitle": "記録・パターン・質問",
       "briefBody": "必要なときに、EMBRはあなたの記録をもとに、診察に持っていけるシンプルな要約を作成します。",
       "briefControlNote": "作成するタイミングはあなたが決めます。自動で作成されることはありません。",
       "conversationLabel": "診察での会話",
@@ -204,11 +208,12 @@
     "noSymptomsYet": "まだ記録がありません。記録を続けるほど、あなたの記録は役立つものになります。",
     "startingPoint": {
       "understandExperience": "記録を始めましょう。",
-      "understandPatterns": "パターンを理解するためにここにいらっしゃいます。記録が増えるとパターンを表示していきます。",
+      "understandPatterns": "パターンを知りたい方へ。記録が増えると、記録に見られるパターンがシグナルに表示されます。",
       "prepareForAppointment": "診察の準備をされていますね。具体的な材料を一緒に作っていきましょう。",
       "keepRecord": "長期的な記録を始めましょう。",
       "notSure": "記録を続けると見えてくるものがあります。"
-    }
+    },
+    "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。"
   },
   "cycle": {
     "title": "今日の周期記録",
@@ -269,11 +274,11 @@
   },
   "brief": {
     "title": "EMBR BRIEF",
-    "hint": "記録した症状と周期データの要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、診断や医学的助言ではありません。",
+    "hint": "記録した症状と周期データの要約に、担当医との会話に使える質問を添えたものです。これは会話の材料となるデータ要約であり、<b>診断や医学的助言ではありません</b>。",
     "fromPlaceholder": "開始日",
     "toPlaceholder": "終了日",
     "invalidDates": "開始日が終了日より前になるように、両方の日付を選択してください。",
-    "generate": "BRIEFを作成",
+    "generate": "EMBR BRIEFを作成",
     "generating": "作成中…",
     "generateError": "BRIEFを作成できませんでした。",
     "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBRIEFは以下からそのままご覧いただけます。",
@@ -308,8 +313,8 @@
     "persistentSymptomsTitle": "継続している症状",
     "persistentSymptomsEntry": "{{category}}は両方の期間で継続して記録されました。",
     "groundedInTitle": "データに基づく根拠",
-    "viewEvidence": "根拠を表示",
-    "hideEvidence": "根拠を非表示",
+    "viewEvidence": "記録した日を表示",
+    "hideEvidence": "記録した日を非表示",
     "evidenceSourceLabel": "情報源",
     "evidenceSourceSelfReported": "自己申告による症状記録",
     "evidenceConfidenceLabel": "解釈のレベル",
@@ -323,7 +328,7 @@
     "trendsTitle": "最近の傾向",
     "briefCountPhrase_other": "{{count}}件のBRIEF",
     "trendsAcrossBriefs_other": "直近{{count}}件のBRIEFについて",
-    "trendsCategoryLine": "{{category}}：{{totalPhrase}}中{{present}}件で記録（うち{{persistent}}件で継続）。",
+    "trendsCategoryLine": "{{category}}：{{totalPhrase}}中{{present}}件で記録（うち{{persistent}}件で継続している症状として記載）。",
     "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
     "longitudinalPatternsLine": "{{category}}は直近{{totalPhrase}}すべてで記録されています。"
   },
@@ -358,7 +363,7 @@
     "confirmLogoutAllMessage": "この端末を含む、すべての端末がログアウトされます。",
     "logout": "ログアウト",
     "deleteAccountTitle": "アカウントの削除",
-    "deleteAccountHint": "アカウントとその中のすべてのデータ（症状の記録、周期の記録、日々の状況、治療の記録、BRIEF、設定など）を完全に削除します。この操作は取り消せません。",
+    "deleteAccountHint": "アカウントとその中のすべてのデータ（症状の記録、周期の記録、日々の状況、治療の記録、BRIEF、設定など）を完全に削除します。<b>この操作は取り消せません。</b>",
     "deleteMyAccount": "アカウントを削除する",
     "confirmPasswordPlaceholder": "パスワードを確認",
     "forgotPasswordHint": "パスワードをお忘れですか？",

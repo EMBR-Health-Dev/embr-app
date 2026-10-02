@@ -24,6 +24,9 @@ export enum ErrorCode {
   /** The consent version the client displayed isn't the current one
    * (stale page or old app build). The client should reload. */
   CONSENT_VERSION_OUTDATED = "CONSENT_VERSION_OUTDATED",
+  /** New accounts are not being created (pre launch, early access
+   * only). Clients show an early access message instead of a form. */
+  REGISTRATION_CLOSED = "REGISTRATION_CLOSED",
 }
 
 export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
@@ -38,4 +41,5 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   [ErrorCode.EMAIL_NOT_VERIFIED]: 403,
   [ErrorCode.CONSENT_REQUIRED]: 403,
   [ErrorCode.CONSENT_VERSION_OUTDATED]: 409,
+  [ErrorCode.REGISTRATION_CLOSED]: 403,
 };

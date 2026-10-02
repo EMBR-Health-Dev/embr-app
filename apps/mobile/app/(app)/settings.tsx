@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { changePasswordSchema } from "@embr/validation";
 import type { DeviceSessionDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
@@ -293,7 +293,14 @@ export default function SettingsScreen() {
 
             <View style={styles.deleteSection}>
               <Text style={styles.sectionTitle}>{t("settings.deleteAccountTitle")}</Text>
-              <Text style={styles.sectionHint}>{t("settings.deleteAccountHint")}</Text>
+              <Text style={styles.sectionHint}>
+                <Trans
+                  i18nKey="settings.deleteAccountHint"
+                  components={{
+                    b: <Text style={{ fontWeight: "600", color: theme.colors.textPrimary }} />,
+                  }}
+                />
+              </Text>
 
               {!deleteConfirming ? (
                 <Pressable onPress={() => setDeleteConfirming(true)}>

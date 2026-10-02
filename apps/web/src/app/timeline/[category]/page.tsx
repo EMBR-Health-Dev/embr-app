@@ -23,6 +23,7 @@ import {
   symptomRecordState,
 } from "../../../lib/symptom-evidence";
 import { formatHistoryDate } from "../../../lib/symptom-history-format";
+import { richText } from "../../../lib/rich-text";
 
 /**
  * One symptom's history: when it was first and last logged, how often
@@ -148,7 +149,7 @@ export default function SymptomHistoryPage() {
             </button>
           </div>
           {selectedEvidence.state === "no_entry" ? (
-            <p className="mt-2 text-sm text-foreground/70">{t("noEntryForDay")}</p>
+            <p className="mt-2 text-sm text-foreground/70">{t.rich("noEntryForDay", richText)}</p>
           ) : dayLogs === null ? (
             <p className="mt-2 text-sm text-foreground/50">{t("dayLoading")}</p>
           ) : (

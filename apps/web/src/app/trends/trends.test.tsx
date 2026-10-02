@@ -29,7 +29,9 @@ const coOccurrenceMock = vi.fn().mockResolvedValue(null);
 const contextCoOccurrenceMock = vi.fn().mockResolvedValue(null);
 const evidenceStrengthMock = vi
   .fn()
-  .mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 0 });
+  // A record exists (outside the window under test) unless a test says
+  // otherwise, so the per-section empty states render.
+  .mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 1 });
 
 vi.mock("../../lib/api", () => ({
   api: {
@@ -66,7 +68,15 @@ describe("Patterns page — empty states", () => {
       await screen.findByText("See what your record is beginning to show over time."),
     ).toBeInTheDocument();
     expect(screen.getByText("Your record")).toBeInTheDocument();
-    expect(screen.getByText("Reported data")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_content: string, el: Element | null) =>
+          el?.textContent === "Entries you recorded for each symptom in this period." &&
+          ![...(el?.children ?? [])].some(
+            (c) => c.textContent === "Entries you recorded for each symptom in this period.",
+          ),
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Cycle history")).toBeInTheDocument();
     expect(screen.getByText("Recorded cycle information.")).toBeInTheDocument();
   });
@@ -173,11 +183,7 @@ describe("Patterns page — populated state (real data flow)", () => {
     // The generic "what EMBR can surface..." explainer only shows in the
     // empty state — once a real finding exists, the finding sentence
     // itself carries that job, so the card doesn't repeat itself.
-    expect(
-      screen.queryByText(
-        "What EMBR can surface from your record once there's enough to show a signal.",
-      ),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Symptoms you recorded on the same days.")).not.toBeInTheDocument();
   });
 });
 
@@ -192,9 +198,7 @@ describe("Patterns page — evidence strength", () => {
 
     expect(await screen.findByText("Building your record")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "You're building your record. As you log more consistently, EMBR can surface stronger signals across symptoms and time.",
-      ),
+      screen.getByText("Your record becomes more useful as you log consistently."),
     ).toBeInTheDocument();
   });
 
@@ -210,5 +214,21 @@ describe("Patterns page — evidence strength", () => {
     expect(
       screen.getByText("頼りになる、しっかりとした記録が集まっています。"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Signals page — nothing recorded at all", () => {
+  it("shows one explanation and one next step instead of empty sections", async () => {
+    evidenceStrengthMock.mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 0 });
+    const { default: TrendsPage } = await import("./page");
+    renderWithIntl(<TrendsPage />);
+
+    expect(await screen.findByText("Nothing recorded yet.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Log today's symptoms" })).toHaveAttribute(
+      "href",
+      "/dashboard",
+    );
+    expect(screen.queryByRole("button", { name: "Last 90 days" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Symptoms you recorded on the same days.")).not.toBeInTheDocument();
   });
 });

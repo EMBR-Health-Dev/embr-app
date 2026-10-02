@@ -188,7 +188,15 @@ describe("Symptom history page", () => {
     expect(blank.className).not.toMatch(/bg-lilac/);
 
     await user.click(blank);
-    expect(screen.getByText("No symptom entry recorded for this day.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_content: string, el: Element | null) =>
+          el?.textContent === "No symptom entry recorded for this day." &&
+          ![...(el?.children ?? [])].some(
+            (c) => c.textContent === "No symptom entry recorded for this day.",
+          ),
+      ),
+    ).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(/no brain fog/i);
     expect(symptomLogsList).not.toHaveBeenCalled();
 

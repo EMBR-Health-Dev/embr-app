@@ -21,7 +21,8 @@
     "newToEmbr": "New to EMBR?",
     "createAccount": "Create an account",
     "sessionExpired": "Your session expired. Log in again to continue.",
-    "accountDeleted": "Your account and everything in it have been deleted."
+    "accountDeleted": "Your account and everything in it have been deleted.",
+    "requestEarlyAccess": "Request early access"
   },
   "LanguageSwitcher": {
     "label": "Language",
@@ -36,7 +37,7 @@
     "checkEmailBody": "We've sent a verification link to <strong>{email}</strong>. Once you've confirmed it, come back and log in.",
     "goToLogin": "Go to login",
     "title": "Create your account",
-    "subtitle": "Turn what you're experiencing into evidence. Private by default, on your terms.",
+    "subtitle": "Build a record of what you're experiencing. Private by default, on your terms.",
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "passwordHint": "At least 12 characters, with an uppercase letter, a lowercase letter, and a digit.",
@@ -44,7 +45,12 @@
     "submit": "Create account",
     "submitting": "Creating account…",
     "alreadyHaveAccount": "Already have an account?",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "earlyAccessTitle": "EMBR is in private early access",
+    "earlyAccessBody": "New accounts are not open yet. We are preparing EMBR for public use, including the privacy and legal documents that will apply when it opens. Request early access and we will be in touch.",
+    "earlyAccessAction": "Request early access",
+    "reassuranceTitle": "Your record stays yours.",
+    "reassuranceBody": "Export it, share it, or delete it when you choose."
   },
   "ForgotPassword": {
     "title": "Reset your password",
@@ -143,7 +149,7 @@
       "patternsCaveat": "These are patterns in your records, not diagnoses. EMBR does not tell you what is causing your symptoms.",
       "trackLabel": "Track",
       "briefLabel": "Brief",
-      "briefTitle": "Evidence · Signals · Questions",
+      "briefTitle": "Record · Signals · Questions",
       "briefBody": "When you want one, EMBR turns your records into a simple summary you can take to a healthcare appointment.",
       "briefControlNote": "You decide when to create it. Nothing is generated automatically.",
       "conversationLabel": "Healthcare conversation",
@@ -267,7 +273,7 @@
     "mostCommon": "Most common: {category}",
     "startingPoint": {
       "understandExperience": "Let's start building your record.",
-      "understandPatterns": "You're here to understand patterns. We'll start surfacing them as you log.",
+      "understandPatterns": "You're here to understand patterns. Observed patterns appear in Signals as your record grows.",
       "prepareForAppointment": "You're preparing for a healthcare conversation. Let's help you build something concrete.",
       "keepRecord": "Let's start building your record over time.",
       "notSure": "Let's see what your record starts to show."
@@ -284,11 +290,12 @@
     "patternsLabel": "Signals",
     "patternsBody": "A weekly view of what's changing. As your record grows, the fuller picture takes shape in Signals.",
     "viewPatterns": "Go to Signals",
-    "evidenceLabel": "Your evidence",
+    "evidenceLabel": "Your EMBR BRIEF",
     "evidenceBody": "Your EMBR BRIEF turns your recorded history into what you can bring to your GP.",
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
     "viewClinicalBrief": "View EMBR BRIEF",
-    "generateFirstBrief": "Generate your first EMBR BRIEF"
+    "generateFirstBrief": "Generate your first EMBR BRIEF",
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
   },
   "Nav": {
     "navigationLabel": "Main navigation",
@@ -329,7 +336,7 @@
     "title": "Signals",
     "subtitle": "See what your record is beginning to show over time.",
     "reportedDataLabel": "Your record",
-    "reportedDataDescription": "Reported data",
+    "reportedDataDescription": "<b>Entries</b> you recorded for each symptom in this period.",
     "symptomsHeader": "Symptoms, last {days} days",
     "noSymptomsYet": "No symptom entries yet",
     "noSymptomsBody": "Your record becomes more useful as you log consistently. After several entries, this view shows how often each symptom was recorded.",
@@ -342,18 +349,21 @@
     "daysUnit": "days",
     "irregularityNote": "Cycle irregularity is expected during perimenopause. This view is here to help you notice your own pattern, not to flag it as a problem.",
     "symptomsHeaderAll": "Symptoms, full record",
-    "cycleLengthHeaderAll": "Cycle length, full record"
+    "cycleLengthHeaderAll": "Cycle length, full record",
+    "emptyRecordTitle": "Nothing recorded yet.",
+    "emptyRecordBody": "Your record becomes more useful as you log consistently. After several entries, Signals shows how often each symptom was recorded, which symptoms you recorded on the same days, and your cycle lengths.",
+    "emptyRecordAction": "Log today's symptoms"
   },
   "CoOccurrence": {
     "cardLabel": "Signal",
-    "cardDescription": "What EMBR can surface from your record once there's enough to show a signal.",
+    "cardDescription": "Symptoms you recorded on the same days.",
     "findingHeading": "{categoryA} and {categoryB} appeared together",
-    "evidenceLabel": "Evidence",
+    "evidenceLabel": "Recorded days",
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "observedLabel": "Observed",
     "observedText": "{categoryA} was logged {countA, plural, one {# time} other {# times}} in the last {days} days. {categoryB} was logged {countB, plural, one {# time} other {# times}}.",
     "caveat": "A description of what you've logged: not a diagnosis, and not a claim about cause.",
-    "whyReasoning": "EMBR surfaces a signal like this once two symptoms have been recorded together on at least 3 separate days. {categoryA} and {categoryB} currently share {days, plural, one {# day} other {# days}}.",
+    "whyReasoning": "This appears once two symptoms have been recorded on the same day on at least 3 separate days. {categoryA} and {categoryB} currently share {days, plural, one {# day} other {# days}}.",
     "questionLabel": "Discuss with your GP",
     "questionText": "Is it common for {categoryA} and {categoryB} to occur together at this stage?",
     "questionCaveat": "A suggested question, not medical advice.",
@@ -364,10 +374,10 @@
   "ContextCoOccurrence": {
     "cardLabel": "Signal",
     "findingHeading": "{category} was recorded alongside {factor}",
-    "evidenceLabel": "Evidence",
+    "evidenceLabel": "Recorded days",
     "sharedDaysCount": "{days, plural, one {# shared day} other {# shared days}}",
     "caveat": "A description of what you've recorded: not a diagnosis, and not a claim that one caused the other.",
-    "whyReasoning": "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
+    "whyReasoning": "This appears once a symptom and a context factor have been recorded on the same day on at least 3 separate days. {category} and {factor} currently share {days, plural, one {# day} other {# days}}.",
     "briefCta": "View this period in your EMBR BRIEF"
   },
   "EvidenceStrength": {
@@ -378,7 +388,7 @@
       "ESTABLISHED": "Established record"
     },
     "caption": {
-      "EARLY": "You're building your record. As you log more consistently, EMBR can surface stronger signals across symptoms and time.",
+      "EARLY": "Your record becomes more useful as you log consistently.",
       "EMERGING": "Your record is starting to take shape. Keep logging to build a fuller picture.",
       "ESTABLISHED": "You have a solid record to draw on."
     }
@@ -520,7 +530,7 @@
     "revoking": "Revoking…",
     "revoke": "Revoke",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, daily context, treatments, briefs, and settings. This cannot be undone.",
+    "deleteAccountDescription": "This permanently deletes your account and everything in it: symptom logs, cycle entries, daily context, treatments, briefs, and settings. <b>This cannot be undone.</b>",
     "deleteMyAccount": "Delete my account",
     "confirmPasswordLabel": "Confirm your password",
     "forgotPasswordHint": "Don't know your password?",
@@ -532,17 +542,17 @@
   },
   "Brief": {
     "title": "EMBR BRIEF",
-    "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation, not a diagnosis, and not medical advice.",
-    "noMinimumEntries": "There's no minimum. Even a single entry generates a brief. With very little logged, it will simply say so rather than guess.",
+    "description": "A structured summary of your record, with questions you can bring to your GP. This is a data summary to help your conversation, <b>not a diagnosis, and not medical advice</b>.",
+    "noMinimumEntries": "Each EMBR BRIEF covers <b>the period you choose</b>: how often each symptom was recorded, observed patterns, cycle lengths and treatments you logged, and <b>questions to ask</b>. There's no minimum. With very little logged, it says so <b>rather than guess</b>.",
     "fromLabel": "From",
     "toLabel": "To",
-    "generate": "Generate brief",
+    "generate": "Generate EMBR BRIEF",
     "generating": "Generating…",
     "pickDates": "Pick both a start and end date.",
     "generateError": "Couldn't generate a brief. Try again.",
     "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
     "briefReady": "Your brief is ready",
-    "aiAuthorshipNote": "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
+    "aiAuthorshipNote": "This summary and the questions are written by AI from the counts and patterns in this brief. <b>Your notes are not used.</b>",
     "downloadPdf": "Download PDF",
     "downloadSummary": "Download clinician summary",
     "downloadingSummary": "Preparing…",
@@ -576,8 +586,8 @@
     "persistentSymptomsTitle": "Ongoing symptoms",
     "persistentSymptomsEntry": "{category} remained present across both periods.",
     "groundedInTitle": "Grounded in your data",
-    "viewEvidence": "View evidence",
-    "hideEvidence": "Hide evidence",
+    "viewEvidence": "View recorded days",
+    "hideEvidence": "Hide recorded days",
     "evidenceSourceLabel": "Source",
     "evidenceSourceSelfReported": "Self-reported symptom logs",
     "evidenceConfidenceLabel": "Interpretation level",
@@ -590,7 +600,7 @@
     "evidenceDatesInterpretation": "This describes a pattern in your logged data. It does not establish a medical cause.",
     "trendsTitle": "Your recent trends",
     "trendsAcrossBriefs": "Across your last {count, plural, one {# brief} other {# briefs}}",
-    "trendsCategoryLine": "{category}: reported in {present} of {total, plural, one {# brief} other {# briefs}}, marked persistent in {persistent}.",
+    "trendsCategoryLine": "{category}: recorded in {present} of {total, plural, one {# brief} other {# briefs}}, listed as ongoing in {persistent}.",
     "longitudinalPatternsTitle": "Recurring across your briefs",
     "longitudinalPatternsLine": "{category} has appeared in every one of your last {total, plural, one {# brief} other {# briefs}}.",
     "presetsLabel": "Quick ranges",
@@ -860,9 +870,9 @@
   "Consent": {
     "termsLabel": "I agree to the <link>Terms of Use</link>.",
     "privacyLabel": "I have read and understood the <link>Privacy Policy</link>.",
-    "healthExplanation": "EMBR stores and uses the health information you enter, such as symptoms, cycle details, daily context and treatments, to build your record, show your patterns and create your EMBR BRIEF.",
-    "healthLabel": "I acknowledge that EMBR handles the health information I provide, such as symptoms, cycle details and treatments, for the purposes described in the <link>Privacy Policy</link>, including building my record, showing my patterns and creating my EMBR BRIEF, and, where required, I consent to that handling.",
-    "manageNote": "You can manage your privacy choices in your account settings. Where the handling of your information is based on consent, you can withdraw that consent at any time.",
+    "healthExplanation": "EMBR uses the health information you choose to enter, including symptoms, cycle details, daily context and treatments, to provide your EMBR record, show changes over time and create your EMBR BRIEF.",
+    "healthLabel": "I consent to EMBR processing the health information I provide for these purposes, as described in the <link>Privacy Policy</link>.",
+    "manageNote": "You can manage your privacy choices in your account settings. Where processing is based on consent, you can withdraw your consent at any time.",
     "opensInNewTab": "(opens in a new tab)",
     "termsRequired": "Please accept the Terms of Use to continue.",
     "privacyRequired": "Please confirm you have read the Privacy Policy.",
@@ -899,7 +909,7 @@
   },
   "SymptomHistory": {
     "sectionTitle": "Symptom history",
-    "sectionIntro": "Days with an entry, counted from your own records. A day without an entry is shown as no entry recorded, never as a day without symptoms.",
+    "sectionIntro": "Days with an entry, counted from your own records. A day without an entry is shown as <b>no entry recorded</b>, never as a day without symptoms.",
     "firstLogged": "First logged",
     "lastLogged": "Last logged",
     "period": "{from} → {to}",
@@ -911,7 +921,7 @@
     "notLoggedInLast": "Not logged in the last {days} days.",
     "notLoggedRecentlyRule": "Shown when a symptom logged on at least {min} days has had no entry for {days} days, while other symptoms are still being logged.",
     "noEntry": "No entry recorded",
-    "noEntryForDay": "No symptom entry recorded for this day.",
+    "noEntryForDay": "<b>No symptom entry</b> recorded for this day.",
     "noHistoryTitle": "No history recorded",
     "noHistoryBody": "There are no entries for this symptom yet. Once you log it, its history will appear here.",
     "viewHistory": "View history",
@@ -932,7 +942,7 @@
   },
   "CheckIn": {
     "title": "How are you feeling today?",
-    "intro": "Select any symptoms you have today, then choose how severe each one is. Anything you don't select is simply not recorded today.",
+    "intro": "Select any symptoms you have today, then choose how severe each one is. Anything you don't select is <b>simply not recorded</b> today.",
     "symptomsLabel": "Symptoms today",
     "addAnother": "Add another symptom",
     "showFewer": "Show fewer symptoms",
@@ -940,12 +950,13 @@
     "severityRequired": "Choose Mild, Moderate or Severe for each selected symptom.",
     "save": "Save today's check in",
     "saving": "Saving…",
-    "saved": "Today's check in is saved.",
+    "saved": "Today's check in is saved. You can edit it <b>until the end of today</b>.",
     "savedEmpty": "Today's check in now has no symptoms recorded.",
     "todayHeading": "Today's symptoms",
     "edit": "Edit today's check in",
     "cancel": "Cancel",
     "saveError": "Your check in could not be saved. Please try again.",
-    "loadError": "Today's check in could not be loaded. Please try again."
+    "loadError": "Today's check in could not be loaded. Please try again.",
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
   }
 }

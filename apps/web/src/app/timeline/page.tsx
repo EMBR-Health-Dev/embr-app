@@ -20,6 +20,7 @@ import {
   type HistoryRange,
   type RecordSpan,
 } from "../../lib/record-history";
+import { richText } from "../../lib/rich-text";
 
 // The list endpoints cap a page at 100 items; a long record is read page
 // by page up to this many pages per source (1,000 entries), and the page
@@ -241,8 +242,10 @@ export default function TimelinePage() {
             >
               {tHistory("sectionTitle")}
             </h2>
-            <p className="mt-2 text-sm text-foreground/60">{tHistory("sectionIntro")}</p>
-            <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+            <p className="mt-2 text-sm text-foreground/60">
+              {tHistory.rich("sectionIntro", richText)}
+            </p>
+            <ul className="mt-5 border-b border-border-subtle">
               {symptomHistory.categories.map((category) => (
                 <SymptomEvidenceCard
                   key={category.category}

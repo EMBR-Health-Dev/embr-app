@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, router, useLocalSearchParams } from "expo-router";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { loginSchema } from "@embr/validation";
@@ -8,6 +8,7 @@ import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
 import { LanguageSwitcher } from "../components/language-switcher";
 import { errorMarker, theme } from "../lib/theme";
+import { EARLY_ACCESS_HREF, isRegistrationOpen } from "../lib/registration";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -98,11 +99,24 @@ export default function LoginScreen() {
           </Text>
         </Pressable>
 
-        <Link href="/register" style={styles.link}>
-          <Text>
-            {t("login.newToEmbr")} <Text style={styles.linkText}>{t("login.createAccount")}</Text>
-          </Text>
-        </Link>
+        {isRegistrationOpen() ? (
+          <Link href="/register" style={styles.link}>
+            <Text>
+              {t("login.newToEmbr")} <Text style={styles.linkText}>{t("login.createAccount")}</Text>
+            </Text>
+          </Link>
+        ) : (
+          <Pressable
+            style={styles.link}
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(EARLY_ACCESS_HREF)}
+          >
+            <Text>
+              {t("login.newToEmbr")}{" "}
+              <Text style={styles.linkText}>{t("login.requestEarlyAccess")}</Text>
+            </Text>
+          </Pressable>
+        )}
       </View>
     </SafeAreaView>
   );

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Working Through the Menopause Transition · EMBR Field Guide</title>
+<!--
+  Source of the public Field Guide (landingpage/embr-guide.pdf).
+  Regenerate with: node docs/content/field-guide/build.cjs
+  Content rules: no statistic without a source, no mechanistic or causal
+  claims, no hyphens or dashes in copy, severity as words (Mild /
+  Moderate / Severe), "record" for the product. Clinician review is
+  recommended before publication.
+-->
+<style>
+  /* The web app's own brand font files, so the PDF builds offline. */
+  @font-face { font-family: "Instrument Serif"; src: url("../../../apps/web/src/fonts/InstrumentSerif-Regular.ttf"); font-weight: 400; font-style: normal; }
+  @font-face { font-family: "Instrument Serif"; src: url("../../../apps/web/src/fonts/InstrumentSerif-Italic.ttf"); font-weight: 400; font-style: italic; }
+  @font-face { font-family: "Inter"; src: url("../../../apps/web/src/fonts/Inter.ttf"); font-weight: 100 900; }
+  @page { size: A4; margin: 18mm 18mm 20mm; }
+  :root {
+    --plum: #2A1F39; --graphite: #4A4058; --muted: #746B82; --rule: #B8B2C1;
+    --lilac: #7A588A; --lilac-soft: #F1EAF5; --pearl: #FAF7FB;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, -apple-system, system-ui, sans-serif; color: var(--graphite); font-size: 10.5pt; line-height: 1.55; background: #fff; }
+  h1, h2, .display { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; color: var(--plum); }
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .brand { font-family: "Instrument Serif", Georgia, serif; font-size: 22pt; color: var(--plum); letter-spacing: 0.02em; }
+  .eyebrow { font-size: 8pt; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--lilac); }
+  .cover h1 { font-size: 40pt; line-height: 1.08; margin: 10mm 0 6mm; }
+  .cover .lede { font-size: 13pt; color: var(--graphite); max-width: 135mm; }
+  .cover .contents { border-top: 1px solid var(--rule); padding-top: 6mm; columns: 2; column-gap: 10mm; font-size: 9.5pt; }
+  .cover .contents div { break-inside: avoid; margin-bottom: 2mm; }
+  .cover .contents span { color: var(--muted); display: inline-block; width: 9mm; }
+  .boundary { border-left: 2px solid var(--lilac); padding: 2mm 0 2mm 4mm; font-size: 9.5pt; color: var(--graphite); margin-top: 6mm; }
+  section { break-before: auto; margin-top: 11mm; }
+  section.page { break-before: page; margin-top: 0; }
+  .num { font-size: 8pt; font-weight: 600; letter-spacing: 0.16em; color: var(--lilac); text-transform: uppercase; }
+  h2 { font-size: 22pt; line-height: 1.15; margin: 2mm 0 4mm; }
+  h3 { font-size: 10.5pt; font-weight: 600; color: var(--plum); margin: 5mm 0 1.5mm; }
+  p { margin: 0 0 3mm; }
+  strong { color: var(--plum); font-weight: 600; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.6mm; }
+  .note { background: var(--lilac-soft); padding: 4mm 5mm; margin: 5mm 0; break-inside: avoid; }
+  .note p:last-child { margin-bottom: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.5pt; break-inside: avoid; }
+  th { text-align: left; font-weight: 600; color: var(--plum); border-bottom: 1px solid var(--plum); padding: 2mm 3mm 2mm 0; }
+  td { border-bottom: 1px solid var(--rule); padding: 2.2mm 3mm 2.2mm 0; vertical-align: top; }
+  td:first-child { width: 34mm; font-weight: 500; color: var(--plum); }
+  .maxim { font-family: "Instrument Serif", Georgia, serif; font-size: 20pt; color: var(--plum); margin: 8mm 0 3mm; }
+  .end { break-inside: avoid; border-top: 1px solid var(--rule); margin-top: 10mm; padding-top: 5mm; font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div>
+    <div class="brand">EMBR</div>
+    <div class="eyebrow" style="margin-top:22mm;">Field Guide</div>
+    <h1>Working Through<br>the Menopause Transition</h1>
+    <p class="lede">A practical guide to recording what you experience, preparing for healthcare appointments, and asking for the support you need at work.</p>
+    <p class="boundary"><strong>Information, not diagnosis.</strong> This guide helps you understand the menopause transition and prepare for conversations about your care. It does not diagnose conditions or replace advice from a qualified healthcare professional.</p>
+  </div>
+  <div class="contents">
+    <div><span>01</span>Why a record helps</div>
+    <div><span>02</span>The menopause transition in brief</div>
+    <div><span>03</span>Symptoms that can affect work</div>
+    <div><span>04</span>What you may choose to record</div>
+    <div><span>05</span>Reading your own record</div>
+    <div><span>06</span>Preparing for your appointment</div>
+    <div><span>07</span>Support at work</div>
+    <div><span>08</span>When to seek care promptly</div>
+  </div>
+</div>
+
+<section class="page">
+  <div class="num">Section 01</div>
+  <h2>Why a record helps</h2>
+  <p>Healthcare is built around moments: a consultation, a test, a prescription, a follow up. But many experiences of the menopause transition unfold between those moments. Symptoms can change from week to week, and by the time you sit down with a clinician, much of that story can be hard to recall.</p>
+  <p>A short appointment is a difficult place to describe something that comes and goes. A record made at the time, in your own words, gives that conversation something firmer to start from: <strong>what happened, how often, and how it has changed.</strong></p>
+  <p>This guide is about building that record and using it well. It does not tell you what your symptoms mean. That is a conversation for you and your clinician.</p>
+</section>
+
+<section>
+  <div class="num">Section 02</div>
+  <h2>The menopause transition in brief</h2>
+  <p><strong>Perimenopause</strong> is the stage of the menopause transition before menopause. Menstrual cycles can become less predictable, and symptoms may change in frequency and intensity. Hormone levels change during this time, often unevenly, which is one reason some weeks can feel very different from others.</p>
+  <p><strong>Menopause</strong> is defined looking back, after 12 consecutive months without a menstrual period when there is no other obvious cause.</p>
+  <p>There is no single timeline. The transition varies considerably between women and can span several years. Not every woman experiences the same symptoms, and symptoms can change over time.</p>
+</section>
+
+<section class="page">
+  <div class="num">Section 03</div>
+  <h2>Symptoms that can affect work</h2>
+  <p>Symptoms commonly reported during the transition include changes in sleep, hot flashes and night sweats, fatigue, changes in concentration and memory, anxiety and mood changes, joint pain and changes in menstrual cycles. Some can make demanding work days harder, often in ways that are difficult to explain.</p>
+  <h3>Cognition</h3>
+  <p>“Brain fog” is a commonly used term, not a formal diagnosis, for experiences such as difficulty concentrating, forgetting words or names, or feeling mentally slower. Many women describe it as one of the hardest symptoms to put into words at work.</p>
+  <h3>Sleep and night sweats</h3>
+  <p>Disrupted sleep, waking during the night, or night sweats can leave you less rested the next day, and can make other symptoms feel harder to manage.</p>
+  <h3>Mood and anxiety</h3>
+  <p>New or stronger feelings of worry, irritability or low mood are commonly reported, sometimes without an obvious reason.</p>
+  <div class="note">
+    <p><strong>Not every symptom is caused by the transition.</strong> Sleep problems, stress, thyroid conditions, anaemia, depression, medications and other conditions can cause similar symptoms. This is one reason a clinician’s assessment matters, and why a clear record of what you experience is useful to them.</p>
+  </div>
+</section>
+
+<section class="page">
+  <div class="num">Section 04</div>
+  <h2>What you may choose to record</h2>
+  <p>You do not need to record everything. A short, consistent entry is more useful than a long one you cannot keep up. These are things you may choose to record, not a test to pass.</p>
+  <table>
+    <tr><th>What</th><th>How</th></tr>
+    <tr><td>Symptoms</td><td>Which symptoms you noticed that day, each with a severity in words: <strong>Mild</strong> (noticeable), <strong>Moderate</strong> (gets in the way of your day) or <strong>Severe</strong> (hard to get through your day).</td></tr>
+    <tr><td>Sleep</td><td>Roughly how long you slept, and whether night sweats or waking disrupted it.</td></tr>
+    <tr><td>Cycle</td><td>Period start and end days and flow, if you still have periods. Skip this if it does not apply.</td></tr>
+    <tr><td>Daily context</td><td>Things you may want to look back on later, such as stress, caffeine or alcohol. These are context, not proof of a cause.</td></tr>
+    <tr><td>Treatments</td><td>Anything you start, stop or change, such as HRT, other medication or supplements, with the date and dose.</td></tr>
+    <tr><td>Your own words</td><td>A short note when something matters, for example how a symptom affected a meeting or a night’s sleep.</td></tr>
+  </table>
+  <p>A day with no entry is simply a day with no entry. It does not mean you had no symptoms, and a good record does not need to be complete to be useful.</p>
+</section>
+
+<section>
+  <div class="num">Section 05</div>
+  <h2>Reading your own record</h2>
+  <p>After a few weeks, your record can show you things that are hard to see day to day:</p>
+  <ul>
+    <li><strong>How often</strong> each symptom was recorded, for example on 12 of the last 30 days.</li>
+    <li><strong>How that changed</strong> over time, compared with an earlier period.</li>
+    <li><strong>When it started</strong>, and when you last recorded it.</li>
+    <li><strong>Which symptoms were recorded on the same days</strong>, and how they sit alongside your cycle or a treatment you started.</li>
+  </ul>
+  <p>These are descriptions of what you recorded. Two symptoms appearing on the same days does not show that one causes the other, and a change after starting a treatment is not proof that the treatment caused it. Your record is most useful as something to discuss, not something to conclude from on your own.</p>
+</section>
+
+<section class="page">
+  <div class="num">Section 06</div>
+  <h2>Preparing for your appointment</h2>
+  <p>Appointments are short. Arriving with a clear summary helps you use the time well.</p>
+  <h3>What to bring</h3>
+  <ul>
+    <li><strong>A timeline.</strong> When you first noticed each symptom, and whether it has changed in frequency or severity.</li>
+    <li><strong>How often, and how much.</strong> For example: “Sleep disruption on 18 of the last 30 days, mostly Moderate.”</li>
+    <li><strong>The impact.</strong> How symptoms affect your sleep, work and daily life, in a sentence or two.</li>
+    <li><strong>Cycle changes</strong>, if you still have periods.</li>
+    <li><strong>Treatments</strong> you have tried, with dates and doses, and what you noticed.</li>
+    <li><strong>Your questions</strong>, written down, with the most important one first.</li>
+  </ul>
+  <h3>Questions you might ask</h3>
+  <ul>
+    <li>Could these symptoms be related to the menopause transition, and what else should we consider?</li>
+    <li>Are there any tests that would help?</li>
+    <li>What are the options for managing these symptoms, and what are their benefits and risks for me?</li>
+    <li>What should I keep recording before we next speak?</li>
+  </ul>
+  <div class="note">
+    <p><strong>If you feel your concerns were not fully addressed,</strong> you can ask for a follow up appointment or a referral to a clinician with a special interest in menopause, and bring your record with you.</p>
+  </div>
+</section>
+
+<section class="page">
+  <div class="num">Section 07</div>
+  <h2>Support at work</h2>
+  <p>Symptoms of the transition can coincide with demanding years at work. You decide how much to share. In many workplaces you can ask for practical changes without sharing your full medical history.</p>
+  <h3>Adjustments people often ask about</h3>
+  <ul>
+    <li>Flexible start times or working location on difficult days.</li>
+    <li>Protected focus time with fewer meetings.</li>
+    <li>Control over temperature, ventilation or a desk fan.</li>
+    <li>Access to occupational health, where your employer offers it.</li>
+    <li>Whether your employer has a menopause policy.</li>
+  </ul>
+  <p>Depending on where you work, employment law or your employer’s own policies may give you rights to adjustments. Your HR team, an employee representative or official guidance for your country can tell you what applies to you.</p>
+  <h3>Preparing the conversation</h3>
+  <p>It can help to describe the effect rather than the diagnosis, for example: “Some nights my sleep is disrupted, which makes early meetings hard. A later start on those days would help.” A record of how often this happens can make the request concrete.</p>
+</section>
+
+<section class="page">
+  <div class="num">Section 08</div>
+  <h2>When to seek care promptly</h2>
+  <p>Recording symptoms is not a substitute for medical care, and it should never delay seeking it.</p>
+  <ul>
+    <li><strong>Seek urgent help</strong> for chest pain, trouble breathing, very heavy bleeding or a sudden severe symptom, by calling your local emergency number.</li>
+    <li><strong>If you are thinking about harming yourself,</strong> contact emergency services or a crisis line in your area right away.</li>
+    <li><strong>Speak to a clinician soon</strong> about any bleeding after menopause, bleeding between periods or after sex, or new, severe, persistent or rapidly worsening symptoms.</li>
+  </ul>
+
+  <p class="maxim">EMBR describes. Your clinician interprets.</p>
+  <p>EMBR helps you build a structured, longitudinal record of what you experience, see how it changes over time, and prepare a concise summary, the EMBR BRIEF, for your healthcare professional. It does not diagnose you or tell you what is causing your symptoms.</p>
+  <p>EMBR is currently in private early access. To request access, email <strong>info@embrhealthcare.com</strong>.</p>
+
+  <div class="end">© 2026 EMBR · Building the longitudinal record for women’s health · embrhealthcare.com<br>Information, not diagnosis. Not medical advice.</div>
+</section>
+
+</body>
+</html>

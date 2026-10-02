@@ -58,7 +58,7 @@ describe("startingPointMessageKey", () => {
       "Let's start building your record.",
     );
     expect(tKey(startingPointMessageKey("UNDERSTAND_PATTERNS")!)).toBe(
-      "You're here to understand patterns. We'll start surfacing them as you log.",
+      "You're here to understand patterns. Observed patterns appear in Signals as your record grows.",
     );
     expect(tKey(startingPointMessageKey("PREPARE_FOR_APPOINTMENT")!)).toBe(
       "You're preparing for a healthcare conversation. Let's help you build something concrete.",

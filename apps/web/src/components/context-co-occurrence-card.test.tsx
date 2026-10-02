@@ -86,7 +86,7 @@ describe("ContextCoOccurrenceCard", () => {
     expect(screen.getByText("Sep 1")).toBeInTheDocument();
     expect(screen.getByText("Sep 5")).toBeInTheDocument();
     expect(screen.getByText("Sep 12")).toBeInTheDocument();
-    expect(screen.getByText("Evidence")).toBeInTheDocument();
+    expect(screen.getByText("Recorded days")).toBeInTheDocument();
   });
 
   it("keeps the interpretation-boundary caveat visible, not hidden behind a disclosure", async () => {
@@ -122,7 +122,7 @@ describe("ContextCoOccurrenceCard", () => {
     expect(details).not.toHaveAttribute("open");
     expect(
       screen.getByText(
-        "EMBR surfaces a signal like this once a symptom and a context factor have been recorded together on at least 3 separate days. Hot Flash and sleep under 6 hours currently share 3 days.",
+        "This appears once a symptom and a context factor have been recorded on the same day on at least 3 separate days. Hot Flash and sleep under 6 hours currently share 3 days.",
       ),
     ).toBeInTheDocument();
   });

@@ -355,7 +355,7 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
   });
 });
 
-describe("Brief page — View evidence (evidence drill-down)", () => {
+describe("Brief page — View recorded days (evidence drill-down)", () => {
   it("resolves a frequency pattern's citation to its frequencyComparison entry and shows the caveat", async () => {
     generateMock.mockResolvedValue(
       brief({
@@ -386,7 +386,7 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     await screen.findByText("Grounded in your data");
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
 
-    const toggle = screen.getByRole("button", { name: "View evidence" });
+    const toggle = screen.getByRole("button", { name: "View recorded days" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     await user.click(toggle);
 
@@ -408,7 +408,7 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
       ),
     ).toBeInTheDocument();
 
-    const hideToggle = screen.getByRole("button", { name: "Hide evidence" });
+    const hideToggle = screen.getByRole("button", { name: "Hide recorded days" });
     expect(hideToggle).toHaveAttribute("aria-expanded", "true");
     await user.click(hideToggle);
     expect(screen.queryByText("This reflects self-reported logging frequency only.")).toBeNull();
@@ -431,7 +431,7 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     await screen.findByText("Grounded in your data");
-    await user.click(screen.getByRole("button", { name: "View evidence" }));
+    await user.click(screen.getByRole("button", { name: "View recorded days" }));
 
     expect(
       screen.getByText("This reflects self-reported logging frequency only."),
@@ -494,7 +494,7 @@ describe("Brief page — View evidence (evidence drill-down)", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     await screen.findByText("Grounded in your data");
-    for (const toggle of screen.getAllByRole("button", { name: "View evidence" })) {
+    for (const toggle of screen.getAllByRole("button", { name: "View recorded days" })) {
       await user.click(toggle);
     }
 
@@ -530,7 +530,7 @@ describe("Brief page — Your recent trends", () => {
     expect(await screen.findByText("Your recent trends")).toBeInTheDocument();
     expect(screen.getByText("Across your last 3 briefs")).toBeInTheDocument();
     expect(
-      screen.getByText("Hot Flash: reported in 3 of 3 briefs, marked persistent in 2."),
+      screen.getByText("Hot Flash: recorded in 3 of 3 briefs, listed as ongoing in 2."),
     ).toBeInTheDocument();
   });
 
@@ -818,10 +818,10 @@ describe("Brief page — multiple items", () => {
     renderWithIntl(<BriefPage />);
 
     expect(
-      await screen.findByText("Hot Flash: reported in 4 of 4 briefs, marked persistent in 3."),
+      await screen.findByText("Hot Flash: recorded in 4 of 4 briefs, listed as ongoing in 3."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Fatigue: reported in 2 of 4 briefs, marked persistent in 0."),
+      screen.getByText("Fatigue: recorded in 2 of 4 briefs, listed as ongoing in 0."),
     ).toBeInTheDocument();
   });
 });
@@ -1129,7 +1129,7 @@ describe("Brief page — history", () => {
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("From"), "2026-01-01");
     await user.type(screen.getByLabelText("To"), "2026-02-01");
-    await user.click(screen.getByRole("button", { name: "Generate brief" }));
+    await user.click(screen.getByRole("button", { name: "Generate EMBR BRIEF" }));
     expect(await screen.findByText("Fresh brief text.")).toBeInTheDocument();
 
     // Deletes via the history row's own delete button, for the same

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- DRAFT: remove the noindex tag and the draft banner once legal review is complete. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Terms of Use | EMBR</title>
+<meta name="description" content="The terms that apply when you use EMBR.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* EMBR Brand Guidelines v1.0 tokens: same values as index.html and the app. */
+  :root { --graphite-900: #2A1F39; --graphite-700: #4A4058; --graphite-500: #746B82; --graphite-300: #B8B2C1; --graphite-100: #F1EEF4; --lilac-100: #F1EAF5; --lilac-200: #E2D7EA; --lilac-500: #A888B6; --lilac-600: #9270A0; --pearl-50: #FAF7FB;
+    --background: var(--pearl-50); --foreground: var(--graphite-900); --muted: var(--graphite-100); --muted-foreground: var(--graphite-500); --border: var(--graphite-300); --border-subtle: var(--graphite-100); --ring: var(--lilac-500);
+    --font-display: 'Instrument Serif', Georgia, serif; --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  body { font-family: var(--font-body); background: var(--background); color: var(--foreground); line-height: 1.65; -webkit-font-smoothing: antialiased; }
+  a { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--lilac-500); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--foreground); }
+  a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .draft-banner { background: var(--lilac-200); color: var(--foreground); padding: 10px 20px; font-size: 14px; font-weight: 500; text-align: center; }
+  header { border-bottom: 1px solid var(--border-subtle); }
+  .bar { max-width: 760px; margin: 0 auto; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-family: var(--font-display); font-size: 24px; font-weight: 400; color: var(--foreground); text-decoration: none; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(40px, 6vw, 56px); line-height: 1.1; }
+  .updated { margin-top: 12px; color: var(--muted-foreground); font-size: 14px; }
+  .important { margin-top: 32px; background: var(--muted); border-left: 3px solid var(--lilac-500); border-radius: 0 12px 12px 0; padding: 20px 24px; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; line-height: 1.25; margin-top: 48px; }
+  p, ul { margin-top: 12px; }
+  ul { padding-left: 20px; }
+  li + li { margin-top: 6px; }
+  /* Draft placeholders awaiting a decision. */
+  .todo { background: var(--lilac-200); padding: 0 4px; border-radius: 4px; }
+  footer { border-top: 1px solid var(--border-subtle); }
+  footer .bar { font-size: 14px; color: var(--muted-foreground); flex-wrap: wrap; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="draft-banner" role="note">DRAFT for legal review. Not yet in effect. Highlighted items need a decision before publishing.</div>
+<header>
+  <div class="bar">
+    <a class="logo" href="/">EMBR</a>
+    <a href="/">Back to home</a>
+  </div>
+</header>
+
+<main>
+  <h1>Terms of Use</h1>
+  <!-- The version string must match LEGAL_DOCUMENT_VERSIONS in EMBR-Health-Dev/embr-app
+       (packages/validation/src/index.ts). Consent records store it, so change both together. -->
+  <p class="updated">Version 0.1-draft · Effective date: <span class="todo">[EFFECTIVE DATE]</span></p>
+
+  <div class="important">
+    <strong>Please read this first.</strong>
+    <p>EMBR is not a medical device, does not diagnose any condition and does not provide medical advice. It helps you keep a record of what you experience and prepare for conversations with a qualified healthcare professional. Always seek their advice about your health. If you think you may have a medical emergency, contact your local emergency services immediately.</p>
+    <p><span class="todo">[Confirm the “not a medical device” statement with regulatory counsel for each market.]</span></p>
+  </div>
+
+  <h2>1. About these terms</h2>
+  <p>These terms are an agreement between you and <span class="todo">[LEGAL ENTITY NAME]</span>, <span class="todo">[REGISTERED ADDRESS]</span> (“EMBR”, “we”, “us”). They apply when you use the EMBR app and website. By creating an account, you accept them. Our <a href="/privacy.html">Privacy Policy</a> explains how we handle your information.</p>
+
+  <h2>2. What EMBR does</h2>
+  <p>EMBR lets you record symptoms, cycle information, daily context and treatments; see patterns in what you have recorded; and create an EMBR BRIEF, a structured summary of your record for a healthcare conversation.</p>
+  <p>Patterns are calculated by fixed rules from your own entries and describe your data only. The EMBR BRIEF is worded with the help of an AI service, working only from those calculated figures. Neither is a diagnosis, a statement about what is causing your symptoms, or a treatment recommendation. EMBR does not replace a clinician.</p>
+
+  <h2>3. Who can use EMBR</h2>
+  <ul>
+    <li>You must be at least <span class="todo">[18]</span> years old.</li>
+    <li>You must provide an email address you control and keep your password secure. You are responsible for activity on your account.</li>
+    <li>Tell us promptly at <a href="mailto:info@embrhealthcare.com">info@embrhealthcare.com</a> if you think someone else has accessed your account.</li>
+  </ul>
+
+  <h2>4. Your content</h2>
+  <p>You own what you enter into EMBR. You give us permission to store and process it only to provide EMBR to you, as described in the Privacy Policy. You can export it or delete your account at any time.</p>
+  <p>Your record is only as accurate as what you enter. If you share an EMBR BRIEF or export with anyone, you decide what to share and with whom.</p>
+
+  <h2>5. Acceptable use</h2>
+  <p>Do not:</p>
+  <ul>
+    <li>use EMBR for anyone other than yourself, or enter someone else's health information without their permission;</li>
+    <li>try to access other people's accounts or data, or interfere with EMBR's security or operation;</li>
+    <li>copy, reverse engineer or resell EMBR, except where the law allows; or</li>
+    <li>use EMBR for anything unlawful.</li>
+  </ul>
+
+  <h2>6. Access through an organization</h2>
+  <p>If your employer or another organization gives you access, they can see your membership and aggregated, anonymized trends only, never your individual record. If the organization's access ends, <span class="todo">[describe what happens to the member's personal account and data]</span>.</p>
+
+  <h2>7. Early access and changes to EMBR</h2>
+  <p>EMBR is new and still developing. We may add, change or remove features. We will try to keep EMBR available, but we do not promise it will be uninterrupted or error-free. We will give reasonable notice of changes that significantly affect you.</p>
+
+  <h2>8. Fees</h2>
+  <p>EMBR is currently free for individual users. <span class="todo">[Confirm. If paid plans are introduced, describe pricing, billing and cancellation here.]</span> Organization plans are covered by a separate agreement.</p>
+
+  <h2>9. Ending your use</h2>
+  <p>You can stop using EMBR and delete your account at any time in Settings. We may suspend or close an account that breaches these terms or puts other users or EMBR at risk. Where reasonable, we will tell you first and give you the chance to export your data.</p>
+
+  <h2>10. Our intellectual property</h2>
+  <p>EMBR, including its software, design and content, belongs to us or our licensors. These terms give you a personal, non-transferable right to use EMBR for its intended purpose.</p>
+
+  <h2>11. Liability</h2>
+  <p><span class="todo">[To be drafted by counsel for each governing jurisdiction. Consumer protection law in the UK, EU and Japan limits what can be excluded; for example, liability for death or personal injury caused by negligence cannot be excluded.]</span></p>
+
+  <h2>12. Changes to these terms</h2>
+  <p>We may update these terms. If a change is material, we will tell you in the app or by email before it takes effect. If you continue to use EMBR after that, the updated terms apply.</p>
+
+  <h2>13. Governing law</h2>
+  <p><span class="todo">[Governing law and courts. Note that consumers usually keep the protection of the law where they live.]</span></p>
+
+  <h2>14. Contact</h2>
+  <p><span class="todo">[LEGAL ENTITY NAME]</span>, <span class="todo">[REGISTERED ADDRESS]</span>. Email: <a href="mailto:info@embrhealthcare.com">info@embrhealthcare.com</a>.</p>
+</main>
+
+<footer>
+  <div class="bar">
+    <span>EMBR</span>
+    <span><a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></span>
+  </div>
+</footer>
+</body>
+</html>

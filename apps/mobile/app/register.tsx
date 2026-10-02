@@ -1,14 +1,44 @@
 import { useState } from "react";
 import { Link } from "expo-router";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { registerSchema } from "@embr/validation";
 import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
 import { errorMarker, theme } from "../lib/theme";
+import { EARLY_ACCESS_HREF, isRegistrationOpen } from "../lib/registration";
+
+function EarlyAccessScreen() {
+  const { t } = useTranslation();
+  return (
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.content}>
+        <Text style={styles.title}>{t("register.earlyAccessTitle")}</Text>
+        <Text style={styles.body}>{t("register.earlyAccessBody")}</Text>
+        <Pressable
+          style={styles.button}
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL(EARLY_ACCESS_HREF)}
+        >
+          <Text style={styles.buttonText}>{t("register.earlyAccessAction")}</Text>
+        </Pressable>
+        <Link href="/login" style={styles.link}>
+          <Text>
+            {t("register.alreadyHaveAccount")}{" "}
+            <Text style={styles.linkText}>{t("register.logIn")}</Text>
+          </Text>
+        </Link>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 export default function RegisterScreen() {
+  return isRegistrationOpen() ? <RegisterForm /> : <EarlyAccessScreen />;
+}
+
+function RegisterForm() {
   const { t } = useTranslation();
   const { register } = useAuth();
   const [email, setEmail] = useState("");
