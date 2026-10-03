@@ -290,7 +290,9 @@ page offers newcomers early access instead of "Create an account".
 To reopen: publish the final legal documents, add their links back to the
 consent screen (`LEGAL_DOCUMENT_URLS`, see `docs/legal/consent-decision-sheet.md`),
 set the final `LEGAL_DOCUMENT_VERSIONS`, then set all three to `true` (web and
-mobile need a rebuild, since public env values are baked in at build time).
+mobile need a rebuild, since public env values are baked in at build time; the
+web Dockerfile takes `NEXT_PUBLIC_REGISTRATION_OPEN` as a build argument, which
+Railway fills from the service variable of the same name).
 
 ## Production configuration checklist
 

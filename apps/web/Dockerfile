@@ -17,6 +17,10 @@ FROM deps AS build
 # service name; other deployments override via --build-arg.
 ARG API_URL=http://api:4000
 ENV API_URL=${API_URL}
+# Registration state is also baked in at build time (NEXT_PUBLIC_*), so
+# the platform must pass it as a build argument. Unset means closed.
+ARG NEXT_PUBLIC_REGISTRATION_OPEN=false
+ENV NEXT_PUBLIC_REGISTRATION_OPEN=${NEXT_PUBLIC_REGISTRATION_OPEN}
 COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY packages/validation ./packages/validation
