@@ -17,7 +17,7 @@ _Last reviewed: 2 October 2026._
 | ------------------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------- |
 | Core record (log, check in, timeline, symptom history) | Done        | Web and mobile suites green; end to end checked locally at 320 to 1440px                 |
 | EMBR BRIEF (generation, PDF, past briefs)              | Done        | Deterministic patterns first, AI wording only; PDF tests green                           |
-| Synthetic demo ("Meet Maya")                           | In progress | Public, synthetic data only; no real health information                                  |
+| Synthetic demo ("Meet Maya")                           | Done        | `maya.html`; synthetic data only, every figure calculated on the page; linked from hero  |
 | Web QA                                                 | Done        | Visual pass at 320, 375, 768, 1024, 1440px; no overflow or page errors                   |
 | Mobile QA                                              | Not started | Code and tests only; needs a pass on real iOS and Android devices                        |
 | Accessibility review                                   | In progress | 44px targets, severity readable without colour, focus states; needs a screen reader pass |
@@ -63,15 +63,16 @@ _Last reviewed: 2 October 2026._
 
 ## Brand
 
-| Item                               | Status      | Evidence / next step                                                                             |
-| ---------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| Founder page                       | Done        | `founder.html` on the website branch; portrait to add (`founder.jpg`)                            |
-| About                              | Done        | Record first positioning, "EMBR describes. Your clinician interprets."                           |
-| Resources                          | In progress | Hero, boundary and grouped Symptom Library done; Menopause 101 and Prepare for Care need content |
-| Evidence & Research                | Not started | Needs cited, clinician reviewed summaries; structure agreed                                      |
-| Synthetic demo                     | In progress | See Product                                                                                      |
-| Early access flow                  | Done        | "Request early access" email on site and app; sign up closed                                     |
-| Website branch merged and deployed | Decision    | `landingpage` branch `launch/readiness-pass` not yet merged                                      |
+| Item                               | Status      | Evidence / next step                                                                        |
+| ---------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| Founder page                       | Done        | `founder.html` on the website branch; portrait to add (`founder.jpg`)                       |
+| About                              | Done        | Record first positioning, "EMBR describes. Your clinician interprets."                      |
+| Resources                          | In progress | Hierarchy in place; Menopause 101 and Common terminology marked "in preparation"            |
+| Evidence & Research                | In progress | Four part structure live; established / emerging summaries need sources and clinical review |
+| Synthetic demo                     | Done        | See Product                                                                                 |
+| Brand foundation                   | Done        | `docs/BRAND-FOUNDATION.md`                                                                  |
+| Early access flow                  | Done        | "Request early access" email on site and app; sign up closed                                |
+| Website branch merged and deployed | Decision    | `landingpage` branch `launch/readiness-pass` not yet merged                                 |
 
 ## Launch
 
