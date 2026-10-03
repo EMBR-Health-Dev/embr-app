@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
 import { LanguageSwitcher } from "../language-switcher";
-import { CtaLink, START_HREF, container } from "./cta-link";
+import { CtaLink, REGISTRATION_OPEN, START_HREF, container } from "./cta-link";
 
 const navLink =
   "rounded-sm text-sm text-graphite-700 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -17,6 +17,7 @@ const navLink =
  */
 export function LandingHeader() {
   const t = useTranslations("Landing.nav");
+  const tAccess = useTranslations("Landing.earlyAccess");
   const { user } = useAuth();
 
   return (
@@ -60,7 +61,7 @@ export function LandingHeader() {
                   logo, switcher and Log in, and the hero's own primary
                   CTA sits directly below. */}
               <CtaLink href={START_HREF} size="sm" className="hidden sm:inline-flex">
-                {t("start")}
+                {REGISTRATION_OPEN ? t("start") : tAccess("label")}
               </CtaLink>
             </>
           )}

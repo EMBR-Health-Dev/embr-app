@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CtaLink, Eyebrow, START_HREF, container } from "./cta-link";
+import { CtaLink, Eyebrow, REGISTRATION_OPEN, START_HREF, container } from "./cta-link";
 import { BriefMockup, RecordMockup } from "./mockups";
 
 const PRODUCT_POINTS = ["record", "signals", "brief"] as const;
@@ -143,6 +143,7 @@ export function PrivacySection() {
 export function ClosingCta() {
   const t = useTranslations("Landing.cta");
   const tHero = useTranslations("Landing.hero");
+  const tAccess = useTranslations("Landing.earlyAccess");
 
   return (
     <section aria-labelledby="cta-heading">
@@ -154,12 +155,15 @@ export function ClosingCta() {
           {t("headline")}
         </h2>
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-          <CtaLink href={START_HREF}>{t("primary")}</CtaLink>
+          <CtaLink href={START_HREF}>{REGISTRATION_OPEN ? t("primary") : tAccess("label")}</CtaLink>
           <CtaLink href="#product" variant="secondary">
             {t("secondary")}
           </CtaLink>
         </div>
-        <p className="mx-auto mt-5 max-w-xl text-body-s text-muted-foreground">{tHero("trust")}</p>
+        {!REGISTRATION_OPEN && (
+          <p className="mx-auto mt-5 max-w-xl text-body-s text-graphite-700">{tAccess("note")}</p>
+        )}
+        <p className="mx-auto mt-2 max-w-xl text-body-s text-muted-foreground">{tHero("trust")}</p>
       </div>
     </section>
   );
@@ -175,6 +179,7 @@ const footerLink =
  */
 export function LandingFooter() {
   const t = useTranslations("Landing.footer");
+  const tAccess = useTranslations("Landing.earlyAccess");
 
   return (
     <footer className="border-t border-border-subtle">
@@ -199,7 +204,7 @@ export function LandingFooter() {
             </li>
             <li>
               <Link href={START_HREF} className={footerLink}>
-                {t("createAccount")}
+                {REGISTRATION_OPEN ? t("createAccount") : tAccess("label")}
               </Link>
             </li>
           </ul>

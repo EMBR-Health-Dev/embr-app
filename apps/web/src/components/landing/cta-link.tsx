@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
+import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 
 type Variant = "primary" | "secondary" | "inverse";
 
@@ -31,8 +32,13 @@ export function CtaLink({
   return <Link className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props} />;
 }
 
-/** The one registration entry point every landing CTA shares. */
-export const START_HREF = "/register";
+/**
+ * The one entry point every landing CTA shares. While sign up is closed
+ * it is the same early access request as the website; the labels switch
+ * with it (see useStartLabel), so nothing points at a closed form.
+ */
+export const START_HREF = REGISTRATION_OPEN ? "/register" : EARLY_ACCESS_HREF;
+export { REGISTRATION_OPEN };
 
 export const container = "mx-auto w-full max-w-6xl px-5 sm:px-8";
 

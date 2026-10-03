@@ -1,10 +1,11 @@
 import { useTranslations } from "next-intl";
-import { CtaLink, Eyebrow, START_HREF, container } from "./cta-link";
+import { CtaLink, Eyebrow, REGISTRATION_OPEN, START_HREF, container } from "./cta-link";
 
 const LOOP = ["track", "patterns", "evidence", "care"] as const;
 
 export function Hero() {
   const t = useTranslations("Landing.hero");
+  const tAccess = useTranslations("Landing.earlyAccess");
 
   return (
     <section aria-labelledby="hero-heading" className="border-b border-border-subtle">
@@ -21,12 +22,17 @@ export function Hero() {
         </p>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <CtaLink href={START_HREF}>{t("primaryCta")}</CtaLink>
+          <CtaLink href={START_HREF}>
+            {REGISTRATION_OPEN ? t("primaryCta") : tAccess("label")}
+          </CtaLink>
           <CtaLink href="#how-it-works" variant="secondary">
             {t("secondaryCta")}
           </CtaLink>
         </div>
-        <p className="mt-5 max-w-xl text-body-s text-muted-foreground">{t("trust")}</p>
+        {!REGISTRATION_OPEN && (
+          <p className="mt-5 max-w-xl text-body-s text-graphite-700">{tAccess("note")}</p>
+        )}
+        <p className="mt-2 max-w-xl text-body-s text-muted-foreground">{t("trust")}</p>
 
         <ol
           aria-label={t("loopLabel")}
