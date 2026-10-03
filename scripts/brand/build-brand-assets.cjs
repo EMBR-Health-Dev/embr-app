@@ -139,6 +139,18 @@ for (const to of [
     m + "android-icon-background.png",
   );
   await png(markSvg(PLUM), 512, m + "splash-icon.png", true);
+  // Wordmark for the mobile screens (React Native draws images, not SVG
+  // paths, without an extra dependency). 96 px tall: crisp at 3x.
+  {
+    const o = outline(WORD, 100, TRACKING);
+    const h = 96,
+      w = Math.round((o.w / o.h) * h);
+    await page.setViewportSize({ width: w, height: h });
+    await page.setContent(
+      `<html><body style="margin:0;background:transparent">${wordmarkSvg(PLUM).replace("<svg ", `<svg width="${w}" height="${h}" `)}</body></html>`,
+    );
+    await page.screenshot({ path: path.join(ROOT, m + "embr-wordmark.png"), omitBackground: true });
+  }
   // Touch icon for the website (phones saving it to the home screen).
   await png(markSvg(PEARL, ICON, PLUM), 180, "assets/brand/embr-touch-icon.png");
   // Link preview image (Open Graph): the pearl wordmark centred on plum.
@@ -153,6 +165,6 @@ for (const to of [
   }
   await browser.close();
   console.log(
-    `Wrote ${Object.keys(files).length} SVGs to assets/brand, ${copies.length} copies, brand-wordmark.ts, 6 mobile PNGs, the touch icon and the share image.`,
+    `Wrote ${Object.keys(files).length} SVGs to assets/brand, ${copies.length} copies, brand-wordmark.ts, 7 mobile PNGs, the touch icon and the share image.`,
   );
 })();

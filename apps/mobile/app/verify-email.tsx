@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { ApiError } from "../lib/api-client";
 import { extractToken } from "../lib/reset-token";
 import { errorMarker, theme } from "../lib/theme";
+import { BrandWordmark } from "../components/brand-wordmark";
 
 // Same known limitation as reset-password.tsx: there's no deep-linking
 // set up for this flow on mobile — the verification email always
@@ -82,6 +83,7 @@ export default function VerifyEmailScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.content}>
+          <BrandWordmark />
           <Text style={styles.title}>{t("verifyEmail.successTitle")}</Text>
           <Text style={styles.body}>{t("verifyEmail.successBody")}</Text>
           <Link href="/login" style={styles.link}>
@@ -95,6 +97,7 @@ export default function VerifyEmailScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
+        <BrandWordmark />
         <Text style={styles.title}>{t("verifyEmail.title")}</Text>
         <Text style={styles.body}>{t("verifyEmail.subtitle")}</Text>
 

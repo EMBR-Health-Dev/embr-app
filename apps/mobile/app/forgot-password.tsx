@@ -7,6 +7,7 @@ import { forgotPasswordSchema } from "@embr/validation";
 import { api } from "../lib/api";
 import { ApiError } from "../lib/api-client";
 import { errorMarker, theme } from "../lib/theme";
+import { BrandWordmark } from "../components/brand-wordmark";
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
@@ -45,6 +46,7 @@ export default function ForgotPasswordScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.content}>
+          <BrandWordmark />
           <Text style={styles.title}>{t("forgotPassword.checkEmailTitle")}</Text>
           <Text style={styles.body}>{t("forgotPassword.checkEmailBody")}</Text>
           <Link href="/login" style={styles.link}>
@@ -58,6 +60,7 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
+        <BrandWordmark />
         <Text style={styles.title}>{t("forgotPassword.title")}</Text>
         <Text style={styles.body}>{t("forgotPassword.subtitle")}</Text>
 

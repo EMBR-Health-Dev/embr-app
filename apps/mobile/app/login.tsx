@@ -9,6 +9,7 @@ import { ApiError } from "../lib/api-client";
 import { LanguageSwitcher } from "../components/language-switcher";
 import { errorMarker, theme } from "../lib/theme";
 import { EARLY_ACCESS_HREF, isRegistrationOpen } from "../lib/registration";
+import { BrandWordmark } from "../components/brand-wordmark";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -50,6 +51,8 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
         <LanguageSwitcher />
+
+        <BrandWordmark />
 
         <Text style={styles.title}>{t("login.title")}</Text>
 
