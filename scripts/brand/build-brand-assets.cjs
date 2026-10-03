@@ -141,8 +141,18 @@ for (const to of [
   await png(markSvg(PLUM), 512, m + "splash-icon.png", true);
   // Touch icon for the website (phones saving it to the home screen).
   await png(markSvg(PEARL, ICON, PLUM), 180, "assets/brand/embr-touch-icon.png");
+  // Link preview image (Open Graph): the pearl wordmark centred on plum.
+  {
+    const o = outline(WORD, 100, TRACKING);
+    const h = 84,
+      w = (o.w / o.h) * h;
+    const share = `<html><body style="margin:0;width:1200px;height:630px;background:${PLUM};display:flex;align-items:center;justify-content:center">${wordmarkSvg(PEARL).replace("<svg ", `<svg width="${w}" height="${h}" `)}</body></html>`;
+    await page.setViewportSize({ width: 1200, height: 630 });
+    await page.setContent(share);
+    await page.screenshot({ path: path.join(ROOT, "assets/brand/embr-share.png") });
+  }
   await browser.close();
   console.log(
-    `Wrote ${Object.keys(files).length} SVGs to assets/brand, ${copies.length} copies, brand-wordmark.ts, 6 mobile PNGs and the touch icon.`,
+    `Wrote ${Object.keys(files).length} SVGs to assets/brand, ${copies.length} copies, brand-wordmark.ts, 6 mobile PNGs, the touch icon and the share image.`,
   );
 })();
