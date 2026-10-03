@@ -281,10 +281,15 @@ accounts sign in as normal.
 | Web    | `NEXT_PUBLIC_REGISTRATION_OPEN` | unset (closed) | `/register` shows an early access page; login links to early access                |
 | Mobile | `EXPO_PUBLIC_REGISTRATION_OPEN` | unset (closed) | Register screen shows early access                                                 |
 
-Organization invites also need an account, so they are paused too.
+Organization invites are not an exception. An invite adds an existing
+account to an organization; it never creates one, and the API refuses new
+accounts the same way with or without one. People who already have an
+account can still log in and accept. While sign up is closed, the invite
+page offers newcomers early access instead of "Create an account".
 
-To reopen: publish the final legal documents at `LEGAL_DOCUMENT_URLS`, set
-the final `LEGAL_DOCUMENT_VERSIONS`, then set all three to `true` (web and
+To reopen: publish the final legal documents, add their links back to the
+consent screen (`LEGAL_DOCUMENT_URLS`, see `docs/legal/consent-decision-sheet.md`),
+set the final `LEGAL_DOCUMENT_VERSIONS`, then set all three to `true` (web and
 mobile need a rebuild, since public env values are baked in at build time).
 
 ## Production configuration checklist

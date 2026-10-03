@@ -616,6 +616,8 @@
     "loginPrompt": "Log in or create an EMBR account using the same email this invite was sent to, and you'll come right back here to join.",
     "logIn": "Log in",
     "createAccount": "Create an account",
+    "loginPromptClosed": "Log in with the account this invite was sent to, and you'll come right back here to join. EMBR is currently onboarding a limited group of early users, so new accounts are by request.",
+    "requestAccess": "Request early access",
     "youreIn": "You're in",
     "joinedNamed": "You've joined <strong>{orgName}</strong>.",
     "joinedUnnamed": "You've joined the organization.",
