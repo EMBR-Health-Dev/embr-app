@@ -8,6 +8,7 @@ import { useAuth } from "../../../lib/auth-context";
 import { api } from "../../../lib/api";
 import { ApiError } from "../../../lib/api-client";
 import { Button } from "../../../components/button";
+import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../../lib/registration";
 
 type Status = "checking" | "accepting" | "accepted" | "already-member" | "wrong-account" | "error";
 
@@ -110,18 +111,33 @@ function AcceptInviteScreen() {
     return (
       <div className="w-full max-w-sm text-center">
         <h1 className="font-display text-heading-xl text-foreground">{t("youveBeenInvited")}</h1>
-        <p className="mt-3 text-sm text-foreground/60">{t("loginPrompt")}</p>
+        <p className="mt-3 text-sm text-foreground/60">
+          {REGISTRATION_OPEN ? t("loginPrompt") : t("loginPromptClosed")}
+        </p>
         <div className="mt-6 flex flex-col gap-3">
           <Button className="w-full" onClick={() => router.push(`/login?redirect=${encoded}`)}>
             {t("logIn")}
           </Button>
-          <Button
-            variant="ghost"
-            className="w-full"
-            onClick={() => router.push(`/register?redirect=${encoded}`)}
-          >
-            {t("createAccount")}
-          </Button>
+          {/* An invite joins an existing account to an organization; it is
+              not a way round closed registration (the API refuses new
+              accounts either way). While sign up is closed, a newcomer
+              is offered the same early access request as everywhere else. */}
+          {REGISTRATION_OPEN ? (
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => router.push(`/register?redirect=${encoded}`)}
+            >
+              {t("createAccount")}
+            </Button>
+          ) : (
+            <a
+              href={EARLY_ACCESS_HREF}
+              className="inline-flex w-full items-center justify-center rounded-sm border border-border bg-transparent px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              {t("requestAccess")}
+            </a>
+          )}
         </div>
       </div>
     );
