@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { AuthProvider } from "../lib/auth-context";
+import { PublicBrandBar } from "../components/public-brand-bar";
 
 // Self-hosted (not next/font/google): a live Google Fonts fetch at build
 // time is a network dependency CI shouldn't have, and it has failed
@@ -45,7 +46,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="bg-background text-foreground antialiased">
         <NextIntlClientProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <PublicBrandBar />
+            {children}
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

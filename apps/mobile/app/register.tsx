@@ -8,12 +8,14 @@ import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
 import { errorMarker, theme } from "../lib/theme";
 import { EARLY_ACCESS_HREF, isRegistrationOpen } from "../lib/registration";
+import { BrandWordmark } from "../components/brand-wordmark";
 
 function EarlyAccessScreen() {
   const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
+        <BrandWordmark />
         <Text style={styles.title}>{t("register.earlyAccessTitle")}</Text>
         <Text style={styles.body}>{t("register.earlyAccessBody")}</Text>
         <Pressable
@@ -73,6 +75,7 @@ function RegisterForm() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.content}>
+          <BrandWordmark />
           <Text style={styles.title}>{t("register.checkEmailTitle")}</Text>
           <Text style={styles.body}>{t("register.checkEmailBody", { email })}</Text>
           <Link href="/login" style={styles.link}>
@@ -86,6 +89,7 @@ function RegisterForm() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
+        <BrandWordmark />
         <Text style={styles.title}>{t("register.title")}</Text>
 
         <View style={styles.field}>

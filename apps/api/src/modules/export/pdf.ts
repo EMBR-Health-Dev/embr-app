@@ -9,6 +9,7 @@ import {
   registerEmbrPdfFonts,
 } from "../../lib/pdf-fonts.js";
 import { PDF_INK, PDF_INK_FAINT, PDF_INK_MUTED, PDF_INK_SECONDARY } from "../../lib/pdf-palette.js";
+import { EMBR_WORDMARK } from "../../lib/brand-wordmark.js";
 
 export function categoryLabel(category: string): string {
   return category
@@ -71,6 +72,17 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
   const doc = new PDFDocument({ margin: 50, size: "A4" });
   registerEmbrPdfFonts(doc);
 
+  // The master wordmark as a small eyebrow, as on the EMBR BRIEF.
+  const wordmarkHeight = 9;
+  const scale = wordmarkHeight / EMBR_WORDMARK.height;
+  doc
+    .save()
+    .translate(doc.x - EMBR_WORDMARK.x * scale, doc.y - EMBR_WORDMARK.y * scale)
+    .scale(scale)
+    .path(EMBR_WORDMARK.path)
+    .fill(PDF_INK)
+    .restore();
+  doc.y += wordmarkHeight + 8;
   doc.fillColor(PDF_INK).fontSize(20).font(EMBR_PDF_HEADING_FONT).text("EMBR Health Summary");
   doc.moveDown(0.3);
   doc

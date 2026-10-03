@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { ApiError } from "../lib/api-client";
 import { extractToken } from "../lib/reset-token";
 import { errorMarker, theme } from "../lib/theme";
+import { BrandWordmark } from "../components/brand-wordmark";
 
 export default function ResetPasswordScreen() {
   const { t } = useTranslation();
@@ -58,6 +59,7 @@ export default function ResetPasswordScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.content}>
+          <BrandWordmark />
           <Text style={styles.title}>{t("resetPassword.successTitle")}</Text>
           <Text style={styles.body}>{t("resetPassword.successBody")}</Text>
           <Link href="/login" style={styles.link}>
@@ -71,6 +73,7 @@ export default function ResetPasswordScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
+        <BrandWordmark />
         <Text style={styles.title}>{t("resetPassword.title")}</Text>
         <Text style={styles.body}>{t("resetPassword.subtitle")}</Text>
 

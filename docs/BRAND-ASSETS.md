@@ -15,19 +15,19 @@ assets/brand/                          ← the master files
 Never redraw, retype or trace the logo. Change the definition, rerun the
 script, commit the output. The script writes:
 
-| Output                                                     | Used by                                |
-| ---------------------------------------------------------- | -------------------------------------- |
-| `assets/brand/embr-wordmark.svg`                           | Inline use; takes the text colour      |
-| `assets/brand/embr-wordmark-dark.svg`                      | Plum wordmark for light grounds        |
-| `assets/brand/embr-wordmark-light.svg`                     | Pearl wordmark for dark grounds        |
-| `assets/brand/embr-mark.svg`, `-dark`, `-light`            | Compact mark, same three variants      |
-| `assets/brand/embr-favicon.svg`, `embr-touch-icon.png`     | Browser tabs, home screen, avatars     |
-| `assets/brand/embr-share.png`                              | Link previews (Open Graph, 1200 x 630) |
-| `apps/web/src/app/icon.svg`, `apps/admin/src/app/icon.svg` | App favicons                           |
-| `apps/{web,admin,api}/src/lib/brand-wordmark.ts`           | Web and admin headers, BRIEF PDF       |
-| `apps/mobile/assets/*.png`                                 | App icon, Android adaptive, splash     |
-| `docs/content/field-guide/embr-wordmark-*.svg`             | Field Guide PDF                        |
-| `landingpage/assets/brand/` (copy of `assets/brand/`)      | Website                                |
+| Output                                                     | Used by                                                         |
+| ---------------------------------------------------------- | --------------------------------------------------------------- |
+| `assets/brand/embr-wordmark.svg`                           | Inline use; takes the text colour                               |
+| `assets/brand/embr-wordmark-dark.svg`                      | Plum wordmark for light grounds                                 |
+| `assets/brand/embr-wordmark-light.svg`                     | Pearl wordmark for dark grounds                                 |
+| `assets/brand/embr-mark.svg`, `-dark`, `-light`            | Compact mark, same three variants                               |
+| `assets/brand/embr-favicon.svg`, `embr-touch-icon.png`     | Browser tabs, home screen, avatars                              |
+| `assets/brand/embr-share.png`                              | Link previews (Open Graph, 1200 x 630)                          |
+| `apps/web/src/app/icon.svg`, `apps/admin/src/app/icon.svg` | App favicons                                                    |
+| `apps/{web,admin,api}/src/lib/brand-wordmark.ts`           | Web headers and sign in pages, admin, BRIEF and export PDFs     |
+| `apps/mobile/assets/*.png`                                 | App icon, Android adaptive, splash, wordmark on sign in screens |
+| `docs/content/field-guide/embr-wordmark-*.svg`             | Field Guide PDF                                                 |
+| `landingpage/assets/brand/` (copy of `assets/brand/`)      | Website                                                         |
 
 The website lives in a separate repository, so copy `assets/brand/` into
 `landingpage/assets/brand/` after each rebuild.
