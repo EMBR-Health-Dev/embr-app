@@ -8,6 +8,7 @@ import { ApiError } from "../../lib/api-client";
 import { useAuth } from "../../lib/auth-context";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { BrandWordmark } from "../../components/brand-wordmark";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -58,7 +59,12 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl text-foreground">EMBR Admin</h1>
+        <h1 className="flex items-baseline gap-3 text-foreground">
+          <BrandWordmark className="h-6" />
+          <span className="text-sm font-medium uppercase tracking-[0.14em] text-foreground/70">
+            Admin
+          </span>
+        </h1>
         <p className="mt-2 text-sm text-foreground/60">
           Operations console — account and audit visibility only.
         </p>

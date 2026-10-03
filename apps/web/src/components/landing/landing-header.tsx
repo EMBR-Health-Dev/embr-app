@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
 import { LanguageSwitcher } from "../language-switcher";
 import { CtaLink, START_HREF, container } from "./cta-link";
+import { BrandWordmark } from "../brand-wordmark";
 
 const navLink =
   "rounded-sm text-sm text-graphite-700 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -25,9 +26,9 @@ export function LandingHeader() {
         <Link
           href="/"
           aria-label={t("home")}
-          className="rounded-sm font-display text-heading-m text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="flex min-h-11 items-center rounded-sm text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          EMBR
+          <BrandWordmark className="h-[15px]" />
         </Link>
 
         <nav aria-label={t("label")} className="hidden items-center gap-6 lg:flex">

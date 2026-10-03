@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { BrandWordmark } from "./brand-wordmark";
 
 interface NavLink {
   href: string;
@@ -73,9 +74,9 @@ export function AppNav({
       >
         <Link
           href="/dashboard"
-          className="font-display text-heading-m text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="flex min-h-11 items-center text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          EMBR
+          <BrandWordmark className="h-[15px]" />
         </Link>
 
         {/* Desktop / tablet: full primary row + secondary "More" menu. */}
