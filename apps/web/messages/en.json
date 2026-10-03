@@ -698,6 +698,10 @@
     }
   },
   "Landing": {
+    "earlyAccess": {
+      "label": "Request early access",
+      "note": "EMBR is currently onboarding a limited group of early users."
+    },
     "meta": {
       "title": "EMBR | Evidence infrastructure for menopause",
       "description": "EMBR helps you track symptoms, see patterns over time, and turn your experience into evidence for your healthcare conversations."
