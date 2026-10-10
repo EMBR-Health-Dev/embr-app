@@ -316,6 +316,7 @@
     "more": "More",
     "menu": "Menu",
     "treatments": "Treatments",
+    "notes": "Notebook",
     "export": "Export",
     "organization": "Organization",
     "logout": "Log out"
@@ -669,6 +670,8 @@
     "cycleEntriesDescription": "Every cycle entry in the range, one row each.",
     "contextLogsLabel": "Daily context (CSV)",
     "contextLogsDescription": "Every daily context entry in the range, one row each: sleep, afternoon caffeine, alcohol, stress and night sweats recalled in the morning. A blank cell means not logged.",
+    "notesLabel": "Notes (CSV)",
+    "notesDescription": "Every note started in the range, one row each, with its title and text.",
     "treatmentsLabel": "Treatments (CSV)",
     "treatmentsDescription": "Every treatment logged in the range, one row each."
   },
@@ -992,5 +995,31 @@
     "saveError": "Your check in could not be saved. Please try again.",
     "loadError": "Today's check in could not be loaded. Please try again.",
     "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
+  },
+  "Notes": {
+    "title": "Notebook",
+    "backToDashboard": "← Dashboard",
+    "hint": "Private notes for yourself. They are saved with your record and included when you export it. EMBR never reads them for the BRIEF or sends them to AI.",
+    "newNote": "New notebook",
+    "empty": "No notebooks yet. Start one for anything you want to remember: questions, what a doctor said, how a day felt.",
+    "openNote": "Open {title}",
+    "editorLabel": "Notebook page",
+    "titleLabel": "Title",
+    "coverLabel": "Cover",
+    "bodyLabel": "Notes",
+    "titleRequired": "Give this notebook a title.",
+    "saveFailed": "This could not be saved. Your text is still here; please try again.",
+    "save": "Save",
+    "saving": "Saving…",
+    "backToShelf": "Back to notebooks",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this notebook? This cannot be undone.",
+    "cover": {
+      "LILAC": "Lilac",
+      "PLUM": "Plum",
+      "PEARL": "Pearl",
+      "ICE": "Ice",
+      "ROSE": "Rose"
+    }
   }
 }

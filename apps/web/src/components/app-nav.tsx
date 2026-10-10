@@ -56,6 +56,7 @@ export function AppNav({
 
   const secondaryLinks: NavLink[] = [
     { href: "/treatments", label: t("treatments") },
+    { href: "/notes", label: t("notes") },
     { href: "/export", label: t("export") },
     ...(managesOrg ? [{ href: "/organization", label: t("organization") }] : []),
     { href: "/settings", label: t("settings") },

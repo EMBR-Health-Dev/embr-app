@@ -316,6 +316,7 @@
     "more": "その他",
     "menu": "メニュー",
     "treatments": "治療",
+    "notes": "ノート",
     "export": "エクスポート",
     "organization": "組織",
     "logout": "ログアウト"
@@ -669,6 +670,8 @@
     "cycleEntriesDescription": "指定した期間のすべての周期記録を1行ずつまとめたものです。",
     "contextLogsLabel": "日々の状況（CSV）",
     "contextLogsDescription": "指定した期間の日々の状況（睡眠、午後のカフェイン、飲酒、ストレス、朝に振り返った昨夜の寝汗）を1行ずつまとめたものです。空欄は未記録を表します。",
+    "notesLabel": "ノート（CSV）",
+    "notesDescription": "指定した期間に作成したノートを、タイトルと本文とともに1行ずつまとめたものです。",
     "treatmentsLabel": "治療の記録（CSV）",
     "treatmentsDescription": "指定した期間のすべての治療記録を1行ずつまとめたものです。"
   },
@@ -992,5 +995,31 @@
     "saveError": "記録を保存できませんでした。もう一度お試しください。",
     "loadError": "今日の記録を読み込めませんでした。もう一度お試しください。",
     "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。"
+  },
+  "Notes": {
+    "title": "ノート",
+    "backToDashboard": "← ダッシュボード",
+    "hint": "自分だけのメモです。記録と一緒に保存され、エクスポートにも含まれます。EMBRがBRIEFのために読んだり、AIに送ったりすることはありません。",
+    "newNote": "新しいノート",
+    "empty": "まだノートはありません。質問、医師に言われたこと、その日の様子など、覚えておきたいことを書き留めましょう。",
+    "openNote": "{title}を開く",
+    "editorLabel": "ノートのページ",
+    "titleLabel": "タイトル",
+    "coverLabel": "表紙",
+    "bodyLabel": "メモ",
+    "titleRequired": "ノートにタイトルを付けてください。",
+    "saveFailed": "保存できませんでした。入力した内容はそのまま残っています。もう一度お試しください。",
+    "save": "保存",
+    "saving": "保存中…",
+    "backToShelf": "ノート一覧に戻る",
+    "delete": "削除",
+    "deleteConfirm": "このノートを削除しますか？元に戻すことはできません。",
+    "cover": {
+      "LILAC": "ライラック",
+      "PLUM": "プラム",
+      "PEARL": "パール",
+      "ICE": "アイス",
+      "ROSE": "ローズ"
+    }
   }
 }
