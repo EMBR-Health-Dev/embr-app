@@ -590,6 +590,13 @@ model ClinicalBrief {
   /// it is never sent to the AI in any form.
   persistentSymptoms Json?
 
+  /// { morningsAnswered: number, breakdown: Record<NightSweatsRecall, number> | null }
+  /// Counted from ContextLog.nightSweats over [fromDate, toDate]; see
+  /// night-sweats-recall.ts. Breakdown only from 7 answered mornings.
+  /// Never merged into symptom counts and never sent to the AI. Null
+  /// means "never computed for this brief".
+  nightSweatsRecall Json?
+
   /// { interpretationVersion: string, patterns: Stage4Pattern[] }
   /// The canonical Stage 4 result (see @embr/types and
   /// stage4-interpretation.ts) — the same object computed once during

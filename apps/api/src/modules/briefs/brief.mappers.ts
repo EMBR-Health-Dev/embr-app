@@ -7,6 +7,7 @@ import type {
   BriefTreatmentSummaryEntryDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  NightSweatsRecallSummaryDto,
   Stage4Result,
   SymptomCategory,
   SymptomCoOccurrenceDto,
@@ -42,6 +43,7 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // coOccurrence — see ClinicalBriefDto's own doc comment.
     treatmentImpact: brief.treatmentImpact as unknown as BriefTreatmentImpactEntryDto[] | null,
     persistentSymptoms: brief.persistentSymptoms as unknown as SymptomCategory[] | null,
+    nightSweatsRecall: brief.nightSweatsRecall as unknown as NightSweatsRecallSummaryDto | null,
     // The canonical Stage 4 result, exactly as generation computed and
     // persisted it — including treatment names inside
     // treatment_window_changed patterns, safe here since this is the

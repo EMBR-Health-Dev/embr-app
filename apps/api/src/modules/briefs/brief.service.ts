@@ -33,6 +33,7 @@ import {
 } from "./brief-trends.js";
 import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.js";
 import { briefPeriodLabel } from "./brief-period-label.js";
+import { summarizeNightSweatsRecall } from "./night-sweats-recall.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -107,12 +108,18 @@ async function generateBriefContent(
   const previousPeriod = computePreviousPeriod(fromDate, toDate);
   const previousQuery = { from: previousPeriod.from, to: previousPeriod.to };
 
-  const [symptomLogs, cycleEntries, treatments, previousSymptomLogs] = await Promise.all([
-    exportRepository.listSymptomLogsForExport(userId, query),
-    exportRepository.listCycleEntriesForExport(userId, query),
-    treatmentRepository.listOverlappingRange(userId, fromDate, toDate),
-    exportRepository.listSymptomLogsForExport(userId, previousQuery),
-  ]);
+  const [symptomLogs, cycleEntries, treatments, previousSymptomLogs, nightSweatsAnswers] =
+    await Promise.all([
+      exportRepository.listSymptomLogsForExport(userId, query),
+      exportRepository.listCycleEntriesForExport(userId, query),
+      treatmentRepository.listOverlappingRange(userId, fromDate, toDate),
+      exportRepository.listSymptomLogsForExport(userId, previousQuery),
+      briefRepository.listNightSweatsRecall(userId, fromDate, toDate),
+    ]);
+
+  // Its own deterministic count, never merged into symptomSummary and
+  // never part of the AI input below. See night-sweats-recall.ts.
+  const nightSweatsRecall = summarizeNightSweatsRecall(nightSweatsAnswers);
 
   const symptomSummary = computeSymptomSummary(symptomLogs);
   const cycleSummary = computeCycleSummary(cycleEntries);
@@ -299,6 +306,7 @@ async function generateBriefContent(
     coOccurrence: coOccurrence === null ? null : JSON.parse(JSON.stringify(coOccurrence)),
     treatmentImpact: JSON.parse(JSON.stringify(treatmentImpact)),
     persistentSymptoms: JSON.parse(JSON.stringify(persistentSymptoms)),
+    nightSweatsRecall: JSON.parse(JSON.stringify(nightSweatsRecall)),
     // The exact same canonical object computed once above — used to
     // build the AI-safe projection and to validate the AI's
     // response — persisted here unchanged, never recomputed. This

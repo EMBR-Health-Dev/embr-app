@@ -6,6 +6,17 @@ import type { PaginationQuery } from "@embr/validation";
 import type { Locale } from "../../lib/locale.js";
 
 export const briefRepository = {
+  /** The morning night sweats answers in [fromDate, toDate], one per
+   * answered day. Only the answer is selected; see
+   * night-sweats-recall.ts for how it is counted. */
+  async listNightSweatsRecall(userId: string, fromDate: Date, toDate: Date) {
+    const rows = await prisma.contextLog.findMany({
+      where: { userId, date: { gte: fromDate, lte: toDate }, nightSweats: { not: null } },
+      select: { nightSweats: true },
+    });
+    return rows.map((row) => row.nightSweats);
+  },
+
   /**
    * Second line of defense against the same double-generation this
    * flow's Redis lock (see brief.service.ts) exists to prevent in the
@@ -29,6 +40,7 @@ export const briefRepository = {
     coOccurrence: Prisma.InputJsonValue | null;
     treatmentImpact: Prisma.InputJsonValue;
     persistentSymptoms: Prisma.InputJsonValue;
+    nightSweatsRecall: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;
     aiNarrative: string;

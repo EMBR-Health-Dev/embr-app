@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { CycleEntryDto, SymptomHistoryDto, SymptomLogDto, TreatmentDto } from "@embr/types";
+import type {
+  ContextLogDto,
+  CycleEntryDto,
+  NightSweatsRecall,
+  SymptomHistoryDto,
+  SymptomLogDto,
+  TreatmentDto,
+} from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
@@ -12,6 +19,7 @@ import { toIsoDate } from "../../lib/date-format";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { SymptomEvidenceCard } from "../../components/symptom-evidence-card";
+import { SymptomRankingBars } from "../../components/symptom-ranking-bars";
 import { TimelineMonth } from "../../components/timeline-month";
 import { browserTimeZone } from "../../lib/symptom-evidence";
 import {
@@ -22,6 +30,7 @@ import {
   type RecordSpan,
 } from "../../lib/record-history";
 import { richText } from "../../lib/rich-text";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 // The list endpoints cap a page at 100 items; a long record is read page
 // by page up to this many pages per source (1,000 entries), and the page
@@ -50,6 +59,8 @@ interface DayGroup {
   date: string; // YYYY-MM-DD
   symptoms: SymptomLogDto[];
   cycle: CycleEntryDto | null;
+  // Recalled the next morning; shown beside symptoms, never counted as one.
+  nightSweats: NightSweatsRecall | null;
   treatmentEvents: Array<{ treatment: TreatmentDto; kind: "started" | "ended" }>;
 }
 
@@ -65,6 +76,7 @@ export default function TimelinePage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLogDto[]>([]);
   const [cycleEntries, setCycleEntries] = useState<CycleEntryDto[]>([]);
   const [treatments, setTreatments] = useState<TreatmentDto[]>([]);
+  const [contextLogs, setContextLogs] = useState<ContextLogDto[]>([]);
   // True if any source had more than MAX_PAGES pages in range: the page
   // must say so rather than silently showing a partial record.
   const [truncated, setTruncated] = useState(false);
@@ -141,13 +153,20 @@ export default function TimelinePage() {
       // apps/api/src/modules/treatments/treatment.routes.ts) — fetched
       // in full and filtered to this window client-side below.
       fetchAllPages((page) => api.treatments.list({ page, pageSize: PAGE_SIZE })),
+      fetchAllPages((page) =>
+        api.contextLogs.list({ from: fetchStart, page, pageSize: PAGE_SIZE }),
+      ),
     ])
-      .then(([symptomsResult, cycleResult, treatmentsResult]) => {
+      .then(([symptomsResult, cycleResult, treatmentsResult, contextResult]) => {
         setSymptomLogs(symptomsResult.items);
         setCycleEntries(cycleResult.items);
         setTreatments(treatmentsResult.items);
+        setContextLogs(contextResult.items);
         setTruncated(
-          symptomsResult.truncated || cycleResult.truncated || treatmentsResult.truncated,
+          symptomsResult.truncated ||
+            cycleResult.truncated ||
+            treatmentsResult.truncated ||
+            contextResult.truncated,
         );
       })
       .finally(() => setDataLoading(false));
@@ -172,7 +191,7 @@ export default function TimelinePage() {
   function getGroup(date: string): DayGroup {
     let group = groups.get(date);
     if (!group) {
-      group = { date, symptoms: [], cycle: null, treatmentEvents: [] };
+      group = { date, symptoms: [], cycle: null, nightSweats: null, treatmentEvents: [] };
       groups.set(date, group);
     }
     return group;
@@ -183,6 +202,9 @@ export default function TimelinePage() {
   }
   for (const entry of cycleEntries) {
     getGroup(entry.date).cycle = entry;
+  }
+  for (const log of contextLogs) {
+    if (log.nightSweats) getGroup(log.date).nightSweats = log.nightSweats;
   }
   for (const treatment of treatments) {
     if (treatment.startDate >= windowStart) {
@@ -207,7 +229,7 @@ export default function TimelinePage() {
   const visibleDates = sortedDates.filter((date) => {
     const group = groups.get(date)!;
     return (
-      (activeFilters.has("symptoms") && group.symptoms.length > 0) ||
+      (activeFilters.has("symptoms") && (group.symptoms.length > 0 || group.nightSweats)) ||
       (activeFilters.has("cycle") && group.cycle !== null) ||
       (activeFilters.has("treatments") && group.treatmentEvents.length > 0)
     );
@@ -219,6 +241,13 @@ export default function TimelinePage() {
       <div className="flex flex-col gap-2">
         {activeFilters.has("symptoms") && categories.length > 0 && (
           <p className="text-sm text-foreground">{categories.join(" · ")}</p>
+        )}
+        {activeFilters.has("symptoms") && group.nightSweats && (
+          <p className="text-sm text-foreground/70">
+            {t("nightSweatsRecalled", {
+              value: tEnum(`nightSweats.${group.nightSweats}`),
+            })}
+          </p>
         )}
         {activeFilters.has("cycle") && group.cycle && (
           <p className="text-sm text-foreground/70">
@@ -249,7 +278,8 @@ export default function TimelinePage() {
     const group = groups.get(date);
     if (!group) return null;
     const marks = {
-      symptoms: activeFilters.has("symptoms") && group.symptoms.length > 0,
+      symptoms:
+        activeFilters.has("symptoms") && (group.symptoms.length > 0 || group.nightSweats !== null),
       cycle: activeFilters.has("cycle") && group.cycle !== null,
       treatments: activeFilters.has("treatments") && group.treatmentEvents.length > 0,
     };
@@ -292,6 +322,11 @@ export default function TimelinePage() {
             <p className="mt-2 text-sm text-foreground/60">
               {tHistory.rich("sectionIntro", richText)}
             </p>
+            <SymptomRankingBars
+              categories={symptomHistory.categories}
+              rangeFrom={formatHistoryDate(locale, symptomHistory.rangeFrom)}
+              rangeTo={formatHistoryDate(locale, symptomHistory.rangeTo)}
+            />
             <ul className="mt-5 border-b border-border-subtle">
               {symptomHistory.categories.map((category) => (
                 <SymptomEvidenceCard
