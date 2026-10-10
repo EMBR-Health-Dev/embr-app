@@ -518,6 +518,14 @@
     "genericError": "Something went wrong. Try again.",
     "changePassword": "Change password",
     "changing": "Changing…",
+    "displayTitle": "Display",
+    "textSizeLabel": "Text size",
+    "textSizeHelp": "Applies on this device.",
+    "textSize": {
+      "standard": "Standard",
+      "large": "Large",
+      "larger": "Larger"
+    },
     "devices": "Devices",
     "logoutEverywhere": "Log out everywhere",
     "confirmLogoutAllMessage": "Every device, including this one, will be signed out.",

@@ -23,7 +23,9 @@ export function LandingHeader() {
 
   return (
     <header className="border-b border-border-subtle">
-      <div className={`${container} flex items-center justify-between gap-4 py-4`}>
+      <div
+        className={`${container} flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4`}
+      >
         <Link
           href="/"
           aria-label={t("home")}

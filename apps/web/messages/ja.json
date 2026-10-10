@@ -518,6 +518,14 @@
     "genericError": "問題が発生しました。もう一度お試しください。",
     "changePassword": "パスワードを変更",
     "changing": "変更中…",
+    "displayTitle": "表示",
+    "textSizeLabel": "文字の大きさ",
+    "textSizeHelp": "この端末に適用されます。",
+    "textSize": {
+      "standard": "標準",
+      "large": "大",
+      "larger": "特大"
+    },
     "devices": "端末",
     "logoutEverywhere": "すべての端末からログアウト",
     "confirmLogoutAllMessage": "この端末を含む、すべての端末がログアウトされます。",

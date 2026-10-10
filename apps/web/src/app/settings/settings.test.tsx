@@ -293,3 +293,16 @@ describe("Settings — device list presentation", () => {
     expect(screen.getByText("Revoke")).toBeInTheDocument();
   });
 });
+
+describe("Settings — text size", () => {
+  it("shows a Display section with the three text sizes, Standard by default", async () => {
+    const { default: SettingsPage } = await import("./page");
+    renderWithIntl(<SettingsPage />);
+
+    expect(await screen.findByRole("heading", { name: "Display" })).toBeInTheDocument();
+    expect(screen.getByText("Applies on this device.")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Standard" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Large" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Larger" })).toBeInTheDocument();
+  });
+});

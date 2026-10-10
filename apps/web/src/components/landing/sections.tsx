@@ -14,7 +14,9 @@ export function ProductSection() {
 
   return (
     <section id="product" aria-labelledby="product-heading" className="scroll-mt-4">
-      <div className={`${container} grid gap-14 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}>
+      <div
+        className={`${container} grid grid-cols-1 gap-14 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
+      >
         <div className="lg:col-span-6">
           <Eyebrow>{t("eyebrow")}</Eyebrow>
           <h2
@@ -51,7 +53,9 @@ export function BriefSection() {
       aria-labelledby="brief-heading"
       className="scroll-mt-4 bg-graphite-900 text-pearl-50"
     >
-      <div className={`${container} grid gap-14 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}>
+      <div
+        className={`${container} grid grid-cols-1 gap-14 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
+      >
         <div className="lg:col-span-5">
           <Eyebrow tone="inverse">{t("eyebrow")}</Eyebrow>
           <h2 id="brief-heading" className="mt-5 font-display text-display-m sm:text-display-l">
@@ -120,7 +124,9 @@ export function PrivacySection() {
 
   return (
     <section id="privacy" aria-labelledby="privacy-heading" className="scroll-mt-4 bg-lilac-100">
-      <div className={`${container} grid gap-12 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}>
+      <div
+        className={`${container} grid grid-cols-1 gap-12 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
+      >
         <div className="lg:col-span-4">
           <Eyebrow>{t("eyebrow")}</Eyebrow>
           <h2 id="privacy-heading" className="mt-5 font-display text-display-m text-foreground">
@@ -128,7 +134,7 @@ export function PrivacySection() {
           </h2>
           <p className="mt-6 text-body-m text-graphite-700">{t("body")}</p>
         </div>
-        <dl className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:col-span-8">
+        <dl className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:col-span-8">
           {PRIVACY_POINTS.map((p) => (
             <div key={p} className="border-t border-lilac-300 pt-4">
               <dt className="font-medium text-foreground">{t(`points.${p}.title`)}</dt>

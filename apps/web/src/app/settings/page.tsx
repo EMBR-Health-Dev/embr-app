@@ -15,6 +15,7 @@ import { AppNav } from "../../components/app-nav";
 import { LanguageSwitcher } from "../../components/language-switcher";
 import { formatDeviceLabel } from "../../lib/user-agent";
 import { richText } from "../../lib/rich-text";
+import { TextSizeControl } from "../../components/text-size-control";
 
 export default function SettingsPage() {
   const t = useTranslations("Settings");
@@ -226,6 +227,13 @@ export default function SettingsPage() {
               {changingPassword ? t("changing") : t("changePassword")}
             </Button>
           </form>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="font-display text-heading-m text-foreground">{t("displayTitle")}</h2>
+          <p className="mt-4 font-medium text-foreground">{t("textSizeLabel")}</p>
+          <p className="mt-1 text-sm text-foreground/70">{t("textSizeHelp")}</p>
+          <TextSizeControl />
         </section>
 
         <section className="mt-10">
