@@ -12,10 +12,17 @@ updates:
     groups:
       # Patch/minor bumps across the workspace are low-risk and noisy
       # one-PR-per-package; group them so review is one PR per week
-      # instead of a dozen. Major bumps stay ungrouped — those need
-      # individual review since they can carry breaking changes.
+      # instead of a dozen. Major bumps are not opened at all (see
+      # ignore below).
       minor-and-patch:
         update-types: ["minor", "patch"]
+    # Major upgrades (Next, Tailwind, Prisma, ESLint...) are migrations, not
+    # bumps: they are planned and done deliberately, not opened weekly.
+    # New security advisories are still caught by the dependency audit
+    # in CI, whatever their version.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
 
@@ -28,6 +35,12 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    # Node major versions change the base image (Node 25+ drops corepack,
+    # which every Dockerfile uses), so they are upgraded deliberately with
+    # a tested image build. Patch and minor image updates still arrive.
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "docker"
