@@ -159,3 +159,7 @@ large shadows," "generous whitespace"), not guideline facts.
 - Mobile: `apps/mobile/lib/theme.ts` — separate migration, since mobile has
   no Tailwind/CSS variables; React Native `StyleSheet` usages reference
   this module's exported constants directly instead
+
+## Web dark theme
+
+The web app has a per device color theme (Settings → Display: System, Light, Dark; cookie `EMBR_THEME`, default Light). Because components use palette classes directly as well as semantic tokens, dark mode remaps the palette itself in `apps/web/src/app/globals.css`: the graphite and lilac scales are inverted (a light tint becomes a dark one, a deep accent becomes a light one), and text on the solid lilac and rose fills is pinned to a dark value. Verified contrast on the dark background (`pearl-50` → `30 22 41`): foreground 15.8:1, muted text 7.3:1, `lilac-700` accent text 10.0:1 (8.0:1 on `lilac-100`), dark text on `lilac-500` 5.7:1 and on `rose-500` 6.3:1.

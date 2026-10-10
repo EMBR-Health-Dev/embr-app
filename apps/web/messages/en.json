@@ -536,6 +536,13 @@
       "large": "Large",
       "larger": "Larger"
     },
+    "themeLabel": "Color theme",
+    "themeHelp": "Dark is easier on the eyes at night. System follows your phone or computer.",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "devices": "Devices",
     "logoutEverywhere": "Log out everywhere",
     "confirmLogoutAllMessage": "Every device, including this one, will be signed out.",

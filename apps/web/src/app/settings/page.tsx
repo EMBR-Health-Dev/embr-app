@@ -16,6 +16,7 @@ import { LanguageSwitcher } from "../../components/language-switcher";
 import { formatDeviceLabel } from "../../lib/user-agent";
 import { richText } from "../../lib/rich-text";
 import { TextSizeControl } from "../../components/text-size-control";
+import { ThemeControl } from "../../components/theme-control";
 
 export default function SettingsPage() {
   const t = useTranslations("Settings");
@@ -234,6 +235,9 @@ export default function SettingsPage() {
           <p className="mt-4 font-medium text-foreground">{t("textSizeLabel")}</p>
           <p className="mt-1 text-sm text-foreground/70">{t("textSizeHelp")}</p>
           <TextSizeControl />
+          <p className="mt-6 font-medium text-foreground">{t("themeLabel")}</p>
+          <p className="mt-1 text-sm text-foreground/70">{t("themeHelp")}</p>
+          <ThemeControl />
         </section>
 
         <section className="mt-10">
