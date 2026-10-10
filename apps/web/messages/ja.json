@@ -339,7 +339,20 @@
     "filteredEmptyTitle": "この条件に一致する記録はありません。",
     "filteredEmptyBody": "上の項目を追加で選択してみてください。",
     "truncatedNotice": "過去{days}日間の、最近記録された内容を表示しています。",
-    "truncatedNoticeAll": "すべての記録のうち、最近記録された内容を表示しています。"
+    "truncatedNoticeAll": "すべての記録のうち、最近記録された内容を表示しています。",
+    "viewLabel": "表示",
+    "view": {
+      "list": "リスト",
+      "month": "月"
+    },
+    "monthPrevious": "前の月",
+    "monthNext": "次の月",
+    "monthLegend": "凡例",
+    "monthMarkSymptoms": "症状",
+    "monthMarkCycle": "周期",
+    "monthMarkTreatments": "治療の変更",
+    "monthDayNoEntry": "{date}：記録なし",
+    "monthNoEntryDetail": "この日の記録はありません。"
   },
   "Trends": {
     "title": "シグナル",
