@@ -763,7 +763,7 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       )}
 
       {brief.nightSweatsRecall && brief.nightSweatsRecall.morningsAnswered > 0 && (
-        <div>
+        <div className={BRIEF_SECTION}>
           <h3 className={BRIEF_SECTION_HEADING}>{t("nightSweatsRecallTitle")}</h3>
           <p className="mt-1 text-foreground/70">
             {t("nightSweatsAnswered", { count: brief.nightSweatsRecall.morningsAnswered })}
