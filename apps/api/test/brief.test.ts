@@ -29,6 +29,7 @@ const { state, nextId } = vi.hoisted(() => {
         occurredAt: Date;
         notes: string | null;
       }>,
+      contextLogs: [] as Array<{ userId: string; date: Date; nightSweats: string | null }>,
       cycleEntries: [] as Array<{
         id: string;
         userId: string;
@@ -326,6 +327,26 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
+    contextLog: {
+      findMany: vi.fn(
+        ({
+          where,
+        }: {
+          where: { userId: string; date: { gte: Date; lte: Date }; nightSweats: { not: null } };
+        }) =>
+          Promise.resolve(
+            state.contextLogs
+              .filter(
+                (row) =>
+                  row.userId === where.userId &&
+                  row.nightSweats !== null &&
+                  row.date >= where.date.gte &&
+                  row.date <= where.date.lte,
+              )
+              .map((row) => ({ nightSweats: row.nightSweats })),
+          ),
+      ),
+    },
     cycleEntry: {
       findMany: vi.fn(
         ({ where }: { where: { userId: string; date?: { gte?: Date; lte?: Date } } }) => {
@@ -528,6 +549,7 @@ beforeEach(() => {
   state.users = [];
   state.symptomLogs = [];
   state.cycleEntries = [];
+  state.contextLogs = [];
   state.treatments = [];
   state.briefs = [];
   state.emailVerificationTokens = [];
@@ -736,6 +758,47 @@ describe("POST /briefs", () => {
 // as the data-layer backstop for whenever the lock itself doesn't
 // prevent it (Redis unavailable, or a generation that outlives the
 // lock's TTL).
+describe("POST /briefs — night sweats recalled in the morning", () => {
+  function addRecall(userId: string, day: string, nightSweats: string | null) {
+    state.contextLogs.push({ userId, date: new Date(`${day}T00:00:00.000Z`), nightSweats });
+  }
+
+  it("counts only answered mornings in range and keeps them out of symptom counts and the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "recall-few@embr.health");
+    addRecall(userId, "2026-01-03", "TWO_TO_THREE");
+    addRecall(userId, "2026-01-04", "NONE");
+    addRecall(userId, "2026-01-05", null); // not logged, never counted as none
+    addRecall(userId, "2026-03-01", "FOUR_PLUS"); // outside the range
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.nightSweatsRecall).toEqual({ morningsAnswered: 2, breakdown: null });
+    expect(res.body.data.symptomSummary).toEqual([]);
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/nightSweats|TWO_TO_THREE|morningsAnswered/);
+  });
+
+  it("adds a per bucket breakdown once 7 mornings are answered", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "recall-seven@embr.health");
+    const answers = ["NONE", "NONE", "ONE", "ONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"];
+    answers.forEach((a, i) => addRecall(userId, `2026-01-${String(10 + i)}`, a));
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.nightSweatsRecall).toEqual({
+      morningsAnswered: 7,
+      breakdown: { NONE: 2, ONE: 3, TWO_TO_THREE: 1, FOUR_PLUS: 1 },
+    });
+  });
+});
+
 describe("POST /briefs — concurrency and locking", () => {
   // Calls briefService.generate directly rather than through two HTTP
   // requests: supertest serializes requests made through the same

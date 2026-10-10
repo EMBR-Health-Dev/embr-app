@@ -27,6 +27,7 @@ const symptomLogsList = vi.fn();
 const cycleEntriesList = vi.fn();
 const treatmentsList = vi.fn();
 const symptomHistory = vi.fn();
+const contextLogsList = vi.fn();
 
 // The record summary's own list requests are mocked out so these tests
 // keep counting only the timeline's fetches; the date helpers stay real.
@@ -43,6 +44,7 @@ vi.mock("../../lib/api", () => ({
     symptomLogs: { list: (...args: unknown[]) => symptomLogsList(...args) },
     cycleEntries: { list: (...args: unknown[]) => cycleEntriesList(...args) },
     treatments: { list: (...args: unknown[]) => treatmentsList(...args) },
+    contextLogs: { list: (...args: unknown[]) => contextLogsList(...args) },
     trends: { symptomHistory: (...args: unknown[]) => symptomHistory(...args) },
   },
 }));
@@ -61,6 +63,7 @@ beforeEach(() => {
   symptomLogsList.mockReset().mockResolvedValue(emptyPage);
   cycleEntriesList.mockReset().mockResolvedValue(emptyPage);
   treatmentsList.mockReset().mockResolvedValue(emptyPage);
+  contextLogsList.mockReset().mockResolvedValue(emptyPage);
   symptomHistory.mockReset().mockResolvedValue({
     timeZone: "UTC",
     rangeFrom: "2026-07-04",
@@ -343,5 +346,41 @@ describe("Timeline page — symptom evidence cards", () => {
     renderWithIntl(<TimelinePage />);
     await screen.findByText("Nothing recorded yet.");
     expect(screen.queryByRole("heading", { name: "Symptom history" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Timeline page — night sweats recalled in the morning", () => {
+  function contextLog(date: string, nightSweats: string | null) {
+    return {
+      id: `ctx-${date}`,
+      date,
+      sleepDuration: null,
+      caffeineAfternoon: null,
+      alcohol: null,
+      stressLevel: null,
+      nightSweats,
+      createdAt: `${date}T08:00:00Z`,
+      updatedAt: `${date}T08:00:00Z`,
+    };
+  }
+
+  it("shows a recalled answer on its day, and nothing for a day left blank", async () => {
+    const today = new Date();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const answered = iso(today);
+    const blank = iso(new Date(today.getTime() - 86_400_000));
+    contextLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [contextLog(answered, "TWO_TO_THREE"), contextLog(blank, null)],
+      total: 2,
+    });
+
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    expect(
+      await screen.findByText("Night sweats last night: 2 to 3 (recalled in the morning)"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Night sweats last night/)).toHaveLength(1);
   });
 });

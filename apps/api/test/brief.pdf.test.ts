@@ -50,6 +50,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     coOccurrence: null,
     treatmentImpact: null,
     persistentSymptoms: null,
+    nightSweatsRecall: null,
     interpretation: null,
     citedPatternIds: null,
     aiNarrative: "No significant patterns were noted in this period.",
@@ -306,5 +307,35 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
     // English-only line stands in as the proof of the English fallback.
     expect(text).toContain("written by AI");
     expect(text).toContain("No symptoms logged in this range.");
+  });
+});
+
+describe("buildClinicalBriefPdf — night sweats recalled in the morning", () => {
+  it("states answered mornings and holds back the breakdown below 7", async () => {
+    const brief = baseBrief({ nightSweatsRecall: { morningsAnswered: 3, breakdown: null } });
+    const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
+    expect(text).toContain("Answered on 3 mornings in this period.");
+    expect(text).toContain("A breakdown is shown once 7 mornings have been answered.");
+    expect(text).toContain("counted separately from logged symptoms");
+  });
+
+  it("gives the breakdown in Japanese from 7 answered mornings", async () => {
+    const brief = baseBrief({
+      locale: "ja",
+      nightSweatsRecall: {
+        morningsAnswered: 8,
+        breakdown: { NONE: 2, ONE: 3, TWO_TO_THREE: 2, FOUR_PLUS: 1 },
+      },
+    });
+    const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
+    expect(text).toContain("朝に振り返った昨夜の寝汗");
+    expect(text).toContain("なし2日、1回3日、2〜3回2日、4回以上1日。");
+  });
+
+  it("leaves the section out when no morning was answered", async () => {
+    const brief = baseBrief({ nightSweatsRecall: { morningsAnswered: 0, breakdown: null } });
+    const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
+    expect(text).not.toContain("Answered on");
+    expect(text).not.toContain("counted separately from logged symptoms");
   });
 });
