@@ -42,7 +42,7 @@ export default function AppointmentStatusScreen() {
           <button
             key={value}
             onClick={() => void handleSelect(value)}
-            className={`flex items-center justify-between border-b border-border-subtle py-4 text-left text-[15px] transition-colors ${
+            className={`flex items-center justify-between border-b border-border-subtle py-4 text-left text-base transition-colors ${
               selected === value ? "text-foreground" : "text-foreground/75 hover:text-foreground"
             }`}
           >

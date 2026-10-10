@@ -81,7 +81,7 @@ export function SymptomCalendar({
                 {formatHistoryMonth(locale, month)}
               </h3>
               <div
-                className="mt-2 grid grid-cols-7 gap-1 text-center text-[11px] text-foreground/40"
+                className="mt-2 grid grid-cols-7 gap-1 text-center text-xs text-foreground/40"
                 aria-hidden="true"
               >
                 {weekdays.map((day, i) => (
@@ -99,7 +99,7 @@ export function SymptomCalendar({
                         return (
                           <span
                             key={cell.date}
-                            className="flex aspect-square items-center justify-center text-[11px] text-foreground/25"
+                            className="flex aspect-square items-center justify-center text-xs text-foreground/25"
                             aria-label={t("dayOutOfRange", { date: label })}
                           >
                             {dayNumber}
@@ -123,7 +123,7 @@ export function SymptomCalendar({
                               : t("dayNoEntry", { date: label })
                           }
                           onClick={() => onSelectDate(cell.date)}
-                          className={`flex aspect-square items-center justify-center rounded-sm text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
+                          className={`flex aspect-square items-center justify-center rounded-sm text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
                             evidence.state === "logged"
                               ? `${SEVERITY_FILL[evidence.maxSeverity]} ${evidence.maxSeverity === "SEVERE" ? "text-pearl-50" : "text-foreground"}`
                               : `${NO_ENTRY_CELL} text-foreground/40`

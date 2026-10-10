@@ -108,8 +108,8 @@ function LoopStage({
         className="absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-primary bg-background"
         aria-hidden="true"
       />
-      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-primary">{label}</p>
-      <p className="mt-1 text-[15px] text-foreground">{title}</p>
+      <p className="text-overline font-medium uppercase tracking-[0.14em] text-primary">{label}</p>
+      <p className="mt-1 text-base text-foreground">{title}</p>
       {children}
     </div>
   );

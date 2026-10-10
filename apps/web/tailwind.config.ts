@@ -74,9 +74,15 @@ const config = {
         "heading-m": ["1.5rem", { lineHeight: "1.3" }],
         "body-l": ["1.125rem", { lineHeight: "1.5" }],
         "body-m": ["1rem", { lineHeight: "1.5" }],
-        "body-s": ["0.875rem", { lineHeight: "1.5" }],
-        caption: ["0.75rem", { lineHeight: "1.4" }],
-        overline: ["0.625rem", { lineHeight: "1.4", letterSpacing: "0.05em" }],
+        "body-s": ["1rem", { lineHeight: "1.5" }],
+        caption: ["0.875rem", { lineHeight: "1.4" }],
+        overline: ["0.875rem", { lineHeight: "1.4", letterSpacing: "0.05em" }],
+        // Readable floor for an audience in their 40s and 50s: running
+        // text is 16px and nothing that is read is smaller than 14px.
+        // Every size is in rem, so it also follows the phone's own text
+        // size setting (see html in globals.css).
+        xs: ["0.875rem", { lineHeight: "1.25rem" }],
+        sm: ["1rem", { lineHeight: "1.5rem" }],
       },
       borderRadius: {
         DEFAULT: "8px",

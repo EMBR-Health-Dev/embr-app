@@ -27,7 +27,7 @@ export default function WelcomeScreen() {
   return (
     <OnboardingScreen step="WELCOME">
       <p className="font-display text-heading-l text-foreground">{t("headline")}</p>
-      <p className="mt-6 text-[15px] leading-relaxed text-foreground/70">{t("body")}</p>
+      <p className="mt-6 text-base leading-relaxed text-foreground/70">{t("body")}</p>
       <Button
         onClick={() => void handleContinue()}
         disabled={starting}
