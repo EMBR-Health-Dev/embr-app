@@ -149,12 +149,12 @@ const EN: PdfStrings = {
   generatedAt: (utcTimestamp) => `Generated ${utcTimestamp} UTC`,
   topDisclaimer:
     "This is a structured summary of self-tracked data, generated to help a conversation with a" +
-    " GP. Not a diagnosis, and not medical advice.",
+    " healthcare provider. Not a diagnosis, and not medical advice.",
   summaryHeading: "Summary",
   aiAuthorshipNote:
     "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
   groundedInHeading: "Grounded in your data",
-  questionsHeading: "Questions to bring to your GP",
+  questionsHeading: "Questions to bring to your healthcare provider",
   symptomSignalsHeading: "Symptom Signals",
   noSymptomsText: "No symptoms logged in this range.",
   occurrenceLine: (count, severityBreakdown) =>

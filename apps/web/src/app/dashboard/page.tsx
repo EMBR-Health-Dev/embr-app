@@ -420,7 +420,7 @@ function DashboardContent() {
         )}
         {/* Ties Today/Your record, Signals, and Evidence together as
             one narrative — what you've recorded, what's changing, and
-            what to bring to your GP — rather than three unrelated
+            what to bring to your healthcare provider — rather than three unrelated
             cards on one page. */}
         <p className={`text-sm text-foreground/60 ${startingPointKey ? "mt-3" : ""}`}>
           {t("homeIntro")}

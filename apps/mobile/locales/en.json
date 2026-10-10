@@ -275,7 +275,7 @@
   },
   "brief": {
     "title": "EMBR BRIEF",
-    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your GP. This is a data summary to help your conversation, <b>not a diagnosis, and not medical advice</b>.",
+    "hint": "A summary of your tracked symptoms and cycle data, with questions you can bring to your healthcare provider. This is a data summary to help your conversation, <b>not a diagnosis, and not medical advice</b>.",
     "fromPlaceholder": "From",
     "toPlaceholder": "To",
     "invalidDates": "Pick a start and end date, with the start before the end.",
@@ -291,7 +291,7 @@
     "generatedOn": "generated {{date}}",
     "pdf": "PDF",
     "delete": "Delete",
-    "questionsForGp": "Questions to bring to your GP",
+    "questionsForGp": "Questions to bring to your healthcare provider",
     "symptomFrequency": "Symptom frequency",
     "noSymptomsInRange": "No symptoms logged in this range.",
     "occurrenceCount_one": "{{count}} occurrence",

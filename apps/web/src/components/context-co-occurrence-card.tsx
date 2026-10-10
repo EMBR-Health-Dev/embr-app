@@ -19,7 +19,7 @@ import { WhyAmISeeingThis } from "./why-am-i-seeing-this";
  * of a small, fixed set of daily context factors — sleep, caffeine,
  * alcohol, stress — never a second symptom).
  *
- * Deliberately no "Discuss with your GP" layer here yet: unlike the
+ * Deliberately no "Discuss with your healthcare provider" layer here yet: unlike the
  * symptom-symptom finding, a context factor isn't itself a clinical
  * question to raise, and the evidence base for any of these four
  * factors actually affecting hot flashes is explicitly thin (see the
@@ -85,7 +85,7 @@ export function ContextCoOccurrenceCard({ from, to }: { from?: string; to?: stri
   );
   // Unlike CoOccurrenceCard's briefHref, a context factor isn't itself
   // part of Clinical Brief's data model yet (see this file's own doc
-  // comment on why there's no GP-question layer either) — so the CTA
+  // comment on why there's no healthcare provider question layer either) — so the CTA
   // copy below stays a neutral "view this period," never a claim that
   // this specific factor will be cited.
   const briefHref = from

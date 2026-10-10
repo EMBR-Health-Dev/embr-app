@@ -180,7 +180,7 @@ describe("brief.ai", () => {
       textResponse(
         JSON.stringify({
           narrative: "n",
-          discussionTopics: [dt("Ask your GP about this?")],
+          discussionTopics: [dt("Ask your healthcare provider about this?")],
           patterns: [],
         }),
       ),
@@ -210,7 +210,7 @@ describe("brief.ai", () => {
         textResponse(
           JSON.stringify({
             narrative: "n",
-            discussionTopics: [dt("Ask your GP about this?")],
+            discussionTopics: [dt("Ask your healthcare provider about this?")],
             patterns: [],
           }),
         ),
@@ -279,7 +279,7 @@ describe("brief.ai", () => {
       textResponse(
         JSON.stringify({
           narrative: "n",
-          discussionTopics: [dt("Ask your GP about this?")],
+          discussionTopics: [dt("Ask your healthcare provider about this?")],
           patterns: [],
         }),
       ),
@@ -304,7 +304,7 @@ describe("brief.ai", () => {
       textResponse(
         JSON.stringify({
           narrative: "n",
-          discussionTopics: [dt("Ask your GP about this?")],
+          discussionTopics: [dt("Ask your healthcare provider about this?")],
           patterns: [],
         }),
       ),

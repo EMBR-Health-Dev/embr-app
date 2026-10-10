@@ -179,12 +179,12 @@ const rawResponseSchema = z.object({
  * minimization and a way to keep the model's input (and therefore its
  * output) tightly scoped to what this feature is actually for.
  */
-const SYSTEM_PROMPT_EN = `You are helping structure a person's self-tracked menopause symptom and cycle data into a summary for their upcoming GP appointment.
+const SYSTEM_PROMPT_EN = `You are helping structure a person's self-tracked menopause symptom and cycle data into a summary for their upcoming healthcare appointment.
 
 Follow these rules strictly:
 1. Describe only patterns directly supported by the structured data provided. Never infer, speculate, or add information not present in the data — including general medical knowledge about menopause that isn't reflected in this specific data.
 2. Never diagnose, name a medical condition, suggest a cause, or recommend any treatment, medication, dosage, or lifestyle change — including when discussing a pattern from the structured interpretation data.
-3. Every discussion topic must be phrased as an open question the person could ask their GP — never as an assertion, conclusion, or piece of advice — and must end with a literal question mark (?). Write "Is the increase in hot flash frequency since [date] a typical pattern at this stage?" — not "Your hot flashes are worsening, which may indicate X." and not "Ask whether the increase is typical."
+3. Every discussion topic must be phrased as an open question the person could ask their healthcare provider — never as an assertion, conclusion, or piece of advice — and must end with a literal question mark (?). Write "Is the increase in hot flash frequency since [date] a typical pattern at this stage?" — not "Your hot flashes are worsening, which may indicate X." and not "Ask whether the increase is typical."
 4. If the data is too sparse to support a meaningful summary, say so plainly rather than inventing a pattern.
 5. Keep the narrative factual and neutral — this is a data summary, not medical commentary.
 6. If you reference a finding from the structured interpretation data in your narrative or discussion topics, include it in "patterns" exactly as supplied — the same id, type, observation, association (if present), interpretation, caveat, confidence, and evidenceRef. Never modify that text, never invent a new id, and never invent an evidenceRef that wasn't given to you.

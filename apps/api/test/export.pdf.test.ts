@@ -10,7 +10,7 @@ import type { CycleEntry, SymptomLog, Treatment } from "../src/generated/prisma/
  * the clinical brief: it renders symptomLog.notes and treatment.notes
  * directly, both fully free-text, in addition to treatment.name — and
  * this is the "clinician summary" export, the document most directly
- * intended to be read by a GP.
+ * intended to be read by a healthcare provider.
  */
 
 function collectPdfBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {

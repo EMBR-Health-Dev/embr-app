@@ -25,7 +25,7 @@ import { HotFlashReferenceLibrary } from "./hot-flash-reference-library";
  *   computation.
  * - Interpretation boundary: the caveat that this is a description,
  *   not a diagnosis or a causal claim.
- * - Discuss with your GP: a fixed, parameterized question template,
+ * - Discuss with your healthcare provider: a fixed, parameterized question template,
  *   the same kind of deterministic Stage 4 lookup stage4-interpretation.ts
  *   uses for the Clinical Brief — never AI-generated here, since this
  *   card renders on every Signals page view, not once per brief.
