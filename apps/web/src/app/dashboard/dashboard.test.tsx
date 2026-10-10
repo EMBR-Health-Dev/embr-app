@@ -48,6 +48,7 @@ const contextLogsUpsert = vi.fn().mockResolvedValue({
   caffeineAfternoon: false,
   alcohol: false,
   stressLevel: null,
+  nightSweats: null,
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-01T00:00:00Z",
 });
@@ -447,6 +448,34 @@ describe("Dashboard — context quick-log", () => {
     expect(screen.getByLabelText(/Alcohol/)).toBeInTheDocument();
   });
 
+  it("asks about last night's night sweats, defaulting to Not logged", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    const select = screen.getByLabelText("Night sweats last night") as HTMLSelectElement;
+    expect(select.value).toBe("");
+    expect(select.selectedOptions[0]?.textContent).toBe("Not logged");
+    expect(screen.getByText("Your best estimate is fine.")).toBeInTheDocument();
+  });
+
+  it("saves a recalled night sweats bucket with today's context", async () => {
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    await user.selectOptions(screen.getByLabelText("Night sweats last night"), "TWO_TO_THREE");
+
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(1));
+    const [input] = contextLogsUpsert.mock.calls[0] as [Record<string, unknown>];
+    expect(input.nightSweats).toBe("TWO_TO_THREE");
+    expect(symptomLogsCreate).not.toHaveBeenCalled();
+  });
+
   it("saves the selected factors for today's date and confirms with the shared Saved state", async () => {
     const user = userEvent.setup();
     const { default: DashboardPage } = await import("./page");
@@ -467,6 +496,8 @@ describe("Dashboard — context quick-log", () => {
     expect(input.stressLevel).toBe("HIGH");
     expect(input.caffeineAfternoon).toBe(true);
     expect(input.alcohol).toBe(false);
+    // Left blank, so it is sent as absent ("not logged"), never as NONE.
+    expect(input.nightSweats).toBeUndefined();
     expect(typeof input.date).toBe("string");
 
     expect(

@@ -192,6 +192,12 @@
       "SIX_TO_SEVEN_H": "6–7 hours",
       "SEVEN_PLUS_H": "7+ hours"
     },
+    "nightSweats": {
+      "NONE": "None",
+      "ONE": "1",
+      "TWO_TO_THREE": "2 to 3",
+      "FOUR_PLUS": "4 or more"
+    },
     "stressLevel": {
       "LOW": "Low",
       "MODERATE": "Moderate",
@@ -257,6 +263,9 @@
     "todaysContextEntry": "Today's context",
     "sleepDurationLabel": "Sleep last night",
     "sleepDurationNone": "Not logged",
+    "nightSweatsLabel": "Night sweats last night",
+    "nightSweatsNone": "Not logged",
+    "nightSweatsHelp": "Your best estimate is fine.",
     "stressLevelLabel": "Stress today",
     "stressLevelNone": "Not logged",
     "caffeineAfternoonLabel": "Caffeine after 2pm",

@@ -192,6 +192,12 @@
       "SIX_TO_SEVEN_H": "6〜7時間",
       "SEVEN_PLUS_H": "7時間以上"
     },
+    "nightSweats": {
+      "NONE": "なし",
+      "ONE": "1回",
+      "TWO_TO_THREE": "2〜3回",
+      "FOUR_PLUS": "4回以上"
+    },
     "stressLevel": {
       "LOW": "低い",
       "MODERATE": "中程度",
@@ -257,6 +263,9 @@
     "todaysContextEntry": "今日の状況",
     "sleepDurationLabel": "昨夜の睡眠",
     "sleepDurationNone": "未記録",
+    "nightSweatsLabel": "昨夜の寝汗",
+    "nightSweatsNone": "未記録",
+    "nightSweatsHelp": "おおよそで大丈夫です。",
     "stressLevelLabel": "今日のストレス",
     "stressLevelNone": "未記録",
     "caffeineAfternoonLabel": "午後2時以降のカフェイン",
