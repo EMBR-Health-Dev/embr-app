@@ -24,6 +24,7 @@ const { state, nextId } = vi.hoisted(() => {
         caffeineAfternoon: boolean | null;
         alcohol: boolean | null;
         stressLevel: string | null;
+        nightSweats: string | null;
         createdAt: Date;
         updatedAt: Date;
       }>,
@@ -262,6 +263,41 @@ describe("POST /context-logs", () => {
       .post("/context-logs")
       .send({ date: "2026-07-20", sleepDuration: "EIGHT_HOURS" });
     expect(res.status).toBe(400);
+  });
+
+  it("stores a recalled night sweats bucket for the date", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-sweats@embr.health");
+
+    const res = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", nightSweats: "TWO_TO_THREE" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.nightSweats).toBe("TWO_TO_THREE");
+  });
+
+  it("leaves night sweats null (not logged, never NONE) when omitted", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-sweats-blank@embr.health");
+
+    const res = await agent.post("/context-logs").send({ date: "2026-07-23", alcohol: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.nightSweats).toBeNull();
+  });
+
+  it("rejects a night sweats value outside the fixed buckets", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-sweats-bad@embr.health");
+
+    for (const nightSweats of ["FIVE", 3, "none"]) {
+      const res = await agent.post("/context-logs").send({ date: "2026-07-23", nightSweats });
+      expect(res.status).toBe(400);
+    }
   });
 
   it("logs CONTEXT_LOG_UPSERTED to the audit trail", async () => {

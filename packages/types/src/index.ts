@@ -261,6 +261,9 @@ export interface CycleEntryDto {
 
 export type SleepDurationBucket = "UNDER_6H" | "SIX_TO_SEVEN_H" | "SEVEN_PLUS_H";
 export type StressLevel = "LOW" | "MODERATE" | "HIGH";
+/** Morning recall of last night's night sweats. A bucketed estimate,
+ * never added to NIGHT_SWEATS symptom counts. */
+export type NightSweatsRecall = "NONE" | "ONE" | "TWO_TO_THREE" | "FOUR_PLUS";
 
 export interface ContextLogDto {
   id: string;
@@ -269,6 +272,7 @@ export interface ContextLogDto {
   caffeineAfternoon: boolean | null;
   alcohol: boolean | null;
   stressLevel: StressLevel | null;
+  nightSweats: NightSweatsRecall | null;
   createdAt: string;
   updatedAt: string;
 }

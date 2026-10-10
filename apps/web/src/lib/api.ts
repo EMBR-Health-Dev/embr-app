@@ -138,6 +138,7 @@ export const api = {
       caffeineAfternoon?: boolean;
       alcohol?: boolean;
       stressLevel?: string;
+      nightSweats?: string;
     }) => apiFetch<ContextLogDto>("/context-logs", { method: "POST", body: input }),
   },
 
