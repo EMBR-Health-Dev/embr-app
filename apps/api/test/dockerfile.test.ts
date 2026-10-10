@@ -28,7 +28,7 @@ describe("apps/api/Dockerfile — runtime stage asset coverage", () => {
   const dockerfile = readFileSync(path.join(__dirname, "../Dockerfile"), "utf-8");
   const runtimeStage = dockerfile.slice(dockerfile.indexOf("FROM base AS runtime"));
 
-  it("copies apps/api/assets into the runtime stage — required by lib/pdf-fonts.ts's UNICODE_FONT_PATH", () => {
+  it("copies apps/api/assets into the runtime stage — required by lib/pdf-fonts.ts's font paths", () => {
     expect(runtimeStage).toMatch(
       /COPY --from=build \/repo\/apps\/api\/assets \.\/apps\/api\/assets/,
     );
