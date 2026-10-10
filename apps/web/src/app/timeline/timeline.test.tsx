@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
@@ -346,6 +346,127 @@ describe("Timeline page — symptom evidence cards", () => {
     renderWithIntl(<TimelinePage />);
     await screen.findByText("Nothing recorded yet.");
     expect(screen.queryByRole("heading", { name: "Symptom history" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Timeline page — month view", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-25T12:00:00"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function seed() {
+    symptomLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        {
+          id: "s1",
+          category: "HOT_FLASH",
+          severity: "MODERATE",
+          occurredAt: "2026-09-20T10:00:00",
+          notes: null,
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
+      total: 1,
+    });
+    cycleEntriesList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        {
+          id: "c1",
+          date: "2026-09-20",
+          flow: "LIGHT",
+          isPeriodStart: true,
+          isPeriodEnd: false,
+          notes: null,
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
+      total: 1,
+    });
+  }
+
+  it("marks days with entries, reads blank days as no entry recorded, and opens a tapped day", async () => {
+    seed();
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    await user.click(await screen.findByRole("button", { name: "Month" }));
+    expect(await screen.findByRole("heading", { name: "September 2026" })).toBeInTheDocument();
+
+    const day = screen.getByRole("button", { name: "Sep 20, 2026: Symptoms, Cycle" });
+    expect(
+      screen.getByRole("button", { name: "Sep 21, 2026: no entry recorded" }),
+    ).toBeInTheDocument();
+
+    await user.click(day);
+    expect(day).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Hot Flash")).toBeInTheDocument();
+    expect(screen.getByText("Cycle: Light · Period started")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Sep 21, 2026: no entry recorded" }));
+    expect(screen.getByText("No entry recorded for this day.")).toBeInTheDocument();
+  });
+
+  it("drops a kind of mark when its filter is turned off", async () => {
+    seed();
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    await user.click(await screen.findByRole("button", { name: "Month" }));
+    await user.click(screen.getByRole("button", { name: "Cycle", pressed: true }));
+    expect(
+      await screen.findByRole("button", { name: "Sep 20, 2026: Symptoms" }),
+    ).toBeInTheDocument();
+  });
+
+  it("marks a day whose only entry is a night sweats answer as a symptom day", async () => {
+    contextLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        {
+          id: "ctx-1",
+          date: "2026-09-22",
+          sleepDuration: null,
+          caffeineAfternoon: null,
+          alcohol: null,
+          stressLevel: null,
+          nightSweats: "ONE",
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
+      total: 1,
+    });
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    await user.click(await screen.findByRole("button", { name: "Month" }));
+    await user.click(await screen.findByRole("button", { name: "Sep 22, 2026: Symptoms" }));
+    expect(
+      screen.getByText("Night sweats last night: 1 (recalled in the morning)"),
+    ).toBeInTheDocument();
+  });
+
+  it("moves between months within the loaded range", async () => {
+    seed();
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    await user.click(await screen.findByRole("button", { name: "Month" }));
+    expect(screen.getByRole("button", { name: "Next month" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    expect(await screen.findByRole("heading", { name: "August 2026" })).toBeInTheDocument();
   });
 });
 

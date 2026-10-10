@@ -20,6 +20,7 @@ import { HistoryRangeSwitch } from "../../components/history-range-switch";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { SymptomEvidenceCard } from "../../components/symptom-evidence-card";
 import { SymptomRankingBars } from "../../components/symptom-ranking-bars";
+import { TimelineMonth } from "../../components/timeline-month";
 import { browserTimeZone } from "../../lib/symptom-evidence";
 import {
   daysSince,
@@ -85,6 +86,9 @@ export default function TimelinePage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [managesOrg, setManagesOrg] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(() => new Set(FILTER_KEYS));
+  const [view, setView] = useState<"list" | "month">("list");
+  const [month, setMonth] = useState(() => toIsoDate(new Date()).slice(0, 7));
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -231,6 +235,57 @@ export default function TimelinePage() {
     );
   });
 
+  function renderDayEntries(group: DayGroup) {
+    const categories = [...new Set(group.symptoms.map((s) => tEnum(`category.${s.category}`)))];
+    return (
+      <div className="flex flex-col gap-2">
+        {activeFilters.has("symptoms") && categories.length > 0 && (
+          <p className="text-sm text-foreground">{categories.join(" · ")}</p>
+        )}
+        {activeFilters.has("symptoms") && group.nightSweats && (
+          <p className="text-sm text-foreground/70">
+            {t("nightSweatsRecalled", {
+              value: tEnum(`nightSweats.${group.nightSweats}`),
+            })}
+          </p>
+        )}
+        {activeFilters.has("cycle") && group.cycle && (
+          <p className="text-sm text-foreground/70">
+            {t("cycleLabel")}
+            {": "}
+            {[
+              group.cycle.flow ? tEnum(`flow.${group.cycle.flow}`) : null,
+              group.cycle.isPeriodStart ? t("periodStarted") : null,
+              group.cycle.isPeriodEnd ? t("periodEnded") : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
+        {activeFilters.has("treatments") &&
+          group.treatmentEvents.map(({ treatment, kind }) => (
+            <p key={`${treatment.id}-${kind}`} className="text-sm text-foreground/70">
+              {kind === "started"
+                ? t("treatmentStarted", { name: treatment.name })
+                : t("treatmentEnded", { name: treatment.name })}
+            </p>
+          ))}
+      </div>
+    );
+  }
+
+  function marksFor(date: string) {
+    const group = groups.get(date);
+    if (!group) return null;
+    const marks = {
+      symptoms:
+        activeFilters.has("symptoms") && (group.symptoms.length > 0 || group.nightSweats !== null),
+      cycle: activeFilters.has("cycle") && group.cycle !== null,
+      treatments: activeFilters.has("treatments") && group.treatmentEvents.length > 0,
+    };
+    return marks.symptoms || marks.cycle || marks.treatments ? marks : null;
+  }
+
   const currentYear = new Date().getFullYear();
   function formatDateHeading(date: string): string {
     const d = new Date(`${date}T00:00:00`);
@@ -304,8 +359,46 @@ export default function TimelinePage() {
           ))}
         </div>
 
+        <div
+          className="mt-3 inline-flex rounded-sm border border-border p-0.5"
+          role="group"
+          aria-label={t("viewLabel")}
+        >
+          {(["list", "month"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={`rounded-sm px-3 py-1.5 text-sm font-medium ${
+                view === v ? "bg-foreground text-background" : "text-foreground/70"
+              }`}
+            >
+              {t(`view.${v}`)}
+            </button>
+          ))}
+        </div>
+
         {dataLoading ? (
           <p className="mt-8 text-sm text-foreground/50">{tCommon("loading")}</p>
+        ) : view === "month" ? (
+          <TimelineMonth
+            from={windowStart}
+            to={toIsoDate(new Date())}
+            month={month}
+            onMonthChange={(m) => {
+              setMonth(m);
+              setSelectedDay(null);
+            }}
+            marksFor={marksFor}
+            selectedDate={selectedDay}
+            onSelectDate={setSelectedDay}
+            dayDetail={
+              selectedDay && groups.get(selectedDay)
+                ? renderDayEntries(groups.get(selectedDay)!)
+                : null
+            }
+          />
         ) : visibleDates.length === 0 ? (
           <div className="mt-10">
             <p className="text-sm font-medium text-foreground">
@@ -319,9 +412,6 @@ export default function TimelinePage() {
           <ul className="mt-10 flex flex-col gap-8">
             {visibleDates.map((date, index) => {
               const group = groups.get(date)!;
-              const categories = [
-                ...new Set(group.symptoms.map((s) => tEnum(`category.${s.category}`))),
-              ];
               // A month marker wherever the month changes, so a long
               // record reads as history rather than one undifferentiated list.
               const newMonth =
@@ -334,38 +424,8 @@ export default function TimelinePage() {
                     </h2>
                   )}
                   <SectionLabel as="h3">{formatDateHeading(date)}</SectionLabel>
-                  <div className="mt-3 flex flex-col gap-2 border-l border-border-subtle pl-4">
-                    {activeFilters.has("symptoms") && categories.length > 0 && (
-                      <p className="text-sm text-foreground">{categories.join(" · ")}</p>
-                    )}
-                    {activeFilters.has("symptoms") && group.nightSweats && (
-                      <p className="text-sm text-foreground/70">
-                        {t("nightSweatsRecalled", {
-                          value: tEnum(`nightSweats.${group.nightSweats}`),
-                        })}
-                      </p>
-                    )}
-                    {activeFilters.has("cycle") && group.cycle && (
-                      <p className="text-sm text-foreground/70">
-                        {t("cycleLabel")}
-                        {": "}
-                        {[
-                          group.cycle.flow ? tEnum(`flow.${group.cycle.flow}`) : null,
-                          group.cycle.isPeriodStart ? t("periodStarted") : null,
-                          group.cycle.isPeriodEnd ? t("periodEnded") : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
-                    {activeFilters.has("treatments") &&
-                      group.treatmentEvents.map(({ treatment, kind }) => (
-                        <p key={`${treatment.id}-${kind}`} className="text-sm text-foreground/70">
-                          {kind === "started"
-                            ? t("treatmentStarted", { name: treatment.name })
-                            : t("treatmentEnded", { name: treatment.name })}
-                        </p>
-                      ))}
+                  <div className="mt-3 border-l border-border-subtle pl-4">
+                    {renderDayEntries(group)}
                   </div>
                 </li>
               );

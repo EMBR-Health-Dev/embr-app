@@ -340,7 +340,20 @@
     "filteredEmptyTitle": "Nothing matches this filter.",
     "filteredEmptyBody": "Try turning on another category above.",
     "truncatedNotice": "Showing your most recently recorded activity from the last {days} days.",
-    "truncatedNoticeAll": "Showing your most recently recorded activity across your full record."
+    "truncatedNoticeAll": "Showing your most recently recorded activity across your full record.",
+    "viewLabel": "View",
+    "view": {
+      "list": "List",
+      "month": "Month"
+    },
+    "monthPrevious": "Previous month",
+    "monthNext": "Next month",
+    "monthLegend": "Legend",
+    "monthMarkSymptoms": "Symptoms",
+    "monthMarkCycle": "Cycle",
+    "monthMarkTreatments": "Treatment change",
+    "monthDayNoEntry": "{date}: no entry recorded",
+    "monthNoEntryDetail": "No entry recorded for this day."
   },
   "Trends": {
     "title": "Signals",
