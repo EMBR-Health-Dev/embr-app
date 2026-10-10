@@ -49,6 +49,24 @@ export const exportRepository = {
     });
   },
 
+  listContextLogsForExport(userId: string, query: ExportQuery) {
+    return prisma.contextLog.findMany({
+      where: {
+        userId,
+        ...(query.from || query.to
+          ? {
+              date: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
+          : {}),
+      },
+      orderBy: { date: "asc" },
+      take: EXPORT_ROW_CAP,
+    });
+  },
+
   /** Overlap semantics, not "startDate within range" — a treatment that
    * started before `from` but is still ongoing (or ended) inside the
    * requested window genuinely was active during it and must still
