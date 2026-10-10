@@ -11,7 +11,15 @@ import {
   severityLabel,
   treatmentCategoryLabel,
 } from "./brief-locale.js";
-import { PDF_ACCENT, PDF_INK, PDF_INK_FAINT, PDF_INK_MUTED } from "../../lib/pdf-palette.js";
+import {
+  PDF_ACCENT,
+  PDF_INK,
+  PDF_INK_FAINT,
+  PDF_INK_MUTED,
+  PDF_PLUM,
+  PDF_SEVERITY_FILL,
+  PDF_TINT,
+} from "../../lib/pdf-palette.js";
 import { EMBR_WORDMARK } from "../../lib/brand-wordmark.js";
 
 // Palette shared with the summary export: see lib/pdf-palette.ts.
@@ -19,6 +27,8 @@ const INK = PDF_INK;
 const INK_MUTED = PDF_INK_MUTED;
 const INK_FAINT = PDF_INK_FAINT;
 const ACCENT = PDF_ACCENT;
+const PLUM = PDF_PLUM;
+const SEVERITY_ORDER = ["MILD", "MODERATE", "SEVERE"] as const;
 
 // The recurring "signal" mark from the brand's visual language — a
 // single point, not a bullet character — set immediately before every
@@ -29,20 +39,53 @@ const SIGNAL_DOT_RADIUS = 2;
 const LEFT_MARGIN = 50;
 const RIGHT_MARGIN = 545;
 
+// A heading never sits alone at the foot of a page: if fewer than this
+// many points are left, it starts the next page with its content.
+const HEADING_KEEP_WITH_NEXT = 90;
+
 function sectionHeading(doc: PDFKit.PDFDocument, label: string): void {
+  if (doc.y > doc.page.height - doc.page.margins.bottom - HEADING_KEEP_WITH_NEXT) {
+    doc.addPage();
+  }
   const y = doc.y;
   doc
     .fillColor(ACCENT)
     .circle(LEFT_MARGIN + SIGNAL_DOT_RADIUS, y + 5, SIGNAL_DOT_RADIUS)
     .fill();
   doc
-    .fillColor(INK)
-    .fontSize(11)
+    .fillColor(PLUM)
+    .fontSize(10.5)
     .font(EMBR_PDF_HEADING_FONT)
     .text(label.toUpperCase(), LEFT_MARGIN + 10, y, {
       characterSpacing: 0.8,
     });
+  doc.x = LEFT_MARGIN;
   doc.moveDown(0.6);
+}
+
+/** One symptom's count as a bar split by severity, sized against the
+ * most logged symptom. The same numbers are printed beside it, so the
+ * bar adds a picture, never information that exists only in colour. */
+function severityBar(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  maxWidth: number,
+  count: number,
+  maxCount: number,
+  breakdown: Record<string, number>,
+): void {
+  const height = 7;
+  const total = Math.max(count, 1);
+  const width = (count / Math.max(maxCount, 1)) * maxWidth;
+  let cursor = x;
+  for (const severity of SEVERITY_ORDER) {
+    const n = breakdown[severity] ?? 0;
+    if (n === 0) continue;
+    const w = (n / total) * width;
+    doc.rect(cursor, y, w, height).fill(PDF_SEVERITY_FILL[severity]);
+    cursor += w;
+  }
 }
 
 /**
@@ -91,6 +134,9 @@ export function buildClinicalBriefPdf(
   // treatment the rest of the product already uses.
   // The wordmark is drawn from the master asset (assets/brand), not set
   // as text, so it matches the website and the apps exactly.
+  // A tinted band behind the masthead, full page width.
+  doc.rect(0, 0, doc.page.width, 150).fill(PDF_TINT);
+  doc.y = 44;
   const wordmarkHeight = 9;
   const scale = wordmarkHeight / EMBR_WORDMARK.height;
   doc
@@ -98,14 +144,14 @@ export function buildClinicalBriefPdf(
     .translate(doc.x - EMBR_WORDMARK.x * scale, doc.y - EMBR_WORDMARK.y * scale)
     .scale(scale)
     .path(EMBR_WORDMARK.path)
-    .fill(INK)
+    .fill(PLUM)
     .restore();
   doc.y += wordmarkHeight + 8;
   doc.fillColor(INK).fontSize(22).font(EMBR_PDF_HEADING_FONT).text(t.documentTitle);
-  doc.moveDown(0.8);
+  doc.moveDown(0.6);
 
   doc
-    .fillColor(INK_MUTED)
+    .fillColor(PLUM)
     .fontSize(8)
     .font(EMBR_PDF_HEADING_FONT)
     .text(t.observationPeriodLabel, { characterSpacing: 0.8 });
@@ -115,7 +161,7 @@ export function buildClinicalBriefPdf(
     .fontSize(12)
     .font(EMBR_PDF_BODY_FONT)
     .text(`${brief.fromDate}  →  ${brief.toDate}`);
-  doc.moveDown(0.6);
+  doc.y = Math.max(doc.y, 150) + 16;
 
   const generatedAtUtc = new Date(brief.createdAt).toISOString().slice(0, 16).replace("T", " ");
   doc
@@ -178,11 +224,20 @@ export function buildClinicalBriefPdf(
   // brief.aiDiscussionTopics was generated in `locale` — rendered as
   // stored.
   sectionHeading(doc, t.questionsHeading);
-  doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
-  for (const topic of brief.aiDiscussionTopics) {
-    doc.text(`•  ${topic}`, { indent: 0 });
-    doc.moveDown(0.2);
-  }
+  brief.aiDiscussionTopics.forEach((topic, i) => {
+    const y = doc.y;
+    doc
+      .fontSize(10)
+      .font(EMBR_PDF_HEADING_FONT)
+      .fillColor(PLUM)
+      .text(`${i + 1}.`, LEFT_MARGIN + 10, y, { width: 18 });
+    doc
+      .font(EMBR_PDF_BODY_FONT)
+      .fillColor(INK)
+      .text(topic, LEFT_MARGIN + 30, y, { width: RIGHT_MARGIN - LEFT_MARGIN - 30 });
+    doc.x = LEFT_MARGIN;
+    doc.moveDown(0.3);
+  });
   doc.moveDown(0.8);
 
   // ---- Symptom frequency ----
@@ -197,6 +252,19 @@ export function buildClinicalBriefPdf(
   if (brief.symptomSummary.length === 0) {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.noSymptomsText);
   } else {
+    // Legend: which shade is which severity.
+    let legendX = LEFT_MARGIN + 10;
+    const legendY = doc.y;
+    doc.fontSize(8).font(EMBR_PDF_BODY_FONT);
+    for (const severity of SEVERITY_ORDER) {
+      doc.rect(legendX, legendY + 1.5, 8, 6).fill(PDF_SEVERITY_FILL[severity]);
+      const label = severityLabel(severity, locale);
+      doc.fillColor(INK_MUTED).text(label, legendX + 11, legendY, { lineBreak: false });
+      legendX += 11 + doc.widthOfString(label) + 14;
+    }
+    doc.x = LEFT_MARGIN;
+    doc.y = legendY + 16;
+    const maxCount = Math.max(...brief.symptomSummary.map((s) => s.count));
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
     for (const { category, count, severityBreakdown } of brief.symptomSummary) {
       const bySeverity = Object.entries(severityBreakdown)
@@ -210,6 +278,8 @@ export function buildClinicalBriefPdf(
         .fillColor(INK)
         .text(`${categoryLabel(category, locale)}`, { continued: true, width: 300 });
       doc.fillColor(INK_MUTED).text(`  ${t.occurrenceLine(count, bySeverity)}`);
+      severityBar(doc, LEFT_MARGIN, doc.y + 2, 300, count, maxCount, severityBreakdown);
+      doc.y += 14;
     }
   }
 

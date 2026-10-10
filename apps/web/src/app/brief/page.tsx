@@ -19,6 +19,9 @@ import { EmailVerificationRequired } from "../../components/email-verification-r
 import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
 import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
 import { richText } from "../../lib/rich-text";
+import { SEVERITY_FILL } from "../../lib/symptom-history-format";
+
+const SEVERITY_ORDER = ["MILD", "MODERATE", "SEVERE"] as const;
 
 function BriefPageContent() {
   const t = useTranslations("Brief");
@@ -279,8 +282,13 @@ function BriefPageContent() {
         {generateNeedsVerification && <EmailVerificationRequired email={user.email} />}
 
         {justGenerated && (
-          <section className="mt-10 border-t border-foreground/80 pt-6">
-            <h2 className="font-display text-heading-m text-foreground">{t("briefReady")}</h2>
+          <section className="mt-10 border-t-2 border-lilac-600 pt-6">
+            <div className="rounded-sm bg-lilac-100 px-4 py-3">
+              <h2 className="font-display text-heading-m text-foreground">{t("briefReady")}</h2>
+              <p className="mt-1 text-sm font-medium text-lilac-700">
+                {t("periodRange", { from: justGenerated.fromDate, to: justGenerated.toDate })}
+              </p>
+            </div>
             <BriefContent brief={justGenerated} />
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <a
@@ -415,7 +423,7 @@ function BriefPageContent() {
 // Section labels inside a brief: plain sentence case headings over a
 // hairline rule, so the page reads like a printed report rather than
 // a stack of cards.
-const BRIEF_SECTION_HEADING = "font-body text-sm font-semibold text-foreground";
+const BRIEF_SECTION_HEADING = "font-body text-sm font-semibold text-lilac-700";
 const BRIEF_SECTION = "border-t border-border-subtle pt-4";
 
 export default function BriefPage() {
@@ -708,7 +716,10 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         <ol className="mt-1 divide-y divide-border-subtle">
           {brief.aiDiscussionTopics.map((topic, i) => (
             <li key={i} className="flex gap-3 py-3 text-foreground">
-              <span aria-hidden="true" className="w-5 shrink-0 tabular-nums text-foreground/50">
+              <span
+                aria-hidden="true"
+                className="w-5 shrink-0 font-semibold tabular-nums text-lilac-700"
+              >
                 {i + 1}.
               </span>
               <span>{topic}</span>
@@ -722,13 +733,49 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         {brief.symptomSummary.length === 0 && (
           <p className="mt-1 text-foreground/70">{t("noSymptomsInRange")}</p>
         )}
-        <ul className="mt-1 text-foreground/70">
-          {brief.symptomSummary.map((entry) => (
-            <li key={entry.category}>
-              {tEnum(`category.${entry.category}`)}: {t("occurrenceCount", { count: entry.count })}{" "}
-              ({formatSeverityBreakdown(entry.severityBreakdown, tEnum, locale)})
-            </li>
-          ))}
+        {brief.symptomSummary.length > 0 && (
+          <ul
+            aria-hidden="true"
+            className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground/60"
+          >
+            {SEVERITY_ORDER.map((severity) => (
+              <li key={severity} className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-2.5 rounded-sm ${SEVERITY_FILL[severity]}`} />
+                {tEnum(`severity.${severity}`)}
+              </li>
+            ))}
+          </ul>
+        )}
+        <ul className="mt-2 flex flex-col gap-2.5 text-foreground/70">
+          {brief.symptomSummary.map((entry) => {
+            const maxCount = Math.max(...brief.symptomSummary.map((e) => e.count));
+            return (
+              <li key={entry.category}>
+                {tEnum(`category.${entry.category}`)}:{" "}
+                {t("occurrenceCount", { count: entry.count })} (
+                {formatSeverityBreakdown(entry.severityBreakdown, tEnum, locale)})
+                {/* The same counts as the line above, drawn: a bar per
+                    symptom split by severity, sized against the most
+                    logged symptom. */}
+                <div
+                  aria-hidden="true"
+                  className="mt-1 flex h-2 overflow-hidden rounded-full"
+                  style={{ width: `${(entry.count / maxCount) * 100}%` }}
+                >
+                  {SEVERITY_ORDER.map((severity) => {
+                    const n = entry.severityBreakdown[severity] ?? 0;
+                    return n > 0 ? (
+                      <span
+                        key={severity}
+                        className={SEVERITY_FILL[severity]}
+                        style={{ width: `${(n / entry.count) * 100}%` }}
+                      />
+                    ) : null;
+                  })}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

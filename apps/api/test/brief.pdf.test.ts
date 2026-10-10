@@ -283,7 +283,7 @@ describe("buildClinicalBriefPdf — Japanese locale", () => {
     // contiguous match would be sensitive to exactly where the wrap
     // lands rather than to whether the content is actually present.
     expect(text).toContain("前回の期間の4回よりも増加しました");
-    expect(text).toContain("併発も見られました");
+    expect(text.replace(/\s+/g, "")).toContain("ブレインフォグとの併発も見られました");
     expect(text).toContain("この頻度の変化はこの時期によくあるパターンですか？");
     // No mojibake/tofu placeholder and no leftover English section
     // headings anywhere in a fully Japanese document.

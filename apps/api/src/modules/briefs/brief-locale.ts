@@ -179,7 +179,7 @@ const EN: PdfStrings = {
   cycleSummaryHeading: "Cycle summary",
   notEnoughCycleDataText: "Not enough period-start entries in this range to compute cycle length.",
   averageCycleLengthLine: (days, cycleCount) =>
-    `Average cycle length: ${days} days (${cycleCount} cycles recorded)`,
+    `Average cycle length: ${days} days (${cycleCount} cycle${cycleCount === 1 ? "" : "s"} recorded)`,
   periodDaysLoggedLine: (days) => `${days} period day${days === 1 ? "" : "s"} logged`,
   treatmentsHeading: "Treatments logged during this period",
   noTreatmentsText: "No treatments logged in this range.",
