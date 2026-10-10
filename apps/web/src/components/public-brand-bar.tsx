@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { BrandWordmark } from "./brand-wordmark";
 
 // Pages a person sees before the app's own navigation: sign in, account
-// recovery, consent, invitations and onboarding. The landing page and
+// recovery, consent and invitations. The landing page, onboarding and
 // the signed-in app carry the wordmark in their own headers.
 const PUBLIC_ROUTES = [
   "/login",
@@ -15,7 +15,6 @@ const PUBLIC_ROUTES = [
   "/verify-email",
   "/consent",
   "/organizations/accept-invite",
-  "/onboarding",
 ];
 
 /** The EMBR wordmark at the top of every pre-app page, linking home. */
