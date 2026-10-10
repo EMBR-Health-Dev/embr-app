@@ -92,6 +92,56 @@
     font-size: 125%;
   }
 
+  /* Dark theme (Settings, stored per device; see src/display/theme.ts).
+     Components use palette classes directly as well as semantic tokens,
+     so the palette itself is remapped: the graphite and lilac scales are
+     inverted, so a light tint becomes a dark one and a deep accent
+     becomes a light one, and every pairing keeps its role. Verified
+     contrast on the dark background: foreground 15.8:1, muted text
+     7.3:1, lilac-700 accent text 10.0:1 (8.0:1 on lilac-100). */
+  html[data-theme="dark"] {
+    --color-graphite-900: 246 242 248;
+    --color-graphite-700: 220 213 226;
+    --color-graphite-500: 172 164 182;
+    --color-graphite-300: 98 88 112;
+    --color-graphite-100: 52 41 66;
+    --color-lilac-100: 52 38 64;
+    --color-lilac-200: 68 50 84;
+    --color-lilac-300: 92 70 112;
+    --color-lilac-400: 120 94 140;
+    --color-lilac-500: 168 136 182;
+    --color-lilac-600: 186 158 198;
+    --color-lilac-700: 209 189 217;
+    --color-ice-500: 40 48 62;
+    --color-pearl-50: 30 22 41;
+    /* Text on the solid lilac and rose fills stays dark in both themes. */
+    --primary-foreground: 30 22 41; /* 5.71:1 on lilac-500 */
+    --destructive-foreground: 30 22 41; /* 6.33:1 on rose-500 */
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    html[data-theme="system"] {
+      --color-graphite-900: 246 242 248;
+      --color-graphite-700: 220 213 226;
+      --color-graphite-500: 172 164 182;
+      --color-graphite-300: 98 88 112;
+      --color-graphite-100: 52 41 66;
+      --color-lilac-100: 52 38 64;
+      --color-lilac-200: 68 50 84;
+      --color-lilac-300: 92 70 112;
+      --color-lilac-400: 120 94 140;
+      --color-lilac-500: 168 136 182;
+      --color-lilac-600: 186 158 198;
+      --color-lilac-700: 209 189 217;
+      --color-ice-500: 40 48 62;
+      --color-pearl-50: 30 22 41;
+      /* Text on the solid lilac and rose fills stays dark in both themes. */
+      --primary-foreground: 30 22 41; /* 5.71:1 on lilac-500 */
+      --destructive-foreground: 30 22 41; /* 6.33:1 on rose-500 */
+      color-scheme: dark;
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family:
