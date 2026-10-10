@@ -941,6 +941,9 @@
   "SymptomHistory": {
     "sectionTitle": "症状の記録履歴",
     "sectionIntro": "あなたの記録から数えた、記録のある日数です。記録のない日は「<b>記録なし</b>」と表示し、症状がなかった日としては扱いません。",
+    "rankingTitle": "記録の多い症状",
+    "rankingSubtitle": "{from}〜{to}に記録があった日数です。記録のない日は、症状がなかった日としては数えていません。",
+    "rankingDays": "{count}日",
     "firstLogged": "初回記録",
     "lastLogged": "最終記録",
     "period": "{from} → {to}",

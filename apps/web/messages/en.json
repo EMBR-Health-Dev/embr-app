@@ -941,6 +941,9 @@
   "SymptomHistory": {
     "sectionTitle": "Symptom history",
     "sectionIntro": "Days with an entry, counted from your own records. A day without an entry is shown as <b>no entry recorded</b>, never as a day without symptoms.",
+    "rankingTitle": "Most logged symptoms",
+    "rankingSubtitle": "Days with an entry, {from} to {to}. A day without an entry is not counted as a day without symptoms.",
+    "rankingDays": "{count, plural, one {# day} other {# days}}",
     "firstLogged": "First logged",
     "lastLogged": "Last logged",
     "period": "{from} → {to}",

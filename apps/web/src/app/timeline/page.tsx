@@ -19,6 +19,7 @@ import { toIsoDate } from "../../lib/date-format";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { SymptomEvidenceCard } from "../../components/symptom-evidence-card";
+import { SymptomRankingBars } from "../../components/symptom-ranking-bars";
 import { browserTimeZone } from "../../lib/symptom-evidence";
 import {
   daysSince,
@@ -28,6 +29,7 @@ import {
   type RecordSpan,
 } from "../../lib/record-history";
 import { richText } from "../../lib/rich-text";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 // The list endpoints cap a page at 100 items; a long record is read page
 // by page up to this many pages per source (1,000 entries), and the page
@@ -265,6 +267,11 @@ export default function TimelinePage() {
             <p className="mt-2 text-sm text-foreground/60">
               {tHistory.rich("sectionIntro", richText)}
             </p>
+            <SymptomRankingBars
+              categories={symptomHistory.categories}
+              rangeFrom={formatHistoryDate(locale, symptomHistory.rangeFrom)}
+              rangeTo={formatHistoryDate(locale, symptomHistory.rangeTo)}
+            />
             <ul className="mt-5 border-b border-border-subtle">
               {symptomHistory.categories.map((category) => (
                 <SymptomEvidenceCard
