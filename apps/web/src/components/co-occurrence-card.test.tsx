@@ -152,7 +152,7 @@ describe("CoOccurrenceCard", () => {
     expect(screen.getByText("Observed")).toBeInTheDocument();
   });
 
-  it("shows a fixed, deterministic 'discuss with your GP' question — never AI-generated — for the detected signal", async () => {
+  it("shows a fixed, deterministic 'discuss with your healthcare provider' question — never AI-generated — for the detected signal", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");
@@ -163,11 +163,11 @@ describe("CoOccurrenceCard", () => {
         "Is it common for Hot Flash and Fatigue to occur together at this stage?",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Discuss with your GP")).toBeInTheDocument();
+    expect(screen.getByText("Discuss with your healthcare provider")).toBeInTheDocument();
     expect(screen.getByText("A suggested question, not medical advice.")).toBeInTheDocument();
   });
 
-  it("shows the Observed and Discuss-with-your-GP layers in Japanese too", async () => {
+  it("shows the Observed and Discuss-with-your-healthcare-provider layers in Japanese too", async () => {
     mockCoOccurrence.mockResolvedValue({ categoryA: "HOT_FLASH", categoryB: "FATIGUE", days: 6 });
 
     const { CoOccurrenceCard } = await import("./co-occurrence-card");

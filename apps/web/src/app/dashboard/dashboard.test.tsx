@@ -411,7 +411,7 @@ describe("Dashboard — evidence-infrastructure hierarchy", () => {
 
     expect(
       await screen.findByText(
-        "Everything in one place: what you've recorded, what's changing, and what to bring to your GP.",
+        "Everything in one place: what you've recorded, what's changing, and what to bring to your healthcare provider.",
       ),
     ).toBeInTheDocument();
     unmount();

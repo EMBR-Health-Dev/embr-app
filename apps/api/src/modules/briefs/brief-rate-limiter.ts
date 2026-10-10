@@ -10,7 +10,7 @@ import { rateLimitExceededHandler } from "../../lib/rate-limit-handler.js";
  * for cost control: every generation is a real Anthropic API call, and
  * this endpoint sits behind requireAuth(), so the thing worth bounding
  * is "how many times can one account generate a brief," not "how many
- * requests from one IP." 10/hour is well above any real GP-prep use
+ * requests from one IP." 10/hour is well above any real appointment-prep use
  * case (a handful of these a day would be a lot) while still capping
  * the blast radius of a client bug that loops, or an account
  * generating far more than anyone would organically need.
