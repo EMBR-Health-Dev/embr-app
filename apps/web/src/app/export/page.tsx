@@ -57,6 +57,11 @@ export default function ExportPage() {
       path: buildExportUrl("cycle-entries.csv", from, to),
     },
     {
+      label: t("contextLogsLabel"),
+      description: t("contextLogsDescription"),
+      path: buildExportUrl("context-logs.csv", from, to),
+    },
+    {
       label: t("treatmentsLabel"),
       description: t("treatmentsDescription"),
       path: buildExportUrl("treatments.csv", from, to),
