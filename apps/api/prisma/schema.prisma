@@ -241,6 +241,16 @@ enum StressLevel {
   HIGH
 }
 
+/// Morning recall of how many night sweats happened last night. A
+/// bucketed estimate, kept apart from SymptomLog so recalled ranges
+/// never enter symptom counts. Null means not recorded.
+enum NightSweatsRecall {
+  NONE
+  ONE
+  TWO_TO_THREE
+  FOUR_PLUS
+}
+
 /// A deliberately small, fixed set of daily context factors (see the
 /// embr-clinical-logic skill doctrine and the "Hot Flash Reference
 /// Library" PR discussion) — never free text, never an open-ended
@@ -257,6 +267,7 @@ model ContextLog {
   caffeineAfternoon Boolean?
   alcohol           Boolean?
   stressLevel       StressLevel?
+  nightSweats       NightSweatsRecall?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 

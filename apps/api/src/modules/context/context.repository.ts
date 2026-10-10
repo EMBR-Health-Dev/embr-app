@@ -20,12 +20,14 @@ export const contextRepository = {
         caffeineAfternoon: input.caffeineAfternoon ?? null,
         alcohol: input.alcohol ?? null,
         stressLevel: input.stressLevel ?? null,
+        nightSweats: input.nightSweats ?? null,
       },
       update: {
         sleepDuration: input.sleepDuration ?? null,
         caffeineAfternoon: input.caffeineAfternoon ?? null,
         alcohol: input.alcohol ?? null,
         stressLevel: input.stressLevel ?? null,
+        nightSweats: input.nightSweats ?? null,
       },
     });
   },

@@ -298,6 +298,10 @@ export type CycleEntryQuery = z.infer<typeof cycleEntryQuerySchema>;
 
 export const sleepDurationBucketSchema = z.enum(["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"]);
 export const stressLevelSchema = z.enum(["LOW", "MODERATE", "HIGH"]);
+// Morning recall of last night's night sweats: a bucketed estimate,
+// stored on the context log (never as NIGHT_SWEATS symptom rows) so a
+// recalled range never enters symptom counts.
+export const nightSweatsRecallSchema = z.enum(["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"]);
 
 export const upsertContextLogSchema = z.object({
   date: z.coerce.date(),
@@ -305,6 +309,7 @@ export const upsertContextLogSchema = z.object({
   caffeineAfternoon: z.boolean().optional(),
   alcohol: z.boolean().optional(),
   stressLevel: stressLevelSchema.optional(),
+  nightSweats: nightSweatsRecallSchema.optional(),
 });
 export type UpsertContextLogInput = z.infer<typeof upsertContextLogSchema>;
 

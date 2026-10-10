@@ -50,6 +50,7 @@ const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
 // open-ended list.
 const SLEEP_DURATIONS = ["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"] as const;
 const STRESS_LEVELS = ["LOW", "MODERATE", "HIGH"] as const;
+const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
 const LOGS_PAGE_SIZE = 10;
 
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
@@ -122,6 +123,8 @@ function DashboardContent() {
   const [caffeineAfternoon, setCaffeineAfternoon] = useState(false);
   const [alcohol, setAlcohol] = useState(false);
   const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
+  // Never prefilled: a blank answer means "not logged", never "none".
+  const [nightSweats, setNightSweats] = useState<(typeof NIGHT_SWEATS)[number] | "">("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextSaved, setContextSaved] = useState(false);
 
@@ -375,6 +378,7 @@ function DashboardContent() {
         caffeineAfternoon,
         alcohol,
         stressLevel: stressLevel || undefined,
+        nightSweats: nightSweats || undefined,
       });
       setContextSaved(true);
     } finally {
@@ -690,6 +694,32 @@ function DashboardContent() {
                 ))}
               </select>
             </label>
+
+            <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <label htmlFor="night-sweats" className="font-medium text-foreground">
+                {t("nightSweatsLabel")}
+              </label>
+              <select
+                id="night-sweats"
+                value={nightSweats}
+                onChange={(e) => {
+                  setNightSweats(e.target.value as (typeof NIGHT_SWEATS)[number] | "");
+                  setContextSaved(false);
+                }}
+                aria-describedby="night-sweats-help"
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("nightSweatsNone")}</option>
+                {NIGHT_SWEATS.map((n) => (
+                  <option key={n} value={n}>
+                    {tEnum(`nightSweats.${n}`)}
+                  </option>
+                ))}
+              </select>
+              <span id="night-sweats-help" className="text-foreground/70">
+                {t("nightSweatsHelp")}
+              </span>
+            </div>
 
             <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{t("stressLevelLabel")}</span>
