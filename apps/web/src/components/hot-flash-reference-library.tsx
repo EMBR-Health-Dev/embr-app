@@ -48,7 +48,7 @@ export function HotFlashReferenceLibrary() {
             )}
             <ul className="mt-1.5 flex flex-col gap-0.5">
               {section.sources.map((source) => (
-                <li key={source.url} className="text-[11px] text-foreground/40">
+                <li key={source.url} className="text-xs text-foreground/40">
                   {t("sourceLabel")}: {source.publisher}, {source.title} ({source.sourceVersion}) —{" "}
                   <a
                     href={source.url}

@@ -64,6 +64,23 @@
     --ring: var(--color-lilac-500);
   }
 
+  /* On iPhone and iPad, take the base size from the system Text Size
+     setting (Dynamic Type), so the app grows when the person has asked
+     for larger text. Scoped to touch WebKit: on macOS Safari the same
+     keyword is 13px and would shrink everything. The shorthand also
+     resets family and line height, so both are restored. */
+  @supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
+    html {
+      font: -apple-system-body;
+      font-family:
+        var(--font-body),
+        -apple-system,
+        system-ui,
+        sans-serif;
+      line-height: 1.5;
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family:
