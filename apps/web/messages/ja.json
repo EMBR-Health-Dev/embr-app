@@ -662,7 +662,7 @@
     "cycleEntriesLabel": "周期の記録（CSV）",
     "cycleEntriesDescription": "指定した期間のすべての周期記録を1行ずつまとめたものです。",
     "contextLogsLabel": "日々の状況（CSV）",
-    "contextLogsDescription": "指定した期間の日々の状況（睡眠、午後のカフェイン、飲酒、ストレス）を1行ずつまとめたものです。空欄は未記録を表します。",
+    "contextLogsDescription": "指定した期間の日々の状況（睡眠、午後のカフェイン、飲酒、ストレス、朝に振り返った昨夜の寝汗）を1行ずつまとめたものです。空欄は未記録を表します。",
     "treatmentsLabel": "治療の記録（CSV）",
     "treatmentsDescription": "指定した期間のすべての治療記録を1行ずつまとめたものです。"
   },
