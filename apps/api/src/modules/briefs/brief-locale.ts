@@ -108,6 +108,13 @@ interface PdfStrings {
   frequencyComparisonLine: (currentCount: number, previousCount: number) => string;
   ongoingSymptomsHeading: string;
   persistentSymptomLine: (category: string) => string;
+  nightSweatsRecallHeading: string;
+  nightSweatsAnsweredLine: (mornings: number) => string;
+  nightSweatsBreakdownLine: (
+    b: Record<"NONE" | "ONE" | "TWO_TO_THREE" | "FOUR_PLUS", number>,
+  ) => string;
+  nightSweatsFewAnswersNote: string;
+  nightSweatsSeparateNote: string;
   patternsNoticedHeading: string;
   coOccurrenceLine: (categoryA: string, categoryB: string, days: number) => string;
   cycleSummaryHeading: string;
@@ -158,6 +165,13 @@ const EN: PdfStrings = {
     ` ${previousCount} time${previousCount === 1 ? "" : "s"} in the previous period.`,
   ongoingSymptomsHeading: "Ongoing symptoms",
   persistentSymptomLine: (category) => `${category} remained present across both periods.`,
+  nightSweatsRecallHeading: "Night sweats recalled in the morning",
+  nightSweatsAnsweredLine: (mornings) =>
+    `Answered on ${mornings} morning${mornings === 1 ? "" : "s"} in this period.`,
+  nightSweatsBreakdownLine: (b) =>
+    `None on ${b.NONE}, 1 on ${b.ONE}, 2 to 3 on ${b.TWO_TO_THREE}, 4 or more on ${b.FOUR_PLUS}.`,
+  nightSweatsFewAnswersNote: "A breakdown is shown once 7 mornings have been answered.",
+  nightSweatsSeparateNote: "These are morning estimates, counted separately from logged symptoms.",
   patternsNoticedHeading: "Observed patterns",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA} and ${categoryB} were both reported on the same day on ${days}` +
@@ -229,6 +243,12 @@ const JA: PdfStrings = {
     `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
   ongoingSymptomsHeading: "継続している症状",
   persistentSymptomLine: (category) => `${category}は両方の期間で継続して記録されました。`,
+  nightSweatsRecallHeading: "朝に振り返った昨夜の寝汗",
+  nightSweatsAnsweredLine: (mornings) => `この期間に${mornings}日の朝に回答がありました。`,
+  nightSweatsBreakdownLine: (b) =>
+    `なし${b.NONE}日、1回${b.ONE}日、2〜3回${b.TWO_TO_THREE}日、4回以上${b.FOUR_PLUS}日。`,
+  nightSweatsFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
+  nightSweatsSeparateNote: "朝のおおよその回答で、症状の記録件数とは別に数えています。",
   patternsNoticedHeading: "記録に見られるパターン",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA}と${categoryB}が同じ日に記録された日は${days}日でした。`,

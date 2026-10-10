@@ -265,6 +265,11 @@ export type StressLevel = "LOW" | "MODERATE" | "HIGH";
  * never added to NIGHT_SWEATS symptom counts. */
 export type NightSweatsRecall = "NONE" | "ONE" | "TWO_TO_THREE" | "FOUR_PLUS";
 
+export interface NightSweatsRecallSummaryDto {
+  morningsAnswered: number;
+  breakdown: Record<NightSweatsRecall, number> | null;
+}
+
 export interface ContextLogDto {
   id: string;
   date: string;
@@ -796,6 +801,12 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * pattern type maps to this, so it is never sent to the AI in any
    * form. */
   persistentSymptoms: SymptomCategory[] | null;
+  /** Morning recall of last night's night sweats over the brief's
+   * range: how many mornings were answered, and a per-bucket count
+   * only when at least 7 were. Kept apart from symptom counts and
+   * never sent to the AI. Null for a brief generated before this
+   * field existed. */
+  nightSweatsRecall: NightSweatsRecallSummaryDto | null;
   /** The canonical Stage 4 result — the same object computed once
    * during generation, used to validate the AI's response, and
    * persisted here, never recomputed. Safe to render in full,

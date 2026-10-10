@@ -250,6 +250,20 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Night sweats recalled in the morning (its own count) ----
+  // Never merged into the symptom counts above; a breakdown only from
+  // 7 answered mornings (see night-sweats-recall.ts). Skipped for a
+  // brief that predates the field or has no answered mornings.
+  if (brief.nightSweatsRecall && brief.nightSweatsRecall.morningsAnswered > 0) {
+    const { morningsAnswered, breakdown } = brief.nightSweatsRecall;
+    sectionHeading(doc, t.nightSweatsRecallHeading);
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
+    doc.text(t.nightSweatsAnsweredLine(morningsAnswered));
+    doc.text(breakdown ? t.nightSweatsBreakdownLine(breakdown) : t.nightSweatsFewAnswersNote);
+    doc.fillColor(INK_MUTED).text(t.nightSweatsSeparateNote);
+    doc.moveDown(1);
+  }
+
   // ---- Observed patterns (symptom co-occurrence, descriptive only) ----
   // Only rendered when present — coOccurrence is null both for a
   // brief predating this field and for one where no pair reached the
