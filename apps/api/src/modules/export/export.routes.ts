@@ -10,8 +10,8 @@ const router: ExpressRouter = Router();
 
 // Every route below hands the caller's own data to them as a
 // download — this is exactly the "sends or shares user data
-// externally" category, gated at the router level since all four
-// routes qualify, not per-route.
+// externally" category, gated at the router level since every
+// route qualifies, not per-route.
 router.use("/export", requireAuth(), requireVerifiedEmail());
 
 router.get(
@@ -44,6 +44,23 @@ router.get(
       .status(200)
       .type("text/csv")
       .set("Content-Disposition", 'attachment; filename="embr-cycle-entries.csv"')
+      .send(csv);
+  }),
+);
+
+router.get(
+  "/export/context-logs.csv",
+  validate(exportQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const csv = await exportService.contextLogsCsv(
+      req.user!.sub,
+      req.query as unknown as ExportQuery,
+    );
+    await writeAuditLog(req, "DATA_EXPORTED", req.user!.sub, { type: "context-logs-csv" });
+    res
+      .status(200)
+      .type("text/csv")
+      .set("Content-Disposition", 'attachment; filename="embr-daily-context.csv"')
       .send(csv);
   }),
 );

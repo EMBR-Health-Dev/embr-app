@@ -58,6 +58,17 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      contexts: [] as Array<{
+        id: string;
+        userId: string;
+        date: Date;
+        sleepDuration: string | null;
+        caffeineAfternoon: boolean | null;
+        alcohol: boolean | null;
+        stressLevel: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>,
       treatments: [] as Array<{
         id: string;
         userId: string;
@@ -246,6 +257,38 @@ vi.mock("../src/lib/prisma.js", () => ({
       findMany: vi.fn(({ where }: { where: { userId: string } }) =>
         Promise.resolve(
           [...state.entries.filter((e) => e.userId === where.userId)].sort(
+            (a, b) => a.date.getTime() - b.date.getTime(),
+          ),
+        ),
+      ),
+    },
+    contextLog: {
+      upsert: vi.fn(
+        ({
+          where,
+          create,
+          update,
+        }: {
+          where: { userId_date: { userId: string; date: Date } };
+          create: Omit<(typeof state.contexts)[number], "id" | "createdAt" | "updatedAt">;
+          update: Partial<(typeof state.contexts)[number]>;
+        }) => {
+          const { userId, date } = where.userId_date;
+          const existing = state.contexts.find(
+            (e) => e.userId === userId && e.date.getTime() === date.getTime(),
+          );
+          if (existing) {
+            Object.assign(existing, update, { updatedAt: now() });
+            return Promise.resolve(existing);
+          }
+          const entry = { id: nextId(), createdAt: now(), updatedAt: now(), ...create };
+          state.contexts.push(entry);
+          return Promise.resolve(entry);
+        },
+      ),
+      findMany: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(
+          [...state.contexts.filter((e) => e.userId === where.userId)].sort(
             (a, b) => a.date.getTime() - b.date.getTime(),
           ),
         ),
@@ -455,6 +498,43 @@ describe("GET /export/cycle-entries.csv", () => {
     expect(res.headers["content-type"]).toContain("text/csv");
     expect(res.text).toContain("2026-07-05");
     expect(res.text).toContain("Medium");
+  });
+});
+
+describe("GET /export/context-logs.csv", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/export/context-logs.csv");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns only the authenticated user's daily context, leaving unlogged factors blank", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "contextExportA@embr.health");
+    await registerAndLogin(agentB, "contextExportB@embr.health");
+
+    await agentA.post("/context-logs").send({
+      date: "2026-06-02",
+      sleepDuration: "UNDER_6H",
+      caffeineAfternoon: true,
+      stressLevel: "HIGH",
+    });
+    await agentA.post("/context-logs").send({ date: "2026-06-03", alcohol: false });
+    await agentB.post("/context-logs").send({ date: "2026-06-02", sleepDuration: "SEVEN_PLUS_H" });
+
+    const res = await agentA.get("/export/context-logs.csv");
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/csv");
+    expect(res.headers["content-disposition"]).toContain("embr-daily-context.csv");
+    expect(res.text.split("\r\n")).toEqual([
+      "date,sleepDuration,caffeineAfternoon,alcohol,stressLevel",
+      "2026-06-02,UNDER_6H,true,,HIGH",
+      "2026-06-03,,,false,",
+      "",
+    ]);
+    expect(res.text).not.toContain("SEVEN_PLUS_H");
   });
 });
 

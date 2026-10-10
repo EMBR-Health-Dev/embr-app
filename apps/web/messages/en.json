@@ -652,6 +652,8 @@
     "symptomLogsDescription": "Every symptom entry in the range, one row each, for your own records or another tool.",
     "cycleEntriesLabel": "Cycle entries (CSV)",
     "cycleEntriesDescription": "Every cycle entry in the range, one row each.",
+    "contextLogsLabel": "Daily context (CSV)",
+    "contextLogsDescription": "Every daily context entry in the range, one row each: sleep, afternoon caffeine, alcohol and stress. A blank cell means not logged.",
     "treatmentsLabel": "Treatments (CSV)",
     "treatmentsDescription": "Every treatment logged in the range, one row each."
   },

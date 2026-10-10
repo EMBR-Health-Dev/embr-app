@@ -18,6 +18,14 @@ interface CycleEntryRecord {
   notes: string | null;
 }
 
+interface ContextLogRecord {
+  date: Date;
+  sleepDuration: string | null;
+  caffeineAfternoon: boolean | null;
+  alcohol: boolean | null;
+  stressLevel: string | null;
+}
+
 interface TreatmentRecord {
   name: string;
   category: string;
@@ -70,6 +78,22 @@ export const exportService = {
         entry.isPeriodStart,
         entry.isPeriodEnd,
         entry.notes,
+      ]),
+    );
+  },
+
+  /** A blank cell means "not logged", never "no" — the same rule the
+   * app applies everywhere a context factor was left empty. */
+  async contextLogsCsv(userId: string, query: ExportQuery): Promise<string> {
+    const logs = await exportRepository.listContextLogsForExport(userId, query);
+    return toCsv(
+      ["date", "sleepDuration", "caffeineAfternoon", "alcohol", "stressLevel"],
+      logs.map((log: ContextLogRecord) => [
+        log.date.toISOString().slice(0, 10),
+        log.sleepDuration,
+        log.caffeineAfternoon,
+        log.alcohol,
+        log.stressLevel,
       ]),
     );
   },

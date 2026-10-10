@@ -371,6 +371,20 @@ paths:
           description: "CSV file (Content-Disposition: attachment)"
           content:
             text/csv: {}
+  /export/context-logs.csv:
+    get:
+      summary: Download daily context entries as CSV
+      description: One row per day. A blank cell means the factor was not logged.
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "CSV file (Content-Disposition: attachment)"
+          content:
+            text/csv: {}
   /export/summary.pdf:
     get:
       summary: Download a clinician-facing PDF summary

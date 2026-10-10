@@ -48,4 +48,12 @@ describe("Export page — date range boundaries", () => {
     const href = link.closest("a")!.getAttribute("href")!;
     expect(href).toBe("/api/export/symptom-logs.csv");
   });
+
+  it("offers the daily context CSV alongside the other exports", async () => {
+    const { default: ExportPage } = await import("./page");
+    renderWithIntl(<ExportPage />);
+
+    const link = await screen.findByText("Daily context (CSV)");
+    expect(link.closest("a")!.getAttribute("href")).toBe("/api/export/context-logs.csv");
+  });
 });
