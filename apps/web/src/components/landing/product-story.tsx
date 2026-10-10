@@ -10,7 +10,9 @@ export function ProductStory() {
   return (
     <>
       <section aria-labelledby="story-heading" className="bg-lilac-100">
-        <div className={`${container} grid gap-12 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}>
+        <div
+          className={`${container} grid grid-cols-1 gap-12 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
+        >
           <div className="lg:col-span-5">
             <Eyebrow>{t("eyebrow")}</Eyebrow>
             <h2

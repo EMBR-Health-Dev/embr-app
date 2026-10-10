@@ -81,6 +81,17 @@
     }
   }
 
+  /* The person's own Text size choice (Settings, stored per device; see
+     src/display/text-size.ts). An explicit choice overrides the system
+     size above; Standard sets no attribute and keeps following it. The
+     attribute selector outranks the plain html rule, whatever the order. */
+  html[data-text-size="large"] {
+    font-size: 112.5%;
+  }
+  html[data-text-size="larger"] {
+    font-size: 125%;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family:
