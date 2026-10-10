@@ -266,6 +266,33 @@ export const treatmentQuerySchema = paginationQuerySchema.extend({
 });
 export type TreatmentQuery = z.infer<typeof treatmentQuerySchema>;
 
+// ---- Notes (the personal notebook) ----
+//
+// Free text the person keeps for herself. Stored and exported like the
+// rest of the record, but never sent to the AI and never part of the
+// BRIEF: notes are not interpreted, counted or summarised anywhere.
+
+export const noteCoverSchema = z.enum(["LILAC", "PLUM", "PEARL", "ICE", "ROSE"]);
+
+export const createNoteSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().max(20000).default(""),
+  cover: noteCoverSchema.default("LILAC"),
+});
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+
+export const updateNoteSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120).optional(),
+    body: z.string().max(20000).optional(),
+    cover: noteCoverSchema.optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "Nothing to update" });
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+
+export const noteQuerySchema = paginationQuerySchema;
+export type NoteQuery = z.infer<typeof noteQuerySchema>;
+
 export const flowIntensitySchema = z.enum(["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"]);
 
 export const upsertCycleEntrySchema = z.object({

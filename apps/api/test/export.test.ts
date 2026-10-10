@@ -70,6 +70,15 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      notes: [] as Array<{
+        id: string;
+        userId: string;
+        title: string;
+        body: string;
+        cover: string;
+        createdAt: Date;
+        updatedAt: Date;
+      }>,
       treatments: [] as Array<{
         id: string;
         userId: string;
@@ -295,6 +304,11 @@ vi.mock("../src/lib/prisma.js", () => ({
         ),
       ),
     },
+    note: {
+      findMany: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(state.notes.filter((n) => n.userId === where.userId)),
+      ),
+    },
     treatment: {
       create: vi.fn(
         ({
@@ -400,6 +414,7 @@ beforeEach(() => {
   state.logs = [];
   state.entries = [];
   state.treatments = [];
+  state.notes = [];
   state.emailVerificationTokens = [];
   vi.mocked(buildClinicianSummaryPdf).mockClear();
   vi.mocked(sendVerificationEmail).mockClear();
@@ -537,6 +552,48 @@ describe("GET /export/context-logs.csv", () => {
       "",
     ]);
     expect(res.text).not.toContain("SEVEN_PLUS_H");
+  });
+});
+
+describe("GET /export/notes.csv", () => {
+  it("requires authentication", async () => {
+    const res = await request(createApp()).get("/export/notes.csv");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns only the signed in person's notes, quoting text that contains commas", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    await registerAndLogin(agentA, "notes-export-a@embr.health");
+    const userId = state.users.find((u) => u.email === "notes-export-a@embr.health")!.id;
+    const at = new Date("2026-06-02T08:00:00.000Z");
+    state.notes.push(
+      {
+        id: "n1",
+        userId,
+        title: "Sleep",
+        body: "Woke at 3am, then 5am",
+        cover: "LILAC",
+        createdAt: at,
+        updatedAt: at,
+      },
+      {
+        id: "n2",
+        userId: "someone-else",
+        title: "Not mine",
+        body: "",
+        cover: "LILAC",
+        createdAt: at,
+        updatedAt: at,
+      },
+    );
+
+    const res = await agentA.get("/export/notes.csv");
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-disposition"]).toContain("embr-notes.csv");
+    expect(res.text).toContain('Sleep,"Woke at 3am, then 5am"');
+    expect(res.text).not.toContain("Not mine");
   });
 });
 

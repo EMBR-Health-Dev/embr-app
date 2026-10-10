@@ -49,6 +49,26 @@ export const exportRepository = {
     });
   },
 
+  /** Notes by when they were written, so a date range exports the notes
+   * started in it. */
+  listNotesForExport(userId: string, query: ExportQuery) {
+    return prisma.note.findMany({
+      where: {
+        userId,
+        ...(query.from || query.to
+          ? {
+              createdAt: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
+          : {}),
+      },
+      orderBy: { createdAt: "asc" },
+      take: EXPORT_ROW_CAP,
+    });
+  },
+
   listContextLogsForExport(userId: string, query: ExportQuery) {
     return prisma.contextLog.findMany({
       where: {
