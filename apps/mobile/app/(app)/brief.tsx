@@ -617,6 +617,28 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </>
       )}
 
+      {/* Morning estimates, counted apart from symptom logs and never
+          sent to the AI. Breakdown only from 7 answered mornings. */}
+      {brief.nightSweatsRecall && brief.nightSweatsRecall.morningsAnswered > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.nightSweatsRecallTitle")}</Text>
+          <Text style={styles.summaryLine}>
+            {t("brief.nightSweatsAnswered", { count: brief.nightSweatsRecall.morningsAnswered })}
+          </Text>
+          <Text style={styles.summaryLine}>
+            {brief.nightSweatsRecall.breakdown
+              ? t("brief.nightSweatsBreakdown", {
+                  none: brief.nightSweatsRecall.breakdown.NONE,
+                  one: brief.nightSweatsRecall.breakdown.ONE,
+                  twoToThree: brief.nightSweatsRecall.breakdown.TWO_TO_THREE,
+                  fourPlus: brief.nightSweatsRecall.breakdown.FOUR_PLUS,
+                })
+              : t("brief.nightSweatsFewAnswers")}
+          </Text>
+          <Text style={styles.summaryLine}>{t("brief.nightSweatsSeparate")}</Text>
+        </>
+      )}
+
       {/* Her own daily answers; never sent to the AI and never part of
           any organisation statistic. Breakdown only from 7 answered days. */}
       {brief.workImpact && brief.workImpact.daysAnswered > 0 && (
