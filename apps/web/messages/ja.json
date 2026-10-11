@@ -843,6 +843,73 @@
         "cycleLabel": "周期の履歴"
       }
     },
+    "engine": {
+      "eyebrow": "仕組み",
+      "headline": "チャットボットではなく、エビデンスエンジン。",
+      "body": "EMBRが示すシグナルはすべて、記録された内容に決まったルールを当てはめて算出しています。同じ記録からは常に同じ結果が得られ、どの結果もその元になった日付までさかのぼって確認できます。AIは最後に一度だけ、算出した結果をわかりやすい言葉にするために使います。",
+      "stages": {
+        "capture": {
+          "label": "記録",
+          "title": "構造化された記録",
+          "body": "14の症状カテゴリー、3段階の重症度、周期と日々の状況を、その日の日付で記録します。",
+          "spec": "taxonomy: fixed, versioned"
+        },
+        "compute": {
+          "label": "算出",
+          "title": "決まったルール",
+          "body": "回数、前の期間との比較、同じ日に重なった症状を、毎回同じ方法で算出します。",
+          "spec": "co_occurrence: ≥ 3 shared days"
+        },
+        "trace": {
+          "label": "根拠",
+          "title": "根拠つきのシグナル",
+          "body": "各シグナルには元になった日付が付いており、あなたと医療者が確認できます。",
+          "spec": "signal → dated entries"
+        },
+        "explain": {
+          "label": "説明",
+          "title": "AIは説明役",
+          "body": "言語モデルは算出された件数だけをもとに要約を書きます。AIが引用する内容は、渡したパターンと照合して確認します。",
+          "spec": "notes and treatment names: never sent"
+        }
+      },
+      "specs": {
+        "version": {
+          "key": "解釈バージョン",
+          "value": "v1.0"
+        },
+        "determinism": {
+          "key": "同じ記録",
+          "value": "→ 同じ結果"
+        },
+        "aiRole": {
+          "key": "AIの役割",
+          "value": "説明のみ"
+        },
+        "region": {
+          "key": "データの保管先",
+          "value": "EU"
+        },
+        "audit": {
+          "key": "監査ログ",
+          "value": "記録の変更"
+        }
+      },
+      "run": {
+        "title": "実行例",
+        "example": "例のデータであり、実際の記録ではありません",
+        "controls": "実行例の操作",
+        "showStep": "「{label}」の段階を表示",
+        "play": "再生",
+        "pause": "一時停止",
+        "output": {
+          "capture": "symptom=HOT_FLASH  severity=MODERATE  date=2026-09-03",
+          "compute": "hot_flash: 今回の期間 9日、前回の期間 4日",
+          "trace": "evidence: 9月3日、9月5日、9月8日、9月11日、9月14日 …（9日分）",
+          "explain": "「ホットフラッシュは9日記録され、前回の期間は4日でした。」"
+        }
+      }
+    },
     "brief": {
       "eyebrow": "EMBR BRIEF",
       "headline": "より明確な状態で、診察室へ。",
