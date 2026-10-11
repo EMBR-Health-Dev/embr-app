@@ -894,6 +894,20 @@
           "key": "Audit log",
           "value": "record changes"
         }
+      },
+      "run": {
+        "title": "Example run",
+        "example": "example data, not a real record",
+        "controls": "Example run controls",
+        "showStep": "Show the {label} step",
+        "play": "Play",
+        "pause": "Pause",
+        "output": {
+          "capture": "symptom=HOT_FLASH  severity=MODERATE  date=2026-09-03",
+          "compute": "hot_flash: 9 days this period, 4 in the previous period",
+          "trace": "evidence: Sep 3, Sep 5, Sep 8, Sep 11, Sep 14 … (9 dates)",
+          "explain": "\"Hot flashes were logged on 9 days, compared with 4 in the previous period.\""
+        }
       }
     },
     "brief": {

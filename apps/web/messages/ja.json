@@ -894,6 +894,20 @@
           "key": "監査ログ",
           "value": "記録の変更"
         }
+      },
+      "run": {
+        "title": "実行例",
+        "example": "例のデータであり、実際の記録ではありません",
+        "controls": "実行例の操作",
+        "showStep": "「{label}」の段階を表示",
+        "play": "再生",
+        "pause": "一時停止",
+        "output": {
+          "capture": "symptom=HOT_FLASH  severity=MODERATE  date=2026-09-03",
+          "compute": "hot_flash: 今回の期間 9日、前回の期間 4日",
+          "trace": "evidence: 9月3日、9月5日、9月8日、9月11日、9月14日 …（9日分）",
+          "explain": "「ホットフラッシュは9日記録され、前回の期間は4日でした。」"
+        }
       }
     },
     "brief": {

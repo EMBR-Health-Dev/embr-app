@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
@@ -51,14 +52,30 @@ describe("Public landing page (/)", () => {
   it("shows the evidence engine as four ordered stages with AI as the last step", () => {
     renderPage();
     const section = screen.getByRole("region", { name: "An evidence engine, not a chatbot." });
-    const stages = within(section).getAllByRole("listitem");
-    expect(stages.map((s) => within(s).getByRole("heading").textContent)).toEqual([
-      "Structured entries",
-      "Deterministic rules",
-      "Evidence attached",
-      "AI as narrator",
-    ]);
+    expect(
+      within(section)
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(["Structured entries", "Deterministic rules", "Evidence attached", "AI as narrator"]);
     expect(within(section).getByText("narration only")).toBeInTheDocument();
+  });
+
+  it("labels the example run as example data and lets a visitor step through it by hand", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const section = screen.getByRole("region", { name: "An evidence engine, not a chatbot." });
+    expect(within(section).getByText(/example data, not a real record/)).toBeInTheDocument();
+
+    const explain = within(section).getByRole("button", { name: "Show the Explain step" });
+    await user.click(explain);
+
+    expect(explain).toHaveAttribute("aria-pressed", "true");
+    expect(within(section).getByRole("button", { name: "Play" })).toBeInTheDocument();
+    expect(
+      within(section)
+        .getByText(/Hot flashes were logged on 9 days/)
+        .closest("li"),
+    ).not.toHaveAttribute("aria-hidden");
   });
 
   it("renders the hero with a single h1", () => {
