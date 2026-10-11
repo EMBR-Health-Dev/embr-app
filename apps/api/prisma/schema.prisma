@@ -242,6 +242,16 @@ enum StressLevel {
   HIGH
 }
 
+/// Whether symptoms affected work that day, as the person answers it.
+/// Kept apart from SymptomLog and from every organisation statistic:
+/// an employer must never see anything about work impact, not even as
+/// a suppressed count. Null means not recorded, never "no".
+enum WorkImpact {
+  NONE
+  DID_LESS
+  MISSED_TIME
+}
+
 /// Morning recall of how many night sweats happened last night. A
 /// bucketed estimate, kept apart from SymptomLog so recalled ranges
 /// never enter symptom counts. Null means not recorded.
@@ -269,6 +279,7 @@ model ContextLog {
   alcohol           Boolean?
   stressLevel       StressLevel?
   nightSweats       NightSweatsRecall?
+  workImpact        WorkImpact?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
@@ -597,6 +608,13 @@ model ClinicalBrief {
   /// Never merged into symptom counts and never sent to the AI. Null
   /// means "never computed for this brief".
   nightSweatsRecall Json?
+
+  /// { daysAnswered: number, breakdown: Record<WorkImpact, number> | null }
+  /// Counted from ContextLog.workImpact over [fromDate, toDate]; see
+  /// work-impact.ts. Breakdown only from 7 answered days. Never sent to
+  /// the AI and never part of organisation statistics. Null means
+  /// "never computed for this brief".
+  workImpact Json?
 
   /// { interpretationVersion: string, patterns: Stage4Pattern[] }
   /// The canonical Stage 4 result (see @embr/types and

@@ -137,6 +137,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     treatmentImpact: [],
     persistentSymptoms: [],
     nightSweatsRecall: null,
+    workImpact: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
     aiNarrative: "A narrative.",

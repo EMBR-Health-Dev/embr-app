@@ -13,6 +13,7 @@ export function toContextLogDto(entry: ContextLog): ContextLogDto {
     alcohol: entry.alcohol,
     stressLevel: entry.stressLevel,
     nightSweats: entry.nightSweats,
+    workImpact: entry.workImpact,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   };

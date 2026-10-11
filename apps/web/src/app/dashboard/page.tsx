@@ -51,6 +51,7 @@ const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
 const SLEEP_DURATIONS = ["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"] as const;
 const STRESS_LEVELS = ["LOW", "MODERATE", "HIGH"] as const;
 const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
+const WORK_IMPACT = ["NONE", "DID_LESS", "MISSED_TIME"] as const;
 const LOGS_PAGE_SIZE = 10;
 
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
@@ -125,6 +126,7 @@ function DashboardContent() {
   const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
   // Never prefilled: a blank answer means "not logged", never "none".
   const [nightSweats, setNightSweats] = useState<(typeof NIGHT_SWEATS)[number] | "">("");
+  const [workImpact, setWorkImpact] = useState<(typeof WORK_IMPACT)[number] | "">("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextSaved, setContextSaved] = useState(false);
 
@@ -379,6 +381,7 @@ function DashboardContent() {
         alcohol,
         stressLevel: stressLevel || undefined,
         nightSweats: nightSweats || undefined,
+        workImpact: workImpact || undefined,
       });
       setContextSaved(true);
     } finally {
@@ -739,6 +742,32 @@ function DashboardContent() {
                 ))}
               </select>
             </label>
+
+            <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <label htmlFor="work-impact" className="font-medium text-foreground">
+                {t("workImpactLabel")}
+              </label>
+              <select
+                id="work-impact"
+                value={workImpact}
+                onChange={(e) => {
+                  setWorkImpact(e.target.value as (typeof WORK_IMPACT)[number] | "");
+                  setContextSaved(false);
+                }}
+                aria-describedby="work-impact-help"
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("workImpactNone")}</option>
+                {WORK_IMPACT.map((w) => (
+                  <option key={w} value={w}>
+                    {tEnum(`workImpact.${w}`)}
+                  </option>
+                ))}
+              </select>
+              <span id="work-impact-help" className="text-foreground/70">
+                {t("workImpactHelp")}
+              </span>
+            </div>
 
             <div className="mt-4 flex flex-wrap gap-4 border-t border-border-subtle pt-4">
               <label className="flex items-center gap-2 text-sm text-foreground">

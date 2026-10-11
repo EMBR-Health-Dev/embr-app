@@ -270,6 +270,16 @@ export interface NightSweatsRecallSummaryDto {
   breakdown: Record<NightSweatsRecall, number> | null;
 }
 
+/** Whether symptoms affected work that day. Counted only for the
+ * person's own BRIEF; never sent to the AI and never part of any
+ * organisation statistic. */
+export type WorkImpact = "NONE" | "DID_LESS" | "MISSED_TIME";
+
+export interface WorkImpactSummaryDto {
+  daysAnswered: number;
+  breakdown: Record<WorkImpact, number> | null;
+}
+
 export type NoteCover = "LILAC" | "PLUM" | "PEARL" | "ICE" | "ROSE";
 
 /** A page in the personal notebook. Never sent to the AI or the BRIEF. */
@@ -290,6 +300,7 @@ export interface ContextLogDto {
   alcohol: boolean | null;
   stressLevel: StressLevel | null;
   nightSweats: NightSweatsRecall | null;
+  workImpact: WorkImpact | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -819,6 +830,11 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * never sent to the AI. Null for a brief generated before this
    * field existed. */
   nightSweatsRecall: NightSweatsRecallSummaryDto | null;
+  /** Days in range where "did symptoms affect work" was answered, and
+   * a per-answer count only when at least 7 were. Never sent to the AI
+   * and never part of organisation statistics. Null for a brief
+   * generated before this field existed. */
+  workImpact: WorkImpactSummaryDto | null;
   /** The canonical Stage 4 result — the same object computed once
    * during generation, used to validate the AI's response, and
    * persisted here, never recomputed. Safe to render in full,

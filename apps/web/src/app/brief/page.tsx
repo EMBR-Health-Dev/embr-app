@@ -829,6 +829,25 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
+      {brief.workImpact && brief.workImpact.daysAnswered > 0 && (
+        <div className={BRIEF_SECTION}>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("workImpactTitle")}</h3>
+          <p className="mt-1 text-foreground/70">
+            {t("workImpactAnswered", { count: brief.workImpact.daysAnswered })}
+          </p>
+          <p className="text-foreground/70">
+            {brief.workImpact.breakdown
+              ? t("workImpactBreakdown", {
+                  none: brief.workImpact.breakdown.NONE,
+                  didLess: brief.workImpact.breakdown.DID_LESS,
+                  missedTime: brief.workImpact.breakdown.MISSED_TIME,
+                })
+              : t("workImpactFewAnswers")}
+          </p>
+          <p className="mt-1 text-xs text-foreground/50">{t("workImpactPrivate")}</p>
+        </div>
+      )}
+
       {brief.coOccurrence && (
         <div className={BRIEF_SECTION}>
           <h3 className={BRIEF_SECTION_HEADING}>{t("patternsNoticedTitle")}</h3>

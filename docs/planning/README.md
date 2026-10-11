@@ -5,13 +5,13 @@ Working documents written while preparing EMBR for launch. They are
 clinical sign off or a published claim. Legal drafts and clinical content
 stay off the website until the named reviewer approves them.
 
-| Document                                                    | For                      | Status                                                     |
-| ----------------------------------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| [Counsel brief](counsel-brief.md)                           | Lawyer                   | Waiting on answers to 12 questions                         |
-| [Content for clinician review](clinician-content-review.md) | Menopause clinician      | Five sections waiting on sign off                          |
-| [Research data plan](research-data-plan.md)                 | Counsel and ethics board | Draft; nothing built, no data shared                       |
-| [Menopause and work (IZA paper)](career-cost-research.md)   | Founder, counsel         | Copy rules ready; work impact question proposed, not built |
-| [Performance review, October 2026](performance-2026-10.md)  | Engineering              | Findings and fixes                                         |
+| Document                                                    | For                      | Status                                                                        |
+| ----------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------- |
+| [Counsel brief](counsel-brief.md)                           | Lawyer                   | Waiting on answers to 12 questions                                            |
+| [Content for clinician review](clinician-content-review.md) | Menopause clinician      | Five sections waiting on sign off                                             |
+| [Research data plan](research-data-plan.md)                 | Counsel and ethics board | Draft; nothing built, no data shared                                          |
+| [Menopause and work (IZA paper)](career-cost-research.md)   | Founder, counsel         | Copy rules ready; work impact question built (#225), counsel question 13 open |
+| [Performance review, October 2026](performance-2026-10.md)  | Engineering              | Findings and fixes                                                            |
 
 Each document has a live copy in Claude Docs, where review comments are
 collected. The copies here are the record; if the two differ, the newer
