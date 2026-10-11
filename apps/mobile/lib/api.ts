@@ -3,6 +3,7 @@ import type {
   BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  ContextLogDto,
   CycleEntryDto,
   CycleLengthTrendDto,
   DeviceSessionDto,
@@ -79,6 +80,24 @@ export const api = {
       apiFetch<SymptomLogDto>("/symptom-logs", { method: "POST", body: input }),
 
     delete: (id: string) => apiFetch<void>(`/symptom-logs/${id}`, { method: "DELETE" }),
+  },
+
+  // Daily context: one entry per user per calendar day. The upsert
+  // replaces every factor for that day, so a caller that only edits one
+  // factor must send the others back as they are (see WorkImpactCard).
+  contextLogs: {
+    list: (query?: { page?: number; pageSize?: number; from?: string; to?: string }) =>
+      apiFetch<PaginatedResponse<ContextLogDto>>("/context-logs", { query }),
+
+    upsert: (input: {
+      date: string;
+      sleepDuration?: string;
+      caffeineAfternoon?: boolean;
+      alcohol?: boolean;
+      stressLevel?: string;
+      nightSweats?: string;
+      workImpact?: string;
+    }) => apiFetch<ContextLogDto>("/context-logs", { method: "POST", body: input }),
   },
 
   cycleEntries: {

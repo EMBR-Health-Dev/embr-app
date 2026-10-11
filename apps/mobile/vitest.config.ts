@@ -28,7 +28,7 @@ export default defineConfig({
     // `// @vitest-environment jsdom` docblock at the top of the file
     // instead — lib tests keep the faster, simpler node default this
     // way, with no environment declared per-file for them.
-    include: ["lib/**/*.test.ts", "app/**/*.test.tsx"],
+    include: ["lib/**/*.test.ts", "app/**/*.test.tsx", "components/**/*.test.tsx"],
     setupFiles: ["./test/setup.ts"],
     // Vitest's own test-transform pipeline resolves modules
     // separately from top-level Vite `resolve.alias` in some cases
