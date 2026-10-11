@@ -136,6 +136,7 @@ export const api = {
       category: string;
       startDate: string;
       endDate?: string;
+      stopReason?: string;
       notes?: string;
     }) => apiFetch<TreatmentDto>("/treatments", { method: "POST", body: input }),
 
@@ -146,6 +147,7 @@ export const api = {
         category: string;
         startDate: string;
         endDate: string | null;
+        stopReason: string | null;
         notes: string;
       }>,
     ) => apiFetch<TreatmentDto>(`/treatments/${id}`, { method: "PATCH", body: input }),

@@ -24,6 +24,7 @@ const { state, nextId } = vi.hoisted(() => {
         category: string;
         startDate: Date;
         endDate: Date | null;
+        stopReason?: string | null;
         notes: string | null;
         createdAt: Date;
         updatedAt: Date;
@@ -562,6 +563,83 @@ describe("ownership scoping on single-resource routes", () => {
     // against the *existing* startDate, not just what's in this body.
     const res = await agent.patch(`/treatments/${treatmentId}`).send({ endDate: "2026-06-01" });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("why a treatment was stopped", () => {
+  async function created(agent: ReturnType<typeof request.agent>, body: Record<string, unknown>) {
+    const res = await agent
+      .post("/treatments")
+      .send({ name: "HRT patch", category: "HRT", startDate: "2026-06-01", ...body });
+    return res;
+  }
+
+  it("stores the reason with an ended treatment and returns it", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "stop-create@embr.health");
+
+    const res = await created(agent, { endDate: "2026-07-01", stopReason: "SIDE_EFFECTS" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.stopReason).toBe("SIDE_EFFECTS");
+  });
+
+  it("is optional: an ended treatment without a reason reads as not answered", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "stop-optional@embr.health");
+
+    const res = await created(agent, { endDate: "2026-07-01" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.stopReason).toBeNull();
+  });
+
+  it("rejects a reason on an ongoing treatment, at create and at update", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "stop-ongoing@embr.health");
+
+    expect((await created(agent, { stopReason: "COST" })).status).toBe(400);
+
+    const ongoing = await created(agent, {});
+    const res = await agent
+      .patch(`/treatments/${ongoing.body.data.id}`)
+      .send({ stopReason: "COST" });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a value outside the fixed list", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "stop-bad@embr.health");
+
+    for (const stopReason of ["NON_COMPLIANT", "side_effects", 3]) {
+      expect((await created(agent, { endDate: "2026-07-01", stopReason })).status).toBe(400);
+    }
+  });
+
+  it("sets or changes the reason later on an ended treatment, and clears it when marked ongoing again", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "stop-update@embr.health");
+    const { id } = (await created(agent, { endDate: "2026-07-01" })).body.data;
+
+    const set = await agent.patch(`/treatments/${id}`).send({ stopReason: "NO_LONGER_NEEDED" });
+    expect(set.status).toBe(200);
+    expect(set.body.data.stopReason).toBe("NO_LONGER_NEEDED");
+
+    const reopened = await agent.patch(`/treatments/${id}`).send({ endDate: null });
+    expect(reopened.status).toBe(200);
+    expect(reopened.body.data.endDate).toBeNull();
+    expect(reopened.body.data.stopReason).toBeNull();
+  });
+
+  it("can be cleared back to not answered", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "stop-clear@embr.health");
+    const { id } = (await created(agent, { endDate: "2026-07-01", stopReason: "COST" })).body.data;
+
+    const res = await agent.patch(`/treatments/${id}`).send({ stopReason: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.stopReason).toBeNull();
   });
 });
 

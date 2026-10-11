@@ -883,6 +883,13 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               <li key={i}>
                 {entry.name}: {tEnum(`treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
                 {entry.endDate ?? t("ongoing")}
+                {entry.stopReason && (
+                  <span className="block text-foreground/60">
+                    {t("stopReasonEntry", {
+                      reason: tEnum(`treatmentStopReason.${entry.stopReason}`),
+                    })}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

@@ -87,6 +87,7 @@ const { state, nextId } = vi.hoisted(() => {
         category: string;
         startDate: Date;
         endDate: Date | null;
+        stopReason?: string | null;
         notes: string | null;
         createdAt: Date;
         updatedAt: Date;
@@ -618,6 +619,7 @@ describe("GET /export/treatments.csv", () => {
       category: "HRT",
       startDate: "2026-06-01",
       endDate: "2026-06-20",
+      stopReason: "SIDE_EFFECTS",
       notes: "twice weekly",
     });
     await agentB.post("/treatments").send({
@@ -637,6 +639,8 @@ describe("GET /export/treatments.csv", () => {
     expect(res.text).toContain("2026-06-01");
     expect(res.text).toContain("2026-06-20");
     expect(res.text).toContain("twice weekly");
+    expect(res.text.split("\r\n")[0]).toBe("name,category,startDate,endDate,stopReason,notes");
+    expect(res.text).toContain("2026-06-20,SIDE_EFFECTS,twice weekly");
     expect(res.text).not.toContain("Magnesium");
   });
 

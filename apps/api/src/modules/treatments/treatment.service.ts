@@ -44,6 +44,17 @@ export const treatmentService = {
       }
     }
 
+    // A stop reason only makes sense for a treatment that has ended.
+    // When the request sets one without also setting an end date, check
+    // the stored end date.
+    if (input.stopReason && input.endDate === undefined) {
+      const existing = await treatmentRepository.findById(userId, id);
+      if (!existing) throw AppError.notFound("Treatment");
+      if (!existing.endDate) {
+        throw AppError.validation("an ongoing treatment has no stopReason");
+      }
+    }
+
     const treatment = await treatmentRepository.update(userId, id, input);
     if (!treatment) throw AppError.notFound("Treatment");
     return toTreatmentDto(treatment);

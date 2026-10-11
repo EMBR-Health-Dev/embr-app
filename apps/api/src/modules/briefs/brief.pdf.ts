@@ -392,10 +392,12 @@ export function buildClinicalBriefPdf(
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK_MUTED).text(t.noTreatmentsText);
   } else {
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
-    for (const { name, category, startDate, endDate } of brief.treatmentSummary) {
+    for (const { name, category, startDate, endDate, stopReason } of brief.treatmentSummary) {
       const dateRange = `${startDate} – ${endDate ?? t.ongoingLabel}`;
       doc.fillColor(INK).text(`${name}`, { continued: true, width: 300 });
       doc.fillColor(INK_MUTED).text(`  ${treatmentCategoryLabel(category, locale)}, ${dateRange}`);
+      // Her stated reason, as a fact; never an assessment of the treatment.
+      if (stopReason) doc.fillColor(INK_MUTED).text(t.stopReasonLine(stopReason));
     }
   }
   doc.moveDown(0.4);

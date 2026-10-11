@@ -33,6 +33,7 @@ interface TreatmentRecord {
   category: string;
   startDate: Date;
   endDate: Date | null;
+  stopReason: string | null;
   notes: string | null;
 }
 
@@ -126,12 +127,15 @@ export const exportService = {
   async treatmentsCsv(userId: string, query: ExportQuery): Promise<string> {
     const treatments = await exportRepository.listTreatmentsForExport(userId, query);
     return toCsv(
-      ["name", "category", "startDate", "endDate", "notes"],
+      ["name", "category", "startDate", "endDate", "stopReason", "notes"],
       treatments.map((treatment: TreatmentRecord) => [
         treatment.name,
         treatmentCategoryLabel(treatment.category),
         treatment.startDate.toISOString().slice(0, 10),
         treatment.endDate ? treatment.endDate.toISOString().slice(0, 10) : "",
+        // Her own record, so every stored value is exported, including
+        // PREFER_NOT_TO_SAY (which the BRIEF does not print).
+        treatment.stopReason,
         treatment.notes,
       ]),
     );

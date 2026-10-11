@@ -19,6 +19,7 @@ export const treatmentRepository = {
         category: input.category,
         startDate: input.startDate,
         endDate: input.endDate ?? null,
+        stopReason: input.endDate ? (input.stopReason ?? null) : null,
         notes: input.notes ?? null,
       },
     });
@@ -152,6 +153,12 @@ export const treatmentRepository = {
         ...(input.category !== undefined ? { category: input.category } : {}),
         ...(input.startDate !== undefined ? { startDate: input.startDate } : {}),
         ...(input.endDate !== undefined ? { endDate: input.endDate } : {}),
+        // Marking a treatment ongoing again clears any stop reason.
+        ...(input.endDate === null
+          ? { stopReason: null }
+          : input.stopReason !== undefined
+            ? { stopReason: input.stopReason }
+            : {}),
         ...(input.notes !== undefined ? { notes: input.notes } : {}),
       },
     });

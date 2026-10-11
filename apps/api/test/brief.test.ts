@@ -51,6 +51,7 @@ const { state, nextId } = vi.hoisted(() => {
         category: string;
         startDate: Date;
         endDate: Date | null;
+        stopReason?: string | null;
         notes: string | null;
       }>,
       briefs: [] as Array<{
@@ -1471,6 +1472,38 @@ describe("POST /briefs — treatment impact (deterministic, no AI involvement)",
 
     expect(res.body.data.treatmentSummary).toHaveLength(1); // still summarized
     expect(res.body.data.treatmentImpact).toEqual([]); // but no impact entry
+  });
+
+  it("lists her reason for stopping, hides prefer not to say, and never sends it to the AI", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "txstop@embr.health");
+    addTreatment(userId, {
+      name: "Estradiol patch",
+      startDate: new Date("2026-01-05"),
+      endDate: new Date("2026-01-20"),
+      stopReason: "SIDE_EFFECTS",
+    });
+    addTreatment(userId, {
+      name: "Magnesium",
+      category: "SUPPLEMENT",
+      startDate: new Date("2026-01-06"),
+      endDate: new Date("2026-01-25"),
+      stopReason: "PREFER_NOT_TO_SAY",
+    });
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    const byName = Object.fromEntries(
+      res.body.data.treatmentSummary.map((t: { name: string; stopReason?: string }) => [
+        t.name,
+        t.stopReason ?? null,
+      ]),
+    );
+    expect(byName).toEqual({ "Estradiol patch": "SIDE_EFFECTS", Magnesium: null });
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/stopReason|SIDE_EFFECTS|PREFER_NOT_TO_SAY/);
   });
 
   it("returns an empty array, not null, when no treatment started inside the period", async () => {

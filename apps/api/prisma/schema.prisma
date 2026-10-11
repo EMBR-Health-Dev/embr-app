@@ -296,6 +296,19 @@ enum TreatmentCategory {
   OTHER
 }
 
+/// Why the person stopped a treatment, in her own choice of words from
+/// a fixed list. Optional, and only for a treatment that has ended. It
+/// records her decision; EMBR never judges it. Shown in her BRIEF
+/// (except PREFER_NOT_TO_SAY), never sent to the AI.
+enum TreatmentStopReason {
+  SIDE_EFFECTS
+  LONG_TERM_CONCERN
+  NO_LONGER_NEEDED
+  COST
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
 /// A treatment or intervention the user is tracking — the "what was
 /// done" layer that symptom/cycle logs alone don't capture. `endDate`
 /// null means ongoing/current, same nullable-means-open-ended pattern
@@ -312,6 +325,8 @@ model Treatment {
   category  TreatmentCategory
   startDate DateTime          @db.Date
   endDate   DateTime?         @db.Date
+  /// Null while ongoing, and when she chose not to answer.
+  stopReason TreatmentStopReason?
   notes     String?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt

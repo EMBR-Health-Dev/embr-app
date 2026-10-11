@@ -645,10 +645,19 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         <Text style={styles.summaryLine}>{t("brief.noTreatmentsInRange")}</Text>
       ) : (
         brief.treatmentSummary.map((entry, i) => (
-          <Text key={i} style={styles.summaryLine}>
-            {entry.name}: {t(`enums.treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
-            {entry.endDate ?? t("brief.ongoing")}
-          </Text>
+          <View key={i}>
+            <Text style={styles.summaryLine}>
+              {entry.name}: {t(`enums.treatmentCategory.${entry.category}`)}, {entry.startDate} –{" "}
+              {entry.endDate ?? t("brief.ongoing")}
+            </Text>
+            {entry.stopReason && (
+              <Text style={styles.summaryLine}>
+                {t("brief.stopReasonEntry", {
+                  reason: t(`enums.treatmentStopReason.${entry.stopReason}`),
+                })}
+              </Text>
+            )}
+          </View>
         ))
       )}
       <Text style={styles.treatmentSafetyNote}>{t("brief.treatmentSafetyNote")}</Text>

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { treatmentCategorySchema } from "@embr/validation";
-import type { TreatmentDto, TreatmentImpactDto } from "@embr/types";
+import { treatmentCategorySchema, treatmentStopReasonSchema } from "@embr/validation";
+import type { TreatmentDto, TreatmentImpactDto, TreatmentStopReason } from "@embr/types";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Chip } from "../../components/chip";
@@ -14,6 +14,8 @@ import { errorMarker, destructiveText, theme } from "../../lib/theme";
 import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = treatmentCategorySchema.options;
+// Her reason, from a fixed list, never a judgement. Optional.
+const STOP_REASONS = treatmentStopReasonSchema.options;
 
 export default function TreatmentsScreen() {
   const { t } = useTranslation();
@@ -27,6 +29,9 @@ export default function TreatmentsScreen() {
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [ongoing, setOngoing] = useState(true);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [stopReason, setStopReason] = useState<TreatmentStopReason | null>(null);
+  const [reasonEditingId, setReasonEditingId] = useState<string | null>(null);
+  const [savingReasonId, setSavingReasonId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -55,6 +60,7 @@ export default function TreatmentsScreen() {
     setStartDate(new Date());
     setOngoing(true);
     setEndDate(null);
+    setStopReason(null);
     setNotes("");
   }
 
@@ -76,6 +82,7 @@ export default function TreatmentsScreen() {
         category,
         startDate: toIsoDate(startDate),
         endDate: !ongoing && endDate ? toIsoDate(endDate) : undefined,
+        stopReason: !ongoing && endDate && stopReason ? stopReason : undefined,
         notes: notes.trim() || undefined,
       });
       resetForm();
@@ -97,6 +104,19 @@ export default function TreatmentsScreen() {
       await loadTreatments();
     } finally {
       setEndingId(null);
+    }
+  }
+
+  async function handleStopReason(id: string, value: TreatmentStopReason | null) {
+    setSavingReasonId(id);
+    try {
+      const updated = await api.treatments.update(id, { stopReason: value });
+      setTreatments((prev) => prev.map((tr) => (tr.id === id ? updated : tr)));
+      setReasonEditingId(null);
+    } catch {
+      await loadTreatments();
+    } finally {
+      setSavingReasonId(null);
     }
   }
 
@@ -179,6 +199,7 @@ export default function TreatmentsScreen() {
                 onPress={() => {
                   setOngoing(true);
                   setEndDate(null);
+                  setStopReason(null);
                 }}
               />
               <Chip
@@ -196,6 +217,28 @@ export default function TreatmentsScreen() {
                 minimumDate={startDate ?? undefined}
                 maximumDate={new Date()}
               />
+            )}
+
+            {!ongoing && (
+              <>
+                <Text style={styles.sectionLabel}>{t("treatments.stopReasonLabel")}</Text>
+                <View style={styles.chipRow}>
+                  <Chip
+                    label={t("treatments.stopReasonNone")}
+                    selected={stopReason === null}
+                    onPress={() => setStopReason(null)}
+                  />
+                  {STOP_REASONS.map((r) => (
+                    <Chip
+                      key={r}
+                      label={t(`enums.treatmentStopReason.${r}`)}
+                      selected={stopReason === r}
+                      onPress={() => setStopReason(r)}
+                    />
+                  ))}
+                </View>
+                <Text style={styles.hint}>{t("treatments.stopReasonHelp")}</Text>
+              </>
             )}
 
             <TextInput
@@ -238,6 +281,50 @@ export default function TreatmentsScreen() {
                     {" – "}
                     {isOngoing ? t("treatments.ongoing") : item.endDate}
                   </Text>
+                  {!isOngoing && (
+                    <View style={styles.reasonRow}>
+                      <Text style={styles.treatmentMeta}>
+                        {item.stopReason
+                          ? t("treatments.stopReasonShown", {
+                              reason: t(`enums.treatmentStopReason.${item.stopReason}`),
+                            })
+                          : t("treatments.stopReasonNotAnswered")}
+                      </Text>
+                      <Pressable
+                        onPress={() =>
+                          setReasonEditingId(reasonEditingId === item.id ? null : item.id)
+                        }
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.linkText}>
+                          {item.stopReason
+                            ? t("treatments.stopReasonChange")
+                            : t("treatments.stopReasonAdd")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  {reasonEditingId === item.id && (
+                    <View style={[styles.chipRow, { marginTop: 6 }]}>
+                      <Chip
+                        label={t("treatments.stopReasonNone")}
+                        selected={!item.stopReason}
+                        onPress={() => void handleStopReason(item.id, null)}
+                      />
+                      {STOP_REASONS.map((r) => (
+                        <Chip
+                          key={r}
+                          label={t(`enums.treatmentStopReason.${r}`)}
+                          selected={item.stopReason === r}
+                          onPress={() =>
+                            savingReasonId === item.id
+                              ? undefined
+                              : void handleStopReason(item.id, r)
+                          }
+                        />
+                      ))}
+                    </View>
+                  )}
                   {item.notes && <Text style={styles.treatmentNotes}>{item.notes}</Text>}
                 </View>
                 <View style={styles.rowActions}>
@@ -315,6 +402,7 @@ export default function TreatmentsScreen() {
 }
 
 const styles = StyleSheet.create({
+  reasonRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 4 },
   screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 10, marginBottom: 8 },

@@ -41,5 +41,13 @@ export function computeTreatmentSummary(treatments: Treatment[]): BriefTreatment
     category: t.category,
     startDate: t.startDate.toISOString().slice(0, 10),
     endDate: t.endDate ? t.endDate.toISOString().slice(0, 10) : null,
+    // Her stated reason for stopping, from a fixed list: a fact for the
+    // reader, never an assessment. PREFER_NOT_TO_SAY is kept on the
+    // record but not printed. Not part of the AI input (see aiInput in
+    // brief.service.ts, which never receives treatmentSummary).
+    // Only present when there is a reason to print.
+    ...(t.endDate && t.stopReason && t.stopReason !== "PREFER_NOT_TO_SAY"
+      ? { stopReason: t.stopReason }
+      : {}),
   }));
 }

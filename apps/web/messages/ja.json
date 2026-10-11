@@ -221,6 +221,14 @@
       "LIFESTYLE": "生活習慣",
       "OTHER": "その他"
     },
+    "treatmentStopReason": {
+      "SIDE_EFFECTS": "副作用",
+      "LONG_TERM_CONCERN": "長期的な影響が心配",
+      "NO_LONGER_NEEDED": "必要がなくなった",
+      "COST": "費用",
+      "OTHER": "その他",
+      "PREFER_NOT_TO_SAY": "答えたくない"
+    },
     "subscriptionStatus": {
       "INCOMPLETE": "未完了",
       "INCOMPLETE_EXPIRED": "未完了（期限切れ）",
@@ -623,6 +631,7 @@
     "noTreatmentsInRange": "この期間に記録された治療はありません。",
     "noSymptomsInRange": "この期間に記録された症状はありません。",
     "ongoing": "継続中",
+    "stopReasonEntry": "中止の理由：{reason}",
     "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
     "frequencyComparisonTitle": "前回の期間との比較",
     "frequencyComparisonEntry": "今回の期間に{currentCount, plural, other {#回}}記録され、前回の期間は{previousCount, plural, other {#回}}でした。",
@@ -710,6 +719,10 @@
     "treatmentsDescription": "指定した期間のすべての治療記録を1行ずつまとめたものです。"
   },
   "Treatments": {
+    "stopReasonLabel": "中止した理由（任意）",
+    "stopReasonRowLabel": "{name}を中止した理由",
+    "stopReasonNone": "未回答",
+    "stopReasonHelp": "選んだ理由はBRIEFで医療者に伝わります。「答えたくない」はBRIEFに表示されません。",
     "title": "治療",
     "backToDashboard": "← ダッシュボード",
     "hint": "HRT、サプリメント、薬など、症状に対して行っていることを記録します。診断や治療の提案ではなく、あなた自身の記録です。",

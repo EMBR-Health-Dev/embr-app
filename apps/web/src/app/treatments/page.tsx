@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { TreatmentDto, TreatmentImpactDto } from "@embr/types";
+import type { TreatmentDto, TreatmentImpactDto, TreatmentStopReason } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
@@ -13,6 +13,15 @@ import { Field } from "../../components/field";
 import { toIsoDate } from "../../lib/date-format";
 
 const CATEGORIES = ["HRT", "SUPPLEMENT", "MEDICATION", "LIFESTYLE", "OTHER"] as const;
+// Her reason, from a fixed list, never a judgement. Optional.
+const STOP_REASONS: TreatmentStopReason[] = [
+  "SIDE_EFFECTS",
+  "LONG_TERM_CONCERN",
+  "NO_LONGER_NEEDED",
+  "COST",
+  "OTHER",
+  "PREFER_NOT_TO_SAY",
+];
 
 export default function TreatmentsPage() {
   const t = useTranslations("Treatments");
@@ -31,6 +40,8 @@ export default function TreatmentsPage() {
   const [startDate, setStartDate] = useState(toIsoDate(new Date()));
   const [ongoing, setOngoing] = useState(true);
   const [endDate, setEndDate] = useState("");
+  const [stopReason, setStopReason] = useState<TreatmentStopReason | "">("");
+  const [savingReasonId, setSavingReasonId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -90,6 +101,7 @@ export default function TreatmentsPage() {
         category,
         startDate,
         endDate: !ongoing && endDate ? endDate : undefined,
+        stopReason: !ongoing && endDate && stopReason ? stopReason : undefined,
         notes: notes.trim() || undefined,
       });
       setName("");
@@ -97,6 +109,7 @@ export default function TreatmentsPage() {
       setStartDate(toIsoDate(new Date()));
       setOngoing(true);
       setEndDate("");
+      setStopReason("");
       setNotes("");
       await loadTreatments();
     } catch (err) {
@@ -121,6 +134,18 @@ export default function TreatmentsPage() {
       await loadTreatments();
     } finally {
       setEndingId(null);
+    }
+  }
+
+  async function handleStopReason(id: string, value: TreatmentStopReason | "") {
+    setSavingReasonId(id);
+    try {
+      const updated = await api.treatments.update(id, { stopReason: value || null });
+      setTreatments((prev) => prev.map((tr) => (tr.id === id ? updated : tr)));
+    } catch {
+      await loadTreatments();
+    } finally {
+      setSavingReasonId(null);
     }
   }
 
@@ -216,7 +241,10 @@ export default function TreatmentsPage() {
               checked={ongoing}
               onChange={(e) => {
                 setOngoing(e.target.checked);
-                if (e.target.checked) setEndDate("");
+                if (e.target.checked) {
+                  setEndDate("");
+                  setStopReason("");
+                }
               }}
             />
             {t("ongoing")}
@@ -233,6 +261,31 @@ export default function TreatmentsPage() {
             />
           )}
         </div>
+
+        {!ongoing && (
+          <div className="flex max-w-xs flex-col gap-1.5 text-sm">
+            <label htmlFor="stop-reason" className="font-medium text-foreground">
+              {t("stopReasonLabel")}
+            </label>
+            <select
+              id="stop-reason"
+              value={stopReason}
+              onChange={(e) => setStopReason(e.target.value as TreatmentStopReason | "")}
+              aria-describedby="stop-reason-help"
+              className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+            >
+              <option value="">{t("stopReasonNone")}</option>
+              {STOP_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {tEnum(`treatmentStopReason.${r}`)}
+                </option>
+              ))}
+            </select>
+            <span id="stop-reason-help" className="text-foreground/70">
+              {t("stopReasonHelp")}
+            </span>
+          </div>
+        )}
 
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{t("notesPlaceholder")}</span>
@@ -304,6 +357,26 @@ export default function TreatmentsPage() {
                     </div>
                   </div>
 
+                  {!isOngoing && (
+                    <label className="mt-2 flex flex-col gap-1 text-foreground/70">
+                      <span>{t("stopReasonRowLabel", { name: tr.name })}</span>
+                      <select
+                        value={tr.stopReason ?? ""}
+                        onChange={(e) =>
+                          void handleStopReason(tr.id, e.target.value as TreatmentStopReason | "")
+                        }
+                        disabled={savingReasonId === tr.id}
+                        className="w-full max-w-xs rounded-sm border border-border bg-background px-2 py-1 text-foreground disabled:opacity-50"
+                      >
+                        <option value="">{t("stopReasonNone")}</option>
+                        {STOP_REASONS.map((r) => (
+                          <option key={r} value={r}>
+                            {tEnum(`treatmentStopReason.${r}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   {expanded && (
                     <div className="mt-3 rounded border border-accent bg-accent p-3 text-sm">
                       {!impact || impact.loading ? (

@@ -129,6 +129,9 @@ interface PdfStrings {
   treatmentsHeading: string;
   noTreatmentsText: string;
   ongoingLabel: string;
+  stopReasonLine: (
+    reason: "SIDE_EFFECTS" | "LONG_TERM_CONCERN" | "NO_LONGER_NEEDED" | "COST" | "OTHER",
+  ) => string;
   treatmentSafetyNote: string;
   treatmentImpactHeading: string;
   treatmentImpactInsufficientText: string;
@@ -196,6 +199,16 @@ const EN: PdfStrings = {
   treatmentsHeading: "Treatments logged during this period",
   noTreatmentsText: "No treatments logged in this range.",
   ongoingLabel: "Ongoing",
+  stopReasonLine: (reason) =>
+    `Her reason for stopping: ${
+      {
+        SIDE_EFFECTS: "side effects",
+        LONG_TERM_CONCERN: "concern about long-term effects",
+        NO_LONGER_NEEDED: "no longer needed",
+        COST: "cost",
+        OTHER: "another reason",
+      }[reason]
+    }`,
   treatmentSafetyNote:
     "This reflects what you've logged. It does not assess whether a treatment is working or" +
     " make treatment recommendations.",
@@ -277,6 +290,16 @@ const JA: PdfStrings = {
   treatmentsHeading: "この期間に記録された治療",
   noTreatmentsText: "この期間に記録された治療はありません。",
   ongoingLabel: "継続中",
+  stopReasonLine: (reason) =>
+    `中止の理由：${
+      {
+        SIDE_EFFECTS: "副作用",
+        LONG_TERM_CONCERN: "長期的な影響への不安",
+        NO_LONGER_NEEDED: "必要がなくなった",
+        COST: "費用",
+        OTHER: "その他の理由",
+      }[reason]
+    }`,
   treatmentSafetyNote:
     "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするもので" +
     "はありません。",
