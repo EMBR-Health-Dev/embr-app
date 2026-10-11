@@ -180,6 +180,11 @@
       "MEDICATION": "医薬品",
       "LIFESTYLE": "生活習慣",
       "OTHER": "その他"
+    },
+    "workImpact": {
+      "NONE": "いいえ",
+      "DID_LESS": "はい、仕事量が減った",
+      "MISSED_TIME": "はい、休んだ・早退した"
     }
   },
   "tabs": {
@@ -312,6 +317,11 @@
     "treatmentImpactInsufficientData": "比較するにはまだ十分な期間が経過していません。",
     "persistentSymptomsTitle": "継続している症状",
     "persistentSymptomsEntry": "{{category}}は両方の期間で継続して記録されました。",
+    "workImpactTitle": "症状が仕事に影響した日",
+    "workImpactAnswered_other": "この期間に{{count}}日分の回答がありました。",
+    "workImpactBreakdown": "影響なし{{none}}日、仕事量が減った{{didLess}}日、休んだ・早退した{{missedTime}}日。",
+    "workImpactFewAnswers": "回答が7日分以上になると、内訳を表示します。",
+    "workImpactPrivate": "あなた自身の毎日の回答です。勤務先と共有されることはありません。",
     "groundedInTitle": "データに基づく根拠",
     "viewEvidence": "記録した日を表示",
     "hideEvidence": "記録した日を非表示",
@@ -372,6 +382,16 @@
     "permanentlyDelete": "完全に削除",
     "deleting": "削除中…",
     "cancel": "キャンセル"
+  },
+  "workImpact": {
+    "question": "今日、症状が仕事に影響しましたか？",
+    "notLogged": "未記録",
+    "help": "あなた自身のBRIEFでのみ集計されます。勤務先と共有されることはありません。",
+    "save": "保存",
+    "saving": "保存中…",
+    "saved": "保存しました ✓",
+    "loadError": "今日の記録を読み込めませんでした。ほかで記録した内容を守るため、保存は止めています。時間をおいてお試しください。",
+    "genericError": "保存できませんでした。接続を確認して、もう一度お試しください。"
   },
   "appointmentCard": {
     "withinMonth": "近々、診察の予定があるとのことでしたね。BRIEFがあれば、具体的な材料を持って診察に臨めます。",

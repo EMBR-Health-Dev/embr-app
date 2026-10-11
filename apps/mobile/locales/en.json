@@ -180,6 +180,11 @@
       "MEDICATION": "Medication",
       "LIFESTYLE": "Lifestyle",
       "OTHER": "Other"
+    },
+    "workImpact": {
+      "NONE": "No",
+      "DID_LESS": "Yes, I did less",
+      "MISSED_TIME": "Yes, I missed time"
     }
   },
   "tabs": {
@@ -318,6 +323,12 @@
     "treatmentImpactInsufficientData": "Not enough time has passed since starting to compare yet.",
     "persistentSymptomsTitle": "Ongoing symptoms",
     "persistentSymptomsEntry": "{{category}} remained present across both periods.",
+    "workImpactTitle": "Days symptoms affected work",
+    "workImpactAnswered_one": "Answered on {{count}} day in this period.",
+    "workImpactAnswered_other": "Answered on {{count}} days in this period.",
+    "workImpactBreakdown": "No effect on {{none}}, did less on {{didLess}}, missed time on {{missedTime}}.",
+    "workImpactFewAnswers": "A breakdown is shown once 7 days have been answered.",
+    "workImpactPrivate": "Your own daily answers. Never shared with any employer.",
     "groundedInTitle": "Grounded in your data",
     "viewEvidence": "View recorded days",
     "hideEvidence": "Hide recorded days",
@@ -380,6 +391,16 @@
     "permanentlyDelete": "Permanently delete",
     "deleting": "Deleting…",
     "cancel": "Cancel"
+  },
+  "workImpact": {
+    "question": "Did symptoms affect your work today?",
+    "notLogged": "Not logged",
+    "help": "Counted only in your own BRIEF. Never shared with an employer.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "loadError": "Couldn't load today's entry, so saving is off to keep what you logged elsewhere. Try again later.",
+    "genericError": "Couldn't save that. Check your connection and try again."
   },
   "appointmentCard": {
     "withinMonth": "You mentioned a healthcare appointment coming up soon. A BRIEF can help you walk in with something concrete.",
