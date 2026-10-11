@@ -20,7 +20,7 @@ interpret.
    the error's stack trace and frequency graph is usually faster than
    reasoning from symptoms alone.
 3. Check the platform status page for wherever this is deployed
-   (Railway/Fly/Vercel status page, and your Postgres/Redis provider's) —
+   (Railway status page; Postgres and Redis also run on Railway) —
    rules out "this is actually an upstream outage" before you spend time
    debugging application code that isn't broken.
 4. If it's a SEV1: post a short status update wherever users/stakeholders
