@@ -1,6 +1,7 @@
 # Menopause and work: what the IZA paper changes for EMBR
 
-_11 October 2026. Draft; nothing here is built or published yet._
+_11 October 2026. Draft. The work impact question (section 3) is built in
+#225; the copy rules are not yet used anywhere public._
 
 ## The source
 
@@ -58,7 +59,7 @@ below 5 people (`ORG_TRENDS_MIN_COHORT_SIZE`). The paper gives that offer
 an evidence based reason. Use only the "may say" wording, with the
 citation and "working paper" named.
 
-### 3. Feature proposal: "Did symptoms affect work today?" (not built)
+### 3. "Did symptoms affect work today?" (built in #225)
 
 A daily context question, built the same way as night sweats recall
 (#211, #214):
