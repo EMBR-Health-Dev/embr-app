@@ -48,6 +48,19 @@ describe("Public landing page (/)", () => {
     replace.mockClear();
   });
 
+  it("shows the evidence engine as four ordered stages with AI as the last step", () => {
+    renderPage();
+    const section = screen.getByRole("region", { name: "An evidence engine, not a chatbot." });
+    const stages = within(section).getAllByRole("listitem");
+    expect(stages.map((s) => within(s).getByRole("heading").textContent)).toEqual([
+      "Structured entries",
+      "Deterministic rules",
+      "Evidence attached",
+      "AI as narrator",
+    ]);
+    expect(within(section).getByText("narration only")).toBeInTheDocument();
+  });
+
   it("renders the hero with a single h1", () => {
     renderPage();
     const h1s = screen.getAllByRole("heading", { level: 1 });

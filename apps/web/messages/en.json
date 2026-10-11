@@ -843,6 +843,59 @@
         "cycleLabel": "Cycle history"
       }
     },
+    "engine": {
+      "eyebrow": "Under the hood",
+      "headline": "An evidence engine, not a chatbot.",
+      "body": "Every signal EMBR shows comes from a fixed rule applied to what you logged. The same record always gives the same result, and every result can be traced back to the days behind it. AI is used once, at the end, to put computed results into plain words.",
+      "stages": {
+        "capture": {
+          "label": "Capture",
+          "title": "Structured entries",
+          "body": "14 symptom categories, 3 severity levels, cycle and daily context, each dated on the day it happens.",
+          "spec": "taxonomy: fixed, versioned"
+        },
+        "compute": {
+          "label": "Compute",
+          "title": "Deterministic rules",
+          "body": "Counts, comparisons with the previous period and same day overlaps, calculated the same way every time.",
+          "spec": "co_occurrence: ≥ 3 shared days"
+        },
+        "trace": {
+          "label": "Trace",
+          "title": "Evidence attached",
+          "body": "Each signal carries the dates it was built from, so you and your clinician can check it.",
+          "spec": "signal → dated entries"
+        },
+        "explain": {
+          "label": "Explain",
+          "title": "AI as narrator",
+          "body": "A language model writes the summary from computed counts only. What it cites is checked against the patterns it was given.",
+          "spec": "notes and treatment names: never sent"
+        }
+      },
+      "specs": {
+        "version": {
+          "key": "Interpretation",
+          "value": "v1.0"
+        },
+        "determinism": {
+          "key": "Same input",
+          "value": "→ same output"
+        },
+        "aiRole": {
+          "key": "AI role",
+          "value": "narration only"
+        },
+        "region": {
+          "key": "Data region",
+          "value": "EU"
+        },
+        "audit": {
+          "key": "Audit log",
+          "value": "record changes"
+        }
+      }
+    },
     "brief": {
       "eyebrow": "EMBR BRIEF",
       "headline": "A clearer way to walk into the appointment.",
