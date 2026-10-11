@@ -107,6 +107,19 @@ export const exportService = {
     );
   },
 
+  async notesCsv(userId: string, query: ExportQuery): Promise<string> {
+    const notes = await exportRepository.listNotesForExport(userId, query);
+    return toCsv(
+      ["createdAt", "updatedAt", "title", "body"],
+      notes.map((note: { createdAt: Date; updatedAt: Date; title: string; body: string }) => [
+        note.createdAt.toISOString(),
+        note.updatedAt.toISOString(),
+        note.title,
+        note.body,
+      ]),
+    );
+  },
+
   async treatmentsCsv(userId: string, query: ExportQuery): Promise<string> {
     const treatments = await exportRepository.listTreatmentsForExport(userId, query);
     return toCsv(

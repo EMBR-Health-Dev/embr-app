@@ -270,6 +270,18 @@ export interface NightSweatsRecallSummaryDto {
   breakdown: Record<NightSweatsRecall, number> | null;
 }
 
+export type NoteCover = "LILAC" | "PLUM" | "PEARL" | "ICE" | "ROSE";
+
+/** A page in the personal notebook. Never sent to the AI or the BRIEF. */
+export interface NoteDto {
+  id: string;
+  title: string;
+  body: string;
+  cover: NoteCover;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ContextLogDto {
   id: string;
   date: string;

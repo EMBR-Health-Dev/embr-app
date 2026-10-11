@@ -21,6 +21,7 @@ import { symptomRouter } from "./modules/symptoms/symptom.routes.js";
 import { treatmentRouter } from "./modules/treatments/treatment.routes.js";
 import { cycleRouter } from "./modules/cycle/cycle.routes.js";
 import { contextRouter } from "./modules/context/context.routes.js";
+import { noteRouter } from "./modules/notes/note.routes.js";
 import { exportRouter } from "./modules/export/export.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { trendsRouter } from "./modules/trends/trends.routes.js";
@@ -131,6 +132,7 @@ export function createApp(): Express {
   app.use(treatmentRouter);
   app.use(cycleRouter);
   app.use(contextRouter);
+  app.use(noteRouter);
   app.use(exportRouter);
   app.use(adminRouter);
   app.use(trendsRouter);

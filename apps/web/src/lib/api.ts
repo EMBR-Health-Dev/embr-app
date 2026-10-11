@@ -10,6 +10,8 @@ import type {
   DeviceSessionDto,
   EvidenceStrengthDto,
   MyOrganizationMembershipDto,
+  NoteCover,
+  NoteDto,
   OnboardingProfileDto,
   OrgBillingStatusDto,
   OrganizationDto,
@@ -160,6 +162,16 @@ export const api = {
     /** Per-symptom history; `from`/`to` are YYYY-MM-DD in `timeZone`. */
     symptomHistory: (query: { from?: string; to?: string; timeZone: string }) =>
       apiFetch<SymptomHistoryDto>("/trends/symptom-history", { query }),
+  },
+
+  notes: {
+    list: (query?: { page?: number; pageSize?: number }) =>
+      apiFetch<PaginatedResponse<NoteDto>>("/notes", { query }),
+    create: (input: { title: string; body?: string; cover?: NoteCover }) =>
+      apiFetch<NoteDto>("/notes", { method: "POST", body: input }),
+    update: (id: string, input: Partial<{ title: string; body: string; cover: NoteCover }>) =>
+      apiFetch<NoteDto>(`/notes/${id}`, { method: "PATCH", body: input }),
+    delete: (id: string) => apiFetch<void>(`/notes/${id}`, { method: "DELETE" }),
   },
 
   treatments: {

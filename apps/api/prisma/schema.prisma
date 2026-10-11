@@ -59,6 +59,7 @@ model User {
   symptomLogs             SymptomLog[]
   cycleEntries            CycleEntry[]
   contextLogs             ContextLog[]
+  notes                   Note[]
   treatments              Treatment[]
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
@@ -813,6 +814,34 @@ model OnboardingProfile {
   updatedAt DateTime @updatedAt
 
   @@map("onboarding_profiles")
+}
+
+// ---- Notes (the personal notebook) ----
+//
+// Free text the person keeps for herself. Exported with the record and
+// deleted with the account; never sent to the AI and never part of the
+// BRIEF.
+
+enum NoteCover {
+  LILAC
+  PLUM
+  PEARL
+  ICE
+  ROSE
+}
+
+model Note {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String    @default("")
+  cover     NoteCover @default(LILAC)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, updatedAt])
+  @@map("notes")
 }
 
 // ---- Consent (Terms, Privacy, health information) ----
