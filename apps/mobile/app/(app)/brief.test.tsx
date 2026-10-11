@@ -891,6 +891,83 @@ describe("Brief screen — multiple items", () => {
   });
 });
 
+describe("Brief screen — night sweats recalled in the morning", () => {
+  it("states mornings answered, holding back the breakdown below 7", async () => {
+    mockHistoryOf(brief({ nightSweatsRecall: { morningsAnswered: 1, breakdown: null } }));
+    await renderAndExpandBrief();
+
+    expect(await screen.findByText("Night sweats recalled in the morning")).toBeInTheDocument();
+    expect(screen.getByText("Answered on 1 morning in this period.")).toBeInTheDocument();
+    expect(
+      screen.getByText("A breakdown is shown once 7 mornings have been answered."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("These are morning estimates, counted separately from logged symptoms."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the breakdown from 7 answered mornings", async () => {
+    mockHistoryOf(
+      brief({
+        nightSweatsRecall: {
+          morningsAnswered: 9,
+          breakdown: { NONE: 3, ONE: 3, TWO_TO_THREE: 2, FOUR_PLUS: 1 },
+        },
+      }),
+    );
+    await renderAndExpandBrief();
+
+    expect(
+      await screen.findByText("None on 3, 1 on 3, 2 to 3 on 2, 4 or more on 1."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the section out when no morning was answered", async () => {
+    mockHistoryOf(brief({ nightSweatsRecall: { morningsAnswered: 0, breakdown: null } }));
+    await renderAndExpandBrief();
+
+    expect(await screen.findByText("A narrative.")).toBeInTheDocument();
+    expect(screen.queryByText("Night sweats recalled in the morning")).not.toBeInTheDocument();
+  });
+});
+
+describe("Brief screen — days symptoms affected work", () => {
+  it("states days answered, holds back the breakdown below 7, and says it is never shared with an employer", async () => {
+    mockHistoryOf(brief({ workImpact: { daysAnswered: 3, breakdown: null } }));
+    await renderAndExpandBrief();
+
+    expect(await screen.findByText("Days symptoms affected work")).toBeInTheDocument();
+    expect(screen.getByText("Answered on 3 days in this period.")).toBeInTheDocument();
+    expect(
+      screen.getByText("A breakdown is shown once 7 days have been answered."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your own daily answers. Never shared with any employer."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the breakdown from 7 answered days", async () => {
+    mockHistoryOf(
+      brief({
+        workImpact: { daysAnswered: 9, breakdown: { NONE: 5, DID_LESS: 3, MISSED_TIME: 1 } },
+      }),
+    );
+    await renderAndExpandBrief();
+
+    expect(
+      await screen.findByText("No effect on 5, did less on 3, missed time on 1."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the section out when no day was answered", async () => {
+    mockHistoryOf(brief({ workImpact: { daysAnswered: 0, breakdown: null } }));
+    await renderAndExpandBrief();
+
+    expect(await screen.findByText("A narrative.")).toBeInTheDocument();
+    expect(screen.queryByText("Days symptoms affected work")).not.toBeInTheDocument();
+  });
+});
+
 describe("Brief screen — PDF / share", () => {
   it("passes the correct brief id to the share helper", async () => {
     mockHistoryOf(brief());
