@@ -67,7 +67,8 @@ describe("Patterns page — empty states", () => {
     expect(
       await screen.findByText("See what your record is beginning to show over time."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Your record")).toBeInTheDocument();
+    // Sections render once the data has loaded; the subtitle renders before.
+    expect(await screen.findByText("Your record")).toBeInTheDocument();
     expect(
       screen.getByText(
         (_content: string, el: Element | null) =>

@@ -1345,7 +1345,10 @@ describe("GET /organizations/:organizationId/trends/symptom-frequency", { timeou
   });
 });
 
-describe("GET /organizations/:organizationId/trends/activation", () => {
+// Like the symptom-frequency block above: the larger tests here sign up
+// and log in six accounts before asserting, which timed out at the 5s
+// default on CI.
+describe("GET /organizations/:organizationId/trends/activation", { timeout: 20_000 }, () => {
   async function setupOrg(suffix: string) {
     const app = createApp();
     const platformAdminAgent = request.agent(app);
