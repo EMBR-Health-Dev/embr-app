@@ -7,6 +7,7 @@ import type {
   ContextLogDto,
   CycleEntryDto,
   NightSweatsRecall,
+  WorkImpact,
   SymptomHistoryDto,
   SymptomLogDto,
   TreatmentDto,
@@ -61,6 +62,8 @@ interface DayGroup {
   cycle: CycleEntryDto | null;
   // Recalled the next morning; shown beside symptoms, never counted as one.
   nightSweats: NightSweatsRecall | null;
+  // The day's own answer; shown in the person's Timeline, never counted as a symptom.
+  workImpact: WorkImpact | null;
   treatmentEvents: Array<{ treatment: TreatmentDto; kind: "started" | "ended" }>;
 }
 
@@ -191,7 +194,14 @@ export default function TimelinePage() {
   function getGroup(date: string): DayGroup {
     let group = groups.get(date);
     if (!group) {
-      group = { date, symptoms: [], cycle: null, nightSweats: null, treatmentEvents: [] };
+      group = {
+        date,
+        symptoms: [],
+        cycle: null,
+        nightSweats: null,
+        workImpact: null,
+        treatmentEvents: [],
+      };
       groups.set(date, group);
     }
     return group;
@@ -205,6 +215,7 @@ export default function TimelinePage() {
   }
   for (const log of contextLogs) {
     if (log.nightSweats) getGroup(log.date).nightSweats = log.nightSweats;
+    if (log.workImpact) getGroup(log.date).workImpact = log.workImpact;
   }
   for (const treatment of treatments) {
     if (treatment.startDate >= windowStart) {
@@ -229,7 +240,8 @@ export default function TimelinePage() {
   const visibleDates = sortedDates.filter((date) => {
     const group = groups.get(date)!;
     return (
-      (activeFilters.has("symptoms") && (group.symptoms.length > 0 || group.nightSweats)) ||
+      (activeFilters.has("symptoms") &&
+        (group.symptoms.length > 0 || group.nightSweats || group.workImpact)) ||
       (activeFilters.has("cycle") && group.cycle !== null) ||
       (activeFilters.has("treatments") && group.treatmentEvents.length > 0)
     );
@@ -247,6 +259,11 @@ export default function TimelinePage() {
             {t("nightSweatsRecalled", {
               value: tEnum(`nightSweats.${group.nightSweats}`),
             })}
+          </p>
+        )}
+        {activeFilters.has("symptoms") && group.workImpact && (
+          <p className="text-sm text-foreground/70">
+            {t("workImpactAnswered", { value: tEnum(`workImpact.${group.workImpact}`) })}
           </p>
         )}
         {activeFilters.has("cycle") && group.cycle && (
@@ -279,7 +296,8 @@ export default function TimelinePage() {
     if (!group) return null;
     const marks = {
       symptoms:
-        activeFilters.has("symptoms") && (group.symptoms.length > 0 || group.nightSweats !== null),
+        activeFilters.has("symptoms") &&
+        (group.symptoms.length > 0 || group.nightSweats !== null || group.workImpact !== null),
       cycle: activeFilters.has("cycle") && group.cycle !== null,
       treatments: activeFilters.has("treatments") && group.treatmentEvents.length > 0,
     };

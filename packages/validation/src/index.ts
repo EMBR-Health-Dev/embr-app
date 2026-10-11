@@ -330,6 +330,10 @@ export const stressLevelSchema = z.enum(["LOW", "MODERATE", "HIGH"]);
 // recalled range never enters symptom counts.
 export const nightSweatsRecallSchema = z.enum(["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"]);
 
+// Whether symptoms affected work that day. Never part of organisation
+// statistics; blank means not recorded, never "no".
+export const workImpactSchema = z.enum(["NONE", "DID_LESS", "MISSED_TIME"]);
+
 export const upsertContextLogSchema = z.object({
   date: z.coerce.date(),
   sleepDuration: sleepDurationBucketSchema.optional(),
@@ -337,6 +341,7 @@ export const upsertContextLogSchema = z.object({
   alcohol: z.boolean().optional(),
   stressLevel: stressLevelSchema.optional(),
   nightSweats: nightSweatsRecallSchema.optional(),
+  workImpact: workImpactSchema.optional(),
 });
 export type UpsertContextLogInput = z.infer<typeof upsertContextLogSchema>;
 

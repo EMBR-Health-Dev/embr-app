@@ -17,6 +17,17 @@ export const briefRepository = {
     return rows.map((row) => row.nightSweats);
   },
 
+  /** The "did symptoms affect work" answer for each answered day in
+   * [fromDate, toDate]. Only the answer is selected; see work-impact.ts.
+   * Read only for the person's own BRIEF. */
+  async listWorkImpact(userId: string, fromDate: Date, toDate: Date) {
+    const rows = await prisma.contextLog.findMany({
+      where: { userId, date: { gte: fromDate, lte: toDate }, workImpact: { not: null } },
+      select: { workImpact: true },
+    });
+    return rows.map((row) => row.workImpact);
+  },
+
   /**
    * Second line of defense against the same double-generation this
    * flow's Redis lock (see brief.service.ts) exists to prevent in the
@@ -41,6 +52,7 @@ export const briefRepository = {
     treatmentImpact: Prisma.InputJsonValue;
     persistentSymptoms: Prisma.InputJsonValue;
     nightSweatsRecall: Prisma.InputJsonValue;
+    workImpact: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;
     aiNarrative: string;

@@ -198,6 +198,11 @@
       "TWO_TO_THREE": "2 to 3",
       "FOUR_PLUS": "4 or more"
     },
+    "workImpact": {
+      "NONE": "No",
+      "DID_LESS": "Yes, I did less",
+      "MISSED_TIME": "Yes, I missed time"
+    },
     "stressLevel": {
       "LOW": "Low",
       "MODERATE": "Moderate",
@@ -266,6 +271,9 @@
     "nightSweatsLabel": "Night sweats last night",
     "nightSweatsNone": "Not logged",
     "nightSweatsHelp": "Your best estimate is fine.",
+    "workImpactLabel": "Did symptoms affect your work today?",
+    "workImpactNone": "Not logged",
+    "workImpactHelp": "Counted only in your own BRIEF. Never shared with an employer.",
     "stressLevelLabel": "Stress today",
     "stressLevelNone": "Not logged",
     "caffeineAfternoonLabel": "Caffeine after 2pm",
@@ -331,6 +339,7 @@
       "treatments": "Treatments"
     },
     "nightSweatsRecalled": "Night sweats last night: {value} (recalled in the morning)",
+    "workImpactAnswered": "Did symptoms affect work? {value}",
     "cycleLabel": "Cycle",
     "periodStarted": "Period started",
     "periodEnded": "Period ended",
@@ -629,6 +638,11 @@
     "nightSweatsBreakdown": "None on {none}, 1 on {one}, 2 to 3 on {twoToThree}, 4 or more on {fourPlus}.",
     "nightSweatsFewAnswers": "A breakdown is shown once 7 mornings have been answered.",
     "nightSweatsSeparate": "These are morning estimates, counted separately from logged symptoms.",
+    "workImpactTitle": "Days symptoms affected work",
+    "workImpactAnswered": "Answered on {count, plural, one {# day} other {# days}} in this period.",
+    "workImpactBreakdown": "No effect on {none}, did less on {didLess}, missed time on {missedTime}.",
+    "workImpactFewAnswers": "A breakdown is shown once 7 days have been answered.",
+    "workImpactPrivate": "Your own daily answers. Never shared with any employer.",
     "groundedInTitle": "Grounded in your data",
     "viewEvidence": "View recorded days",
     "hideEvidence": "Hide recorded days",

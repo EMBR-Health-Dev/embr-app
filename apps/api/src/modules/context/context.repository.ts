@@ -21,6 +21,7 @@ export const contextRepository = {
         alcohol: input.alcohol ?? null,
         stressLevel: input.stressLevel ?? null,
         nightSweats: input.nightSweats ?? null,
+        workImpact: input.workImpact ?? null,
       },
       update: {
         sleepDuration: input.sleepDuration ?? null,
@@ -28,6 +29,7 @@ export const contextRepository = {
         alcohol: input.alcohol ?? null,
         stressLevel: input.stressLevel ?? null,
         nightSweats: input.nightSweats ?? null,
+        workImpact: input.workImpact ?? null,
       },
     });
   },

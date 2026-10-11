@@ -334,6 +334,20 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Days symptoms affected work (its own count) ----
+  // Same rules as night sweats: a breakdown only from 7 answered days
+  // (see work-impact.ts); skipped for a brief that predates the field
+  // or has no answered days.
+  if (brief.workImpact && brief.workImpact.daysAnswered > 0) {
+    const { daysAnswered, breakdown } = brief.workImpact;
+    sectionHeading(doc, t.workImpactHeading);
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
+    doc.text(t.workImpactAnsweredLine(daysAnswered));
+    doc.text(breakdown ? t.workImpactBreakdownLine(breakdown) : t.workImpactFewAnswersNote);
+    doc.fillColor(INK_MUTED).text(t.workImpactPrivacyNote);
+    doc.moveDown(1);
+  }
+
   // ---- Observed patterns (symptom co-occurrence, descriptive only) ----
   // Only rendered when present — coOccurrence is null both for a
   // brief predating this field and for one where no pair reached the

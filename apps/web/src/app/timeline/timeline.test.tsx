@@ -440,6 +440,7 @@ describe("Timeline page — month view", () => {
           alcohol: null,
           stressLevel: null,
           nightSweats: "ONE",
+          workImpact: null,
           createdAt: "",
           updatedAt: "",
         },
@@ -480,6 +481,7 @@ describe("Timeline page — night sweats recalled in the morning", () => {
       alcohol: null,
       stressLevel: null,
       nightSweats,
+      workImpact: null as string | null,
       createdAt: `${date}T08:00:00Z`,
       updatedAt: `${date}T08:00:00Z`,
     };
@@ -503,5 +505,37 @@ describe("Timeline page — night sweats recalled in the morning", () => {
       await screen.findByText("Night sweats last night: 2 to 3 (recalled in the morning)"),
     ).toBeInTheDocument();
     expect(screen.getAllByText(/Night sweats last night/)).toHaveLength(1);
+  });
+});
+
+describe("Timeline page — days symptoms affected work", () => {
+  it("shows the work answer on its day, beside symptoms, and nothing for a blank day", async () => {
+    const today = new Date();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const answered = iso(today);
+    const blank = iso(new Date(today.getTime() - 86_400_000));
+    const base = {
+      sleepDuration: null,
+      caffeineAfternoon: null,
+      alcohol: null,
+      stressLevel: null,
+      nightSweats: null,
+    };
+    contextLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        { ...base, id: "w1", date: answered, workImpact: "DID_LESS", createdAt: "", updatedAt: "" },
+        { ...base, id: "w2", date: blank, workImpact: null, createdAt: "", updatedAt: "" },
+      ],
+      total: 2,
+    });
+
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    expect(
+      await screen.findByText("Did symptoms affect work? Yes, I did less"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Did symptoms affect work\?/)).toHaveLength(1);
   });
 });

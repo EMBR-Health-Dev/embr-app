@@ -25,6 +25,7 @@ const { state, nextId } = vi.hoisted(() => {
         alcohol: boolean | null;
         stressLevel: string | null;
         nightSweats: string | null;
+        workImpact: string | null;
         createdAt: Date;
         updatedAt: Date;
       }>,
@@ -296,6 +297,41 @@ describe("POST /context-logs", () => {
 
     for (const nightSweats of ["FIVE", 3, "none"]) {
       const res = await agent.post("/context-logs").send({ date: "2026-07-23", nightSweats });
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it("stores whether symptoms affected work that day", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-work@embr.health");
+
+    const res = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", workImpact: "DID_LESS" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.workImpact).toBe("DID_LESS");
+  });
+
+  it("leaves work impact null (not logged, never NONE) when omitted", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-work-blank@embr.health");
+
+    const res = await agent.post("/context-logs").send({ date: "2026-07-23", alcohol: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.workImpact).toBeNull();
+  });
+
+  it("rejects a work impact value outside the fixed answers", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-work-bad@embr.health");
+
+    for (const workImpact of ["SOME", true, "none"]) {
+      const res = await agent.post("/context-logs").send({ date: "2026-07-23", workImpact });
       expect(res.status).toBe(400);
     }
   });

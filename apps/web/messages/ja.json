@@ -198,6 +198,11 @@
       "TWO_TO_THREE": "2〜3回",
       "FOUR_PLUS": "4回以上"
     },
+    "workImpact": {
+      "NONE": "いいえ",
+      "DID_LESS": "はい、仕事量が減った",
+      "MISSED_TIME": "はい、休んだ・早退した"
+    },
     "stressLevel": {
       "LOW": "低い",
       "MODERATE": "中程度",
@@ -266,6 +271,9 @@
     "nightSweatsLabel": "昨夜の寝汗",
     "nightSweatsNone": "未記録",
     "nightSweatsHelp": "おおよそで大丈夫です。",
+    "workImpactLabel": "今日、症状が仕事に影響しましたか？",
+    "workImpactNone": "未記録",
+    "workImpactHelp": "あなた自身のBRIEFでのみ集計されます。勤務先と共有されることはありません。",
     "stressLevelLabel": "今日のストレス",
     "stressLevelNone": "未記録",
     "caffeineAfternoonLabel": "午後2時以降のカフェイン",
@@ -331,6 +339,7 @@
       "treatments": "治療"
     },
     "nightSweatsRecalled": "昨夜の寝汗：{value}（朝に振り返った回答）",
+    "workImpactAnswered": "症状が仕事に影響したか：{value}",
     "cycleLabel": "周期",
     "periodStarted": "生理開始",
     "periodEnded": "生理終了",
@@ -629,6 +638,11 @@
     "nightSweatsBreakdown": "なし{none}日、1回{one}日、2〜3回{twoToThree}日、4回以上{fourPlus}日。",
     "nightSweatsFewAnswers": "回答が7日分以上になると、内訳を表示します。",
     "nightSweatsSeparate": "朝のおおよその回答で、症状の記録件数とは別に数えています。",
+    "workImpactTitle": "症状が仕事に影響した日",
+    "workImpactAnswered": "この期間に{count}日分の回答がありました。",
+    "workImpactBreakdown": "影響なし{none}日、仕事量が減った{didLess}日、休んだ・早退した{missedTime}日。",
+    "workImpactFewAnswers": "回答が7日分以上になると、内訳を表示します。",
+    "workImpactPrivate": "あなた自身の毎日の回答です。勤務先と共有されることはありません。",
     "groundedInTitle": "データに基づく根拠",
     "viewEvidence": "記録した日を表示",
     "hideEvidence": "記録した日を非表示",

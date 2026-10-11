@@ -115,6 +115,11 @@ interface PdfStrings {
   ) => string;
   nightSweatsFewAnswersNote: string;
   nightSweatsSeparateNote: string;
+  workImpactHeading: string;
+  workImpactAnsweredLine: (days: number) => string;
+  workImpactBreakdownLine: (b: Record<"NONE" | "DID_LESS" | "MISSED_TIME", number>) => string;
+  workImpactFewAnswersNote: string;
+  workImpactPrivacyNote: string;
   patternsNoticedHeading: string;
   coOccurrenceLine: (categoryA: string, categoryB: string, days: number) => string;
   cycleSummaryHeading: string;
@@ -172,6 +177,13 @@ const EN: PdfStrings = {
     `None on ${b.NONE}, 1 on ${b.ONE}, 2 to 3 on ${b.TWO_TO_THREE}, 4 or more on ${b.FOUR_PLUS}.`,
   nightSweatsFewAnswersNote: "A breakdown is shown once 7 mornings have been answered.",
   nightSweatsSeparateNote: "These are morning estimates, counted separately from logged symptoms.",
+  workImpactHeading: "Days symptoms affected work",
+  workImpactAnsweredLine: (days) =>
+    `Answered on ${days} day${days === 1 ? "" : "s"} in this period.`,
+  workImpactBreakdownLine: (b) =>
+    `No effect on ${b.NONE}, did less on ${b.DID_LESS}, missed time on ${b.MISSED_TIME}.`,
+  workImpactFewAnswersNote: "A breakdown is shown once 7 days have been answered.",
+  workImpactPrivacyNote: "Her own daily answers. Never shared with any employer.",
   patternsNoticedHeading: "Observed patterns",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA} and ${categoryB} were both reported on the same day on ${days}` +
@@ -249,6 +261,12 @@ const JA: PdfStrings = {
     `なし${b.NONE}日、1回${b.ONE}日、2〜3回${b.TWO_TO_THREE}日、4回以上${b.FOUR_PLUS}日。`,
   nightSweatsFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
   nightSweatsSeparateNote: "朝のおおよその回答で、症状の記録件数とは別に数えています。",
+  workImpactHeading: "症状が仕事に影響した日",
+  workImpactAnsweredLine: (days) => `この期間に${days}日分の回答がありました。`,
+  workImpactBreakdownLine: (b) =>
+    `影響なし${b.NONE}日、仕事量が減った${b.DID_LESS}日、休んだ・早退した${b.MISSED_TIME}日。`,
+  workImpactFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
+  workImpactPrivacyNote: "本人による毎日の回答です。勤務先と共有されることはありません。",
   patternsNoticedHeading: "記録に見られるパターン",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA}と${categoryB}が同じ日に記録された日は${days}日でした。`,

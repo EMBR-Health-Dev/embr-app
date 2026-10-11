@@ -51,6 +51,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     treatmentImpact: null,
     persistentSymptoms: null,
     nightSweatsRecall: null,
+    workImpact: null,
     interpretation: null,
     citedPatternIds: null,
     aiNarrative: "No significant patterns were noted in this period.",
@@ -337,5 +338,35 @@ describe("buildClinicalBriefPdf — night sweats recalled in the morning", () =>
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
     expect(text).not.toContain("Answered on");
     expect(text).not.toContain("counted separately from logged symptoms");
+  });
+});
+
+describe("buildClinicalBriefPdf — days symptoms affected work", () => {
+  it("states answered days, holds back the breakdown below 7, and says it is never shared with an employer", async () => {
+    const brief = baseBrief({ workImpact: { daysAnswered: 4, breakdown: null } });
+    const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
+    expect(text).toContain("Answered on 4 days in this period.");
+    expect(text).toContain("A breakdown is shown once 7 days have been answered.");
+    expect(text).toContain("Never shared with any employer.");
+  });
+
+  it("gives the breakdown in Japanese from 7 answered days", async () => {
+    const brief = baseBrief({
+      locale: "ja",
+      workImpact: { daysAnswered: 9, breakdown: { NONE: 5, DID_LESS: 3, MISSED_TIME: 1 } },
+    });
+    const text = (await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"))).replace(
+      /\s+/g,
+      "",
+    );
+    expect(text).toContain("症状が仕事に影響した日");
+    expect(text).toContain("影響なし5日、仕事量が減った3日、休んだ・早退した1日。");
+    expect(text).toContain("勤務先と共有されることはありません。");
+  });
+
+  it("leaves the section out when no day was answered", async () => {
+    const brief = baseBrief({ workImpact: { daysAnswered: 0, breakdown: null } });
+    const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
+    expect(text).not.toContain("employer");
   });
 });

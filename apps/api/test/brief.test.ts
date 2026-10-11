@@ -29,7 +29,12 @@ const { state, nextId } = vi.hoisted(() => {
         occurredAt: Date;
         notes: string | null;
       }>,
-      contextLogs: [] as Array<{ userId: string; date: Date; nightSweats: string | null }>,
+      contextLogs: [] as Array<{
+        userId: string;
+        date: Date;
+        nightSweats: string | null;
+        workImpact?: string | null;
+      }>,
       cycleEntries: [] as Array<{
         id: string;
         userId: string;
@@ -331,20 +336,26 @@ vi.mock("../src/lib/prisma.js", () => ({
       findMany: vi.fn(
         ({
           where,
+          select,
         }: {
-          where: { userId: string; date: { gte: Date; lte: Date }; nightSweats: { not: null } };
-        }) =>
-          Promise.resolve(
+          // Matches brief.repository.ts: one answer field per query
+          // (nightSweats or workImpact), filtered to non-null and selected.
+          where: { userId: string; date: { gte: Date; lte: Date } } & Record<string, unknown>;
+          select: Record<string, true>;
+        }) => {
+          const field = Object.keys(select)[0] as "nightSweats" | "workImpact";
+          return Promise.resolve(
             state.contextLogs
               .filter(
                 (row) =>
                   row.userId === where.userId &&
-                  row.nightSweats !== null &&
+                  (row[field] ?? null) !== null &&
                   row.date >= where.date.gte &&
                   row.date <= where.date.lte,
               )
-              .map((row) => ({ nightSweats: row.nightSweats })),
-          ),
+              .map((row) => ({ [field]: row[field] })),
+          );
+        },
       ),
     },
     cycleEntry: {
@@ -796,6 +807,54 @@ describe("POST /briefs — night sweats recalled in the morning", () => {
       morningsAnswered: 7,
       breakdown: { NONE: 2, ONE: 3, TWO_TO_THREE: 1, FOUR_PLUS: 1 },
     });
+  });
+});
+
+describe("POST /briefs — days symptoms affected work", () => {
+  function addWork(userId: string, day: string, workImpact: string | null) {
+    state.contextLogs.push({
+      userId,
+      date: new Date(`${day}T00:00:00.000Z`),
+      nightSweats: null,
+      workImpact,
+    });
+  }
+
+  it("counts only answered days in range and keeps them out of symptom counts and the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "work-few@embr.health");
+    addWork(userId, "2026-01-03", "MISSED_TIME");
+    addWork(userId, "2026-01-04", "NONE");
+    addWork(userId, "2026-01-05", null); // not logged, never counted as no effect
+    addWork(userId, "2026-03-01", "DID_LESS"); // outside the range
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.workImpact).toEqual({ daysAnswered: 2, breakdown: null });
+    expect(res.body.data.symptomSummary).toEqual([]);
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/workImpact|MISSED_TIME|DID_LESS|daysAnswered/);
+  });
+
+  it("adds a per answer breakdown once 7 days are answered", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "work-seven@embr.health");
+    const answers = ["NONE", "NONE", "NONE", "DID_LESS", "DID_LESS", "MISSED_TIME", "NONE"];
+    answers.forEach((a, i) => addWork(userId, `2026-01-${String(10 + i)}`, a));
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.workImpact).toEqual({
+      daysAnswered: 7,
+      breakdown: { NONE: 4, DID_LESS: 2, MISSED_TIME: 1 },
+    });
+    // Night sweats are counted from their own field only.
+    expect(res.body.data.nightSweatsRecall).toEqual({ morningsAnswered: 0, breakdown: null });
   });
 });
 
