@@ -28,6 +28,31 @@ describe("localDate / isValidTimeZone / addDaysToIsoDate", () => {
     expect(localDate(instant, "America/New_York")).toBe("2026-01-01");
   });
 
+  it("keeps each zone's answer when calls alternate between zones", () => {
+    const instant = new Date("2026-01-01T23:30:00.000Z");
+    const zones = ["Asia/Tokyo", "UTC", "Asia/Tokyo", "Pacific/Kiritimati", "UTC"];
+    expect(zones.map((z) => localDate(instant, z))).toEqual([
+      "2026-01-02",
+      "2026-01-01",
+      "2026-01-02",
+      "2026-01-02",
+      "2026-01-01",
+    ]);
+  });
+
+  it("dates a three year record quickly", () => {
+    const start = Date.parse("2023-10-01T09:00:00.000Z");
+    const logs = Array.from({ length: 6500 }, (_, i) => ({
+      category: "HOT_FLASH" as SymptomCategory,
+      severity: "MILD" as SeverityLevel,
+      occurredAt: new Date(start + Math.floor(i / 6) * 86_400_000),
+    }));
+    const t = performance.now();
+    computeSymptomHistory({ logs, timeZone: "Asia/Tokyo", now: NOW });
+    // Was about 1.5s when a formatter was built per entry; now tens of ms.
+    expect(performance.now() - t).toBeLessThan(500);
+  });
+
   it("validates IANA zones", () => {
     expect(isValidTimeZone("Europe/Paris")).toBe(true);
     expect(isValidTimeZone("Mars/Olympus")).toBe(false);

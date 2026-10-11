@@ -30,15 +30,26 @@ export interface HistoryLogInput {
   occurredAt: Date;
 }
 
+// Building an Intl.DateTimeFormat is far slower than using one, and
+// localDate runs once per symptom entry: a three year record took 1.6s
+// when a new formatter was built per call. Cached per zone; the set of
+// IANA zones is small and fixed, so the cache cannot grow without bound.
+const localDateFormatters = new Map<string, Intl.DateTimeFormat>();
+
 /** YYYY-MM-DD of an instant in a given IANA timezone. */
 export function localDate(instant: Date, timeZone: string): string {
-  // en-CA formats as YYYY-MM-DD.
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(instant);
+  let formatter = localDateFormatters.get(timeZone);
+  if (!formatter) {
+    // en-CA formats as YYYY-MM-DD.
+    formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    localDateFormatters.set(timeZone, formatter);
+  }
+  return formatter.format(instant);
 }
 
 export function isValidTimeZone(timeZone: string): boolean {
