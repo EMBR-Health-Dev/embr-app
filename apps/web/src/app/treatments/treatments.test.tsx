@@ -33,6 +33,7 @@ const treatment: TreatmentDto = {
   category: "HRT",
   startDate: "2026-06-01",
   endDate: null,
+  stopReason: null,
   notes: null,
   createdAt: "2026-06-01T00:00:00Z",
   updatedAt: "2026-06-01T00:00:00Z",
@@ -47,6 +48,7 @@ const listMock = vi.fn().mockResolvedValue({
 });
 const impactMock = vi.fn();
 const createMock = vi.fn().mockResolvedValue(treatment);
+const updateMock = vi.fn();
 
 vi.mock("../../lib/api", () => ({
   api: {
@@ -54,7 +56,7 @@ vi.mock("../../lib/api", () => ({
       list: (...args: unknown[]) => listMock(...args),
       impact: (...args: unknown[]) => impactMock(...args),
       create: (...args: unknown[]) => createMock(...args),
-      update: vi.fn(),
+      update: (...args: unknown[]) => updateMock(...args),
       delete: vi.fn(),
     },
   },
@@ -83,6 +85,14 @@ beforeEach(() => {
   listMock.mockClear();
   impactMock.mockReset();
   createMock.mockReset().mockResolvedValue(treatment);
+  updateMock.mockReset();
+  listMock.mockResolvedValue({
+    items: [treatment],
+    page: 1,
+    pageSize: 50,
+    total: 1,
+    totalPages: 1,
+  });
 });
 
 describe("Treatments page — impact section", () => {
@@ -299,5 +309,90 @@ describe("Treatments page — add-treatment date validation", () => {
     await user.click(screen.getByRole("button", { name: "Add treatment" }));
 
     expect(await screen.findByText("Something broke")).toBeInTheDocument();
+  });
+});
+
+describe("Treatments page — why did you stop", () => {
+  const ended: TreatmentDto = { ...treatment, endDate: "2026-07-01", stopReason: "SIDE_EFFECTS" };
+
+  it("asks only once the treatment has an end, and sends the reason with the new treatment", async () => {
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+
+    expect(screen.queryByLabelText("Why did you stop? (optional)")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Name (e.g. Estradiol patch)"), "Black cohosh");
+    await user.click(screen.getByLabelText("Ongoing"));
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-09-01" } });
+    fireEvent.change(await screen.findByLabelText("End date"), { target: { value: "2026-09-10" } });
+    const select = screen.getByLabelText("Why did you stop? (optional)") as HTMLSelectElement;
+    expect(select.value).toBe("");
+    expect(
+      screen.getByText(
+        "Your BRIEF shows the reason you pick, for your healthcare provider. Prefer not to say is never shown.",
+      ),
+    ).toBeInTheDocument();
+    await user.selectOptions(select, "LONG_TERM_CONCERN");
+    await user.click(screen.getByRole("button", { name: "Add treatment" }));
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
+    expect(createMock.mock.calls[0]![0]).toMatchObject({
+      endDate: "2026-09-10",
+      stopReason: "LONG_TERM_CONCERN",
+    });
+  });
+
+  it("leaves the reason out when not answered", async () => {
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+
+    await user.type(screen.getByLabelText("Name (e.g. Estradiol patch)"), "Black cohosh");
+    await user.click(screen.getByLabelText("Ongoing"));
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-09-01" } });
+    fireEvent.change(await screen.findByLabelText("End date"), { target: { value: "2026-09-10" } });
+    await user.click(screen.getByRole("button", { name: "Add treatment" }));
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
+    expect(createMock.mock.calls[0]![0].stopReason).toBeUndefined();
+  });
+
+  it("shows and changes the reason on an ended treatment, and never on an ongoing one", async () => {
+    listMock.mockResolvedValue({
+      items: [ended, { ...treatment, id: "t2", name: "Magnesium" }],
+      page: 1,
+      pageSize: 50,
+      total: 2,
+      totalPages: 1,
+    });
+    updateMock.mockResolvedValue({ ...ended, stopReason: "COST" });
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    const rowSelect = (await screen.findByLabelText(
+      "Why did you stop Estradiol patch?",
+    )) as HTMLSelectElement;
+    expect(rowSelect.value).toBe("SIDE_EFFECTS");
+    expect(screen.queryByLabelText("Why did you stop Magnesium?")).not.toBeInTheDocument();
+
+    await user.selectOptions(rowSelect, "COST");
+    await waitFor(() => expect(updateMock).toHaveBeenCalledWith("t1", { stopReason: "COST" }));
+    await waitFor(() => expect(rowSelect.value).toBe("COST"));
+  });
+
+  it("clears the reason back to not answered", async () => {
+    listMock.mockResolvedValue({ items: [ended], page: 1, pageSize: 50, total: 1, totalPages: 1 });
+    updateMock.mockResolvedValue({ ...ended, stopReason: null });
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    const rowSelect = await screen.findByLabelText("Why did you stop Estradiol patch?");
+    await user.selectOptions(rowSelect, "");
+    await waitFor(() => expect(updateMock).toHaveBeenCalledWith("t1", { stopReason: null }));
   });
 });

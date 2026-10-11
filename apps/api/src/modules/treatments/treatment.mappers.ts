@@ -8,6 +8,7 @@ export function toTreatmentDto(treatment: Treatment): TreatmentDto {
     category: treatment.category as TreatmentCategory,
     startDate: treatment.startDate.toISOString().slice(0, 10),
     endDate: treatment.endDate ? treatment.endDate.toISOString().slice(0, 10) : null,
+    stopReason: treatment.stopReason,
     notes: treatment.notes,
     createdAt: treatment.createdAt.toISOString(),
     updatedAt: treatment.updatedAt.toISOString(),

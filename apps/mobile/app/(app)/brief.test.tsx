@@ -968,6 +968,29 @@ describe("Brief screen — days symptoms affected work", () => {
   });
 });
 
+describe("Brief screen — her reason for stopping a treatment", () => {
+  it("shows the reason under an ended treatment", async () => {
+    mockHistoryOf(
+      brief({
+        treatmentSummary: [
+          {
+            name: "Estradiol patch",
+            category: "HRT",
+            startDate: "2026-01-05",
+            endDate: "2026-01-20",
+            stopReason: "LONG_TERM_CONCERN",
+          },
+        ],
+      }),
+    );
+    await renderAndExpandBrief();
+
+    expect(
+      await screen.findByText("Reason for stopping: Worried about long-term effects"),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("Brief screen — PDF / share", () => {
   it("passes the correct brief id to the share helper", async () => {
     mockHistoryOf(brief());

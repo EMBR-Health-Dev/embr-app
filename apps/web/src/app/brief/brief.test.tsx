@@ -735,6 +735,25 @@ describe("Brief page — deterministic evidence sections", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows her reason for stopping under an ended treatment, and nothing for one without", async () => {
+    await generateWith(
+      brief({
+        treatmentSummary: [
+          {
+            name: "Estradiol patch",
+            category: "HRT",
+            startDate: "2026-01-05",
+            endDate: "2026-01-20",
+            stopReason: "SIDE_EFFECTS",
+          },
+          { name: "Magnesium", category: "SUPPLEMENT", startDate: "2026-01-06", endDate: null },
+        ],
+      }),
+    );
+    expect(await screen.findByText("Reason for stopping: Side effects")).toBeInTheDocument();
+    expect(screen.getAllByText(/Reason for stopping/)).toHaveLength(1);
+  });
+
   it("shows the work impact breakdown from 7 answered days", async () => {
     await generateWith(
       brief({

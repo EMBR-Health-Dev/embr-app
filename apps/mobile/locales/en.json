@@ -185,6 +185,14 @@
       "NONE": "No",
       "DID_LESS": "Yes, I did less",
       "MISSED_TIME": "Yes, I missed time"
+    },
+    "treatmentStopReason": {
+      "SIDE_EFFECTS": "Side effects",
+      "LONG_TERM_CONCERN": "Worried about long-term effects",
+      "NO_LONGER_NEEDED": "No longer needed",
+      "COST": "Cost",
+      "OTHER": "Something else",
+      "PREFER_NOT_TO_SAY": "Prefer not to say"
     }
   },
   "tabs": {
@@ -265,7 +273,14 @@
     "impactAfterLabel": "Symptom logs since treatment began",
     "impactWindow_one": "{{count}} day",
     "impactWindow_other": "{{count}} days",
-    "impactDisclaimer": "A count of how often you logged symptoms, not a measure of whether the treatment is working."
+    "impactDisclaimer": "A count of how often you logged symptoms, not a measure of whether the treatment is working.",
+    "stopReasonLabel": "Why did you stop? (optional)",
+    "stopReasonNone": "Not answered",
+    "stopReasonHelp": "Your BRIEF shows the reason you pick, for your healthcare provider. Prefer not to say is never shown.",
+    "stopReasonShown": "Reason for stopping: {{reason}}",
+    "stopReasonNotAnswered": "No reason given",
+    "stopReasonAdd": "Add a reason",
+    "stopReasonChange": "Change"
   },
   "trends": {
     "title": "Trends",
@@ -308,6 +323,7 @@
     "treatmentsLoggedDuringPeriod": "Treatments logged during this period",
     "noTreatmentsInRange": "No treatments logged in this range.",
     "ongoing": "Ongoing",
+    "stopReasonEntry": "Reason for stopping: {{reason}}",
     "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
     "frequencyComparisonTitle": "Compared with the previous period",
     "frequencyComparisonDayCount_one": "{{count}} time",

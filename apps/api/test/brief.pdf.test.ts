@@ -370,3 +370,48 @@ describe("buildClinicalBriefPdf — days symptoms affected work", () => {
     expect(text).not.toContain("employer");
   });
 });
+
+describe("buildClinicalBriefPdf — her reason for stopping a treatment", () => {
+  it("prints the reason under an ended treatment, in English and Japanese", async () => {
+    const entry = {
+      name: "Estradiol patch",
+      category: "HRT" as const,
+      startDate: "2026-01-05",
+      endDate: "2026-01-20",
+      stopReason: "LONG_TERM_CONCERN" as const,
+    };
+    const en = await extractPdfText(
+      buildClinicalBriefPdf(baseBrief({ treatmentSummary: [entry] }), "person@embr.health"),
+    );
+    expect(en).toContain("Her reason for stopping: concern about long-term effects");
+
+    const ja = (
+      await extractPdfText(
+        buildClinicalBriefPdf(
+          baseBrief({ locale: "ja", treatmentSummary: [entry] }),
+          "person@embr.health",
+        ),
+      )
+    ).replace(/\s+/g, "");
+    expect(ja).toContain("中止の理由：長期的な影響への不安");
+  });
+
+  it("prints nothing extra when no reason was given", async () => {
+    const text = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({
+          treatmentSummary: [
+            {
+              name: "Magnesium",
+              category: "SUPPLEMENT",
+              startDate: "2026-01-05",
+              endDate: "2026-01-20",
+            },
+          ],
+        }),
+        "person@embr.health",
+      ),
+    );
+    expect(text).not.toContain("reason for stopping");
+  });
+});

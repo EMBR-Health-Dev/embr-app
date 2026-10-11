@@ -223,17 +223,33 @@ export const treatmentCategorySchema = z.enum([
   "OTHER",
 ]);
 
+// Why a treatment was stopped: optional, and only for a treatment that
+// has ended. Records her decision; never sent to the AI.
+export const treatmentStopReasonSchema = z.enum([
+  "SIDE_EFFECTS",
+  "LONG_TERM_CONCERN",
+  "NO_LONGER_NEEDED",
+  "COST",
+  "OTHER",
+  "PREFER_NOT_TO_SAY",
+]);
+
 export const createTreatmentSchema = z
   .object({
     name: z.string().trim().min(1).max(200),
     category: treatmentCategorySchema,
     startDate: z.coerce.date(),
     endDate: z.coerce.date().optional(),
+    stopReason: treatmentStopReasonSchema.optional(),
     notes: z.string().trim().max(2000).optional(),
   })
   .refine((v) => !v.endDate || v.endDate >= v.startDate, {
     message: "endDate cannot be before startDate",
     path: ["endDate"],
+  })
+  .refine((v) => !v.stopReason || v.endDate, {
+    message: "stopReason needs an endDate",
+    path: ["stopReason"],
   });
 export type CreateTreatmentInput = z.infer<typeof createTreatmentSchema>;
 
@@ -248,11 +264,16 @@ export const updateTreatmentSchema = z
     category: treatmentCategorySchema.optional(),
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().nullable().optional(),
+    stopReason: treatmentStopReasonSchema.nullable().optional(),
     notes: z.string().trim().max(2000).optional(),
   })
   .refine((v) => !v.startDate || !v.endDate || v.endDate >= v.startDate, {
     message: "endDate cannot be before startDate",
     path: ["endDate"],
+  })
+  .refine((v) => !(v.endDate === null && v.stopReason), {
+    message: "an ongoing treatment has no stopReason",
+    path: ["stopReason"],
   });
 export type UpdateTreatmentInput = z.infer<typeof updateTreatmentSchema>;
 

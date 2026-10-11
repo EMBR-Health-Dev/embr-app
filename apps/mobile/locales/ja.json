@@ -185,6 +185,14 @@
       "NONE": "いいえ",
       "DID_LESS": "はい、仕事量が減った",
       "MISSED_TIME": "はい、休んだ・早退した"
+    },
+    "treatmentStopReason": {
+      "SIDE_EFFECTS": "副作用",
+      "LONG_TERM_CONCERN": "長期的な影響が心配",
+      "NO_LONGER_NEEDED": "必要がなくなった",
+      "COST": "費用",
+      "OTHER": "その他",
+      "PREFER_NOT_TO_SAY": "答えたくない"
     }
   },
   "tabs": {
@@ -264,7 +272,14 @@
     "impactBeforeLabel": "治療開始前の症状記録",
     "impactAfterLabel": "治療開始後の症状記録",
     "impactWindow_other": "{{count}}日間",
-    "impactDisclaimer": "症状を記録した回数であり、治療の効果を示すものではありません。"
+    "impactDisclaimer": "症状を記録した回数であり、治療の効果を示すものではありません。",
+    "stopReasonLabel": "中止した理由（任意）",
+    "stopReasonNone": "未回答",
+    "stopReasonHelp": "選んだ理由はBRIEFで医療者に伝わります。「答えたくない」はBRIEFに表示されません。",
+    "stopReasonShown": "中止の理由：{{reason}}",
+    "stopReasonNotAnswered": "理由は未回答",
+    "stopReasonAdd": "理由を追加",
+    "stopReasonChange": "変更"
   },
   "trends": {
     "title": "シグナル",
@@ -305,6 +320,7 @@
     "treatmentsLoggedDuringPeriod": "この期間に記録された治療",
     "noTreatmentsInRange": "この期間に記録された治療はありません。",
     "ongoing": "継続中",
+    "stopReasonEntry": "中止の理由：{{reason}}",
     "treatmentSafetyNote": "これはあなたが記録した内容の反映です。治療の効果を評価したり、治療に関する提案をしたりするものではありません。",
     "frequencyComparisonTitle": "前回の期間との比較",
     "frequencyComparisonDayCount_other": "{{count}}回",

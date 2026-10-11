@@ -151,6 +151,15 @@ export interface SymptomLogDto {
 
 export type TreatmentCategory = "HRT" | "SUPPLEMENT" | "MEDICATION" | "LIFESTYLE" | "OTHER";
 
+/** Why a treatment was stopped, as she chose it. Never sent to the AI. */
+export type TreatmentStopReason =
+  | "SIDE_EFFECTS"
+  | "LONG_TERM_CONCERN"
+  | "NO_LONGER_NEEDED"
+  | "COST"
+  | "OTHER"
+  | "PREFER_NOT_TO_SAY";
+
 export interface TreatmentDto {
   id: string;
   name: string;
@@ -158,6 +167,8 @@ export interface TreatmentDto {
   startDate: string;
   /** Null means ongoing/current. */
   endDate: string | null;
+  /** Null while ongoing or when not answered. */
+  stopReason: TreatmentStopReason | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -705,6 +716,10 @@ export interface BriefTreatmentSummaryEntryDto {
   category: TreatmentCategory;
   startDate: string;
   endDate: string | null;
+  /** Why she stopped, when she said. Absent when ongoing, not answered,
+   * PREFER_NOT_TO_SAY (never printed), or on briefs generated before
+   * this field existed. Never sent to the AI. */
+  stopReason?: Exclude<TreatmentStopReason, "PREFER_NOT_TO_SAY">;
 }
 
 /** Deterministic period-over-period comparison for one symptom

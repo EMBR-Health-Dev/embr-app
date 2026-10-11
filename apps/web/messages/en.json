@@ -221,6 +221,14 @@
       "LIFESTYLE": "Lifestyle",
       "OTHER": "Other"
     },
+    "treatmentStopReason": {
+      "SIDE_EFFECTS": "Side effects",
+      "LONG_TERM_CONCERN": "Worried about long-term effects",
+      "NO_LONGER_NEEDED": "No longer needed",
+      "COST": "Cost",
+      "OTHER": "Something else",
+      "PREFER_NOT_TO_SAY": "Prefer not to say"
+    },
     "subscriptionStatus": {
       "INCOMPLETE": "Incomplete",
       "INCOMPLETE_EXPIRED": "Incomplete (expired)",
@@ -623,6 +631,7 @@
     "noTreatmentsInRange": "No treatments logged in this range.",
     "noSymptomsInRange": "No symptoms logged in this range.",
     "ongoing": "Ongoing",
+    "stopReasonEntry": "Reason for stopping: {reason}",
     "treatmentSafetyNote": "This reflects what you've logged. It does not assess whether a treatment is working or make treatment recommendations.",
     "frequencyComparisonTitle": "Compared with the previous period",
     "frequencyComparisonEntry": "Logged {currentCount, plural, one {# time} other {# times}}, compared with {previousCount, plural, one {# time} other {# times}} in the previous period.",
@@ -710,6 +719,10 @@
     "treatmentsDescription": "Every treatment logged in the range, one row each."
   },
   "Treatments": {
+    "stopReasonLabel": "Why did you stop? (optional)",
+    "stopReasonRowLabel": "Why did you stop {name}?",
+    "stopReasonNone": "Not answered",
+    "stopReasonHelp": "Your BRIEF shows the reason you pick, for your healthcare provider. Prefer not to say is never shown.",
     "title": "Treatments",
     "backToDashboard": "← Dashboard",
     "hint": "What you're doing about it: HRT, supplements, medication, or anything else. Not a diagnosis or treatment recommendation, just your own record.",
