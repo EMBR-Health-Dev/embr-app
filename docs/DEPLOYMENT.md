@@ -13,15 +13,15 @@ Everything runs in one Railway project, `embr-production`, environment
 from `main` of `EMBR-Health-Dev/embr-app` and redeploys on push when a
 file matching its watch patterns changes.
 
-| Railway service         | What it is                | Build                                         | Public address                                                | Notes                                                                                                                     |
-| ----------------------- | ------------------------- | --------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `@embr/api`             | `apps/api`                | Dockerfile `/apps/api/Dockerfile`             | `embrapi-production.up.railway.app`                           | Pre-deploy runs `prisma migrate deploy`; healthcheck `/health/live`                                                       |
-| `@embr/web`             | `apps/web`                | Dockerfile `/apps/web/Dockerfile`             | `app.embrhealthcare.com`, `embrweb-production.up.railway.app` | Healthcheck `/`                                                                                                           |
-| `@embr/admin`           | `apps/admin`              | Dockerfile `/apps/admin/Dockerfile`           | `embradmin-production.up.railway.app`                         | Moved from Vercel on 11 October 2026; see "Admin app" below                                                               |
-| `@embr/worker`          | `apps/worker`             | Railpack (`pnpm --filter @embr/worker build`) | none (private only)                                           | **Last real deploy failed (10 October 2026).** Likely the same fix as the admin app: build from `/apps/worker/Dockerfile` |
-| `@embr/mobile`          | `apps/mobile`             | Railpack                                      | none                                                          |                                                                                                                           |
-| `efficient-benevolence` | Encrypted Postgres backup | Dockerfile `/scripts/backup/Dockerfile`       | none                                                          | Cron `0 3 * * *` (03:00 UTC daily); see `docs/BACKUPS.md`                                                                 |
-| `Postgres`, `Redis`     | Managed databases         | Railway                                       | none (private network)                                        |                                                                                                                           |
+| Railway service         | What it is                | Build                                   | Public address                                                | Notes                                                               |
+| ----------------------- | ------------------------- | --------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `@embr/api`             | `apps/api`                | Dockerfile `/apps/api/Dockerfile`       | `embrapi-production.up.railway.app`                           | Pre-deploy runs `prisma migrate deploy`; healthcheck `/health/live` |
+| `@embr/web`             | `apps/web`                | Dockerfile `/apps/web/Dockerfile`       | `app.embrhealthcare.com`, `embrweb-production.up.railway.app` | Healthcheck `/`                                                     |
+| `@embr/admin`           | `apps/admin`              | Dockerfile `/apps/admin/Dockerfile`     | `embradmin-production.up.railway.app`                         | Moved from Vercel on 11 October 2026; see "Admin app" below         |
+| `@embr/worker`          | `apps/worker`             | Dockerfile `/apps/worker/Dockerfile`    | none (private only)                                           | Moved off Railpack on 11 October 2026; see "Worker" below           |
+| `@embr/mobile`          | `apps/mobile`             | Railpack                                | none                                                          |                                                                     |
+| `efficient-benevolence` | Encrypted Postgres backup | Dockerfile `/scripts/backup/Dockerfile` | none                                                          | Cron `0 3 * * *` (03:00 UTC daily); see `docs/BACKUPS.md`           |
+| `Postgres`, `Redis`     | Managed databases         | Railway                                 | none (private network)                                        |                                                                     |
 
 Vercel is no longer part of production. A Vercel project for the admin
 app (`embr-admin`) may still be connected to the repository and post
@@ -46,6 +46,21 @@ checks, and the project can be disconnected in Vercel (Settings → Git).
   browser's `Origin` header, and the API rejects origins it doesn't
   list, so admin sign in fails without it. Append it to the existing
   list; never replace the list.
+
+### Worker
+
+- **Builder must be the Dockerfile, not Railpack**, for the same reason
+  as the admin app: Railpack ran `pnpm --filter @embr/worker build`
+  without building `@embr/shared` first, so the build failed with
+  `Cannot find module '@embr/shared'`. `apps/worker/Dockerfile` builds
+  `@embr/shared` before the worker. No build or start command is set on
+  the service; the Dockerfile's `CMD` starts it.
+- **Variables**: `REDIS_URL` = `${{Redis.REDIS_URL}}` and
+  `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (Railway references). The
+  worker exits at startup if either is missing. `SENTRY_DSN` is optional.
+- **Watch patterns**: `/apps/worker/**`, `/packages/shared/**`,
+  `/pnpm-lock.yaml`.
+- **Restart policy**: on failure, up to 10 retries.
 
 ## Recommended platforms
 

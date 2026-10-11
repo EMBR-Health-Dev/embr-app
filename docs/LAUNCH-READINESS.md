@@ -15,21 +15,21 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Product
 
-| Item                                                   | Status      | Evidence / next step                                                                                                            |
-| ------------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Core record (log, check in, timeline, symptom history) | Done        | Web and mobile suites green; end to end checked locally at 320 to 1440px                                                        |
-| EMBR BRIEF (generation, PDF, past briefs)              | Done        | Deterministic patterns first, AI wording only; PDF tests green                                                                  |
-| Night sweats recall                                    | Done        | Morning question (#211), shown on Timeline and BRIEF (#214); never sent to the AI                                               |
-| Work impact question                                   | Done        | #225; BRIEF and Timeline only, never sent to the AI or to employers; counsel question 13 open                                   |
-| Timeline month view and ranked symptom bars            | Done        | #215, #216                                                                                                                      |
-| Notebook                                               | Done        | #220; cover colour editable, exported, audited by id only, never sent to the AI                                                 |
-| Display settings (text size, dark mode)                | Done        | Web only (#210, #219); mobile dark mode not built                                                                               |
-| Synthetic demo ("Meet Maya")                           | Done        | `maya.html`; synthetic data only, every figure calculated on the page; linked from hero                                         |
-| Web QA                                                 | Done        | Visual pass at 320, 375, 768, 1024, 1440px; no overflow or page errors                                                          |
-| Mobile QA                                              | Not started | Code and tests only; needs a pass on real iOS and Android devices                                                               |
-| Accessibility review                                   | In progress | 44px targets, severity readable without colour, focus states; needs a screen reader pass                                        |
-| EN / JA review                                         | In progress | Copy reviewed in session; needs a native Japanese reviewer before launch                                                        |
-| Admin and worker deploys                               | In progress | Admin moved to Railway (Dockerfile build) and live on 11 Oct; needs its origin in the API's `CORS_ORIGIN`. Worker still failing |
+| Item                                                   | Status      | Evidence / next step                                                                                                                                |
+| ------------------------------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core record (log, check in, timeline, symptom history) | Done        | Web and mobile suites green; end to end checked locally at 320 to 1440px                                                                            |
+| EMBR BRIEF (generation, PDF, past briefs)              | Done        | Deterministic patterns first, AI wording only; PDF tests green                                                                                      |
+| Night sweats recall                                    | Done        | Morning question (#211), shown on Timeline and BRIEF (#214); never sent to the AI                                                                   |
+| Work impact question                                   | Done        | #225; BRIEF and Timeline only, never sent to the AI or to employers; counsel question 13 open                                                       |
+| Timeline month view and ranked symptom bars            | Done        | #215, #216                                                                                                                                          |
+| Notebook                                               | Done        | #220; cover colour editable, exported, audited by id only, never sent to the AI                                                                     |
+| Display settings (text size, dark mode)                | Done        | Web only (#210, #219); mobile dark mode not built                                                                                                   |
+| Synthetic demo ("Meet Maya")                           | Done        | `maya.html`; synthetic data only, every figure calculated on the page; linked from hero                                                             |
+| Web QA                                                 | Done        | Visual pass at 320, 375, 768, 1024, 1440px; no overflow or page errors                                                                              |
+| Mobile QA                                              | Not started | Code and tests only; needs a pass on real iOS and Android devices                                                                                   |
+| Accessibility review                                   | In progress | 44px targets, severity readable without colour, focus states; needs a screen reader pass                                                            |
+| EN / JA review                                         | In progress | Copy reviewed in session; needs a native Japanese reviewer before launch                                                                            |
+| Admin and worker deploys                               | In progress | Admin moved to Railway (Dockerfile build) and live on 11 Oct; needs its origin in the API's `CORS_ORIGIN`. Worker moved to its Dockerfile on 11 Oct |
 
 ## Clinical
 
