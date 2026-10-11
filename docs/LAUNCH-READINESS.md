@@ -9,7 +9,9 @@ Status key: **Done** (verified), **In progress**, **Not started**,
 **Decision** (waiting on a person, named where known). Update the date
 and the evidence column whenever a status changes.
 
-_Last reviewed: 2 October 2026._
+_Last reviewed: 11 October 2026._ What changed since 2 October is listed in
+[`CHANGELOG-2026-10.md`](CHANGELOG-2026-10.md); the working drafts for counsel,
+the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Product
 
@@ -17,6 +19,10 @@ _Last reviewed: 2 October 2026._
 | ------------------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------- |
 | Core record (log, check in, timeline, symptom history) | Done        | Web and mobile suites green; end to end checked locally at 320 to 1440px                 |
 | EMBR BRIEF (generation, PDF, past briefs)              | Done        | Deterministic patterns first, AI wording only; PDF tests green                           |
+| Night sweats recall                                    | Done        | Morning question (#211), shown on Timeline and BRIEF (#214); never sent to the AI        |
+| Timeline month view and ranked symptom bars            | Done        | #215, #216                                                                               |
+| Notebook                                               | Done        | #220; cover colour editable, exported, audited by id only, never sent to the AI          |
+| Display settings (text size, dark mode)                | Done        | Web only (#210, #219); mobile dark mode not built                                        |
 | Synthetic demo ("Meet Maya")                           | Done        | `maya.html`; synthetic data only, every figure calculated on the page; linked from hero  |
 | Web QA                                                 | Done        | Visual pass at 320, 375, 768, 1024, 1440px; no overflow or page errors                   |
 | Mobile QA                                              | Not started | Code and tests only; needs a pass on real iOS and Android devices                        |
@@ -33,12 +39,16 @@ _Last reviewed: 2 October 2026._
 | Field Guide reviewed                         | Decision    | Rewritten without unsourced figures; needs a clinician                                   |
 | Symptom language reviewed                    | Decision    | App taxonomy and severity words (Mild / Moderate / Severe)                               |
 | Escalation and urgent care language reviewed | Decision    | App safety notice and Field Guide section 08                                             |
+| Questions for a healthcare provider sheet    | Decision    | Draft in `planning/clinician-content-review.md`; not in the app until signed off         |
+| Urgent help box on mood and anxiety          | Decision    | Draft wording ready; needs clinician sign off and confirmed crisis lines per country     |
 | Claims inventory completed                   | Not started | List every factual or medical claim on the site, app and PDFs with its source or removal |
 
 ## Legal
 
 | Item                                | Status      | Evidence / next step                                                                                               |
 | ----------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| Counsel brief answered              | Decision    | 12 questions in `planning/counsel-brief.md`                                                                        |
+| Research data use                   | Decision    | Plan in `planning/research-data-plan.md`; nothing built, no data shared                                            |
 | Entity incorporated                 | Decision    | Founder                                                                                                            |
 | Terms approved                      | Decision    | Draft in `docs/legal/drafts/`; placeholders unresolved                                                             |
 | Privacy Policy approved             | Decision    | Draft in `docs/legal/drafts/`; reconcile with the real data flows below                                            |
@@ -49,23 +59,25 @@ _Last reviewed: 2 October 2026._
 
 ## Security
 
-| Item                | Status      | Evidence / next step                                                                |
-| ------------------- | ----------- | ----------------------------------------------------------------------------------- |
-| Production database | Done        | Railway Postgres in the EU (Amsterdam)                                              |
-| Backup verification | In progress | Daily encrypted backups at 03:00 UTC, 30 day pruning; run and record a restore test |
-| Access controls     | In progress | Owner and admin roles in app; review Railway and GitHub access lists                |
-| Secrets management  | In progress | Railway variables; remove leftover SMTP variables that are no longer used           |
-| Error monitoring    | Not started | No `SENTRY_DSN` set in production                                                   |
-| Audit logging       | Done        | Auth, consent, symptom, check in and BRIEF events audited                           |
-| Deletion workflow   | Done        | Account deletion tested end to end                                                  |
-| Dependency scanning | Done        | CI blocks high and critical advisories; documented ignores have removal conditions  |
-| Incident response   | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise     |
+| Item                | Status      | Evidence / next step                                                                                               |
+| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| Production database | Done        | Railway Postgres in the EU (Amsterdam)                                                                             |
+| Backup verification | In progress | Daily encrypted backups at 03:00 UTC, 30 day pruning; run and record a restore test                                |
+| Access controls     | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                               |
+| Secrets management  | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                          |
+| Error monitoring    | Not started | No `SENTRY_DSN` set in production                                                                                  |
+| Audit logging       | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                          |
+| Deletion workflow   | Done        | Account deletion tested end to end                                                                                 |
+| Data export         | In progress | Symptoms, cycle, daily context, treatments, notes, BRIEF PDF; onboarding answers and consent history still missing |
+| Dependency scanning | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                                 |
+| Incident response   | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                    |
 
 ## Brand
 
 | Item                               | Status      | Evidence / next step                                                                        |
 | ---------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
-| Founder page                       | Done        | `founder.html` on the website branch; portrait to add (`founder.jpg`)                       |
+| Founder page                       | In progress | `founder.html` shows `founder.jpg` once the file is uploaded to the website repo            |
+| Evidence engine section (website)  | In progress | [landingpage#7](https://github.com/EMBR-Health-Dev/landingpage/pull/7) open for review      |
 | About                              | Done        | Record first positioning, "EMBR describes. Your clinician interprets."                      |
 | Resources                          | In progress | Hierarchy in place; Menopause 101 and Common terminology marked "in preparation"            |
 | Evidence & Research                | In progress | Four part structure live; established / emerging summaries need sources and clinical review |
