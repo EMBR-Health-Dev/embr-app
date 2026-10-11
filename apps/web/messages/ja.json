@@ -549,6 +549,13 @@
       "large": "大",
       "larger": "特大"
     },
+    "themeLabel": "カラーテーマ",
+    "themeHelp": "ダークは夜間に目にやさしい表示です。「システム」はお使いの端末の設定に合わせます。",
+    "theme": {
+      "system": "システム",
+      "light": "ライト",
+      "dark": "ダーク"
+    },
     "devices": "端末",
     "logoutEverywhere": "すべての端末からログアウト",
     "confirmLogoutAllMessage": "この端末を含む、すべての端末がログアウトされます。",

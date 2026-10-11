@@ -8,6 +8,8 @@ import { AuthProvider } from "../lib/auth-context";
 import { PublicBrandBar } from "../components/public-brand-bar";
 import { TEXT_SIZE_COOKIE, textSizeFromCookie } from "../display/text-size";
 import { TextSizeProvider } from "../display/text-size-context";
+import { THEME_COOKIE, themeFromCookie } from "../display/theme";
+import { ThemeProvider } from "../display/theme-context";
 
 // Self-hosted (not next/font/google): a live Google Fonts fetch at build
 // time is a network dependency CI shouldn't have, and it has failed
@@ -41,21 +43,26 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
-  const textSize = textSizeFromCookie((await cookies()).get(TEXT_SIZE_COOKIE)?.value);
+  const cookieStore = await cookies();
+  const textSize = textSizeFromCookie(cookieStore.get(TEXT_SIZE_COOKIE)?.value);
+  const theme = themeFromCookie(cookieStore.get(THEME_COOKIE)?.value);
 
   return (
     <html
       lang={locale}
       data-text-size={textSize === "standard" ? undefined : textSize}
+      data-theme={theme}
       className={`${instrumentSerif.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="bg-background text-foreground antialiased">
         <NextIntlClientProvider>
           <TextSizeProvider value={textSize}>
-            <AuthProvider>
-              <PublicBrandBar />
-              {children}
-            </AuthProvider>
+            <ThemeProvider value={theme}>
+              <AuthProvider>
+                <PublicBrandBar />
+                {children}
+              </AuthProvider>
+            </ThemeProvider>
           </TextSizeProvider>
         </NextIntlClientProvider>
       </body>
