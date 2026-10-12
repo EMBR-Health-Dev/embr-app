@@ -10,6 +10,7 @@ import { validate } from "../../lib/validate.js";
 import { requireAuth, requireRole } from "../auth/auth.middleware.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { adminService } from "./admin.service.js";
+import { computeAdminMetrics } from "./admin.metrics.js";
 
 const router: ExpressRouter = Router();
 
@@ -41,6 +42,16 @@ router.get(
     const page = await adminService.listAuditLogs(req.query as unknown as AdminAuditLogQuery);
     await writeAuditLog(req, "ADMIN_VIEWED_AUDIT_LOGS", req.user!.sub);
     res.status(200).json({ data: page, requestId: req.requestId });
+  }),
+);
+
+// Counts only, never health content: see admin.metrics.ts.
+router.get(
+  "/admin/metrics",
+  asyncHandler(async (req, res) => {
+    const metrics = await computeAdminMetrics();
+    await writeAuditLog(req, "ADMIN_VIEWED_METRICS", req.user!.sub);
+    res.status(200).json({ data: metrics, requestId: req.requestId });
   }),
 );
 

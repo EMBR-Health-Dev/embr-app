@@ -1,4 +1,5 @@
 import type {
+  AdminMetricsDto,
   AuditLogDto,
   AuthSessionResponse,
   DeviceSessionDto,
@@ -28,6 +29,8 @@ export const api = {
   },
 
   admin: {
+    metrics: () => apiFetch<AdminMetricsDto>("/admin/metrics"),
+
     listUsers: (query?: { page?: number; pageSize?: number }) =>
       apiFetch<PaginatedResponse<UserDto>>("/admin/users", { query }),
 

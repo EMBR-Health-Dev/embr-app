@@ -3,17 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { AuditLogDto, UserDto } from "@embr/types";
+import type { AdminMetricsDto, AuditLogDto, UserDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { BrandWordmark } from "../../components/brand-wordmark";
+import { MetricsPanel } from "../../components/metrics-panel";
 
-type Tab = "users" | "audit";
+type Tab = "metrics" | "users" | "audit";
+const TAB_LABELS: Record<Tab, string> = {
+  metrics: "Metrics",
+  users: "Users",
+  audit: "Audit log",
+};
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isAdmin, loading, logout } = useAuth();
-  const [tab, setTab] = useState<Tab>("users");
+  const [tab, setTab] = useState<Tab>("metrics");
+  const [metrics, setMetrics] = useState<AdminMetricsDto | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const [users, setUsers] = useState<UserDto[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogDto[]>([]);
@@ -39,11 +47,14 @@ export default function AdminDashboardPage() {
     // rather than contorted into something artificial.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDataLoading(true);
+    setLoadError(false);
     const load =
-      tab === "users"
-        ? api.admin.listUsers({ pageSize: 50 }).then((page) => setUsers(page.items))
-        : api.admin.listAuditLogs({ pageSize: 50 }).then((page) => setAuditLogs(page.items));
-    load.finally(() => setDataLoading(false));
+      tab === "metrics"
+        ? api.admin.metrics().then(setMetrics)
+        : tab === "users"
+          ? api.admin.listUsers({ pageSize: 50 }).then((page) => setUsers(page.items))
+          : api.admin.listAuditLogs({ pageSize: 50 }).then((page) => setAuditLogs(page.items));
+    load.catch(() => setLoadError(true)).finally(() => setDataLoading(false));
   }, [tab, isAdmin]);
 
   if (loading || !user) {
@@ -73,18 +84,18 @@ export default function AdminDashboardPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="flex items-baseline gap-3 text-foreground">
           <BrandWordmark className="h-5" />
           <span className="text-sm font-medium uppercase tracking-[0.14em] text-foreground/70">
             Admin
           </span>
         </h1>
-        <div className="flex items-center gap-4 text-sm text-foreground/60">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-sm text-foreground/60">
           <Link href="/settings" className="underline underline-offset-2 hover:text-foreground">
             Settings
           </Link>
-          <span>{user.email}</span>
+          <span className="break-all">{user.email}</span>
           <button
             onClick={() => logout().then(() => router.replace("/login"))}
             className="underline underline-offset-2 hover:text-foreground"
@@ -95,7 +106,7 @@ export default function AdminDashboardPage() {
       </header>
 
       <nav className="mt-8 flex gap-1 border-b border-border">
-        {(["users", "audit"] as const).map((t) => (
+        {(["metrics", "users", "audit"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -105,13 +116,19 @@ export default function AdminDashboardPage() {
                 : "text-foreground/50 hover:text-foreground/80"
             }`}
           >
-            {t === "users" ? "Users" : "Audit log"}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </nav>
 
       {dataLoading ? (
         <p className="mt-6 text-sm text-foreground/50">Loading…</p>
+      ) : loadError ? (
+        <p role="alert" className="mt-6 text-sm text-foreground">
+          Could not load this view. Try again in a moment.
+        </p>
+      ) : tab === "metrics" ? (
+        metrics && <MetricsPanel metrics={metrics} />
       ) : tab === "users" ? (
         <table className="mt-6 w-full text-left text-sm">
           <thead>

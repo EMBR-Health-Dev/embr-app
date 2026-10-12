@@ -950,3 +950,48 @@ export interface OnboardingProfileDto {
   skipped: boolean;
   completedAt: string | null;
 }
+
+// ---- Admin metrics ----
+
+/**
+ * Product health for the founder, as plain counts. Never health content:
+ * no symptom names or categories, no per-person rows, and accounts with
+ * the ADMIN role are left out of every number. "Active" means she logged
+ * anything that day: a symptom, a cycle or bleeding entry, or daily
+ * context. Dates are UTC.
+ */
+export interface AdminMetricsDto {
+  generatedAt: string;
+  accounts: {
+    total: number;
+    verified: number;
+    onboarded: number;
+    new7d: number;
+    new30d: number;
+  };
+  activity: {
+    active7d: number;
+    active30d: number;
+    /** Mean distinct days logged in the last 7 days, per active person; null when nobody was active. */
+    avgDaysLogged7d: number | null;
+  };
+  /** People who signed up 28 to 56 days ago, and how many logged anything on days 21 to 27 after. */
+  retentionWeek4: {
+    cohort: number;
+    retained: number;
+    rate: number | null;
+  };
+  briefs: {
+    generated7d: number;
+    generated30d: number;
+    downloaded30d: number;
+    peopleWithBrief: number;
+  };
+  /** The last 8 weeks, oldest first, weeks starting Monday (UTC). */
+  weekly: Array<{
+    weekStart: string;
+    activePeople: number;
+    newAccounts: number;
+    briefsGenerated: number;
+  }>;
+}
