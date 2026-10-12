@@ -1,10 +1,66 @@
 # Deployment
 
-This describes the recommended path to production. As of Milestone 11,
-this is guidance and tooling — pipeline configs, scripts, docs — not a
-claim that the platform is currently deployed anywhere. Whoever runs
-these steps first should update this doc with the actual URLs/dashboards
-once live.
+This describes how EMBR is deployed. It started as the recommended path
+(Milestone 11); "Current production setup" below records what actually
+runs today, and the rest of the doc has been brought in line with it.
+
+## Current production setup
+
+_Last checked against Railway: 11 October 2026._
+
+Everything runs in one Railway project, `embr-production`, environment
+`production`, region `ams` (EU, Amsterdam). Every app service builds
+from `main` of `EMBR-Health-Dev/embr-app` and redeploys on push when a
+file matching its watch patterns changes.
+
+| Railway service         | What it is                | Build                                   | Public address                                                | Notes                                                               |
+| ----------------------- | ------------------------- | --------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `@embr/api`             | `apps/api`                | Dockerfile `/apps/api/Dockerfile`       | `embrapi-production.up.railway.app`                           | Pre-deploy runs `prisma migrate deploy`; healthcheck `/health/live` |
+| `@embr/web`             | `apps/web`                | Dockerfile `/apps/web/Dockerfile`       | `app.embrhealthcare.com`, `embrweb-production.up.railway.app` | Healthcheck `/`                                                     |
+| `@embr/admin`           | `apps/admin`              | Dockerfile `/apps/admin/Dockerfile`     | `embradmin-production.up.railway.app`                         | Moved from Vercel on 11 October 2026; see "Admin app" below         |
+| `@embr/worker`          | `apps/worker`             | Dockerfile `/apps/worker/Dockerfile`    | none (private only)                                           | Moved off Railpack on 11 October 2026; see "Worker" below           |
+| `@embr/mobile`          | `apps/mobile`             | Railpack                                | none                                                          |                                                                     |
+| `efficient-benevolence` | Encrypted Postgres backup | Dockerfile `/scripts/backup/Dockerfile` | none                                                          | Cron `0 3 * * *` (03:00 UTC daily); see `docs/BACKUPS.md`           |
+| `Postgres`, `Redis`     | Managed databases         | Railway                                 | none (private network)                                        |                                                                     |
+
+Vercel is no longer part of production. A Vercel project for the admin
+app (`embr-admin`) may still be connected to the repository and post
+preview statuses on pull requests; those statuses are not required
+checks, and the project can be disconnected in Vercel (Settings → Git).
+
+### Admin app
+
+- **Builder must be the Dockerfile, not Railpack.** Railpack ran
+  `pnpm --filter @embr/admin build` without building the workspace
+  packages first, so every build failed with
+  `Module not found: Can't resolve '@embr/validation'`.
+  `apps/admin/Dockerfile` builds `@embr/types` and `@embr/validation`
+  before the app.
+- **`API_URL`** is set on the service to the API's public address. It
+  is a build argument: `next.config.ts` bakes it into the `/api/*`
+  same-origin proxy at build time, so changing it needs a rebuild.
+- **Watch patterns**: `/apps/admin/**`, `/packages/types/**`,
+  `/packages/validation/**`, `/pnpm-lock.yaml`.
+- **`CORS_ORIGIN` on `@embr/api` must include
+  `https://embradmin-production.up.railway.app`.** The proxy forwards the
+  browser's `Origin` header, and the API rejects origins it doesn't
+  list, so admin sign in fails without it. Append it to the existing
+  list; never replace the list.
+
+### Worker
+
+- **Builder must be the Dockerfile, not Railpack**, for the same reason
+  as the admin app: Railpack ran `pnpm --filter @embr/worker build`
+  without building `@embr/shared` first, so the build failed with
+  `Cannot find module '@embr/shared'`. `apps/worker/Dockerfile` builds
+  `@embr/shared` before the worker. No build or start command is set on
+  the service; the Dockerfile's `CMD` starts it.
+- **Variables**: `REDIS_URL` = `${{Redis.REDIS_URL}}` and
+  `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (Railway references). The
+  worker exits at startup if either is missing. `SENTRY_DSN` is optional.
+- **Watch patterns**: `/apps/worker/**`, `/packages/shared/**`,
+  `/pnpm-lock.yaml`.
+- **Restart policy**: on failure, up to 10 retries.
 
 ## Recommended platforms
 
@@ -12,7 +68,7 @@ once live.
 | ------------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/api`               | Railway or Fly.io                         | Both run long-lived containers with attached Postgres/Redis, and both build straight from the existing `apps/api/Dockerfile` with no changes needed.     |
 | `apps/worker`            | Same platform as `apps/api`               | Needs to share the same Postgres/Redis instances; keeping it on the same platform avoids cross-provider network latency/cost for BullMQ's Redis polling. |
-| `apps/web`, `apps/admin` | Vercel                                    | Both are already Next.js 15 apps — Vercel is the path of least friction and gives preview deployments per PR for free.                                   |
+| `apps/web`, `apps/admin` | Railway (Dockerfile builds)               | Originally planned for Vercel. Both now run on Railway beside the API, so one platform holds every service and the data stays in one EU region.          |
 | Postgres                 | Railway/Fly managed Postgres, or Supabase | Managed backups exist on all three, but see `docs/BACKUPS.md` — the app-level backup script here is a deliberate second layer, not a replacement.        |
 | Redis                    | Railway/Fly managed Redis, or Upstash     | Upstash's serverless pricing model fits a worker that is often idle.                                                                                     |
 
@@ -42,10 +98,10 @@ GitHub Actions (.github/workflows/ci.yml)
 Build
   ↓
 Deploy API + Worker  (Railway/Fly — connect the GitHub repo, auto-deploy on push to main)
-Deploy Web + Admin   (Vercel — connect the GitHub repo, auto-deploy on push to main)
+Deploy Web + Admin   (Railway — same project, auto-deploy on push to main)
 ```
 
-Railway, Fly, and Vercel all support "deploy on push to `main`" as a
+Railway and Fly both support "deploy on push to `main`" as a
 built-in GitHub integration — there's deliberately no custom deploy step
 added to `ci.yml` here, since duplicating what the platform's own GitHub
 App already does would just be two systems that can disagree about what
@@ -75,8 +131,8 @@ Two git-ignored files hold local secrets, for two different runtimes:
 
 In order of preference for where production secrets actually live:
 
-1. **Platform-native secrets** (Railway Variables, Vercel Environment
-   Variables, Fly `fly secrets`) for anything only that platform's
+1. **Platform-native secrets** (Railway Variables, which is what
+   production uses, or Fly `fly secrets`) for anything only that platform's
    process needs — simplest option, no extra tool to run.
 2. **GitHub Actions Secrets** (repo Settings → Secrets and variables →
    Actions) for anything a CI/CD workflow itself needs to read — e.g.
@@ -198,8 +254,8 @@ See `docs/BACKUPS.md`.
 - **API/Worker**: Railway and Fly both keep prior deployments and support
   one-click/one-command rollback to the last known-good image — no
   extra tooling needed here.
-- **Web/Admin**: Vercel keeps every deployment and lets you "promote to
-  production" any prior one instantly.
+- **Web/Admin**: same as the API: Railway keeps prior deployments and
+  can roll back to the last good one from the service's Deployments tab.
 - **Database migrations**: `apps/api/prisma/schema.prisma` is the source
   of truth; `apps/api/prisma/migrations` now holds a real, linear
   migration history (17 migrations as of this writing, from the
@@ -357,9 +413,9 @@ be changed by an env var at container start:
   corrected will build successfully and simply be unable to reach any
   API
 
-**Migrations**: confirm the chosen platform actually runs
-`pnpm --filter @embr/api exec prisma migrate deploy` before the new API
-version starts serving traffic — nothing does this automatically today
-(see "Rollback strategy" above). This is the one item on this list that
+**Migrations**: the `@embr/api` Railway service runs
+`pnpm --filter @embr/api exec prisma migrate deploy` as its pre-deploy
+command, before the new API version starts serving traffic (see
+"Rollback strategy" above). Keep it there on any new platform. This is the one item on this list that
 isn't an env var at all, but is just as capable of leaving the API
 "boots fine, immediately broken" if skipped.
