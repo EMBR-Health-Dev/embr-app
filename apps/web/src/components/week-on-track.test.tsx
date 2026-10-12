@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "../../messages/en.json";
 import { toIsoDate } from "../lib/date-format";
@@ -82,6 +83,15 @@ describe("WeekOnTrack", () => {
     renderWeek();
 
     expect(await screen.findByText("Today is recorded. Nothing else to do.")).toBeInTheDocument();
+  });
+
+  it("tells the page which step was tapped, so it can open that form", async () => {
+    const onStep = vi.fn();
+    const user = userEvent.setup();
+    renderWeek({ onStep });
+
+    await user.click(await screen.findByRole("link", { name: /Add today's context/ }));
+    expect(onStep).toHaveBeenCalledWith("context");
   });
 
   it("stays hidden if the week cannot be loaded", async () => {

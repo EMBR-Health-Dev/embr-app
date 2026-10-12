@@ -36,7 +36,7 @@ vi.mock("../../lib/auth-context", () => ({
 const symptomFrequency = vi.fn().mockResolvedValue([]);
 const symptomLogsList = vi
   .fn()
-  .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
+  .mockResolvedValue({ items: [], page: 1, pageSize: 5, total: 0, totalPages: 1 });
 const symptomLogsCreate = vi.fn();
 const symptomLogsUpdate = vi.fn();
 const symptomLogsDelete = vi.fn();
@@ -95,7 +95,7 @@ beforeEach(() => {
   symptomFrequency.mockReset().mockResolvedValue([]);
   symptomLogsList
     .mockReset()
-    .mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 });
+    .mockResolvedValue({ items: [], page: 1, pageSize: 5, total: 0, totalPages: 1 });
   symptomLogsCreate.mockReset();
   symptomLogsUpdate.mockReset().mockResolvedValue(makeLog("updated-1"));
   symptomLogsDelete.mockReset().mockResolvedValue(undefined);
@@ -297,7 +297,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     symptomLogsList.mockResolvedValue({
       items: [makeLog("1")],
       page: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 1,
       totalPages: 1,
     });
@@ -314,7 +314,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     symptomLogsList.mockResolvedValueOnce({
       items: [makeLog("1", "HOT_FLASH")],
       page: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 2,
       totalPages: 2,
     });
@@ -326,7 +326,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     symptomLogsList.mockResolvedValueOnce({
       items: [makeLog("2", "BRAIN_FOG")],
       page: 2,
-      pageSize: 10,
+      pageSize: 5,
       total: 2,
       totalPages: 2,
     });
@@ -336,7 +336,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     // The second page's item must come from a real second server call
     // (page: 2), not from data client-side pagination would already
     // have had in memory.
-    expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 2, pageSize: 10 });
+    expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 2, pageSize: 5 });
     await waitFor(() => expect(screen.getByText("Brain Fog")).toBeInTheDocument());
     // The first page's item is still there — appended, not replaced.
     expect(screen.getByText("Hot Flash")).toBeInTheDocument();
@@ -349,7 +349,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     symptomLogsList.mockResolvedValueOnce({
       items: [makeLog("1")],
       page: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 2,
       totalPages: 2,
     });
@@ -372,7 +372,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     symptomLogsList.mockResolvedValue({
       items: [makeLog("1")],
       page: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 11,
       totalPages: 2,
     });
@@ -386,9 +386,7 @@ describe("Dashboard — recent symptoms pagination", () => {
     });
     await user.click(button);
 
-    await waitFor(() =>
-      expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 1, pageSize: 10 }),
-    );
+    await waitFor(() => expect(symptomLogsList).toHaveBeenLastCalledWith({ page: 1, pageSize: 5 }));
   });
 });
 
@@ -473,6 +471,7 @@ describe("Dashboard — context quick-log", () => {
     renderWithIntl(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Today's context/ }));
     await user.selectOptions(screen.getByLabelText("Night sweats last night"), "TWO_TO_THREE");
 
     const contextSection = screen.getByText("Today's context").closest("div")!;
@@ -511,6 +510,7 @@ describe("Dashboard — context quick-log", () => {
     renderWithIntl(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Today's context/ }));
     await user.selectOptions(
       screen.getByLabelText("Did symptoms affect your work today?"),
       "MISSED_TIME",
@@ -531,6 +531,7 @@ describe("Dashboard — context quick-log", () => {
     renderWithIntl(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Today's context/ }));
 
     await user.selectOptions(screen.getByLabelText("Sleep last night"), "UNDER_6H");
     await user.selectOptions(screen.getByLabelText("Stress today"), "HIGH");
@@ -612,5 +613,40 @@ describe("Dashboard — after menopause", () => {
     expect(screen.queryByText("Today's cycle entry")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Period started today")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Period ended today")).not.toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — shorter page", () => {
+  it("keeps the cycle and context forms closed until she opens one", async () => {
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const context = await screen.findByRole("button", { name: /Today's context/ });
+    expect(context).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /Today's cycle entry/ })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.queryByRole("button", { name: "Save today's entry" })).not.toBeInTheDocument();
+
+    await user.click(context);
+    expect(context).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Night sweats last night")).toBeVisible();
+
+    await user.click(context);
+    expect(context).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("opens the matching form when the page is reached with its link", async () => {
+    window.location.hash = "#cycle-entry";
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(await screen.findByRole("button", { name: /Today's cycle entry/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    window.location.hash = "";
   });
 });

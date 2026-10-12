@@ -21,6 +21,7 @@ import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { isPostmenopause } from "../../lib/life-stage";
 import { WeekOnTrack } from "../../components/week-on-track";
+import { CollapsibleCard } from "../../components/collapsible-card";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { DailyCheckIn } from "../../components/daily-check-in";
@@ -54,7 +55,7 @@ const SLEEP_DURATIONS = ["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"] as const;
 const STRESS_LEVELS = ["LOW", "MODERATE", "HIGH"] as const;
 const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
 const WORK_IMPACT = ["NONE", "DID_LESS", "MISSED_TIME"] as const;
-const LOGS_PAGE_SIZE = 10;
+const LOGS_PAGE_SIZE = 5;
 
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
   return value !== null && (CATEGORIES as readonly string[]).includes(value);
@@ -99,6 +100,21 @@ function DashboardContent() {
   const postmenopause = isPostmenopause(onboardingProfile?.lifeStage);
   // Bumped after anything is saved here, so "Your week" shows it at once.
   const [weekRefreshKey, setWeekRefreshKey] = useState(0);
+  // The cycle and context forms start closed to keep the page short;
+  // the week card's steps and a #cycle-entry / #context-entry link open them.
+  const [openPanel, setOpenPanel] = useState<"cycle" | "context" | null>(null);
+  function togglePanel(panel: "cycle" | "context") {
+    setOpenPanel((current) => (current === panel ? null : panel));
+  }
+  useEffect(() => {
+    function openFromHash() {
+      if (window.location.hash === "#cycle-entry") setOpenPanel("cycle");
+      if (window.location.hash === "#context-entry") setOpenPanel("context");
+    }
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, []);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [latestBrief, setLatestBrief] = useState<ClinicalBriefListItemDto | null>(null);
   // Bumped on every successful log submission — ReflectionsSection
@@ -451,16 +467,20 @@ function DashboardContent() {
             postmenopause={postmenopause}
             appointmentSoon={onboardingProfile?.appointmentStatus === "WITHIN_MONTH"}
             latestBriefCreatedAt={latestBrief?.createdAt ?? null}
+            onStep={(key) => {
+              if (key === "cycle") setOpenPanel("cycle");
+              if (key === "context") setOpenPanel("context");
+            }}
           />
 
-          <div className="mt-6 flex flex-col items-center gap-3 rounded border border-border-subtle bg-muted/40 py-12 text-center">
+          <div className="mt-6 flex flex-col items-center gap-3 rounded border border-border-subtle bg-muted/40 py-8 text-center">
             {/* Signature interaction: one tap, no form, for the moment
                 that actually needs it — mid-hot-flash is not when
                 anyone wants to fill out a category picker. */}
             <button
               onClick={() => void logHotFlashNow()}
               disabled={loggingHotFlash || hotFlashCooldown}
-              className="flex h-24 w-24 items-center justify-center rounded-full bg-foreground text-background shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.2)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100"
+              className="flex h-20 w-20 items-center justify-center rounded-full bg-foreground text-background shadow-[0_0_0_6px_rgb(var(--color-lilac-500)/0.2)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-95 disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100"
               aria-label={t("hotFlashAriaLabel")}
               aria-busy={loggingHotFlash}
             >
@@ -629,18 +649,16 @@ function DashboardContent() {
           {/* Cycle quick-log for today. After menopause it becomes a
               bleeding log only: no period start or end, but bleeding
               still has a place in her record. */}
-          <div
+          <CollapsibleCard
             id="cycle-entry"
-            className="mt-6 scroll-mt-6 rounded border border-border-subtle p-5"
+            title={postmenopause ? t("todaysBleedingEntry") : t("todaysCycleEntry")}
+            status={
+              cycleSaved ? t("saved") : postmenopause ? t("bleedingHint") : t("cycleCollapsedHint")
+            }
+            open={openPanel === "cycle"}
+            onToggle={() => togglePanel("cycle")}
           >
-            <h3 className="font-display text-body-l text-foreground">
-              {postmenopause ? t("todaysBleedingEntry") : t("todaysCycleEntry")}
-            </h3>
-            {postmenopause && (
-              <p className="mt-1 text-sm text-foreground/60">{t("bleedingHint")}</p>
-            )}
-
-            <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+            <label className="flex max-w-xs flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{t("flowLabel")}</span>
               <select
                 value={flow}
@@ -702,18 +720,19 @@ function DashboardContent() {
             >
               {cycleSaving ? t("saving") : cycleSaved ? t("saved") : t("saveTodaysEntry")}
             </Button>
-          </div>
+          </CollapsibleCard>
 
           {/* Context quick-log for today — a deliberately small, fixed
               set of factors (see the embr-clinical-logic skill
               doctrine), never free text or an open-ended system. */}
-          <div
+          <CollapsibleCard
             id="context-entry"
-            className="mt-6 scroll-mt-6 rounded border border-border-subtle p-5"
+            title={t("todaysContextEntry")}
+            status={contextSaved ? t("saved") : t("contextCollapsedHint")}
+            open={openPanel === "context"}
+            onToggle={() => togglePanel("context")}
           >
-            <h3 className="font-display text-body-l text-foreground">{t("todaysContextEntry")}</h3>
-
-            <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+            <label className="flex max-w-xs flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{t("sleepDurationLabel")}</span>
               <select
                 value={sleepDuration}
@@ -837,7 +856,7 @@ function DashboardContent() {
             >
               {contextSaving ? t("saving") : contextSaved ? t("saved") : t("saveTodaysEntry")}
             </Button>
-          </div>
+          </CollapsibleCard>
 
           {/* Recent history. */}
           <div className="mt-10">

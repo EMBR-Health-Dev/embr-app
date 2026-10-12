@@ -330,7 +330,9 @@
     "generateFirstBrief": "Generate your first EMBR BRIEF",
     "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day.",
     "todaysBleedingEntry": "Bleeding or spotting today",
-    "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician."
+    "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician.",
+    "cycleCollapsedHint": "Only if your period started, ended or you had flow",
+    "contextCollapsedHint": "Sleep, night sweats, stress and work"
   },
   "Week": {
     "title": "Your week",

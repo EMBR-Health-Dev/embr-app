@@ -330,7 +330,9 @@
     "generateFirstBrief": "最初のEMBR BRIEFを作成する",
     "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。",
     "todaysBleedingEntry": "今日の出血・少量の出血",
-    "bleedingHint": "出血や少量の出血があれば、ここに記録してください。担当医のための記録として残ります。"
+    "bleedingHint": "出血や少量の出血があれば、ここに記録してください。担当医のための記録として残ります。",
+    "cycleCollapsedHint": "月経の開始・終了や出血があった日のみ",
+    "contextCollapsedHint": "睡眠、寝汗、ストレス、仕事への影響"
   },
   "Week": {
     "title": "今週の記録",
