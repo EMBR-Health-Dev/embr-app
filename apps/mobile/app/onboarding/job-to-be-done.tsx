@@ -43,7 +43,13 @@ export default function JobToBeDoneScreen() {
         {OPTION_VALUES.map((value) => {
           const isSelected = selected === value;
           return (
-            <Pressable key={value} onPress={() => void handleSelect(value)} style={styles.row}>
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isSelected }}
+              key={value}
+              onPress={() => void handleSelect(value)}
+              style={styles.row}
+            >
               <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>
                 {t(`onboarding.jobToBeDone.${OPTION_KEYS[value]}`)}
               </Text>

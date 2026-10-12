@@ -27,6 +27,7 @@ export default function WelcomeScreen() {
       <Text style={styles.headline}>{t("onboarding.welcome.headline")}</Text>
       <Text style={styles.body}>{t("onboarding.welcome.body")}</Text>
       <Pressable
+        accessibilityRole="button"
         onPress={() => void handleContinue()}
         disabled={starting}
         style={[styles.button, starting && styles.buttonDisabled]}

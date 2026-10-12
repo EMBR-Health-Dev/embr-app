@@ -143,7 +143,7 @@ export default function HomeScreen() {
                   ? t("home.greetingWithName", { name: user.email.split("@")[0] })
                   : t("home.greeting")}
               </Text>
-              <Pressable onPress={handleLogout}>
+              <Pressable accessibilityRole="button" onPress={handleLogout}>
                 <Text style={styles.logoutText}>{t("home.logout")}</Text>
               </Pressable>
             </View>
@@ -196,6 +196,7 @@ export default function HomeScreen() {
             {formError && <Text style={styles.error}>{formError}</Text>}
 
             <Pressable
+              accessibilityRole="button"
               style={[styles.button, submitting && styles.buttonDisabled]}
               onPress={handleLogSymptom}
               disabled={submitting}
@@ -222,7 +223,7 @@ export default function HomeScreen() {
               </Text>
               {item.notes && <Text style={styles.logNotes}>{item.notes}</Text>}
             </View>
-            <Pressable onPress={() => void handleDelete(item.id)}>
+            <Pressable accessibilityRole="button" onPress={() => void handleDelete(item.id)}>
               <Text style={styles.deleteText}>{t("home.delete")}</Text>
             </Pressable>
           </View>

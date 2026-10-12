@@ -117,6 +117,7 @@ export default function VerifyEmailScreen() {
         {formError && <Text style={styles.error}>{formError}</Text>}
 
         <Pressable
+          accessibilityRole="button"
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleVerify}
           disabled={submitting}
@@ -147,6 +148,7 @@ export default function VerifyEmailScreen() {
               </View>
               {resendFormError && <Text style={styles.error}>{resendFormError}</Text>}
               <Pressable
+                accessibilityRole="button"
                 style={[styles.button, resendSubmitting && styles.buttonDisabled]}
                 onPress={handleResend}
                 disabled={resendSubmitting}

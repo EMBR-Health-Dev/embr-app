@@ -170,6 +170,7 @@ export default function BriefScreen() {
             )}
 
             <Pressable
+              accessibilityRole="button"
               style={[styles.button, generating && styles.buttonDisabled]}
               onPress={() => void handleGenerate()}
               disabled={generating}
@@ -184,6 +185,7 @@ export default function BriefScreen() {
                 <Text style={styles.freshBriefTitle}>{t("brief.briefReady")}</Text>
                 <BriefContent brief={justGenerated} />
                 <Pressable
+                  accessibilityRole="button"
                   onPress={() => void handleShare(justGenerated.id)}
                   disabled={sharingId === justGenerated.id}
                 >
@@ -244,7 +246,11 @@ export default function BriefScreen() {
         renderItem={({ item }) => (
           <View style={styles.briefRow}>
             <View style={styles.briefRowHeader}>
-              <Pressable onPress={() => void toggleBrief(item.id)} style={{ flex: 1 }}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void toggleBrief(item.id)}
+                style={{ flex: 1 }}
+              >
                 <Text style={styles.briefRowTitle}>
                   {item.fromDate} to {item.toDate}
                 </Text>
@@ -252,10 +258,15 @@ export default function BriefScreen() {
                   {t("brief.generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                 </Text>
               </Pressable>
-              <Pressable onPress={() => void handleShare(item.id)} disabled={sharingId === item.id}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void handleShare(item.id)}
+                disabled={sharingId === item.id}
+              >
                 <Text style={styles.link}>{sharingId === item.id ? "…" : t("brief.pdf")}</Text>
               </Pressable>
               <Pressable
+                accessibilityRole="button"
                 onPress={() => void handleDelete(item.id)}
                 disabled={deletingId === item.id}
                 style={{ marginLeft: 16 }}

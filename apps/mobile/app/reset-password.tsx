@@ -122,6 +122,7 @@ export default function ResetPasswordScreen() {
         {formError && <Text style={styles.error}>{formError}</Text>}
 
         <Pressable
+          accessibilityRole="button"
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={submitting}

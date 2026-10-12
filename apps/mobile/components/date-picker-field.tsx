@@ -52,7 +52,11 @@ export function DatePickerField({
             minimumDate={minimumDate}
           />
           {Platform.OS === "ios" && (
-            <Pressable onPress={() => setShowing(false)} style={styles.doneButton}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setShowing(false)}
+              style={styles.doneButton}
+            >
               <Text style={styles.doneText}>{t("common.done")}</Text>
             </Pressable>
           )}
