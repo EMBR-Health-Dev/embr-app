@@ -41,6 +41,7 @@ jobs:
           JWT_ACCESS_SECRET: ${{ secrets.PRODUCTION_JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.PRODUCTION_JWT_REFRESH_SECRET }}
           SSO_ENCRYPTION_KEY: ${{ secrets.PRODUCTION_SSO_ENCRYPTION_KEY }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.PRODUCTION_DATA_ENCRYPTION_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.PRODUCTION_ANTHROPIC_API_KEY }}
         run: pnpm --filter @embr/api exec tsx src/scripts/retention-cleanup.ts
 

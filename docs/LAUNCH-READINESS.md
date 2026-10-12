@@ -60,18 +60,19 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Security
 
-| Item                | Status      | Evidence / next step                                                                                                               |
-| ------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Production database | Done        | Railway Postgres in the EU (Amsterdam)                                                                                             |
-| Backup verification | Done        | Daily encrypted backups at 03:00 UTC, 30 day pruning; restore drill passed on 12 October 2026 (see `BACKUPS.md`); repeat quarterly |
-| Access controls     | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                                               |
-| Secrets management  | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                                          |
-| Error monitoring    | Not started | No `SENTRY_DSN` set in production                                                                                                  |
-| Audit logging       | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                                          |
-| Deletion workflow   | Done        | Account deletion tested end to end                                                                                                 |
-| Data export         | Done        | One JSON file holds the whole record, including onboarding answers and consent history; CSVs and PDF for reading                   |
-| Dependency scanning | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                                                 |
-| Incident response   | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                                    |
+| Item                     | Status      | Evidence / next step                                                                                                                                        |
+| ------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production database      | Done        | Railway Postgres in the EU (Amsterdam)                                                                                                                      |
+| Personal text encryption | In progress | Notes, notebook, treatment names and BRIEF wording encrypted in the API (`ENCRYPTION.md`); set `DATA_ENCRYPTION_KEY` in Railway, then run the backfill once |
+| Backup verification      | Done        | Daily encrypted backups at 03:00 UTC, 30 day pruning; restore drill passed on 12 October 2026 (see `BACKUPS.md`); repeat quarterly                          |
+| Access controls          | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                                                                        |
+| Secrets management       | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                                                                   |
+| Error monitoring         | Not started | No `SENTRY_DSN` set in production                                                                                                                           |
+| Audit logging            | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                                                                   |
+| Deletion workflow        | Done        | Account deletion tested end to end                                                                                                                          |
+| Data export              | Done        | One JSON file holds the whole record, including onboarding answers and consent history; CSVs and PDF for reading                                            |
+| Dependency scanning      | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                                                                          |
+| Incident response        | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                                                             |
 
 ## Brand
 

@@ -1,3 +1,4 @@
+import type { TransactionClient } from "../../lib/prisma.js";
 import type { Prisma } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { env } from "../../config/env.js";
@@ -48,7 +49,7 @@ export const authRepository = {
       expiresAt: Date;
     },
   ) {
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    return prisma.$transaction(async (tx: TransactionClient) => {
       const created = await tx.session.create({ data: newSession });
       await tx.session.update({
         where: { id: oldSessionId },
@@ -186,7 +187,7 @@ export const authRepository = {
    * vulnerability is out of scope here and already assigned
    * elsewhere. */
   async deleteUserAccount(userId: string): Promise<"DELETED" | "LAST_ADMIN"> {
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    return prisma.$transaction(async (tx: TransactionClient) => {
       const soleAdminMemberships = await tx.organizationMembership.findMany({
         where: { userId, role: "ORG_ADMIN" },
         select: { organizationId: true },

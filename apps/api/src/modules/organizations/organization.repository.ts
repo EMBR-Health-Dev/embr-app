@@ -1,10 +1,10 @@
+import type { TransactionClient } from "../../lib/prisma.js";
 import type {
   CreateOrganizationInput,
   OrganizationMemberQuery,
   OrgTrendsQuery,
 } from "@embr/validation";
 import type { OrgRole } from "@embr/types";
-import type { Prisma } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { toSkipTake } from "../../lib/pagination.js";
 
@@ -124,7 +124,7 @@ export const organizationRepository = {
     organizationId: string,
     userId: string,
   ): Promise<"REVOKED" | "NOT_FOUND" | "LAST_ADMIN"> {
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    return prisma.$transaction(async (tx: TransactionClient) => {
       const target = await tx.organizationMembership.findUnique({
         where: { organizationId_userId: { organizationId, userId } },
       });
@@ -194,7 +194,7 @@ export const organizationRepository = {
     role: OrgRole,
     inviteId: string,
   ): Promise<void> {
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await prisma.$transaction(async (tx: TransactionClient) => {
       await tx.organizationMembership.create({ data: { organizationId, userId, role } });
       await tx.organizationInvite.update({
         where: { id: inviteId },

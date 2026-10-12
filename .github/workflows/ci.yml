@@ -332,6 +332,7 @@ jobs:
           export JWT_ACCESS_SECRET="ci-only-access-secret-32-chars-min!"
           export JWT_REFRESH_SECRET="ci-only-refresh-secret-32-chars-min!"
           export SSO_ENCRYPTION_KEY="$(head -c 32 /dev/zero | base64)"
+          export DATA_ENCRYPTION_KEY="$(head -c 32 /dev/urandom | base64)"
           export ANTHROPIC_API_KEY="ci-placeholder"
           node dist/server.js > /tmp/boot.log 2>&1 &
           PID=$!
