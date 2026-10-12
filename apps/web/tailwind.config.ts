@@ -92,6 +92,17 @@ const config = {
       boxShadow: {
         subtle: "0 1px 3px 0 rgb(var(--color-graphite-900) / 0.06)",
       },
+      // A slow, small drift for decorative icons. Use with motion-safe:
+      // so it never runs for people who prefer reduced motion.
+      keyframes: {
+        "float-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+      },
+      animation: {
+        "float-soft": "float-soft 6s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

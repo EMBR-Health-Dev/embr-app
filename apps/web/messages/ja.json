@@ -853,6 +853,14 @@
         "patterns": "パターンを見る",
         "evidence": "エビデンスをつくる",
         "care": "受診に備える"
+      },
+      "illustration": {
+        "title": "今週の記録",
+        "count": "7日中6日",
+        "weekdays": "月,火,水,木,金,土,日",
+        "stepCheckIn": "チェックイン",
+        "stepContext": "今日の状況を追加",
+        "caption": "サンプルデータによる例"
       }
     },
     "story": {

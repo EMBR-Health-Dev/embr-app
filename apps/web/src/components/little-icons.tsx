@@ -125,3 +125,114 @@ export function CircleIcon(props: IconProps) {
     </Icon>
   );
 }
+
+/** A calendar page with two rings and a marked day. */
+export function CalendarIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="5.5" width="16" height="14.5" rx="3" />
+      <path d="M8.5 3.5v3.5M15.5 3.5v3.5M4 10h16" />
+      <circle cx="12" cy="15" r="1.25" />
+    </Icon>
+  );
+}
+
+/** Two speech bubbles: the conversation with a clinician. */
+export function ConversationIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h7A2.5 2.5 0 0 1 16 6.5v4a2.5 2.5 0 0 1-2.5 2.5H9l-3 2.5V13h0A2 2 0 0 1 4 11V6.5Z" />
+      <path d="M18.5 9.5a1.5 1.5 0 0 1 1.5 1.5v4.5a2 2 0 0 1-2 2v2l-2.5-2H12a2 2 0 0 1-2-1.5" />
+    </Icon>
+  );
+}
+
+/** An even, steady line: the same scale every time. */
+export function SteadyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 8h16M4 12h16M4 16h16" />
+      <circle cx="9" cy="8" r="1.25" />
+      <circle cx="15" cy="12" r="1.25" />
+      <circle cx="11" cy="16" r="1.25" />
+    </Icon>
+  );
+}
+
+/** A pencil writing a short line: describing, not deciding. */
+export function NoteIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 19.5h7" />
+      <path d="m14.5 5.5 4 4L10 18l-4.5.5L6 14l8.5-8.5Z" />
+    </Icon>
+  );
+}
+
+/** An arrow into a tray: take your record with you. */
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 4v10M8 10.5l4 4 4-4" />
+      <path d="M5 16v1.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V16" />
+    </Icon>
+  );
+}
+
+/** A soft bin: delete your account. */
+export function TrashIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4.5 7h15M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7" />
+      <path d="M6.5 7l.8 11a2 2 0 0 0 2 1.8h5.4a2 2 0 0 0 2-1.8l.8-11M10.5 11v5M13.5 11v5" />
+    </Icon>
+  );
+}
+
+/** A phone and a laptop: where you're signed in. */
+export function DevicesIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="5" width="12" height="9" rx="1.5" />
+      <path d="M2.5 17h11" />
+      <rect x="15.5" y="9" width="5.5" height="10" rx="1.5" />
+      <path d="M18 17h.5" />
+    </Icon>
+  );
+}
+
+/** Three heads together: a group, never one person. */
+export function GroupIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="8" r="2.75" />
+      <circle cx="5.75" cy="10" r="2" />
+      <circle cx="18.25" cy="10" r="2" />
+      <path d="M7 19a5 5 0 0 1 10 0M2.5 18a3.5 3.5 0 0 1 4.5-3.3M21.5 18a3.5 3.5 0 0 0-4.5-3.3" />
+    </Icon>
+  );
+}
+
+/**
+ * An icon in a soft lilac circle, the way the homepage and dashboard
+ * show them. Purely decorative.
+ */
+export function IconBadge({
+  children,
+  size = "md",
+  className = "",
+}: {
+  children: React.ReactNode;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}) {
+  const box = size === "sm" ? "h-8 w-8" : size === "lg" ? "h-14 w-14" : "h-11 w-11";
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-lilac-100 text-lilac-700 ring-1 ring-lilac-200 ${box} ${className}`}
+    >
+      {children}
+    </span>
+  );
+}

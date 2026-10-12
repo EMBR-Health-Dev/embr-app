@@ -1,8 +1,21 @@
 import { useTranslations } from "next-intl";
 import { Eyebrow, container } from "./cta-link";
+import {
+  BriefIcon,
+  ConversationIcon,
+  HeartPulseIcon,
+  IconBadge,
+  PatternIcon,
+} from "../little-icons";
 
 const MOMENTS = ["m1", "m2", "m3", "m4"] as const;
 const STEPS = ["track", "patterns", "brief", "care"] as const;
+const STEP_ICONS = {
+  track: HeartPulseIcon,
+  patterns: PatternIcon,
+  brief: BriefIcon,
+  care: ConversationIcon,
+} as const;
 
 export function ProductStory() {
   const t = useTranslations("Landing.story");
@@ -52,20 +65,26 @@ export function ProductStory() {
             {t("stepsHeading")}
           </h2>
           <ol className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-            {STEPS.map((step, i) => (
-              <li key={step} className="border-t-2 border-foreground pt-5">
-                <p className="flex items-baseline gap-3 text-caption font-medium uppercase tracking-[0.14em] text-graphite-700">
-                  <span className="font-mono" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  {t(`steps.${step}.label`)}
-                </p>
-                <h3 className="mt-4 font-display text-heading-m text-foreground">
-                  {t(`steps.${step}.title`)}
-                </h3>
-                <p className="mt-3 text-body-s text-graphite-700">{t(`steps.${step}.body`)}</p>
-              </li>
-            ))}
+            {STEPS.map((step, i) => {
+              const StepIcon = STEP_ICONS[step];
+              return (
+                <li key={step} className="border-t-2 border-foreground pt-5">
+                  <IconBadge className="mb-5">
+                    <StepIcon size={22} />
+                  </IconBadge>
+                  <p className="flex items-baseline gap-3 text-caption font-medium uppercase tracking-[0.14em] text-graphite-700">
+                    <span className="font-mono" aria-hidden="true">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {t(`steps.${step}.label`)}
+                  </p>
+                  <h3 className="mt-4 font-display text-heading-m text-foreground">
+                    {t(`steps.${step}.title`)}
+                  </h3>
+                  <p className="mt-3 text-body-s text-graphite-700">{t(`steps.${step}.body`)}</p>
+                </li>
+              );
+            })}
           </ol>
         </div>
       </section>

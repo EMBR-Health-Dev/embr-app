@@ -132,7 +132,8 @@ describe("Public landing page (/)", () => {
 
   it("labels product mockups as illustrative sample data", () => {
     renderPage();
-    expect(screen.getAllByText("Illustrative example with sample data")).toHaveLength(2);
+    // The hero's week card, the record mockup and the BRIEF mockup.
+    expect(screen.getAllByText("Illustrative example with sample data")).toHaveLength(3);
   });
 
   it("offers Log in to signed-out visitors and never links to pages that don't exist", () => {
