@@ -56,4 +56,15 @@ describe("Export page — date range boundaries", () => {
     const link = await screen.findByText("Daily context (CSV)");
     expect(link.closest("a")!.getAttribute("href")).toBe("/api/export/context-logs.csv");
   });
+
+  it("offers the whole record as one file, ignoring the picked dates", async () => {
+    const user = userEvent.setup();
+    const { default: ExportPage } = await import("./page");
+    renderWithIntl(<ExportPage />);
+
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+
+    const link = await screen.findByText("All my data (JSON)");
+    expect(link.closest("a")!.getAttribute("href")).toBe("/api/export/all-data.json");
+  });
 });

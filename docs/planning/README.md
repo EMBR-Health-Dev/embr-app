@@ -12,6 +12,7 @@ stay off the website until the named reviewer approves them.
 | [Research data plan](research-data-plan.md)                 | Counsel and ethics board | Draft; nothing built, no data shared                                          |
 | [Menopause and work (IZA paper)](career-cost-research.md)   | Founder, counsel         | Copy rules ready; work impact question built (#225), counsel question 13 open |
 | [Performance review, October 2026](performance-2026-10.md)  | Engineering              | Findings and fixes                                                            |
+| [Claims inventory](claims-inventory.md)                     | Clinician, founder       | Every claim with its source or a fix; seven actions open                      |
 
 Each document has a live copy in Claude Docs, where review comments are
 collected. The copies here are the record; if the two differ, the newer

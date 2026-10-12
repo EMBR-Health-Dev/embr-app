@@ -15,34 +15,34 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Product
 
-| Item                                                   | Status      | Evidence / next step                                                                          |
-| ------------------------------------------------------ | ----------- | --------------------------------------------------------------------------------------------- |
-| Core record (log, check in, timeline, symptom history) | Done        | Web and mobile suites green; end to end checked locally at 320 to 1440px                      |
-| EMBR BRIEF (generation, PDF, past briefs)              | Done        | Deterministic patterns first, AI wording only; PDF tests green                                |
-| Night sweats recall                                    | Done        | Morning question (#211), shown on Timeline and BRIEF (#214); never sent to the AI             |
-| Work impact question                                   | Done        | #225; BRIEF and Timeline only, never sent to the AI or to employers; counsel question 13 open |
-| Timeline month view and ranked symptom bars            | Done        | #215, #216                                                                                    |
-| Notebook                                               | Done        | #220; cover colour editable, exported, audited by id only, never sent to the AI               |
-| Display settings (text size, dark mode)                | Done        | Web only (#210, #219); mobile dark mode not built                                             |
-| Synthetic demo ("Meet Maya")                           | Done        | `maya.html`; synthetic data only, every figure calculated on the page; linked from hero       |
-| Web QA                                                 | Done        | Visual pass at 320, 375, 768, 1024, 1440px; no overflow or page errors                        |
-| Mobile QA                                              | Not started | Code and tests only; needs a pass on real iOS and Android devices                             |
-| Accessibility review                                   | In progress | 44px targets, severity readable without colour, focus states; needs a screen reader pass      |
-| EN / JA review                                         | In progress | Copy reviewed in session; needs a native Japanese reviewer before launch                      |
-| Admin and worker deploys                               | Not started | Latest admin and worker deploys on Railway were failing when last checked                     |
+| Item                                                   | Status      | Evidence / next step                                                                                                                                                    |
+| ------------------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core record (log, check in, timeline, symptom history) | Done        | Web and mobile suites green; end to end checked locally at 320 to 1440px                                                                                                |
+| EMBR BRIEF (generation, PDF, past briefs)              | Done        | Deterministic patterns first, AI wording only; PDF tests green                                                                                                          |
+| Night sweats recall                                    | Done        | Morning question (#211), shown on Timeline and BRIEF (#214); never sent to the AI                                                                                       |
+| Work impact question                                   | Done        | #225; BRIEF and Timeline only, never sent to the AI or to employers; counsel question 13 open                                                                           |
+| Timeline month view and ranked symptom bars            | Done        | #215, #216                                                                                                                                                              |
+| Notebook                                               | Done        | #220; cover colour editable, exported, audited by id only, never sent to the AI                                                                                         |
+| Display settings (text size, dark mode)                | Done        | Web only (#210, #219); mobile dark mode not built                                                                                                                       |
+| Synthetic demo ("Meet Maya")                           | Done        | `maya.html`; synthetic data only, every figure calculated on the page; linked from hero                                                                                 |
+| Web QA                                                 | Done        | Visual pass at 320, 375, 768, 1024, 1440px; no overflow or page errors                                                                                                  |
+| Mobile QA                                              | In progress | Builds fixed (test files under `app/` broke every build) and screen reader roles added; 56 screens checked at phone widths. Real device script in `MOBILE-DEVICE-QA.md` |
+| Accessibility review                                   | In progress | 44px targets, severity readable without colour, focus states; needs a screen reader pass                                                                                |
+| EN / JA review                                         | In progress | Copy reviewed in session; needs a native Japanese reviewer before launch                                                                                                |
+| Admin and worker deploys                               | In progress | Admin moved to Railway (Dockerfile build) and live on 11 Oct; needs its origin in the API's `CORS_ORIGIN`. Worker moved to its Dockerfile on 11 Oct                     |
 
 ## Clinical
 
-| Item                                         | Status      | Evidence / next step                                                                     |
-| -------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| FAQ reviewed                                 | Decision    | Rewritten to make fewer medical claims; needs a menopause clinician                      |
-| Resources and Symptom Library reviewed       | Decision    | Same                                                                                     |
-| Field Guide reviewed                         | Decision    | Rewritten without unsourced figures; needs a clinician                                   |
-| Symptom language reviewed                    | Decision    | App taxonomy and severity words (Mild / Moderate / Severe)                               |
-| Escalation and urgent care language reviewed | Decision    | App safety notice and Field Guide section 08                                             |
-| Questions for a healthcare provider sheet    | Decision    | Draft in `planning/clinician-content-review.md`; not in the app until signed off         |
-| Urgent help box on mood and anxiety          | Decision    | Draft wording ready; needs clinician sign off and confirmed crisis lines per country     |
-| Claims inventory completed                   | Not started | List every factual or medical claim on the site, app and PDFs with its source or removal |
+| Item                                         | Status      | Evidence / next step                                                                 |
+| -------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| FAQ reviewed                                 | Decision    | Rewritten to make fewer medical claims; needs a menopause clinician                  |
+| Resources and Symptom Library reviewed       | Decision    | Same                                                                                 |
+| Field Guide reviewed                         | Decision    | Rewritten without unsourced figures; needs a clinician                               |
+| Symptom language reviewed                    | Decision    | App taxonomy and severity words (Mild / Moderate / Severe)                           |
+| Escalation and urgent care language reviewed | Decision    | App safety notice and Field Guide section 08                                         |
+| Questions for a healthcare provider sheet    | Decision    | Draft in `planning/clinician-content-review.md`; not in the app until signed off     |
+| Urgent help box on mood and anxiety          | Decision    | Draft wording ready; needs clinician sign off and confirmed crisis lines per country |
+| Claims inventory completed                   | In progress | Inventory in `planning/claims-inventory.md`; seven fixes and clinician sign off open |
 
 ## Legal
 
@@ -60,18 +60,19 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Security
 
-| Item                | Status      | Evidence / next step                                                                                               |
-| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| Production database | Done        | Railway Postgres in the EU (Amsterdam)                                                                             |
-| Backup verification | In progress | Daily encrypted backups at 03:00 UTC, 30 day pruning; run and record a restore test                                |
-| Access controls     | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                               |
-| Secrets management  | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                          |
-| Error monitoring    | Not started | No `SENTRY_DSN` set in production                                                                                  |
-| Audit logging       | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                          |
-| Deletion workflow   | Done        | Account deletion tested end to end                                                                                 |
-| Data export         | In progress | Symptoms, cycle, daily context, treatments, notes, BRIEF PDF; onboarding answers and consent history still missing |
-| Dependency scanning | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                                 |
-| Incident response   | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                    |
+| Item                     | Status      | Evidence / next step                                                                                                                                        |
+| ------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production database      | Done        | Railway Postgres in the EU (Amsterdam)                                                                                                                      |
+| Personal text encryption | In progress | Notes, notebook, treatment names and BRIEF wording encrypted in the API (`ENCRYPTION.md`); set `DATA_ENCRYPTION_KEY` in Railway, then run the backfill once |
+| Backup verification      | Done        | Daily encrypted backups at 03:00 UTC, 30 day pruning; restore drill passed on 12 October 2026 (see `BACKUPS.md`); repeat quarterly                          |
+| Access controls          | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                                                                        |
+| Secrets management       | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                                                                   |
+| Error monitoring         | Not started | No `SENTRY_DSN` set in production                                                                                                                           |
+| Audit logging            | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                                                                   |
+| Deletion workflow        | Done        | Account deletion tested end to end                                                                                                                          |
+| Data export              | Done        | One JSON file holds the whole record, including onboarding answers and consent history; CSVs and PDF for reading                                            |
+| Dependency scanning      | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                                                                          |
+| Incident response        | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                                                             |
 
 ## Brand
 

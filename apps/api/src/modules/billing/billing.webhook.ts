@@ -1,5 +1,6 @@
+import type { TransactionClient } from "../../lib/prisma.js";
 import type Stripe from "stripe";
-import type { Prisma, StripeSubscriptionStatus } from "../../generated/prisma/index.js";
+import type { StripeSubscriptionStatus } from "../../generated/prisma/index.js";
 import { AppError } from "@embr/shared";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
@@ -104,7 +105,7 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<void> {
   }
 }
 
-async function organizationForCustomer(tx: Prisma.TransactionClient, customerId: string) {
+async function organizationForCustomer(tx: TransactionClient, customerId: string) {
   const org = await billingRepository.findOrganizationByStripeCustomerId(tx, customerId);
   if (!org) {
     // Not an error worth failing the webhook over (Stripe would retry
@@ -127,7 +128,7 @@ async function organizationForCustomer(tx: Prisma.TransactionClient, customerId:
  * silently read the wrong one.
  */
 async function applySubscription(
-  tx: Prisma.TransactionClient,
+  tx: TransactionClient,
   subscription: Stripe.Subscription,
 ): Promise<void> {
   const customerId =
@@ -153,7 +154,7 @@ async function applySubscription(
 }
 
 async function applySubscriptionDeleted(
-  tx: Prisma.TransactionClient,
+  tx: TransactionClient,
   subscription: Stripe.Subscription,
 ): Promise<void> {
   const customerId =

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/* eslint-disable import/no-named-as-default-member -- i18next's default export is the documented instance API; same suppression as app/(app)/brief.test.tsx. */
+/* eslint-disable import/no-named-as-default-member -- i18next's default export is the documented instance API; same suppression as test/screens/brief.test.tsx. */
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import i18next from "i18next";

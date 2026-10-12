@@ -253,6 +253,7 @@ export default function TreatmentsScreen() {
             {formError && <Text style={styles.error}>{formError}</Text>}
 
             <Pressable
+              accessibilityRole="button"
               style={[styles.button, saving && styles.buttonDisabled]}
               onPress={() => void handleSave()}
               disabled={saving}
@@ -328,13 +329,14 @@ export default function TreatmentsScreen() {
                   {item.notes && <Text style={styles.treatmentNotes}>{item.notes}</Text>}
                 </View>
                 <View style={styles.rowActions}>
-                  <Pressable onPress={() => void toggleImpact(item.id)}>
+                  <Pressable accessibilityRole="button" onPress={() => void toggleImpact(item.id)}>
                     <Text style={styles.linkText}>
                       {expanded ? t("treatments.hideImpact") : t("treatments.showImpact")}
                     </Text>
                   </Pressable>
                   {isOngoing && (
                     <Pressable
+                      accessibilityRole="button"
                       onPress={() => void handleEndToday(item.id)}
                       disabled={endingId === item.id}
                     >
@@ -344,6 +346,7 @@ export default function TreatmentsScreen() {
                     </Pressable>
                   )}
                   <Pressable
+                    accessibilityRole="button"
                     onPress={() => void handleDelete(item.id)}
                     disabled={deletingId === item.id}
                   >

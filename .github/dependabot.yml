@@ -23,6 +23,23 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Expo pins these to the versions its SDK was built against (see
+      # expo/bundledNativeModules.json). A plain semver bump breaks the
+      # mobile app: #209 moved react-native 0.86.2 to 0.87.1 and react
+      # to 19.3 under Expo SDK 57, and mobile typecheck failed. Upgrade
+      # them together with `npx expo install --fix` (or an SDK upgrade)
+      # in apps/mobile instead. react and react-dom are shared with the
+      # web and admin apps, which stay on the same React version.
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "@types/react"
+      - dependency-name: "@types/react-dom"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "@react-native-community/*"
     labels:
       - "dependencies"
 

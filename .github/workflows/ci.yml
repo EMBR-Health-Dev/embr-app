@@ -249,6 +249,34 @@ jobs:
       - name: Secret scan (gitleaks)
         uses: gacts/gitleaks@v1
 
+  # Expo Router turns every file under apps/mobile/app/ into a route, so
+  # a stray file there (test files did it for weeks) breaks every iOS,
+  # Android and web bundle while lint, typecheck and the unit tests all
+  # stay green. Nothing else in CI bundles the mobile app, so this job is
+  # the only check that it still builds. It bundles the JavaScript only
+  # (no native compile, no signing), which is what Metro would fail on.
+  mobile-bundle:
+    name: Mobile Bundle (iOS, Android, web)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @embr/types --filter @embr/validation build
+      - name: Bundle with expo export
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+          # Any non localhost URL; the bundle is thrown away.
+          EXPO_PUBLIC_API_URL: https://ci.invalid
+        run: npx expo export --platform ios --platform android --platform web --output-dir dist-ci
+
   build:
     name: Build All Apps
     runs-on: ubuntu-latest
@@ -304,6 +332,7 @@ jobs:
           export JWT_ACCESS_SECRET="ci-only-access-secret-32-chars-min!"
           export JWT_REFRESH_SECRET="ci-only-refresh-secret-32-chars-min!"
           export SSO_ENCRYPTION_KEY="$(head -c 32 /dev/zero | base64)"
+          export DATA_ENCRYPTION_KEY="$(head -c 32 /dev/urandom | base64)"
           export ANTHROPIC_API_KEY="ci-placeholder"
           node dist/server.js > /tmp/boot.log 2>&1 &
           PID=$!

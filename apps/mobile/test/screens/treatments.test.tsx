@@ -67,7 +67,7 @@ function page(items: TreatmentDto[]) {
 }
 
 async function renderScreen() {
-  const { default: TreatmentsScreen } = await import("./treatments");
+  const { default: TreatmentsScreen } = await import("../../app/(app)/treatments");
   render(
     <I18nextProvider i18n={i18next}>
       <TreatmentsScreen />

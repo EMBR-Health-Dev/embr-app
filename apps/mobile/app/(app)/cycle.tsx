@@ -139,6 +139,7 @@ export default function CycleScreen() {
             {formError && <Text style={styles.error}>{formError}</Text>}
 
             <Pressable
+              accessibilityRole="button"
               style={[styles.button, saving && styles.buttonDisabled]}
               onPress={handleSave}
               disabled={saving}

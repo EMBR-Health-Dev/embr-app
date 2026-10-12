@@ -184,6 +184,7 @@ export default function SettingsScreen() {
                       </Text>
                     ) : (
                       <Pressable
+                        accessibilityRole="button"
                         onPress={() => void handleResendVerification()}
                         disabled={resending}
                       >
@@ -231,6 +232,7 @@ export default function SettingsScreen() {
             {passwordError && <Text style={styles.error}>{passwordError}</Text>}
 
             <Pressable
+              accessibilityRole="button"
               style={[styles.button, changingPassword && styles.buttonDisabled]}
               onPress={() => void handleChangePassword()}
               disabled={changingPassword}
@@ -242,7 +244,11 @@ export default function SettingsScreen() {
 
             <View style={styles.devicesHeaderRow}>
               <Text style={[styles.sectionTitle, { marginTop: 0 }]}>{t("settings.devices")}</Text>
-              <Pressable onPress={() => void logoutEverywhere()} disabled={loggingOutAll}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void logoutEverywhere()}
+                disabled={loggingOutAll}
+              >
                 <Text style={styles.dangerText}>
                   {loggingOutAll ? t("settings.loggingOut") : t("settings.logoutEverywhere")}
                 </Text>
@@ -271,6 +277,7 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Pressable
+              accessibilityRole="button"
               onPress={() => void revokeSession(item.id)}
               disabled={revokingId === item.id}
             >
@@ -287,7 +294,11 @@ export default function SettingsScreen() {
         }
         ListFooterComponent={
           <View>
-            <Pressable style={styles.logoutRow} onPress={() => void handleLogout()}>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.logoutRow}
+              onPress={() => void handleLogout()}
+            >
               <Text style={styles.dangerText}>{t("settings.logout")}</Text>
             </Pressable>
 
@@ -303,7 +314,7 @@ export default function SettingsScreen() {
               </Text>
 
               {!deleteConfirming ? (
-                <Pressable onPress={() => setDeleteConfirming(true)}>
+                <Pressable accessibilityRole="button" onPress={() => setDeleteConfirming(true)}>
                   <Text style={styles.dangerText}>{t("settings.deleteMyAccount")}</Text>
                 </Pressable>
               ) : (
@@ -318,6 +329,7 @@ export default function SettingsScreen() {
                     onChangeText={setDeletePassword}
                   />
                   <Pressable
+                    accessibilityRole="link"
                     style={styles.forgotPasswordRow}
                     onPress={() => router.push("/forgot-password")}
                   >
@@ -329,6 +341,7 @@ export default function SettingsScreen() {
                   {deleteError && <Text style={styles.error}>{deleteError}</Text>}
                   <View style={styles.deleteActionsRow}>
                     <Pressable
+                      accessibilityRole="button"
                       style={[styles.deleteButton, deleting && styles.buttonDisabled]}
                       onPress={() => void handleDeleteAccount()}
                       disabled={deleting}
@@ -338,6 +351,7 @@ export default function SettingsScreen() {
                       </Text>
                     </Pressable>
                     <Pressable
+                      accessibilityRole="button"
                       disabled={deleting}
                       onPress={() => {
                         setDeleteConfirming(false);

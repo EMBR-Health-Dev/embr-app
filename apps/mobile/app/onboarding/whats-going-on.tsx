@@ -97,6 +97,7 @@ export default function WhatsGoingOnScreen() {
         })}
       </View>
       <Pressable
+        accessibilityRole="button"
         onPress={() => void handleContinue()}
         disabled={saving}
         style={[styles.button, saving && styles.buttonDisabled]}

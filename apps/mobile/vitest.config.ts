@@ -20,7 +20,7 @@ export default defineConfig({
     environment: "node",
     globals: false,
     // lib/**/*.test.ts: pure logic, unchanged, no DOM needed.
-    // app/**/*.test.tsx: screen component tests, which render through
+    // test/**/*.test.tsx: screen component tests, which render through
     // react-native-web (see the alias above) and therefore need a
     // DOM. Vitest 4 dropped `environmentMatchGlobs` (tried it first;
     // confirmed it's a silent no-op on this version rather than
@@ -28,7 +28,11 @@ export default defineConfig({
     // `// @vitest-environment jsdom` docblock at the top of the file
     // instead — lib tests keep the faster, simpler node default this
     // way, with no environment declared per-file for them.
-    include: ["lib/**/*.test.ts", "app/**/*.test.tsx", "components/**/*.test.tsx"],
+    // Screen tests live in test/screens, never in app/: Expo Router turns
+    // every file under app/ into a route, so a test file there gets
+    // bundled into the app with vitest and breaks every build (see
+    // test/no-tests-in-app.test.ts).
+    include: ["lib/**/*.test.ts", "components/**/*.test.tsx", "test/**/*.test.{ts,tsx}"],
     setupFiles: ["./test/setup.ts"],
     // Vitest's own test-transform pipeline resolves modules
     // separately from top-level Vite `resolve.alias` in some cases
