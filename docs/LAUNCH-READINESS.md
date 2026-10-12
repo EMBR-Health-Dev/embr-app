@@ -33,16 +33,16 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Clinical
 
-| Item                                         | Status      | Evidence / next step                                                                     |
-| -------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| FAQ reviewed                                 | Decision    | Rewritten to make fewer medical claims; needs a menopause clinician                      |
-| Resources and Symptom Library reviewed       | Decision    | Same                                                                                     |
-| Field Guide reviewed                         | Decision    | Rewritten without unsourced figures; needs a clinician                                   |
-| Symptom language reviewed                    | Decision    | App taxonomy and severity words (Mild / Moderate / Severe)                               |
-| Escalation and urgent care language reviewed | Decision    | App safety notice and Field Guide section 08                                             |
-| Questions for a healthcare provider sheet    | Decision    | Draft in `planning/clinician-content-review.md`; not in the app until signed off         |
-| Urgent help box on mood and anxiety          | Decision    | Draft wording ready; needs clinician sign off and confirmed crisis lines per country     |
-| Claims inventory completed                   | Not started | List every factual or medical claim on the site, app and PDFs with its source or removal |
+| Item                                         | Status      | Evidence / next step                                                                 |
+| -------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| FAQ reviewed                                 | Decision    | Rewritten to make fewer medical claims; needs a menopause clinician                  |
+| Resources and Symptom Library reviewed       | Decision    | Same                                                                                 |
+| Field Guide reviewed                         | Decision    | Rewritten without unsourced figures; needs a clinician                               |
+| Symptom language reviewed                    | Decision    | App taxonomy and severity words (Mild / Moderate / Severe)                           |
+| Escalation and urgent care language reviewed | Decision    | App safety notice and Field Guide section 08                                         |
+| Questions for a healthcare provider sheet    | Decision    | Draft in `planning/clinician-content-review.md`; not in the app until signed off     |
+| Urgent help box on mood and anxiety          | Decision    | Draft wording ready; needs clinician sign off and confirmed crisis lines per country |
+| Claims inventory completed                   | In progress | Inventory in `planning/claims-inventory.md`; seven fixes and clinician sign off open |
 
 ## Legal
 
