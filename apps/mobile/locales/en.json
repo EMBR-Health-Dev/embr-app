@@ -434,7 +434,14 @@
       "postmenopause": "No period for 12 months or more (postmenopause)",
       "notSure": "Not sure",
       "preferNotToSay": "Prefer not to say"
-    }
+    },
+    "reminderTitle": "Daily reminder",
+    "reminderHelp": "One gentle nudge a day to check in. It is set on this phone only, and never shows anything about your health.",
+    "reminderToggle": "Remind me each day",
+    "reminderTimeLabel": "Time",
+    "reminderOnAt": "On, every day at {{time}}",
+    "reminderDenied": "Notifications are turned off for EMBR. You can allow them in your phone's settings.",
+    "reminderError": "Could not set the reminder. Please try again."
   },
   "workImpact": {
     "question": "Did symptoms affect your work today?",
@@ -484,5 +491,10 @@
       "message_other": "You've logged {{count}} symptom entries during this period.",
       "caveat": "A count of what you've logged during this treatment, not a measure of how well it's working."
     }
+  },
+  "reminder": {
+    "title": "EMBR",
+    "body": "A minute for today's check in.",
+    "channelName": "Daily reminder"
   }
 }

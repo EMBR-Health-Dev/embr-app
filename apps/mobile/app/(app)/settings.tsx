@@ -11,6 +11,8 @@ import { ApiError } from "../../lib/api-client";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { LifeStageControl } from "../../components/life-stage-control";
+import { ReminderControl } from "../../components/reminder-control";
+import { remindersSupported } from "../../lib/reminders";
 import { errorMarker, destructiveText, theme } from "../../lib/theme";
 
 export default function SettingsScreen() {
@@ -205,6 +207,14 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>{t("settings.lifeStageTitle")}</Text>
             <Text style={styles.sectionHint}>{t("settings.lifeStageHelp")}</Text>
             <LifeStageControl />
+
+            {remindersSupported && (
+              <>
+                <Text style={styles.sectionTitle}>{t("settings.reminderTitle")}</Text>
+                <Text style={styles.sectionHint}>{t("settings.reminderHelp")}</Text>
+                <ReminderControl />
+              </>
+            )}
 
             <Text style={styles.sectionTitle}>{t("settings.changePasswordTitle")}</Text>
             <Text style={styles.sectionHint}>{t("settings.changePasswordHint")}</Text>

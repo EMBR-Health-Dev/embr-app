@@ -14,6 +14,7 @@
     "expo-font": "~57.0.1",
     "expo-linking": "~57.0.5",
     "expo-localization": "~57.0.1",
+    "expo-notifications": "57.0.21",
     "expo-router": "~57.0.12",
     "expo-secure-store": "~57.0.1",
     "expo-sharing": "~57.0.11",
@@ -30,8 +31,8 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "@types/react": "~19.2.2",
     "@types/node": "^22.20.5",
+    "@types/react": "~19.2.2",
     "eslint": "^9.17.0",
     "eslint-config-expo": "^57.0.2",
     "jsdom": "^30.1.2",
