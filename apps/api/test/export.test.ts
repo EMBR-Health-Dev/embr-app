@@ -92,6 +92,14 @@ const { state, nextId } = vi.hoisted(() => {
         createdAt: Date;
         updatedAt: Date;
       }>,
+      briefs: [] as Array<{ id: string; userId: string; aiNarrative: string; createdAt: Date }>,
+      onboarding: [] as Array<{ id: string; userId: string; jobToBeDone: string | null }>,
+      memberships: [] as Array<{
+        userId: string;
+        role: string;
+        createdAt: Date;
+        organization: { name: string };
+      }>,
       emailVerificationTokens: [] as Array<{
         id: string;
         userId: string;
@@ -220,7 +228,22 @@ vi.mock("../src/lib/prisma.js", () => ({
       create: vi.fn().mockResolvedValue({}),
     },
     onboardingProfile: {
-      findUnique: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(state.onboarding.find((o) => o.userId === where.userId) ?? null),
+      ),
+    },
+    clinicalBrief: {
+      findMany: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(state.briefs.filter((b) => b.userId === where.userId)),
+      ),
+    },
+    reflectionDismissal: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    organizationMembership: {
+      findMany: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(state.memberships.filter((m) => m.userId === where.userId)),
+      ),
     },
     symptomLog: {
       create: vi.fn(
@@ -417,6 +440,10 @@ beforeEach(() => {
   state.entries = [];
   state.treatments = [];
   state.notes = [];
+  state.contexts = [];
+  state.briefs = [];
+  state.onboarding = [];
+  state.memberships = [];
   state.emailVerificationTokens = [];
   vi.mocked(buildClinicianSummaryPdf).mockClear();
   vi.mocked(sendVerificationEmail).mockClear();
@@ -746,5 +773,93 @@ describe("GET /export/summary.pdf", () => {
       category: "HRT",
       notes: "twice weekly",
     });
+  });
+});
+
+describe("GET /export/all-data.json", () => {
+  it("requires authentication", async () => {
+    const app = createApp();
+    const res = await request(app).get("/export/all-data.json");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns her whole record, including onboarding answers and consent history, and nobody else's", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const loginRes = await registerAndLogin(agent, "all-data@embr.health");
+    const userId = loginRes.body.data.user.id as string;
+    const other = request.agent(app);
+    const otherRes = await registerAndLogin(other, "all-data-other@embr.health");
+    const otherId = otherRes.body.data.user.id as string;
+
+    await agent
+      .post("/symptom-logs")
+      .send({ category: "HOT_FLASH", severity: "MILD", occurredAt: "2026-09-01T08:00:00.000Z" });
+    await other
+      .post("/symptom-logs")
+      .send({ category: "FATIGUE", severity: "SEVERE", occurredAt: "2026-09-02T08:00:00.000Z" });
+    state.onboarding.push({ id: "ob-1", userId, jobToBeDone: "PREPARE_FOR_APPOINTMENT" });
+    state.briefs.push({ id: "b-1", userId, aiNarrative: "Her wording", createdAt: new Date() });
+    state.briefs.push({
+      id: "b-2",
+      userId: otherId,
+      aiNarrative: "Not hers",
+      createdAt: new Date(),
+    });
+    state.memberships.push({
+      userId,
+      role: "ORG_MEMBER",
+      createdAt: new Date("2026-08-01T00:00:00.000Z"),
+      organization: { name: "Acme" },
+    });
+
+    const res = await agent.get("/export/all-data.json");
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("application/json");
+    expect(res.headers["content-disposition"]).toBe('attachment; filename="embr-all-data.json"');
+
+    const body = JSON.parse(res.text);
+    expect(body.format).toBe("embr-all-data");
+    expect(body.version).toBe(1);
+    expect(body.account).toEqual({
+      id: userId,
+      email: "all-data@embr.health",
+      role: "MEMBER",
+      emailVerifiedAt: expect.any(String),
+      createdAt: expect.any(String),
+    });
+    expect(body.onboarding).toEqual({ id: "ob-1", jobToBeDone: "PREPARE_FOR_APPOINTMENT" });
+    // The consents given at registration, oldest first.
+    expect(body.consentHistory.map((c: { type: string }) => c.type).sort()).toEqual(
+      CURRENT_CONSENTS.map((c) => c.type).sort(),
+    );
+    expect(body.symptomLogs.map((l: { category: string }) => l.category)).toEqual(["HOT_FLASH"]);
+    expect(body.briefs.map((b: { aiNarrative: string }) => b.aiNarrative)).toEqual(["Her wording"]);
+    expect(body.organizations).toEqual([
+      { organizationName: "Acme", role: "ORG_MEMBER", joinedAt: "2026-08-01T00:00:00.000Z" },
+    ]);
+
+    // Never her password hash, and no owner ids repeated on every row.
+    expect(res.text).not.toContain("passwordHash");
+    expect(res.text).not.toContain('"userId"');
+  });
+
+  it("is audited as a data export", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "all-data-audit@embr.health");
+    const { prisma } = await import("../src/lib/prisma.js");
+    vi.mocked(prisma.auditLog.create).mockClear();
+
+    await agent.get("/export/all-data.json");
+
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "DATA_EXPORTED",
+          metadata: { type: "all-data-json" },
+        }),
+      }),
+    );
   });
 });

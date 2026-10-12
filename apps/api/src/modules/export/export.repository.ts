@@ -1,5 +1,6 @@
 import type { ExportQuery } from "@embr/validation";
 import { prisma } from "../../lib/prisma.js";
+import { consentRepository } from "../consent/consent.repository.js";
 
 /**
  * An export is "give me everything in this range," not a page of it —
@@ -109,5 +110,64 @@ export const exportRepository = {
       orderBy: { startDate: "asc" },
       take: EXPORT_ROW_CAP,
     });
+  },
+
+  /**
+   * Everything stored about one person, for the "all my data" download.
+   * No date range and no row cap: this is the copy of her whole record
+   * she is entitled to, so silently truncating it would be wrong. Even
+   * a heavy three year record is a few thousand small rows.
+   *
+   * Left out on purpose: the password hash, sessions and one time
+   * tokens (security secrets, not her record), and the audit log
+   * (security records about the account; see docs/planning/counsel-brief.md).
+   */
+  async loadAllForUser(userId: string) {
+    const byUser = { where: { userId }, omit: { userId: true } } as const;
+    const [
+      account,
+      onboarding,
+      consentHistory,
+      symptomLogs,
+      cycleEntries,
+      contextLogs,
+      treatments,
+      notes,
+      briefs,
+      reflectionDismissals,
+      memberships,
+    ] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true, emailVerifiedAt: true, createdAt: true },
+      }),
+      prisma.onboardingProfile.findUnique({ where: { userId }, omit: { userId: true } }),
+      consentRepository.history(userId),
+      prisma.symptomLog.findMany({ ...byUser, orderBy: { occurredAt: "asc" } }),
+      prisma.cycleEntry.findMany({ ...byUser, orderBy: { date: "asc" } }),
+      prisma.contextLog.findMany({ ...byUser, orderBy: { date: "asc" } }),
+      prisma.treatment.findMany({ ...byUser, orderBy: { startDate: "asc" } }),
+      prisma.note.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
+      prisma.clinicalBrief.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
+      prisma.reflectionDismissal.findMany({ ...byUser, orderBy: { dismissedAt: "asc" } }),
+      prisma.organizationMembership.findMany({
+        where: { userId },
+        select: { role: true, createdAt: true, organization: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+    return {
+      account,
+      onboarding,
+      consentHistory,
+      symptomLogs,
+      cycleEntries,
+      contextLogs,
+      treatments,
+      notes,
+      briefs,
+      reflectionDismissals,
+      memberships,
+    };
   },
 };
