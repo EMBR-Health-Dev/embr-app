@@ -332,6 +332,27 @@
     "todaysBleedingEntry": "Bleeding or spotting today",
     "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician."
   },
+  "Week": {
+    "title": "Your week",
+    "summary": "{count} of {total} days recorded",
+    "legendSymptoms": "How you felt",
+    "legendContext": "Daily context",
+    "legendCycle": "Cycle",
+    "legendBleeding": "Bleeding",
+    "dayRecorded": "recorded {items}",
+    "dayNothing": "nothing recorded",
+    "todayTitle": "Today",
+    "stepSymptoms": "Check in: how are you feeling?",
+    "stepContext": "Add today's context: sleep, stress, night sweats",
+    "stepCycle": "Cycle entry, if your period started, ended or you had flow",
+    "stepBleeding": "Bleeding or spotting, only if you had any",
+    "stepBrief": "Create your BRIEF before your appointment",
+    "optional": "Only if it applies",
+    "done": "done",
+    "notDone": "not done yet",
+    "allDone": "Today is recorded. Nothing else to do.",
+    "encouragement": "A minute a day keeps your record complete for your BRIEF."
+  },
   "Nav": {
     "navigationLabel": "Main navigation",
     "home": "Home",

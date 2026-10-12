@@ -20,6 +20,7 @@ import { ReflectionsSection } from "../../components/reflections-section";
 import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { isPostmenopause } from "../../lib/life-stage";
+import { WeekOnTrack } from "../../components/week-on-track";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { DailyCheckIn } from "../../components/daily-check-in";
@@ -96,6 +97,8 @@ function DashboardContent() {
   const [managesOrg, setManagesOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
   const postmenopause = isPostmenopause(onboardingProfile?.lifeStage);
+  // Bumped after anything is saved here, so "Your week" shows it at once.
+  const [weekRefreshKey, setWeekRefreshKey] = useState(0);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [latestBrief, setLatestBrief] = useState<ClinicalBriefListItemDto | null>(null);
   // Bumped on every successful log submission — ReflectionsSection
@@ -268,6 +271,7 @@ function DashboardContent() {
         occurredAt: new Date().toISOString(),
       });
       setConfirmation(t("hotFlashConfirmation"));
+      setWeekRefreshKey((key) => key + 1);
       setLastHotFlashLog(created);
       setHotFlashSeverity("MODERATE");
       setSeverityUpdated(false);
@@ -337,6 +341,7 @@ function DashboardContent() {
       setNotes("");
       setFormOpen(false);
       setConfirmation(t("logConfirmation"));
+      setWeekRefreshKey((key) => key + 1);
       const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
       setWeeklyFrequency(frequency);
       setReflectionsRefreshKey((key) => key + 1);
@@ -353,6 +358,7 @@ function DashboardContent() {
 
   // The check in saves several entries at once: refresh what this page shows from the record.
   async function refreshAfterCheckIn() {
+    setWeekRefreshKey((key) => key + 1);
     const [, frequency] = await Promise.all([loadLogs(), loadWeeklyFrequency()]);
     setWeeklyFrequency(frequency);
     setReflectionsRefreshKey((key) => key + 1);
@@ -368,6 +374,7 @@ function DashboardContent() {
         isPeriodEnd: periodEnd,
       });
       setCycleSaved(true);
+      setWeekRefreshKey((key) => key + 1);
     } finally {
       setCycleSaving(false);
     }
@@ -386,6 +393,7 @@ function DashboardContent() {
         workImpact: workImpact || undefined,
       });
       setContextSaved(true);
+      setWeekRefreshKey((key) => key + 1);
     } finally {
       setContextSaving(false);
     }
@@ -437,6 +445,13 @@ function DashboardContent() {
             {t("todayLabel")} · {todayLabel}
           </SectionLabel>
           <p className="mt-2 text-sm text-foreground/60">{t("todayDescription")}</p>
+
+          <WeekOnTrack
+            refreshKey={weekRefreshKey}
+            postmenopause={postmenopause}
+            appointmentSoon={onboardingProfile?.appointmentStatus === "WITHIN_MONTH"}
+            latestBriefCreatedAt={latestBrief?.createdAt ?? null}
+          />
 
           <div className="mt-6 flex flex-col items-center gap-3 rounded border border-border-subtle bg-muted/40 py-12 text-center">
             {/* Signature interaction: one tap, no form, for the moment
@@ -510,7 +525,9 @@ function DashboardContent() {
             )}
           </div>
 
-          <DailyCheckIn onSaved={() => void refreshAfterCheckIn()} />
+          <div id="check-in" className="scroll-mt-6">
+            <DailyCheckIn onSaved={() => void refreshAfterCheckIn()} />
+          </div>
         </section>
 
         {/* ---- YOUR RECORD ---- */}
@@ -612,7 +629,10 @@ function DashboardContent() {
           {/* Cycle quick-log for today. After menopause it becomes a
               bleeding log only: no period start or end, but bleeding
               still has a place in her record. */}
-          <div className="mt-6 rounded border border-border-subtle p-5">
+          <div
+            id="cycle-entry"
+            className="mt-6 scroll-mt-6 rounded border border-border-subtle p-5"
+          >
             <h3 className="font-display text-body-l text-foreground">
               {postmenopause ? t("todaysBleedingEntry") : t("todaysCycleEntry")}
             </h3>
@@ -687,7 +707,10 @@ function DashboardContent() {
           {/* Context quick-log for today — a deliberately small, fixed
               set of factors (see the embr-clinical-logic skill
               doctrine), never free text or an open-ended system. */}
-          <div className="mt-6 rounded border border-border-subtle p-5">
+          <div
+            id="context-entry"
+            className="mt-6 scroll-mt-6 rounded border border-border-subtle p-5"
+          >
             <h3 className="font-display text-body-l text-foreground">{t("todaysContextEntry")}</h3>
 
             <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
