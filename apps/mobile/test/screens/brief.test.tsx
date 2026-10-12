@@ -186,7 +186,7 @@ function mockHistoryOf(fixture: ClinicalBriefDto) {
 // code path from handleGenerate() and reaches the exact same
 // BriefContent rendering logic the citation section lives in.
 async function renderAndExpandBrief() {
-  const { default: BriefScreen } = await import("./brief");
+  const { default: BriefScreen } = await import("../../app/(app)/brief");
   render(
     <I18nextProvider i18n={i18next}>
       <BriefScreen />
@@ -200,7 +200,7 @@ async function renderAndExpandBrief() {
 describe("Brief screen — generation", () => {
   it("shows a validation error and never calls the API when dates are missing", async () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -218,7 +218,7 @@ describe("Brief screen — generation", () => {
   it("shows the generated brief and refreshes history and trends on success", async () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
     generateMock.mockResolvedValue(brief({ id: "new-1", aiNarrative: "Freshly generated." }));
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -253,7 +253,7 @@ describe("Brief screen — generation", () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
     const { ApiError } = await import("../../lib/api-client");
     generateMock.mockRejectedValue(new ApiError(422, "VALIDATION_ERROR", "Date range too large"));
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -283,7 +283,7 @@ describe("Brief screen — generation", () => {
     generateMock.mockRejectedValue(
       new ApiError(503, "SERVICE_UNAVAILABLE", "Brief generation is temporarily unavailable."),
     );
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -598,7 +598,7 @@ describe("Brief screen — Your recent trends", () => {
       ],
       longitudinalPatterns: [],
     });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -639,7 +639,7 @@ describe("Brief screen — Your recent trends", () => {
         },
       ],
     });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -670,7 +670,7 @@ describe("Brief screen — Your recent trends", () => {
       ],
       longitudinalPatterns: [],
     });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -690,7 +690,7 @@ describe("Brief screen — Your recent trends", () => {
       categories: [],
       longitudinalPatterns: [],
     });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -875,7 +875,7 @@ describe("Brief screen — multiple items", () => {
       ],
       longitudinalPatterns: [],
     });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -994,7 +994,7 @@ describe("Brief screen — her reason for stopping a treatment", () => {
 describe("Brief screen — PDF / share", () => {
   it("passes the correct brief id to the share helper", async () => {
     mockHistoryOf(brief());
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -1015,7 +1015,7 @@ describe("Brief screen — PDF / share", () => {
         resolveShare = resolve;
       }),
     );
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -1038,7 +1038,7 @@ describe("Brief screen — deletion", () => {
   it("removes a deleted brief from the history list", async () => {
     mockHistoryOf(brief());
     deleteMock.mockResolvedValue(undefined);
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -1084,7 +1084,7 @@ describe("Brief screen — deletion", () => {
     });
     generateMock.mockResolvedValue(brief({ id: "b1", aiNarrative: "Fresh brief text." }));
     deleteMock.mockResolvedValue(undefined);
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -1115,7 +1115,7 @@ describe("Brief screen — deletion", () => {
 describe("Brief screen — history", () => {
   it("shows an empty state when there are no past briefs", async () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />
@@ -1133,7 +1133,7 @@ describe("Brief screen — history", () => {
 describe("Brief screen — medical disclaimer", () => {
   it("renders the same safety framing web shows, near the top of the screen", async () => {
     listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
-    const { default: BriefScreen } = await import("./brief");
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
     render(
       <I18nextProvider i18n={i18next}>
         <BriefScreen />

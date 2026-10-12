@@ -79,6 +79,7 @@ export default function TheLoopScreen() {
 
       <View style={styles.actions}>
         <Pressable
+          accessibilityRole="button"
           onPress={handleLogFirstEntry}
           disabled={finishing}
           style={[styles.button, finishing && styles.buttonDisabled]}
@@ -87,7 +88,11 @@ export default function TheLoopScreen() {
             {finishing ? "…" : t("onboarding.theLoop.logFirstEntry")}
           </Text>
         </Pressable>
-        <Pressable onPress={() => void finishAndGo()} disabled={finishing}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void finishAndGo()}
+          disabled={finishing}
+        >
           <Text style={styles.secondaryLink}>{t("onboarding.theLoop.goToDashboard")}</Text>
         </Pressable>
       </View>

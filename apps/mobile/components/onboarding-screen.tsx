@@ -34,7 +34,7 @@ export function OnboardingScreen({
               />
             ))}
           </View>
-          <Pressable onPress={() => void handleSkip()}>
+          <Pressable accessibilityRole="button" onPress={() => void handleSkip()}>
             <Text style={styles.skipText}>{t("onboarding.skipToDashboard")}</Text>
           </Pressable>
         </View>
