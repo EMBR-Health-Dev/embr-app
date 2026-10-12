@@ -77,6 +77,43 @@ see the note above. It would still need:
 3. Run the weekly restore-verify job manually once via
    `workflow_dispatch` before trusting the schedule.
 
+## Restore drills
+
+A backup counts only once it has been restored. Record every drill here.
+
+| Date            | Backup restored                                                       | Result                                                                                                                                    | Rows restored                                                                                                         |
+| --------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 12 October 2026 | `embr-20261012T030234Z.dump.gpg` (the 03:02 UTC run that day, 36 KiB) | **Passed**: downloaded from the bucket, decrypted with `BACKUP_ENCRYPTION_KEY`, restored with no `pg_restore` errors, sanity check passed | 6 users, 37 symptom logs, 5 cycle entries, 2 daily context entries, 0 treatments, 1 note, 6 BRIEFs, 6 consent records |
+
+**How the 12 October drill ran.** A temporary Railway service built from
+`scripts/backup/Dockerfile`, with `restore-drill.sh` as its start command,
+the backup service's bucket credentials and encryption key passed in as
+Railway variable references (never copied out of Railway), and
+`RESTORE_TEST_DB_URL` pointing at a temporary Postgres 18 service in the
+same project. The production database was not read or touched.
+Afterwards both temporary services (`restore-drill`, `Postgres-a4Pc`) and
+the scratch database's volume (`postgres-volume-s5AH`) were staged for
+deletion; Railway applies deletions only after two factor confirmation in
+the dashboard. The restored copy is health data and must not be left
+behind, so confirm the deletion is applied before closing a drill.
+
+**To repeat it**, quarterly and after any change to the backup scripts or
+the Postgres version:
+
+1. Add a Postgres service from Railway's template (a scratch database).
+2. Add an empty service, set its Dockerfile path to
+   `/scripts/backup/Dockerfile`, restart policy to never, and start
+   command to `./restore-drill.sh`.
+3. Set its variables as references: `BACKUP_ENCRYPTION_KEY`,
+   `BACKUP_S3_BUCKET` and the four `AWS_*` variables from the backup
+   service, and `RESTORE_TEST_DB_URL` from the scratch database's
+   `DATABASE_URL`.
+4. Connect the repository; the deploy runs the drill. Read its logs for
+   "Restore test passed".
+5. Delete both services and the scratch database's volume. Railway asks
+   for two factor confirmation in the dashboard to apply the deletions.
+6. Add a row to the table above.
+
 ## Restoring in a real incident
 
 ```bash
