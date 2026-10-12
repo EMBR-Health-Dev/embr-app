@@ -40,7 +40,10 @@ export function WeekOnTrack({
   postmenopause,
   appointmentSoon,
   latestBriefCreatedAt,
+  onStep,
 }: {
+  /** Called when she taps a step, so the page can open its form. */
+  onStep?: (key: TodayStepKey) => void;
   refreshKey: number;
   postmenopause: boolean;
   appointmentSoon: boolean;
@@ -192,7 +195,7 @@ export function WeekOnTrack({
                   {label}
                 </Link>
               ) : (
-                <a href={href} className={className}>
+                <a href={href} className={className} onClick={() => onStep?.(step.key)}>
                   {label}
                 </a>
               )}
