@@ -116,6 +116,22 @@ describe("Public landing page (/)", () => {
     }
   });
 
+  it("gives small screens a jump-to-section row linking to sections that exist", () => {
+    const { container } = renderPage();
+    const nav = screen.getByRole("navigation", { name: "Jump to a section" });
+    const links = within(nav).getAllByRole("link");
+    expect(links.map((a) => a.textContent)).toEqual([
+      "How it works",
+      "Product",
+      "EMBR BRIEF",
+      "Your data",
+    ]);
+    for (const link of links) {
+      const id = link.getAttribute("href")!.slice(1);
+      expect(container.querySelector(`#${id}`)).not.toBeNull();
+    }
+  });
+
   it("shows the non-diagnostic trust statement and Brief disclaimer", () => {
     renderPage();
     expect(

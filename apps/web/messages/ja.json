@@ -833,6 +833,7 @@
     "mockupCaption": "サンプルデータによるイメージ例",
     "nav": {
       "label": "サイト",
+      "sections": "セクションへ移動",
       "home": "EMBR ホーム",
       "product": "プロダクト",
       "howItWorks": "仕組み",

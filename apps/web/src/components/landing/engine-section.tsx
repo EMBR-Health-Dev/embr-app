@@ -25,7 +25,7 @@ export function EngineSection() {
     <section
       id="engine"
       aria-labelledby="engine-heading"
-      className="scroll-mt-4 border-y border-border-subtle"
+      className="scroll-mt-16 lg:scroll-mt-4 border-y border-border-subtle"
       style={GRID}
     >
       <div className={`${container} py-20 sm:py-28`}>

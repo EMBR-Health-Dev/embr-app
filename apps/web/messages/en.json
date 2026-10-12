@@ -833,6 +833,7 @@
     "mockupCaption": "Illustrative example with sample data",
     "nav": {
       "label": "Site",
+      "sections": "Jump to a section",
       "home": "EMBR home",
       "product": "Product",
       "howItWorks": "How it works",
