@@ -57,7 +57,58 @@ function treatmentCategoryLabel(category: string): string {
   return categoryLabel(category);
 }
 
+/** Version of the all-data file's layout, so a reader can tell what to expect. */
+export const ALL_DATA_EXPORT_VERSION = 1;
+
+/** Drops the owner id from rows that carry it. The repository already
+ * omits it; this keeps the file clean whatever the query returns. */
+function withoutUserId<T extends object>(rows: T[]): Array<Omit<T, "userId">> {
+  return rows.map(
+    (row) =>
+      Object.fromEntries(Object.entries(row).filter(([key]) => key !== "userId")) as Omit<
+        T,
+        "userId"
+      >,
+  );
+}
+
 export const exportService = {
+  /**
+   * Her whole record as one JSON file: account, onboarding answers,
+   * consent history and every entry, note and BRIEF. The CSVs and PDF
+   * are for reading and for appointments; this is the complete copy.
+   */
+  async allDataJson(userId: string) {
+    const data = await exportRepository.loadAllForUser(userId);
+    const account = data.account && {
+      id: data.account.id,
+      email: data.account.email,
+      role: data.account.role,
+      emailVerifiedAt: data.account.emailVerifiedAt,
+      createdAt: data.account.createdAt,
+    };
+    return {
+      format: "embr-all-data",
+      version: ALL_DATA_EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      account,
+      onboarding: data.onboarding ? withoutUserId([data.onboarding])[0] : null,
+      consentHistory: withoutUserId([...data.consentHistory].reverse()),
+      symptomLogs: withoutUserId(data.symptomLogs),
+      cycleEntries: withoutUserId(data.cycleEntries),
+      dailyContext: withoutUserId(data.contextLogs),
+      treatments: withoutUserId(data.treatments),
+      notes: withoutUserId(data.notes),
+      briefs: withoutUserId(data.briefs),
+      dismissedReflections: withoutUserId(data.reflectionDismissals),
+      organizations: data.memberships.map((m) => ({
+        organizationName: m.organization.name,
+        role: m.role,
+        joinedAt: m.createdAt,
+      })),
+    };
+  },
+
   async symptomLogsCsv(userId: string, query: ExportQuery): Promise<string> {
     const logs = await exportRepository.listSymptomLogsForExport(userId, query);
     return toCsv(

@@ -122,6 +122,19 @@ export default function ExportPage() {
           </a>
         ))}
       </section>
+
+      <section className="mt-10" aria-labelledby="all-data-heading">
+        <h2 id="all-data-heading" className="font-medium text-foreground">
+          {t("allDataHeading")}
+        </h2>
+        <a
+          href="/api/export/all-data.json"
+          className="mt-3 flex flex-col gap-1 rounded border border-border-subtle p-4 transition-colors hover:border-primary hover:bg-primary/5"
+        >
+          <span className="font-medium text-foreground">{t("allDataLabel")}</span>
+          <span className="text-sm text-foreground/60">{t("allDataDescription")}</span>
+        </a>
+      </section>
     </main>
   );
 }
