@@ -47,6 +47,7 @@ function emptyProfile(overrides: Partial<OnboardingProfileDto> = {}): Onboarding
     jobToBeDone: null,
     noticedAreas: [],
     appointmentStatus: null,
+    lifeStage: null,
     currentStep: null,
     skipped: false,
     completedAt: null,
@@ -118,7 +119,7 @@ describe("Onboarding index — resume behavior", () => {
 });
 
 describe("Screen 2 — job to be done", () => {
-  it("persists the selection and advances to WHATS_GOING_ON", async () => {
+  it("persists the selection and advances to LIFE_STAGE", async () => {
     const user = userEvent.setup();
     const { default: JobToBeDoneScreen } = await import("./job-to-be-done/page");
 
@@ -128,13 +129,42 @@ describe("Screen 2 — job to be done", () => {
     await waitFor(() =>
       expect(onboardingPatch).toHaveBeenCalledWith({
         jobToBeDone: "PREPARE_FOR_APPOINTMENT",
-        currentStep: "WHATS_GOING_ON",
+        currentStep: "LIFE_STAGE",
       }),
     );
   });
 });
 
-describe("Screen 3 — what's going on", () => {
+describe("Screen 3 — life stage", () => {
+  it("persists the chosen stage and advances to WHATS_GOING_ON", async () => {
+    const user = userEvent.setup();
+    const { default: LifeStageScreen } = await import("./life-stage/page");
+
+    renderWithIntl(<LifeStageScreen />);
+    await user.click(screen.getByText("No period for 12 months or more (postmenopause)"));
+
+    await waitFor(() =>
+      expect(onboardingPatch).toHaveBeenCalledWith({
+        lifeStage: "POSTMENOPAUSE",
+        currentStep: "WHATS_GOING_ON",
+      }),
+    );
+  });
+
+  it("stores nothing when she prefers not to say", async () => {
+    const user = userEvent.setup();
+    const { default: LifeStageScreen } = await import("./life-stage/page");
+
+    renderWithIntl(<LifeStageScreen />);
+    await user.click(screen.getByText("Prefer not to say"));
+
+    await waitFor(() =>
+      expect(onboardingPatch).toHaveBeenCalledWith({ currentStep: "WHATS_GOING_ON" }),
+    );
+  });
+});
+
+describe("Screen 4 — what's going on", () => {
   it("toggles multiple areas and persists them as an array on continue", async () => {
     const user = userEvent.setup();
     const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
@@ -227,7 +257,7 @@ describe("Screen 3 — what's going on", () => {
   });
 });
 
-describe("Screen 4 — appointment status", () => {
+describe("Screen 5 — appointment status", () => {
   it("persists the selection and advances to THE_LOOP", async () => {
     const user = userEvent.setup();
     const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
@@ -270,7 +300,7 @@ describe("Screen 4 — appointment status", () => {
   });
 });
 
-describe("Screen 5 — the loop", () => {
+describe("Screen 6 — the loop", () => {
   it("marks onboarding completed on 'Log your first entry', without ever touching symptom-log or brief creation", async () => {
     const user = userEvent.setup();
     const { default: TheLoopScreen } = await import("./the-loop/page");

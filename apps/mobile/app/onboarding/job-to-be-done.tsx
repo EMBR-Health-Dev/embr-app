@@ -31,8 +31,8 @@ export default function JobToBeDoneScreen() {
   async function handleSelect(value: string) {
     if (selected) return;
     setSelected(value);
-    await patch({ jobToBeDone: value, currentStep: "WHATS_GOING_ON" });
-    setTimeout(() => router.push(STEP_ROUTES.WHATS_GOING_ON), 320);
+    await patch({ jobToBeDone: value, currentStep: "LIFE_STAGE" });
+    setTimeout(() => router.push(STEP_ROUTES.LIFE_STAGE), 320);
   }
 
   return (

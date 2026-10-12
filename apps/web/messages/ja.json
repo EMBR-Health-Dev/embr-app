@@ -157,6 +157,14 @@
       "conversationBody": "もちろん、自分のためだけにEMBRを使い続けることもできます。",
       "logFirstEntry": "最初の記録をつける",
       "goToDashboard": "代わりにダッシュボードへ"
+    },
+    "lifeStage": {
+      "headline": "今のあなたに近いのは？",
+      "hint": "いちばん近いものを選んでください。設定からいつでも変更できます。",
+      "perimenopause": "月経の周期や量が変わってきた（周閉経期）",
+      "postmenopause": "12か月以上月経がない（閉経後）",
+      "notSure": "わからない",
+      "preferNotToSay": "答えない"
     }
   },
   "Enums": {
@@ -594,7 +602,17 @@
     "enterPasswordToConfirm": "確認のためパスワードを入力してください。",
     "permanentlyDelete": "アカウントを完全に削除する",
     "deleting": "削除中…",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "lifeStageTitle": "ライフステージ",
+    "lifeStageHelp": "あなた自身の答えです。EMBRが記録から推測することはなく、AIに送られることもありません。",
+    "lifeStageSaved": "保存しました",
+    "lifeStageError": "保存できませんでした。もう一度お試しください。",
+    "lifeStage": {
+      "perimenopause": "月経の周期や量が変わってきた（周閉経期）",
+      "postmenopause": "12か月以上月経がない（閉経後）",
+      "notSure": "わからない",
+      "preferNotToSay": "答えない"
+    }
   },
   "Brief": {
     "title": "EMBR BRIEF",

@@ -157,6 +157,14 @@
       "conversationBody": "You can also just keep using EMBR for yourself.",
       "logFirstEntry": "Log your first entry",
       "goToDashboard": "Go to dashboard instead"
+    },
+    "lifeStage": {
+      "headline": "Where are you right now?",
+      "hint": "Pick what feels closest. You can change it any time in Settings.",
+      "perimenopause": "My periods are changing or irregular (perimenopause)",
+      "postmenopause": "No period for 12 months or more (postmenopause)",
+      "notSure": "Not sure",
+      "preferNotToSay": "Prefer not to say"
     }
   },
   "Enums": {
@@ -594,7 +602,17 @@
     "enterPasswordToConfirm": "Enter your password to confirm.",
     "permanentlyDelete": "Permanently delete my account",
     "deleting": "Deleting…",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "lifeStageTitle": "Life stage",
+    "lifeStageHelp": "Your own answer. EMBR never guesses this from your logs, and it is never sent to the AI.",
+    "lifeStageSaved": "Saved",
+    "lifeStageError": "Could not save. Please try again.",
+    "lifeStage": {
+      "perimenopause": "My periods are changing or irregular (perimenopause)",
+      "postmenopause": "No period for 12 months or more (postmenopause)",
+      "notSure": "Not sure",
+      "preferNotToSay": "Prefer not to say"
+    }
   },
   "Brief": {
     "title": "EMBR BRIEF",

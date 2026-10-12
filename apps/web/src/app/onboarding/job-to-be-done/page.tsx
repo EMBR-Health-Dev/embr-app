@@ -32,10 +32,10 @@ export default function JobToBeDoneScreen() {
   async function handleSelect(value: string) {
     if (selected) return; // already advancing — ignore a second tap
     setSelected(value);
-    await patch({ jobToBeDone: value, currentStep: "WHATS_GOING_ON" });
+    await patch({ jobToBeDone: value, currentStep: "LIFE_STAGE" });
     // A brief, deliberate pause so the selection reads as registered,
     // not as an instant jump — "immediate and intentional," not jarring.
-    setTimeout(() => router.push(STEP_ROUTES.WHATS_GOING_ON), 320);
+    setTimeout(() => router.push(STEP_ROUTES.LIFE_STAGE), 320);
   }
 
   return (
