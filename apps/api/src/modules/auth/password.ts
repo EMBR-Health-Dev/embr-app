@@ -13,7 +13,7 @@ const HASH_OPTIONS = {
   memoryCost: 2 ** 16, // 64 MiB
   timeCost: 3,
   parallelism: 1,
-};
+} as const;
 
 export async function hashPassword(plaintext: string): Promise<string> {
   return argon2.hash(plaintext, HASH_OPTIONS);
