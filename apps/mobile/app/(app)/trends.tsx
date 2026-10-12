@@ -8,6 +8,7 @@ import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { theme } from "../../lib/theme";
+import { isPostmenopause, useLifeStage } from "../../lib/life-stage";
 
 const WINDOW_DAYS = 90;
 const CYCLE_WINDOW_DAYS = 180;
@@ -20,6 +21,7 @@ function daysAgoIso(days: number): string {
 
 export default function TrendsScreen() {
   const { t } = useTranslation();
+  const postmenopause = isPostmenopause(useLifeStage());
   const [frequency, setFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [lengths, setLengths] = useState<CycleLengthEntryDto[]>([]);
   const [averageCycleLength, setAverageCycleLength] = useState<number | null>(null);
@@ -84,39 +86,42 @@ export default function TrendsScreen() {
               <CoOccurrenceCard from={daysAgoIso(WINDOW_DAYS)} />
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                {t("trends.cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
-              </Text>
-              {lengths.length === 0 ? (
-                <EmptyState icon="calendar-outline" label={t("trends.noCycleDataYet")} />
-              ) : (
-                <>
-                  {averageCycleLength !== null && (
-                    <Text style={styles.averageText}>
-                      {t("trends.averagingPrefix")}
-                      <Text style={{ fontWeight: "600" }}>
-                        {averageCycleLength} {t("trends.daysUnit")}
+            {/* Cycle lengths mean nothing after menopause. */}
+            {!postmenopause && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  {t("trends.cycleLengthHeader", { days: CYCLE_WINDOW_DAYS })}
+                </Text>
+                {lengths.length === 0 ? (
+                  <EmptyState icon="calendar-outline" label={t("trends.noCycleDataYet")} />
+                ) : (
+                  <>
+                    {averageCycleLength !== null && (
+                      <Text style={styles.averageText}>
+                        {t("trends.averagingPrefix")}
+                        <Text style={{ fontWeight: "600" }}>
+                          {averageCycleLength} {t("trends.daysUnit")}
+                        </Text>
+                        {t("trends.averagingSuffix")}
                       </Text>
-                      {t("trends.averagingSuffix")}
-                    </Text>
-                  )}
-                  <View style={{ marginTop: 12 }}>
-                    {lengths.map((l) => (
-                      <View key={l.to} style={styles.lengthRow}>
-                        <Text style={styles.lengthRange}>
-                          {l.from} → {l.to}
-                        </Text>
-                        <Text style={styles.lengthDays}>
-                          {l.days} {t("trends.daysUnit")}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                  <Text style={styles.footnote}>{t("trends.irregularityNote")}</Text>
-                </>
-              )}
-            </View>
+                    )}
+                    <View style={{ marginTop: 12 }}>
+                      {lengths.map((l) => (
+                        <View key={l.to} style={styles.lengthRow}>
+                          <Text style={styles.lengthRange}>
+                            {l.from} → {l.to}
+                          </Text>
+                          <Text style={styles.lengthDays}>
+                            {l.days} {t("trends.daysUnit")}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                    <Text style={styles.footnote}>{t("trends.irregularityNote")}</Text>
+                  </>
+                )}
+              </View>
+            )}
           </>
         )}
       </ScrollView>

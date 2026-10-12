@@ -209,7 +209,8 @@
     "treatments": "治療",
     "trends": "シグナル",
     "brief": "BRIEF",
-    "settings": "設定"
+    "settings": "設定",
+    "bleeding": "出血"
   },
   "home": {
     "greeting": "こんにちは",
@@ -252,7 +253,10 @@
     "noFlowLogged": "経血量の記録なし",
     "periodStart": "・生理開始",
     "periodEnd": "・生理終了",
-    "noEntriesYet": "まだ周期の記録がありません。生理日を記録すると、周期の長さの推移を確認できます。"
+    "noEntriesYet": "まだ周期の記録がありません。生理日を記録すると、周期の長さの推移を確認できます。",
+    "bleedingTitle": "出血・少量の出血",
+    "bleedingLabel": "今日",
+    "bleedingHint": "出血や少量の出血があれば、ここに記録してください。担当医のための記録として残ります。"
   },
   "treatments": {
     "title": "治療",

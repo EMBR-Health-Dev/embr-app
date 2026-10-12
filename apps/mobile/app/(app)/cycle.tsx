@@ -10,6 +10,7 @@ import { Chip } from "../../components/chip";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { errorMarker, theme } from "../../lib/theme";
+import { isPostmenopause, useLifeStage } from "../../lib/life-stage";
 
 const FLOWS = flowIntensitySchema.options;
 
@@ -23,6 +24,9 @@ function todayIsoDate(): string {
 
 export default function CycleScreen() {
   const { t } = useTranslation();
+  // After menopause this screen is a bleeding log only: no period start
+  // or end, but bleeding still has a place in her record.
+  const postmenopause = isPostmenopause(useLifeStage());
   const [entries, setEntries] = useState<CycleEntryDto[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
 
@@ -78,9 +82,14 @@ export default function CycleScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>{t("cycle.title")}</Text>
+            <Text style={styles.title}>
+              {postmenopause ? t("cycle.bleedingTitle") : t("cycle.title")}
+            </Text>
+            {postmenopause && <Text style={styles.hint}>{t("cycle.bleedingHint")}</Text>}
 
-            <Text style={styles.sectionLabel}>{t("cycle.flow")}</Text>
+            <Text style={styles.sectionLabel}>
+              {postmenopause ? t("cycle.bleedingLabel") : t("cycle.flow")}
+            </Text>
             <View style={styles.chipRow}>
               <Chip
                 label={t("cycle.none")}
@@ -103,27 +112,31 @@ export default function CycleScreen() {
               ))}
             </View>
 
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>{t("cycle.periodStartedToday")}</Text>
-              <Switch
-                value={periodStart}
-                onValueChange={(v) => {
-                  setPeriodStart(v);
-                  markDirty();
-                }}
-              />
-            </View>
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>{t("cycle.periodEndedToday")}</Text>
-              <Switch
-                value={periodEnd}
-                onValueChange={(v) => {
-                  setPeriodEnd(v);
-                  markDirty();
-                }}
-              />
-            </View>
-            <Text style={styles.hint}>{t("cycle.periodMiddleHint")}</Text>
+            {!postmenopause && (
+              <>
+                <View style={styles.switchRow}>
+                  <Text style={styles.switchLabel}>{t("cycle.periodStartedToday")}</Text>
+                  <Switch
+                    value={periodStart}
+                    onValueChange={(v) => {
+                      setPeriodStart(v);
+                      markDirty();
+                    }}
+                  />
+                </View>
+                <View style={styles.switchRow}>
+                  <Text style={styles.switchLabel}>{t("cycle.periodEndedToday")}</Text>
+                  <Switch
+                    value={periodEnd}
+                    onValueChange={(v) => {
+                      setPeriodEnd(v);
+                      markDirty();
+                    }}
+                  />
+                </View>
+                <Text style={styles.hint}>{t("cycle.periodMiddleHint")}</Text>
+              </>
+            )}
 
             <TextInput
               style={styles.notesInput}

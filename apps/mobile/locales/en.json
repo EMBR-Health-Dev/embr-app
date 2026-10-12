@@ -209,7 +209,8 @@
     "treatments": "Treatments",
     "trends": "Trends",
     "brief": "BRIEF",
-    "settings": "Settings"
+    "settings": "Settings",
+    "bleeding": "Bleeding"
   },
   "home": {
     "greeting": "Hi",
@@ -252,7 +253,10 @@
     "noFlowLogged": "No flow logged",
     "periodStart": " · Period start",
     "periodEnd": " · Period end",
-    "noEntriesYet": "No cycle entries yet. Logging period days lets your record show cycle lengths over time."
+    "noEntriesYet": "No cycle entries yet. Logging period days lets your record show cycle lengths over time.",
+    "bleedingTitle": "Bleeding or spotting",
+    "bleedingLabel": "Today",
+    "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician."
   },
   "treatments": {
     "title": "Treatments",

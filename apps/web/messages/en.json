@@ -328,7 +328,9 @@
     "evidenceLatestMeta": "{from} → {to} · generated {date}",
     "viewClinicalBrief": "View EMBR BRIEF",
     "generateFirstBrief": "Generate your first EMBR BRIEF",
-    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day.",
+    "todaysBleedingEntry": "Bleeding or spotting today",
+    "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician."
   },
   "Nav": {
     "navigationLabel": "Main navigation",

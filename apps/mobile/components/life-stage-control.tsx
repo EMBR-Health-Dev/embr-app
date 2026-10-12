@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { theme } from "../lib/theme";
+import { setLifeStageCache, useLifeStage } from "../lib/life-stage";
 
 // null is "Prefer not to say": choosing it clears the stored answer.
 const OPTIONS = [
@@ -14,16 +15,9 @@ const OPTIONS = [
 
 export function LifeStageControl() {
   const { t } = useTranslation();
-  const [current, setCurrent] = useState<string | null | undefined>(undefined);
+  const current = useLifeStage();
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"saved" | "error" | null>(null);
-
-  useEffect(() => {
-    api.onboarding
-      .get()
-      .then((profile) => setCurrent(profile.lifeStage))
-      .catch(() => setCurrent(null));
-  }, []);
 
   async function choose(next: string | null) {
     if (next === current || saving) return;
@@ -31,7 +25,7 @@ export function LifeStageControl() {
     setStatus(null);
     try {
       const profile = await api.onboarding.patch({ lifeStage: next });
-      setCurrent(profile.lifeStage);
+      setLifeStageCache(profile.lifeStage);
       setStatus("saved");
     } catch {
       setStatus("error");
