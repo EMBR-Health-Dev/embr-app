@@ -21,6 +21,7 @@ import {
   type HistoryRange,
 } from "../../lib/record-history";
 import { richText } from "../../lib/rich-text";
+import { isPostmenopause, useLifeStage } from "../../lib/life-stage";
 
 // Cycle length needs several period starts to say anything, so the
 // default 90-day view reads cycles over a longer 180 days; the wider
@@ -37,6 +38,7 @@ export default function TrendsPage() {
   const tCommon = useTranslations("Common");
   const router = useRouter();
   const { user, loading, logout } = useAuth();
+  const postmenopause = isPostmenopause(useLifeStage(Boolean(user)));
 
   const [frequency, setFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [lengths, setLengths] = useState<CycleLengthEntryDto[]>([]);
@@ -203,57 +205,61 @@ export default function TrendsPage() {
                   from={startOfDayIso(rangeStart)}
                 />
 
-                <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-6">
-                  <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>
-                  <p className="mt-2 text-body-s text-foreground/60">
-                    {t("cycleHistoryDescription")}
-                  </p>
-                  <h2 className="mt-4 font-display text-heading-m text-foreground">
-                    {range === "all"
-                      ? t("cycleLengthHeaderAll")
-                      : t("cycleLengthHeader", { days: daysSince(cycleStart) - 1 })}
-                  </h2>
-                  {lengths.length === 0 ? (
-                    <>
-                      <p className="mt-3 text-body-s text-foreground/60">{t("noCycleDataYet")}</p>
-                      <p className="mt-1 text-caption text-foreground/40">
-                        {t("noCycleDataCaveat")}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      {averageCycleLength !== null && (
-                        <p className="mt-3 text-body-s text-foreground/70">
-                          {t.rich("averagingDays", {
-                            days: averageCycleLength,
-                            strong: (chunks) => (
-                              <span className="font-medium text-foreground">{chunks}</span>
-                            ),
-                          })}
+                {/* Cycle lengths mean nothing after menopause, so the
+                    section is hidden for her. */}
+                {!postmenopause && (
+                  <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-6">
+                    <SectionLabel>{t("cycleHistoryLabel")}</SectionLabel>
+                    <p className="mt-2 text-body-s text-foreground/60">
+                      {t("cycleHistoryDescription")}
+                    </p>
+                    <h2 className="mt-4 font-display text-heading-m text-foreground">
+                      {range === "all"
+                        ? t("cycleLengthHeaderAll")
+                        : t("cycleLengthHeader", { days: daysSince(cycleStart) - 1 })}
+                    </h2>
+                    {lengths.length === 0 ? (
+                      <>
+                        <p className="mt-3 text-body-s text-foreground/60">{t("noCycleDataYet")}</p>
+                        <p className="mt-1 text-caption text-foreground/40">
+                          {t("noCycleDataCaveat")}
                         </p>
-                      )}
-                      <ul className="mt-4 divide-y divide-border-subtle">
-                        {lengths.map((l) => (
-                          <li
-                            key={l.to}
-                            className="flex items-center justify-between py-2.5 text-body-s"
-                          >
-                            <span className="text-foreground/60">
-                              {l.from} → {l.to}
-                            </span>
-                            <span className="font-medium text-foreground">
-                              <span className="font-mono tabular-nums">{l.days}</span>{" "}
-                              {t("daysUnit")}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-4 text-caption text-foreground/40">
-                        {t("irregularityNote")}
-                      </p>
-                    </>
-                  )}
-                </section>
+                      </>
+                    ) : (
+                      <>
+                        {averageCycleLength !== null && (
+                          <p className="mt-3 text-body-s text-foreground/70">
+                            {t.rich("averagingDays", {
+                              days: averageCycleLength,
+                              strong: (chunks) => (
+                                <span className="font-medium text-foreground">{chunks}</span>
+                              ),
+                            })}
+                          </p>
+                        )}
+                        <ul className="mt-4 divide-y divide-border-subtle">
+                          {lengths.map((l) => (
+                            <li
+                              key={l.to}
+                              className="flex items-center justify-between py-2.5 text-body-s"
+                            >
+                              <span className="text-foreground/60">
+                                {l.from} → {l.to}
+                              </span>
+                              <span className="font-medium text-foreground">
+                                <span className="font-mono tabular-nums">{l.days}</span>{" "}
+                                {t("daysUnit")}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="mt-4 text-caption text-foreground/40">
+                          {t("irregularityNote")}
+                        </p>
+                      </>
+                    )}
+                  </section>
+                )}
               </>
             )}
           </>

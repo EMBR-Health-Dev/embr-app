@@ -19,6 +19,7 @@ import { SectionLabel } from "../../components/section-label";
 import { ReflectionsSection } from "../../components/reflections-section";
 import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
+import { isPostmenopause } from "../../lib/life-stage";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
 import { DailyCheckIn } from "../../components/daily-check-in";
@@ -94,6 +95,7 @@ function DashboardContent() {
   const [logSubmitError, setLogSubmitError] = useState<string | null>(null);
   const [managesOrg, setManagesOrg] = useState(false);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfileDto | null>(null);
+  const postmenopause = isPostmenopause(onboardingProfile?.lifeStage);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [latestBrief, setLatestBrief] = useState<ClinicalBriefListItemDto | null>(null);
   // Bumped on every successful log submission — ReflectionsSection
@@ -607,9 +609,16 @@ function DashboardContent() {
             )}
           </div>
 
-          {/* Cycle quick-log for today. */}
+          {/* Cycle quick-log for today. After menopause it becomes a
+              bleeding log only: no period start or end, but bleeding
+              still has a place in her record. */}
           <div className="mt-6 rounded border border-border-subtle p-5">
-            <h3 className="font-display text-body-l text-foreground">{t("todaysCycleEntry")}</h3>
+            <h3 className="font-display text-body-l text-foreground">
+              {postmenopause ? t("todaysBleedingEntry") : t("todaysCycleEntry")}
+            </h3>
+            {postmenopause && (
+              <p className="mt-1 text-sm text-foreground/60">{t("bleedingHint")}</p>
+            )}
 
             <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{t("flowLabel")}</span>
@@ -634,35 +643,37 @@ function DashboardContent() {
                 flow describes an ongoing quality, while these are the
                 cycle's own start/end boundary events, not variations of
                 the same field. */}
-            <div className="mt-4 border-t border-border-subtle pt-4">
-              <span className="text-sm font-medium text-foreground">{t("periodLabel")}</span>
-              <div className="mt-2 flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={periodStart}
-                    onChange={(e) => {
-                      setPeriodStart(e.target.checked);
-                      setCycleSaved(false);
-                    }}
-                  />
-                  {t("periodStartedToday")}
-                </label>
+            {!postmenopause && (
+              <div className="mt-4 border-t border-border-subtle pt-4">
+                <span className="text-sm font-medium text-foreground">{t("periodLabel")}</span>
+                <div className="mt-2 flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={periodStart}
+                      onChange={(e) => {
+                        setPeriodStart(e.target.checked);
+                        setCycleSaved(false);
+                      }}
+                    />
+                    {t("periodStartedToday")}
+                  </label>
 
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={periodEnd}
-                    onChange={(e) => {
-                      setPeriodEnd(e.target.checked);
-                      setCycleSaved(false);
-                    }}
-                  />
-                  {t("periodEndedToday")}
-                </label>
+                  <label className="flex items-center gap-2 text-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={periodEnd}
+                      onChange={(e) => {
+                        setPeriodEnd(e.target.checked);
+                        setCycleSaved(false);
+                      }}
+                    />
+                    {t("periodEndedToday")}
+                  </label>
+                </div>
+                <p className="mt-2 text-xs text-foreground/45">{t("periodMiddleHint")}</p>
               </div>
-              <p className="mt-2 text-xs text-foreground/45">{t("periodMiddleHint")}</p>
-            </div>
+            )}
             <Button
               variant="ghost"
               onClick={saveCycleEntry}

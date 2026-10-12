@@ -25,6 +25,7 @@ const mockUser = {
 
 const symptomFrequencyMock = vi.fn();
 const cycleLengthMock = vi.fn();
+const onboardingGetMock = vi.fn().mockResolvedValue({ lifeStage: null });
 const coOccurrenceMock = vi.fn().mockResolvedValue(null);
 const contextCoOccurrenceMock = vi.fn().mockResolvedValue(null);
 const evidenceStrengthMock = vi
@@ -36,6 +37,7 @@ const evidenceStrengthMock = vi
 vi.mock("../../lib/api", () => ({
   api: {
     organizations: { mine: vi.fn().mockResolvedValue([]) },
+    onboarding: { get: (...args: unknown[]) => onboardingGetMock(...args) },
     trends: {
       symptomFrequency: (...args: unknown[]) => symptomFrequencyMock(...args),
       cycleLength: (...args: unknown[]) => cycleLengthMock(...args),
@@ -231,5 +233,24 @@ describe("Signals page — nothing recorded at all", () => {
     );
     expect(screen.queryByRole("button", { name: "Last 90 days" })).not.toBeInTheDocument();
     expect(screen.queryByText("Symptoms you recorded on the same days.")).not.toBeInTheDocument();
+  });
+});
+
+describe("Patterns page — after menopause", () => {
+  it("hides cycle history when she has said she is postmenopausal", async () => {
+    onboardingGetMock.mockResolvedValueOnce({ lifeStage: "POSTMENOPAUSE" });
+    evidenceStrengthMock.mockResolvedValue({ strength: "EARLY", distinctDaysLogged: 6 });
+    symptomFrequencyMock.mockResolvedValue([{ category: "HOT_FLASH", count: 6 }]);
+    cycleLengthMock.mockResolvedValue({
+      lengths: [{ from: "2026-01-01", to: "2026-01-29", days: 28 }],
+      averageDays: 28,
+    });
+
+    const { default: TrendsPage } = await import("./page");
+    renderWithIntl(<TrendsPage />);
+
+    expect(await screen.findByText("Hot Flash")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Cycle history")).not.toBeInTheDocument());
+    expect(screen.queryByText("2026-01-01 → 2026-01-29")).not.toBeInTheDocument();
   });
 });

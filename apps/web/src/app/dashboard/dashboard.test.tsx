@@ -41,6 +41,7 @@ const symptomLogsCreate = vi.fn();
 const symptomLogsUpdate = vi.fn();
 const symptomLogsDelete = vi.fn();
 const briefsList = vi.fn().mockResolvedValue({ items: [] });
+const onboardingGet = vi.fn().mockResolvedValue({ jobToBeDone: null });
 const contextLogsUpsert = vi.fn().mockResolvedValue({
   id: "ctx-1",
   date: "2026-01-01",
@@ -76,7 +77,7 @@ vi.mock("../../lib/api", () => ({
       update: symptomLogsUpdate,
       delete: symptomLogsDelete,
     },
-    onboarding: { get: vi.fn().mockResolvedValue({ jobToBeDone: null }) },
+    onboarding: { get: onboardingGet },
     organizations: { mine: vi.fn().mockResolvedValue([]) },
     trends: { symptomFrequency },
     reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
@@ -95,6 +96,7 @@ beforeEach(() => {
   symptomLogsDelete.mockReset().mockResolvedValue(undefined);
   briefsList.mockReset().mockResolvedValue({ items: [] });
   contextLogsUpsert.mockClear();
+  onboardingGet.mockReset().mockResolvedValue({ jobToBeDone: null });
 });
 
 function makeLog(id: string, category = "HOT_FLASH") {
@@ -579,5 +581,31 @@ describe("Dashboard — Clinical Brief as an evidence artifact", () => {
     expect(
       screen.getByText("2026-01-01 → 2026-02-01 · generated February 1, 2026"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — after menopause", () => {
+  it("keeps the full cycle entry when she has not said she is postmenopausal", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(await screen.findByText("Today's cycle entry")).toBeInTheDocument();
+    expect(screen.getByLabelText("Period started today")).toBeInTheDocument();
+  });
+
+  it("turns the cycle entry into a bleeding log with no period start or end", async () => {
+    onboardingGet.mockResolvedValue({ jobToBeDone: null, lifeStage: "POSTMENOPAUSE" });
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(await screen.findByText("Bleeding or spotting today")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Log any bleeding or spotting here. It stays in your record for your clinician.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Today's cycle entry")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Period started today")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Period ended today")).not.toBeInTheDocument();
   });
 });

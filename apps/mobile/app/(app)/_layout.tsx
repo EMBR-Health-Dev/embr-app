@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../lib/auth-context";
 import { theme } from "../../lib/theme";
+import { isPostmenopause, useLifeStage } from "../../lib/life-stage";
 
 function tabIcon(name: keyof typeof Ionicons.glyphMap) {
   function TabIcon({ color, size }: { color: ColorValue; size: number }) {
@@ -15,6 +16,7 @@ function tabIcon(name: keyof typeof Ionicons.glyphMap) {
 export default function AppLayout() {
   const { t } = useTranslation();
   const { user, loading } = useAuth();
+  const postmenopause = isPostmenopause(useLifeStage());
 
   if (loading) {
     return (
@@ -43,7 +45,10 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="cycle"
-        options={{ title: t("tabs.cycle"), tabBarIcon: tabIcon("calendar-outline") }}
+        options={{
+          title: postmenopause ? t("tabs.bleeding") : t("tabs.cycle"),
+          tabBarIcon: tabIcon("calendar-outline"),
+        }}
       />
       <Tabs.Screen
         name="treatments"
