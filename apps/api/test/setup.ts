@@ -8,6 +8,8 @@ process.env.JWT_REFRESH_SECRET ??= "test-only-refresh-secret-do-not-use-in-prod-
 // 32 zero bytes, base64-encoded — fine for tests, never for a real
 // deployment (see env.ts's doc comment on the real key's rotation cost).
 process.env.SSO_ENCRYPTION_KEY ??= Buffer.alloc(32).toString("base64");
+// A different test-only key from the SSO one, as in production.
+process.env.DATA_ENCRYPTION_KEY ??= Buffer.alloc(32, 7).toString("base64");
 // Never actually called in tests — brief.ai.ts is mocked wherever it
 // matters — this just satisfies env.ts's required-field validation at
 // boot.

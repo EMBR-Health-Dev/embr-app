@@ -179,6 +179,21 @@ const apiEnvSchema = z.object({
       return false;
     }
   }, "SSO_ENCRYPTION_KEY must be a base64-encoded 32-byte key"),
+  // ---- Personal text encryption ----
+  // Base64-encoded 32-byte key for the application level encryption of
+  // personal text (notes, notebook pages, treatment names, stored BRIEF
+  // wording; see lib/field-crypto.ts). Required: the API never falls
+  // back to storing that text unencrypted. Losing this key makes the
+  // encrypted text unreadable, in the live database AND in every backup,
+  // so keep a copy outside Railway (a password manager) the day it is
+  // created. Never reuse SSO_ENCRYPTION_KEY or a JWT secret here.
+  DATA_ENCRYPTION_KEY: z.string().refine((v) => {
+    try {
+      return Buffer.from(v, "base64").length === 32;
+    } catch {
+      return false;
+    }
+  }, "DATA_ENCRYPTION_KEY must be a base64-encoded 32-byte key"),
   // How long a single SSO login attempt's state/PKCE/nonce (stored in
   // Redis, keyed by the OAuth `state` value) stays valid — long enough
   // to cover a slow IdP login prompt (MFA, etc.), short enough that a

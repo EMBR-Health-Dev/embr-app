@@ -1,3 +1,4 @@
+import type { TransactionClient } from "../../lib/prisma.js";
 import type { Request } from "express";
 import { AppError, ErrorCode } from "@embr/shared";
 import type { UpsertSsoConnectionInput } from "@embr/validation";
@@ -5,7 +6,6 @@ import type { SsoConnectionDto } from "@embr/types";
 import { env } from "../../config/env.js";
 import { redis } from "../../lib/redis.js";
 import { prisma } from "../../lib/prisma.js";
-import type { Prisma } from "../../generated/prisma/index.js";
 import { ssoRepository } from "./sso.repository.js";
 import { toSsoConnectionDto } from "./sso.mappers.js";
 import { encryptClientSecret, decryptClientSecret } from "./sso.crypto.js";
@@ -226,7 +226,7 @@ export const ssoService = {
     // itself here, since the seat count spans two different tables —
     // memberships and pending invites — that a single-table lock
     // can't cover).
-    const provisionResult = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const provisionResult = await prisma.$transaction(async (tx: TransactionClient) => {
       let txUser = await tx.user.findUnique({ where: { email: identity.email } });
       let created = false;
       if (!txUser) {

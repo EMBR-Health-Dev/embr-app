@@ -1,4 +1,5 @@
-import type { Prisma, StripeSubscriptionStatus } from "../../generated/prisma/index.js";
+import type { TransactionClient } from "../../lib/prisma.js";
+import type { StripeSubscriptionStatus } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 
 export interface SubscriptionStateUpdate {
@@ -12,9 +13,9 @@ export interface SubscriptionStateUpdate {
  * either the top-level client or an open transaction's client. Always
  * a transaction client in practice today (see
  * runIdempotentWebhookTransaction) — kept generic rather than
- * re-typed to Prisma.TransactionClient specifically so a future
+ * re-typed to TransactionClient specifically so a future
  * non-transactional caller isn't forced to fake one. */
-type Db = typeof prisma | Prisma.TransactionClient;
+type Db = typeof prisma | TransactionClient;
 
 export const billingRepository = {
   findOrganizationById(id: string) {
@@ -129,9 +130,9 @@ export const billingRepository = {
   async runIdempotentWebhookTransaction<T>(
     eventId: string,
     eventType: string,
-    work: (tx: Prisma.TransactionClient) => Promise<T>,
+    work: (tx: TransactionClient) => Promise<T>,
   ): Promise<T | null> {
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    return prisma.$transaction(async (tx: TransactionClient) => {
       const isNew = await billingRepository.recordWebhookEventIfNew(tx, eventId, eventType);
       if (!isNew) return null;
       return work(tx);
