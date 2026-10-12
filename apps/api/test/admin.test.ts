@@ -140,6 +140,17 @@ vi.mock("../src/lib/prisma.js", () => ({
   },
 }));
 
+vi.mock("../src/modules/admin/admin.metrics.js", () => ({
+  computeAdminMetrics: vi.fn().mockResolvedValue({
+    generatedAt: "2026-10-12T00:00:00.000Z",
+    accounts: { total: 3, verified: 3, onboarded: 2, new7d: 1, new30d: 2 },
+    activity: { active7d: 1, active30d: 2, avgDaysLogged7d: 2 },
+    retentionWeek4: { cohort: 2, retained: 1, rate: 0.5 },
+    briefs: { generated7d: 1, generated30d: 1, downloaded30d: 1, peopleWithBrief: 1 },
+    weekly: [],
+  }),
+}));
+
 const VALID_PASSWORD = "Sup3rSecret!Pass";
 
 async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: string) {
@@ -241,5 +252,31 @@ describe("GET /admin/audit-logs", () => {
         (l) => l.action === "LOGIN_SUCCEEDED",
       ),
     ).toBe(true);
+  });
+});
+
+describe("GET /admin/metrics", () => {
+  it("returns 403 for a non-admin", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "member-metrics@embr.health");
+
+    const res = await agent.get("/admin/metrics");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns the counts to an admin and records that they looked", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "admin-metrics@embr.health");
+    promoteToAdmin("admin-metrics@embr.health");
+    await agent
+      .post("/auth/login")
+      .send({ email: "admin-metrics@embr.health", password: VALID_PASSWORD });
+
+    const res = await agent.get("/admin/metrics");
+    expect(res.status).toBe(200);
+    expect(res.body.data.retentionWeek4).toEqual({ cohort: 2, retained: 1, rate: 0.5 });
+    expect(state.auditLogs.some((l) => l.action === "ADMIN_VIEWED_METRICS")).toBe(true);
   });
 });
