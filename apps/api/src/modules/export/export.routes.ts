@@ -115,4 +115,20 @@ router.get(
   }),
 );
 
+// The complete record, not a date range: the copy of everything EMBR
+// holds about her. Still available after health processing is
+// withdrawn, like every route here.
+router.get(
+  "/export/all-data.json",
+  asyncHandler(async (req, res) => {
+    const data = await exportService.allDataJson(req.user!.sub);
+    await writeAuditLog(req, "DATA_EXPORTED", req.user!.sub, { type: "all-data-json" });
+    res
+      .status(200)
+      .type("application/json")
+      .set("Content-Disposition", 'attachment; filename="embr-all-data.json"')
+      .send(JSON.stringify(data, null, 2));
+  }),
+);
+
 export { router as exportRouter };
