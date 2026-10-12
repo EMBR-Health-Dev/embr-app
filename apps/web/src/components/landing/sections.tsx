@@ -3,11 +3,34 @@ import { useTranslations } from "next-intl";
 import { CtaLink, Eyebrow, REGISTRATION_OPEN, START_HREF, container } from "./cta-link";
 import { BriefMockup, RecordMockup } from "./mockups";
 import { BrandWordmark } from "../brand-wordmark";
+import {
+  CalendarIcon,
+  DevicesIcon,
+  DownloadIcon,
+  GroupIcon,
+  IconBadge,
+  LockIcon,
+  NoteIcon,
+  SteadyIcon,
+  TrashIcon,
+} from "../little-icons";
 
 const PRODUCT_POINTS = ["record", "signals", "brief"] as const;
 const BRIEF_POINTS = ["contents", "evidence", "questions", "pdf"] as const;
 const EVIDENCE_POINTS = ["dated", "consistent", "descriptive"] as const;
 const PRIVACY_POINTS = ["yours", "export", "delete", "sessions", "employer"] as const;
+const EVIDENCE_ICONS = {
+  dated: CalendarIcon,
+  consistent: SteadyIcon,
+  descriptive: NoteIcon,
+} as const;
+const PRIVACY_ICONS = {
+  yours: LockIcon,
+  export: DownloadIcon,
+  delete: TrashIcon,
+  sessions: DevicesIcon,
+  employer: GroupIcon,
+} as const;
 
 export function ProductSection() {
   const t = useTranslations("Landing.product");
@@ -105,14 +128,20 @@ export function EvidenceSection() {
           <p className="mt-4 text-body-m text-graphite-700">{t("body3")}</p>
         </div>
         <ul className="mt-14 grid gap-px overflow-hidden rounded-sm border border-border-subtle bg-border-subtle md:grid-cols-3">
-          {EVIDENCE_POINTS.map((p) => (
-            <li key={p} className="bg-background p-6 sm:p-8">
-              <h3 className="font-display text-heading-m text-foreground">
-                {t(`points.${p}.title`)}
-              </h3>
-              <p className="mt-3 text-body-s text-graphite-700">{t(`points.${p}.body`)}</p>
-            </li>
-          ))}
+          {EVIDENCE_POINTS.map((p) => {
+            const PointIcon = EVIDENCE_ICONS[p];
+            return (
+              <li key={p} className="bg-background p-6 sm:p-8">
+                <IconBadge className="mb-5">
+                  <PointIcon size={22} />
+                </IconBadge>
+                <h3 className="font-display text-heading-m text-foreground">
+                  {t(`points.${p}.title`)}
+                </h3>
+                <p className="mt-3 text-body-s text-graphite-700">{t(`points.${p}.body`)}</p>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>
@@ -135,12 +164,20 @@ export function PrivacySection() {
           <p className="mt-6 text-body-m text-graphite-700">{t("body")}</p>
         </div>
         <dl className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:col-span-8">
-          {PRIVACY_POINTS.map((p) => (
-            <div key={p} className="border-t border-lilac-300 pt-4">
-              <dt className="font-medium text-foreground">{t(`points.${p}.title`)}</dt>
-              <dd className="mt-2 text-body-s text-graphite-700">{t(`points.${p}.body`)}</dd>
-            </div>
-          ))}
+          {PRIVACY_POINTS.map((p) => {
+            const PointIcon = PRIVACY_ICONS[p];
+            return (
+              <div key={p} className="flex gap-4 border-t border-lilac-300 pt-4">
+                <IconBadge size="sm" className="mt-0.5 bg-background">
+                  <PointIcon size={18} />
+                </IconBadge>
+                <div>
+                  <dt className="font-medium text-foreground">{t(`points.${p}.title`)}</dt>
+                  <dd className="mt-2 text-body-s text-graphite-700">{t(`points.${p}.body`)}</dd>
+                </div>
+              </div>
+            );
+          })}
         </dl>
       </div>
     </section>

@@ -832,6 +832,14 @@
         "patterns": "See patterns",
         "evidence": "Build evidence",
         "care": "Prepare for care"
+      },
+      "illustration": {
+        "title": "Your week",
+        "count": "6 of 7 days",
+        "weekdays": "M,T,W,T,F,S,S",
+        "stepCheckIn": "Check in",
+        "stepContext": "Add today's context",
+        "caption": "Illustrative example with sample data"
       }
     },
     "story": {
