@@ -226,6 +226,7 @@ describe("GET /onboarding", () => {
       jobToBeDone: null,
       noticedAreas: [],
       appointmentStatus: null,
+      lifeStage: null,
       currentStep: null,
       skipped: false,
       completedAt: null,
@@ -343,6 +344,40 @@ describe("PATCH /onboarding", () => {
     const res = await agent.get("/onboarding");
 
     expect(res.body.data.currentStep).toBe("JOB_TO_BE_DONE");
+  });
+
+  it("stores a self reported life stage, keeps it after completion, and clears it with null", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+
+    await registerAndLogin(agent, "lifestage@embr.health");
+
+    const set = await agent
+      .patch("/onboarding")
+      .send({ lifeStage: "POSTMENOPAUSE", currentStep: "LIFE_STAGE" });
+    expect(set.status).toBe(200);
+    expect(set.body.data.lifeStage).toBe("POSTMENOPAUSE");
+    expect(set.body.data.currentStep).toBe("LIFE_STAGE");
+
+    // Settings changes it after onboarding has ended.
+    await agent.patch("/onboarding").send({ status: "completed" });
+    const changed = await agent.patch("/onboarding").send({ lifeStage: "NOT_SURE" });
+    expect(changed.body.data.lifeStage).toBe("NOT_SURE");
+    expect(changed.body.data.completedAt).not.toBeNull();
+
+    const cleared = await agent.patch("/onboarding").send({ lifeStage: null });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.data.lifeStage).toBeNull();
+  });
+
+  it("rejects a life stage outside the closed set", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+
+    await registerAndLogin(agent, "lifestage-invalid@embr.health");
+
+    const res = await agent.patch("/onboarding").send({ lifeStage: "MENOPAUSE" });
+    expect(res.status).toBe(400);
   });
 
   it("completion sets completedAt and leaves skipped false", async () => {

@@ -10,6 +10,7 @@ import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
+import { LifeStageControl } from "../../components/life-stage-control";
 import { errorMarker, destructiveText, theme } from "../../lib/theme";
 
 export default function SettingsScreen() {
@@ -200,6 +201,10 @@ export default function SettingsScreen() {
                 )}
               </View>
             )}
+
+            <Text style={styles.sectionTitle}>{t("settings.lifeStageTitle")}</Text>
+            <Text style={styles.sectionHint}>{t("settings.lifeStageHelp")}</Text>
+            <LifeStageControl />
 
             <Text style={styles.sectionTitle}>{t("settings.changePasswordTitle")}</Text>
             <Text style={styles.sectionHint}>{t("settings.changePasswordHint")}</Text>

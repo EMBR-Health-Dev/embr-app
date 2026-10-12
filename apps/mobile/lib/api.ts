@@ -198,6 +198,7 @@ export const api = {
       jobToBeDone?: string;
       noticedAreas?: string[];
       appointmentStatus?: string;
+      lifeStage?: string | null;
       status?: "completed" | "skipped";
     }) => apiFetch<OnboardingProfileDto>("/onboarding", { method: "PATCH", body: input }),
   },

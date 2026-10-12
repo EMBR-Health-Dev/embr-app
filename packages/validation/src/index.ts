@@ -640,9 +640,14 @@ export const onboardingAppointmentStatusSchema = z.enum([
   "NOT_NOW",
 ]);
 
+// Self reported, never inferred from logs. See schema.prisma's LifeStage.
+export const lifeStageSchema = z.enum(["PERIMENOPAUSE", "POSTMENOPAUSE", "NOT_SURE"]);
+export type LifeStageValue = z.infer<typeof lifeStageSchema>;
+
 export const onboardingStepSchema = z.enum([
   "WELCOME",
   "JOB_TO_BE_DONE",
+  "LIFE_STAGE",
   "WHATS_GOING_ON",
   "APPOINTMENT_STATUS",
   "THE_LOOP",
@@ -659,6 +664,8 @@ export const patchOnboardingSchema = z
     jobToBeDone: onboardingJobToBeDoneSchema.optional(),
     noticedAreas: z.array(onboardingAreaSchema).optional(),
     appointmentStatus: onboardingAppointmentStatusSchema.optional(),
+    // null clears it, for "prefer not to say" in Settings.
+    lifeStage: lifeStageSchema.nullable().optional(),
     // Two distinct terminal actions, not a boolean "done" flag — a
     // skip and a full completion both end onboarding the same way
     // (completedAt gets set, onboarding never shows again) but mean

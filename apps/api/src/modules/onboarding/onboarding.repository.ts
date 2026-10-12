@@ -1,4 +1,5 @@
 import {
+  LifeStage,
   OnboardingArea,
   OnboardingAppointmentStatus,
   OnboardingJobToBeDone,
@@ -12,6 +13,7 @@ export interface OnboardingUpsertData {
   jobToBeDone?: string;
   noticedAreas?: string[];
   appointmentStatus?: string;
+  lifeStage?: string | null;
   completedAt?: Date;
   skipped?: boolean;
 }
@@ -46,6 +48,10 @@ export const onboardingRepository = {
           appointmentStatus: data.appointmentStatus as OnboardingAppointmentStatus,
         }),
 
+        ...(data.lifeStage !== undefined && {
+          lifeStage: data.lifeStage as LifeStage | null,
+        }),
+
         ...(data.completedAt !== undefined && {
           completedAt: data.completedAt,
         }),
@@ -72,6 +78,10 @@ export const onboardingRepository = {
 
         ...(data.appointmentStatus !== undefined && {
           appointmentStatus: data.appointmentStatus as OnboardingAppointmentStatus,
+        }),
+
+        ...(data.lifeStage !== undefined && {
+          lifeStage: data.lifeStage as LifeStage | null,
         }),
 
         ...(data.completedAt !== undefined && {

@@ -10,6 +10,7 @@ interface OnboardingPatchInput {
   jobToBeDone?: string;
   noticedAreas?: string[];
   appointmentStatus?: string;
+  lifeStage?: string | null;
   status?: "completed" | "skipped";
 }
 

@@ -30,6 +30,8 @@ vi.mock("../../lib/auth-context", () => ({
 const deleteAccountMock = vi.fn();
 const resendVerificationMock = vi.fn();
 const sessionsListMock = vi.fn().mockResolvedValue([]);
+const onboardingGetMock = vi.fn();
+const onboardingPatchMock = vi.fn();
 vi.mock("../../lib/api", () => ({
   api: {
     auth: {
@@ -41,6 +43,10 @@ vi.mock("../../lib/api", () => ({
     },
     organizations: {
       mine: vi.fn().mockResolvedValue([]),
+    },
+    onboarding: {
+      get: (...args: unknown[]) => onboardingGetMock(...args),
+      patch: (...args: unknown[]) => onboardingPatchMock(...args),
     },
   },
 }));
@@ -65,7 +71,46 @@ beforeEach(() => {
   deleteAccountMock.mockReset();
   resendVerificationMock.mockReset();
   sessionsListMock.mockClear();
+  onboardingGetMock.mockReset().mockResolvedValue({ lifeStage: null });
+  onboardingPatchMock.mockReset();
   mockUser.emailVerified = false;
+});
+
+describe("Settings — life stage", () => {
+  it("shows the stored answer and saves a change", async () => {
+    onboardingGetMock.mockResolvedValue({ lifeStage: "PERIMENOPAUSE" });
+    onboardingPatchMock.mockResolvedValue({ lifeStage: "POSTMENOPAUSE" });
+    const user = userEvent.setup();
+    const { default: SettingsPage } = await import("./page");
+    renderWithIntl(<SettingsPage />);
+
+    const peri = await screen.findByRole("radio", {
+      name: "My periods are changing or irregular (perimenopause)",
+    });
+    expect(peri).toHaveAttribute("aria-checked", "true");
+
+    await user.click(
+      screen.getByRole("radio", { name: "No period for 12 months or more (postmenopause)" }),
+    );
+
+    expect(onboardingPatchMock).toHaveBeenCalledWith({ lifeStage: "POSTMENOPAUSE" });
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "No period for 12 months or more (postmenopause)" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("clears the answer with Prefer not to say", async () => {
+    onboardingGetMock.mockResolvedValue({ lifeStage: "NOT_SURE" });
+    onboardingPatchMock.mockResolvedValue({ lifeStage: null });
+    const user = userEvent.setup();
+    const { default: SettingsPage } = await import("./page");
+    renderWithIntl(<SettingsPage />);
+
+    await user.click(await screen.findByRole("radio", { name: "Prefer not to say" }));
+
+    expect(onboardingPatchMock).toHaveBeenCalledWith({ lifeStage: null });
+  });
 });
 
 describe("Settings — account deletion password recovery link", () => {

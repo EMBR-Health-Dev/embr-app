@@ -943,6 +943,9 @@ export interface OnboardingProfileDto {
   jobToBeDone: string | null;
   noticedAreas: string[];
   appointmentStatus: string | null;
+  /** PERIMENOPAUSE, POSTMENOPAUSE or NOT_SURE, as she reported it; null
+   * if unanswered. Never inferred from her logs. */
+  lifeStage: string | null;
   currentStep: string | null;
   skipped: boolean;
   completedAt: string | null;

@@ -779,9 +779,20 @@ enum OnboardingAppointmentStatus {
 enum OnboardingStep {
   WELCOME
   JOB_TO_BE_DONE
+  LIFE_STAGE
   WHATS_GOING_ON
   APPOINTMENT_STATUS
   THE_LOOP
+}
+
+/// Where the person says she is, in her own words. Always self reported
+/// and changeable in Settings; EMBR never infers or corrects it from her
+/// logs, and it is never sent to the AI. Null means she hasn't answered
+/// or chose not to.
+enum LifeStage {
+  PERIMENOPAUSE
+  POSTMENOPAUSE
+  NOT_SURE
 }
 
 // ---- Reflections (Milestone 19) ----
@@ -834,6 +845,7 @@ model OnboardingProfile {
   jobToBeDone       OnboardingJobToBeDone?
   noticedAreas      OnboardingArea[]             @default([])
   appointmentStatus OnboardingAppointmentStatus?
+  lifeStage         LifeStage?
   currentStep       OnboardingStep?
 
   /// True if the person explicitly skipped to the dashboard rather than
