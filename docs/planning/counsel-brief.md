@@ -61,7 +61,7 @@ today, so an answer can be turned into a change directly.
 | 7   | Do transfers abroad need extra steps: Japanese users to an EU database, and computed counts to Anthropic in the US?                     | Data stored in the EU; Anthropic receives counts and patterns only, no notes or treatment names                                               |
 | 8   | Is EMBR a medical device, or software outside that rule, in each launch market (Japan, EU, UK, US)?                                     | Copy says EMBR describes and does not diagnose, predict or treat; the website FAQ says it is not a medical device                             |
 | 9   | Which processors need a signed data processing agreement, and are their terms adequate (Railway, Anthropic, Resend, Formspree, Stripe)? | Unknown to engineering whether agreements are signed                                                                                          |
-| 10  | How long may the security audit log, with IP address and user agent, be kept?                                                           | Kept with no expiry; when an account is deleted, its log entries stay but lose the link to the user                                           |
+| 10  | How long may the security audit log, with IP address and user agent, be kept, and must it be in a person's own data download?           | Kept with no expiry; when an account is deleted, its log entries stay but lose the link to the user. Left out of the all data download        |
 | 11  | What retention wording is right, given that backups keep deleted data for about 30 days?                                                | Deletion is immediate in the live database; backups roll off after about 30 days                                                              |
 | 12  | What must breach notification cover (GDPR 72 hours, APPI report to the PPC), and who is responsible?                                    | `docs/INCIDENT_RESPONSE.md` exists, with no named people and no error monitoring switched on                                                  |
 
@@ -75,24 +75,25 @@ again when the final documents are published.
 The controls counsel is likely to ask about exist in code and have tests;
 the table says where.
 
-| Control             | What it does                                                                                                                     | Where                                                                     |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Consent records     | Append only; one row per acceptance or withdrawal, with version, language and time; no boxes ticked in advance                   | `ConsentRecord` model, `apps/api/src/modules/consent`                     |
-| Health feature gate | Health data cannot be written until the health item is current                                                                   | `requireCurrentConsent` middleware on every health route, including Notes |
-| Versioned documents | Raising a version asks every user to review that item again at next sign in                                                      | `LEGAL_DOCUMENT_VERSIONS` in `packages/validation`                        |
-| Account deletion    | Deletes the account and all its health data at once; tested end to end                                                           | `DELETE /auth/me`                                                         |
-| Data export         | CSV of symptoms, cycle entries, daily context, treatments and notes; BRIEF as PDF                                                | `apps/api/src/modules/export`, `apps/api/src/modules/briefs`              |
-| AI boundary         | Only computed counts and patterns reach Anthropic; notes, notebook entries, treatment names and night sweats recall are not sent | `stage4-ai-projection.ts`                                                 |
-| Audit log           | Sign in, consent, symptom, check in, BRIEF, export and notebook events                                                           | `apps/api/src/modules/auth/audit.ts`                                      |
-| Data location       | Database and backups in the EU (Amsterdam)                                                                                       | Railway                                                                   |
-| Closed sign up      | Public registration is off until a deliberate switch                                                                             | `PUBLIC_REGISTRATION_ENABLED`, `NEXT_PUBLIC_REGISTRATION_OPEN`            |
+| Control             | What it does                                                                                                                            | Where                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Consent records     | Append only; one row per acceptance or withdrawal, with version, language and time; no boxes ticked in advance                          | `ConsentRecord` model, `apps/api/src/modules/consent`                     |
+| Health feature gate | Health data cannot be written until the health item is current                                                                          | `requireCurrentConsent` middleware on every health route, including Notes |
+| Versioned documents | Raising a version asks every user to review that item again at next sign in                                                             | `LEGAL_DOCUMENT_VERSIONS` in `packages/validation`                        |
+| Account deletion    | Deletes the account and all its health data at once; tested end to end                                                                  | `DELETE /auth/me`                                                         |
+| Data export         | The whole record as one JSON file (account, onboarding answers, consent history, every entry, note and BRIEF); CSVs and PDF for reading | `apps/api/src/modules/export`, `apps/api/src/modules/briefs`              |
+| AI boundary         | Only computed counts and patterns reach Anthropic; notes, notebook entries, treatment names and night sweats recall are not sent        | `stage4-ai-projection.ts`                                                 |
+| Audit log           | Sign in, consent, symptom, check in, BRIEF, export and notebook events                                                                  | `apps/api/src/modules/auth/audit.ts`                                      |
+| Data location       | Database and backups in the EU (Amsterdam)                                                                                              | Railway                                                                   |
+| Closed sign up      | Public registration is off until a deliberate switch                                                                                    | `PUBLIC_REGISTRATION_ENABLED`, `NEXT_PUBLIC_REGISTRATION_OPEN`            |
 
 ## Known gaps
 
 Five gaps are engineering's to close before launch.
 
-- [ ] **Export is incomplete.** Daily context was added in #212 and notes
-      in #220. Onboarding answers and consent history are still to do.
+- [x] **Export is incomplete.** Closed: `GET /export/all-data.json`
+      adds onboarding answers, consent history, BRIEFs and organisation
+      memberships to everything the CSVs already held.
 - [ ] **No screen to withdraw consent.** The endpoint exists; the Settings
       screen waits on counsel's answer to question 3.
 - [ ] **Error monitoring is off.** Sentry is supported but `SENTRY_DSN` is

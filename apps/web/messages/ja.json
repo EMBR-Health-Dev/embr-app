@@ -716,7 +716,10 @@
     "notesLabel": "ノート（CSV）",
     "notesDescription": "指定した期間に作成したノートを、タイトルと本文とともに1行ずつまとめたものです。",
     "treatmentsLabel": "治療の記録（CSV）",
-    "treatmentsDescription": "指定した期間のすべての治療記録を1行ずつまとめたものです。"
+    "treatmentsDescription": "指定した期間のすべての治療記録を1行ずつまとめたものです。",
+    "allDataHeading": "すべてを1つのファイルに",
+    "allDataLabel": "すべてのデータ（JSON）",
+    "allDataDescription": "アカウント情報、オンボーディングの回答、同意の履歴、すべての記録、ノート、BRIEFを1つのファイルにまとめたものです。上の期間指定は適用されません。"
   },
   "Treatments": {
     "stopReasonLabel": "中止した理由（任意）",

@@ -716,7 +716,10 @@
     "notesLabel": "Notes (CSV)",
     "notesDescription": "Every note started in the range, one row each, with its title and text.",
     "treatmentsLabel": "Treatments (CSV)",
-    "treatmentsDescription": "Every treatment logged in the range, one row each."
+    "treatmentsDescription": "Every treatment logged in the range, one row each.",
+    "allDataHeading": "Everything in one file",
+    "allDataLabel": "All my data (JSON)",
+    "allDataDescription": "Your whole record in one machine readable file: account details, onboarding answers, consent history, and every entry, note and BRIEF. The dates above do not apply to it."
   },
   "Treatments": {
     "stopReasonLabel": "Why did you stop? (optional)",

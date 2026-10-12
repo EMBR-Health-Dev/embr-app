@@ -29,7 +29,7 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 | Mobile QA                                              | In progress | Builds fixed (test files under `app/` broke every build) and screen reader roles added; 56 screens checked at phone widths. Real device script in `MOBILE-DEVICE-QA.md` |
 | Accessibility review                                   | In progress | 44px targets, severity readable without colour, focus states; needs a screen reader pass                                                                                |
 | EN / JA review                                         | In progress | Copy reviewed in session; needs a native Japanese reviewer before launch                                                                                                |
-| Admin and worker deploys                               | Not started | Latest admin and worker deploys on Railway were failing when last checked                                                                                               |
+| Admin and worker deploys                               | In progress | Admin moved to Railway (Dockerfile build) and live on 11 Oct; needs its origin in the API's `CORS_ORIGIN`. Worker moved to its Dockerfile on 11 Oct                     |
 
 ## Clinical
 
@@ -60,18 +60,18 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 
 ## Security
 
-| Item                | Status      | Evidence / next step                                                                                               |
-| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| Production database | Done        | Railway Postgres in the EU (Amsterdam)                                                                             |
-| Backup verification | In progress | Daily encrypted backups at 03:00 UTC, 30 day pruning; run and record a restore test                                |
-| Access controls     | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                               |
-| Secrets management  | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                          |
-| Error monitoring    | Not started | No `SENTRY_DSN` set in production                                                                                  |
-| Audit logging       | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                          |
-| Deletion workflow   | Done        | Account deletion tested end to end                                                                                 |
-| Data export         | In progress | Symptoms, cycle, daily context, treatments, notes, BRIEF PDF; onboarding answers and consent history still missing |
-| Dependency scanning | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                                 |
-| Incident response   | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                    |
+| Item                | Status      | Evidence / next step                                                                                             |
+| ------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| Production database | Done        | Railway Postgres in the EU (Amsterdam)                                                                           |
+| Backup verification | In progress | Daily encrypted backups at 03:00 UTC, 30 day pruning; run and record a restore test                              |
+| Access controls     | In progress | Owner and admin roles in app; review Railway and GitHub access lists                                             |
+| Secrets management  | In progress | Railway variables; remove leftover SMTP variables that are no longer used                                        |
+| Error monitoring    | Not started | No `SENTRY_DSN` set in production                                                                                |
+| Audit logging       | Done        | Auth, consent, symptom, check in and BRIEF events audited                                                        |
+| Deletion workflow   | Done        | Account deletion tested end to end                                                                               |
+| Data export         | Done        | One JSON file holds the whole record, including onboarding answers and consent history; CSVs and PDF for reading |
+| Dependency scanning | Done        | CI blocks high and critical advisories; documented ignores have removal conditions                               |
+| Incident response   | In progress | `docs/INCIDENT_RESPONSE.md` exists; name the people and run a tabletop exercise                                  |
 
 ## Brand
 
