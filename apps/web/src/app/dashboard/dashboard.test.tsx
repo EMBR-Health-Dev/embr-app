@@ -63,6 +63,11 @@ vi.mock("../../components/daily-check-in", () => ({
   DailyCheckIn: () => null,
 }));
 
+// Fetches its own week of entries; covered in week-on-track.test.tsx.
+vi.mock("../../components/week-on-track", () => ({
+  WeekOnTrack: () => null,
+}));
+
 vi.mock("../../lib/record-history", () => ({
   fetchRecordSpan: vi
     .fn()

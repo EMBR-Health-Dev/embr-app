@@ -332,6 +332,27 @@
     "todaysBleedingEntry": "今日の出血・少量の出血",
     "bleedingHint": "出血や少量の出血があれば、ここに記録してください。担当医のための記録として残ります。"
   },
+  "Week": {
+    "title": "今週の記録",
+    "summary": "{total}日中{count}日記録",
+    "legendSymptoms": "体調",
+    "legendContext": "その日の状況",
+    "legendCycle": "周期",
+    "legendBleeding": "出血",
+    "dayRecorded": "記録：{items}",
+    "dayNothing": "記録なし",
+    "todayTitle": "今日",
+    "stepSymptoms": "チェックイン：今日の体調は？",
+    "stepContext": "今日の状況を追加：睡眠、ストレス、寝汗",
+    "stepCycle": "周期の記録（月経の開始・終了や出血があった日）",
+    "stepBleeding": "出血・少量の出血（あった場合のみ）",
+    "stepBrief": "診察の前にBRIEFを作成",
+    "optional": "当てはまる場合のみ",
+    "done": "完了",
+    "notDone": "未完了",
+    "allDone": "今日の記録は完了です。ほかにすることはありません。",
+    "encouragement": "1日1分の記録で、BRIEFのための記録がそろいます。"
+  },
   "Nav": {
     "navigationLabel": "メインナビゲーション",
     "home": "ホーム",
