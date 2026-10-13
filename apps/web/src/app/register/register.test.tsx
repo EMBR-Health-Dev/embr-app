@@ -57,11 +57,8 @@ describe("Register — consent", () => {
     for (const box of screen.getAllByRole("checkbox")) {
       expect(box).not.toHaveAccessibleName(/Terms of Use|Privacy Policy/);
     }
-    expect(
-      screen.getByText(
-        "The Terms of Use and Privacy Policy will be published before sign-up opens.",
-      ),
-    ).toBeInTheDocument();
+    // Sign up can open before they are published, so no note promises otherwise.
+    expect(screen.queryByText(/will be published/)).toBeNull();
   });
 
   it("does not submit without Terms and Privacy, and says why", async () => {
@@ -146,9 +143,6 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage("ja");
     expect(screen.getByRole("checkbox", { name: /テスト段階/ })).not.toBeChecked();
-    expect(
-      screen.getByText(/利用規約とプライバシーポリシーは、新規登録の受付開始前に公開します/),
-    ).toBeInTheDocument();
     // The explanation names what is handled and why, once, right before the box.
     expect(
       screen.getByText(/EMBRの記録の提供、時間による変化の表示、EMBR BRIEFの作成/),
