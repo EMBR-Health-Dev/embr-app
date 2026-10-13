@@ -55,7 +55,7 @@ export function ProductStory() {
       <section
         id="how-it-works"
         aria-labelledby="how-heading"
-        className="scroll-mt-4 border-b border-border-subtle"
+        className="scroll-mt-16 lg:scroll-mt-4 border-b border-border-subtle"
       >
         <div className={`${container} py-20 sm:py-28`}>
           <h2

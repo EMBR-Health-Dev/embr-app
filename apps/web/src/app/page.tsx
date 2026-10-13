@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { LandingHeader } from "../components/landing/landing-header";
 import { Hero } from "../components/landing/hero";
 import { ProductStory } from "../components/landing/product-story";
+import { SectionNav } from "../components/landing/section-nav";
 import { EngineSection } from "../components/landing/engine-section";
 import {
   BriefSection,
@@ -46,6 +47,7 @@ export default function HomePage() {
         {t("skipToContent")}
       </a>
       <LandingHeader />
+      <SectionNav />
       <main id="main">
         <Hero />
         <ProductStory />

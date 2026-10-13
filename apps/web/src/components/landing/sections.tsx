@@ -36,7 +36,7 @@ export function ProductSection() {
   const t = useTranslations("Landing.product");
 
   return (
-    <section id="product" aria-labelledby="product-heading" className="scroll-mt-4">
+    <section id="product" aria-labelledby="product-heading" className="scroll-mt-16 lg:scroll-mt-4">
       <div
         className={`${container} grid grid-cols-1 gap-14 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
       >
@@ -74,7 +74,7 @@ export function BriefSection() {
     <section
       id="brief"
       aria-labelledby="brief-heading"
-      className="scroll-mt-4 bg-graphite-900 text-pearl-50"
+      className="scroll-mt-16 lg:scroll-mt-4 bg-graphite-900 text-pearl-50"
     >
       <div
         className={`${container} grid grid-cols-1 gap-14 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
@@ -152,7 +152,11 @@ export function PrivacySection() {
   const t = useTranslations("Landing.privacy");
 
   return (
-    <section id="privacy" aria-labelledby="privacy-heading" className="scroll-mt-4 bg-lilac-100">
+    <section
+      id="privacy"
+      aria-labelledby="privacy-heading"
+      className="scroll-mt-16 lg:scroll-mt-4 bg-lilac-100"
+    >
       <div
         className={`${container} grid grid-cols-1 gap-12 py-20 sm:py-28 lg:grid-cols-12 lg:gap-16`}
       >
