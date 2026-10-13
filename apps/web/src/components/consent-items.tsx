@@ -16,9 +16,8 @@ const LABEL_KEY: Record<ConsentType, "termsLabel" | "privacyLabel" | "healthLabe
  * owned by the caller and starts false — nothing here pre-ticks a box.
  *
  * The Terms of Use and Privacy Policy are not published yet, so nothing
- * here links to them or asks anyone to agree to them; a note says they
- * will be published before sign-up opens. Linking them again is a
- * separate release, together with their final versions.
+ * here links to them or asks anyone to agree to them. Linking them
+ * again is a separate release, together with their final versions.
  */
 export function ConsentItems({
   items,
@@ -77,7 +76,6 @@ export function ConsentItems({
           </div>
         );
       })}
-      <p className="text-xs text-foreground/60">{t("documentsPending")}</p>
     </fieldset>
   );
 }
