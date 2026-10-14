@@ -82,7 +82,7 @@ describe("Public landing page (/)", () => {
     renderPage();
     const h1s = screen.getAllByRole("heading", { level: 1 });
     expect(h1s).toHaveLength(1);
-    expect(h1s[0]).toHaveTextContent("Make sense of what you're experiencing.");
+    expect(h1s[0]).toHaveTextContent("Your health story deserves the full picture.");
     expect(screen.getByText("Evidence infrastructure for menopause")).toBeInTheDocument();
   });
 
@@ -99,6 +99,32 @@ describe("Public landing page (/)", () => {
     // header (sm+), hero, closing CTA
     expect(starts.length).toBeGreaterThanOrEqual(3);
     for (const link of starts) expect(link).toHaveAttribute("href", "/register");
+  });
+
+  it("sells one outcome: the full picture, then three steps", () => {
+    renderPage();
+    expect(
+      screen.getByText(/it can be difficult to remember everything when you finally sit down/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/a clearer, structured health summary you can choose to share/),
+    ).toBeInTheDocument();
+    const loop = screen.getByRole("list", { name: "How EMBR works, in three steps" });
+    expect(
+      within(loop)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["01Record", "02See patterns", "03Prepare"]);
+    const how = screen.getByRole("region", { name: "How it works" });
+    expect(
+      within(how)
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual([
+      "Capture how you've been feeling.",
+      "Review changes over time.",
+      "Create a concise summary for your appointment.",
+    ]);
   });
 
   it("links the secondary CTAs to in-page sections that exist", () => {
@@ -173,7 +199,7 @@ describe("Public landing page (/)", () => {
   it("renders fully in Japanese with no missing messages", () => {
     renderPage("ja");
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "いま起きていることを、理解できる形に。",
+      "あなたの健康のストーリーを、まるごと見える形に。",
     );
     for (const link of screen.getAllByRole("link", { name: "EMBRをはじめる" })) {
       expect(link).toHaveAttribute("href", "/register");

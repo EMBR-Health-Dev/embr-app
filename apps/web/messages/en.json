@@ -845,17 +845,17 @@
     },
     "hero": {
       "eyebrow": "Evidence infrastructure for menopause",
-      "headline": "Make sense of what you're experiencing.",
-      "body": "EMBR helps you track symptoms, see patterns over time, and turn your experience into evidence you can bring into your healthcare conversations.",
+      "headline": "Your health story deserves the full picture.",
+      "lead": "Symptoms change. Patterns take time to emerge. And it can be difficult to remember everything when you finally sit down with your clinician.",
+      "body": "EMBR helps you record your experiences over time and turn them into a clearer, structured health summary you can choose to share.",
       "primaryCta": "Start using EMBR",
       "secondaryCta": "See how it works",
       "trust": "Not a diagnosis. Not medical advice. A clearer record for you and your healthcare conversations.",
-      "loopLabel": "How EMBR works, in four steps",
+      "loopLabel": "How EMBR works, in three steps",
       "loop": {
-        "track": "Track",
+        "record": "Record",
         "patterns": "See patterns",
-        "evidence": "Build evidence",
-        "care": "Prepare for care"
+        "prepare": "Prepare"
       },
       "illustration": {
         "title": "Your week",
@@ -879,25 +879,20 @@
       "kicker": "EMBR helps you capture the pattern.",
       "stepsHeading": "How it works",
       "steps": {
-        "track": {
-          "label": "Track",
-          "title": "Capture what you're experiencing.",
+        "record": {
+          "label": "Record",
+          "title": "Capture how you've been feeling.",
           "body": "Log symptoms with severity, cycle entries, daily context like sleep and stress, and the treatments you try. A hot flash can be a single tap."
         },
         "patterns": {
           "label": "See patterns",
-          "title": "Understand changes across time.",
+          "title": "Review changes over time.",
           "body": "Your timeline and Signals show how often symptoms appear, which ones occur together, and how your cycle has changed."
         },
-        "brief": {
-          "label": "Build your brief",
-          "title": "Turn your record into a structured summary.",
-          "body": "Choose a date range and EMBR builds an EMBR BRIEF from what you've logged in it."
-        },
-        "care": {
-          "label": "Prepare for care",
-          "title": "Bring clearer evidence into the conversation.",
-          "body": "Review the brief, download it as a PDF, and take it to the conversation with your healthcare provider."
+        "prepare": {
+          "label": "Prepare",
+          "title": "Create a concise summary for your appointment.",
+          "body": "Choose a date range and EMBR builds an EMBR BRIEF from what you logged. Review it, download it as a PDF and share it if you choose."
         }
       }
     },
