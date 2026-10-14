@@ -1,0 +1,76 @@
+name: Encryption backfill (manual)
+
+# Encrypts personal text written before application level encryption
+# existed, then proves every stored value decrypts. Manual only, never on a
+# schedule or a push. See docs/ENCRYPTION.md, "Turning it on in production".
+#
+#   check: changes nothing. Prints, per field, how many values are
+#          encrypted, how many are still plaintext and how many the key
+#          cannot read. Counts only, never a stored value.
+#   apply: encrypts what is left, then runs the same check. Refuses to
+#          start unless `confirm` is exactly ENCRYPT.
+#
+# Needs the PRODUCTION_DATABASE_URL and PRODUCTION_DATA_ENCRYPTION_KEY
+# repository secrets (the retention workflow uses the same two).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "check (read only) or apply (encrypts)"
+        type: choice
+        options: [check, apply]
+        default: check
+      confirm:
+        description: "For apply only: type ENCRYPT"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: encryption-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: Encryption backfill (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse apply without confirmation
+        if: inputs.mode == 'apply'
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "ENCRYPT" ]; then
+            echo "::error::apply needs confirm set to ENCRYPT"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @embr/api exec prisma generate
+
+      - name: Run backfill
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.PRODUCTION_DATA_ENCRYPTION_KEY }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$MODE" = "check" ]; then
+            pnpm --filter @embr/api exec tsx src/scripts/encrypt-existing.ts --check
+          else
+            pnpm --filter @embr/api exec tsx src/scripts/encrypt-existing.ts
+          fi
