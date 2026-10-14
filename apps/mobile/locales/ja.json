@@ -424,7 +424,14 @@
       "postmenopause": "12か月以上月経がない（閉経後）",
       "notSure": "わからない",
       "preferNotToSay": "答えない"
-    }
+    },
+    "reminderTitle": "毎日のリマインダー",
+    "reminderHelp": "1日1回、チェックインのお知らせ。この端末の中だけで設定され、健康に関する内容は表示されません。",
+    "reminderToggle": "毎日知らせる",
+    "reminderTimeLabel": "時刻",
+    "reminderOnAt": "オン：毎日{{time}}",
+    "reminderDenied": "EMBRの通知がオフになっています。端末の設定から許可できます。",
+    "reminderError": "リマインダーを設定できませんでした。もう一度お試しください。"
   },
   "workImpact": {
     "question": "今日、症状が仕事に影響しましたか？",
@@ -468,5 +475,10 @@
       "message_other": "この期間に{{count}}件の症状を記録しました。",
       "caveat": "これはこの治療期間中に記録された件数であり、効果を示すものではありません。"
     }
+  },
+  "reminder": {
+    "title": "EMBR",
+    "body": "今日のチェックインを1分で。",
+    "channelName": "毎日のリマインダー"
   }
 }

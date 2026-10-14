@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { LOCALES, setStoredLocale, type Locale } from "../lib/i18n/locale";
 import { theme } from "../lib/theme";
+import { refreshReminderText } from "../lib/reminders";
 
 export function LanguageSwitcher() {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,11 @@ export function LanguageSwitcher() {
     try {
       await setStoredLocale(locale);
       await i18n.changeLanguage(locale);
+      await refreshReminderText({
+        title: i18n.t("reminder.title"),
+        body: i18n.t("reminder.body"),
+        channelName: i18n.t("reminder.channelName"),
+      }).catch(() => {});
     } finally {
       setSwitching(false);
     }

@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import type { UserDto } from "@embr/types";
 import { api } from "./api";
 import { ApiError, setSessionExpiredHandler } from "./api-client";
+import { clearReminder } from "./reminders";
 import { tokenStorage } from "./token-storage";
 
 interface AuthContextValue {
@@ -97,6 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.auth.logout(stored.refreshToken).catch(() => {});
     }
     await tokenStorage.clear();
+    // A reminder belongs to this person; the next account on this phone starts without one.
+    await clearReminder().catch(() => {});
     setUser(null);
   }, []);
 
