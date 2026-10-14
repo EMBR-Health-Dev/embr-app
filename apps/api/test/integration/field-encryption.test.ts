@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { connect } from "node:net";
 import { randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { join } from "node:path";
 
 // Personal text against the real Postgres CI provides: what is stored on
@@ -165,4 +165,53 @@ describe.skipIf(!reachable)("personal text encryption against Postgres", () => {
       body: "old body",
     });
   }, 60_000);
+
+  it("keeps last edited dates, and prints counts but never a stored value", async () => {
+    const user = await newUser();
+    const id = randomUUID();
+    const editedAt = new Date("2026-01-15T08:30:00.000Z");
+    await prisma.$executeRaw`
+      INSERT INTO notes (id, "userId", title, body, "updatedAt")
+      VALUES (${id}, ${user.id}, 'distinctive-title-7f3a', 'distinctive-body-7f3a', ${editedAt})`;
+
+    const output = runBackfill([]);
+
+    const rows = await prisma.$queryRaw<Array<{ title: string; updatedAt: Date }>>`
+      SELECT title, "updatedAt" FROM notes WHERE id = ${id}`;
+    expect(rows[0]!.title).toMatch(/^enc:v1:/);
+    expect(rows[0]!.updatedAt.toISOString()).toBe(editedAt.toISOString());
+    expect(output.status).toBe(0);
+    expect(output.text).toMatch(/check Note\.title: \d+ stored, \d+ encrypted, 0 plaintext/);
+    expect(output.text).not.toContain("distinctive");
+    expect(output.text).not.toContain("enc:v1:");
+  }, 60_000);
+
+  it("--check changes nothing and fails on a value the key cannot read", async () => {
+    const user = await newUser();
+    const plain = randomUUID();
+    const broken = randomUUID();
+    await prisma.$executeRaw`
+      INSERT INTO notes (id, "userId", title, body, "updatedAt")
+      VALUES (${plain}, ${user.id}, 'still plaintext', '', now()),
+             (${broken}, ${user.id}, 'enc:v1:AAAA.AAAA.AAAA', '', now())`;
+    try {
+      const output = runBackfill(["--check"]);
+      const rows = await prisma.$queryRaw<Array<{ title: string }>>`
+        SELECT title FROM notes WHERE id = ${plain}`;
+      expect(rows[0]!.title).toBe("still plaintext");
+      expect(output.text).toMatch(/check Note\.title: .*[1-9]\d* plaintext, [1-9]\d* unreadable/);
+      expect(output.status).toBe(1);
+    } finally {
+      await prisma.$executeRaw`DELETE FROM notes WHERE id IN (${plain}, ${broken})`;
+    }
+  }, 60_000);
 });
+
+function runBackfill(args: string[]): { status: number; text: string } {
+  const result = spawnSync(
+    "npx",
+    ["tsx", join(__dirname, "../../src/scripts/encrypt-existing.ts"), ...args],
+    { env: process.env, encoding: "utf8" },
+  );
+  return { status: result.status ?? 1, text: `${result.stdout}${result.stderr}` };
+}

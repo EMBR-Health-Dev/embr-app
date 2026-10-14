@@ -54,8 +54,24 @@ pages and treatment names are never sent.
    API deploy fails its health check and Railway keeps the previous one
    running.
 3. Merge and deploy.
-4. Encrypt the rows written before the change, once:
-   `pnpm --filter @embr/api exec tsx src/scripts/encrypt-existing.ts`
-   with `DATABASE_URL` and `DATA_ENCRYPTION_KEY` set (for example as a one
-   off Railway command on the API service). It skips values already
-   encrypted, so running it twice is safe.
+4. Encrypt the rows written before the change, as its own step:
+   1. **Backup first.** Confirm the daily backup from the same day exists
+      in the bucket (`docs/BACKUPS.md`). It is the way back if anything
+      goes wrong, and it is the last backup holding this text unencrypted.
+   2. **Check.** Run the "Encryption backfill (manual)" workflow with mode
+      `check`. It changes nothing and prints counts per field: stored,
+      encrypted, plaintext, unreadable.
+   3. **Apply.** Run it again with mode `apply` and confirm `ENCRYPT`. It
+      encrypts what is left and then runs the check itself.
+   4. **Verify.** Run `check` once more. Done means `0 plaintext` and
+      `0 unreadable` on every line; the job fails otherwise.
+
+   The script (`src/scripts/encrypt-existing.ts`, also runnable locally
+   with `DATABASE_URL` and `DATA_ENCRYPTION_KEY`, add `--check` for the
+   read only pass) prints counts and never a stored value. Encrypting a
+   value is not an edit, so it keeps each row's `updatedAt`, and it only
+   writes a row whose text is still what it read, so an edit saved during
+   the run is never overwritten. Running it twice is safe.
+
+   Every backup taken after this step needs `DATA_ENCRYPTION_KEY` as well
+   as `BACKUP_ENCRYPTION_KEY` to be readable.
