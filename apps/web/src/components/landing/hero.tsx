@@ -1,14 +1,13 @@
 import { useTranslations } from "next-intl";
 import { CtaLink, Eyebrow, REGISTRATION_OPEN, START_HREF, container } from "./cta-link";
 import { HeroIllustration } from "./hero-illustration";
-import { BriefIcon, ConversationIcon, HeartPulseIcon, PatternIcon } from "../little-icons";
+import { BriefIcon, HeartPulseIcon, PatternIcon } from "../little-icons";
 
-const LOOP = ["track", "patterns", "evidence", "care"] as const;
+const LOOP = ["record", "patterns", "prepare"] as const;
 const LOOP_ICONS = {
-  track: HeartPulseIcon,
+  record: HeartPulseIcon,
   patterns: PatternIcon,
-  evidence: BriefIcon,
-  care: ConversationIcon,
+  prepare: BriefIcon,
 } as const;
 
 export function Hero() {
@@ -23,11 +22,14 @@ export function Hero() {
             <Eyebrow>{t("eyebrow")}</Eyebrow>
             <h1
               id="hero-heading"
-              className="mt-6 max-w-4xl text-balance font-display text-[2.75rem] leading-[1.05] text-foreground sm:text-[4rem] lg:text-[4.5rem]"
+              className="mt-6 max-w-4xl text-balance font-display [word-break:auto-phrase] text-[2.75rem] leading-[1.05] text-foreground sm:text-[4rem] lg:text-[4.5rem]"
             >
               {t("headline")}
             </h1>
             <p className="mt-6 max-w-2xl text-body-l text-graphite-700 sm:mt-8 sm:text-[1.25rem] sm:leading-relaxed">
+              {t("lead")}
+            </p>
+            <p className="mt-4 max-w-2xl text-body-l font-medium text-foreground sm:text-[1.25rem] sm:leading-relaxed">
               {t("body")}
             </p>
 
@@ -51,7 +53,7 @@ export function Hero() {
 
         <ol
           aria-label={t("loopLabel")}
-          className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-border-subtle bg-border-subtle sm:mt-20 sm:grid-cols-4"
+          className="mt-16 grid grid-cols-1 gap-px overflow-hidden rounded-sm border border-border-subtle bg-border-subtle sm:mt-20 sm:grid-cols-3"
         >
           {LOOP.map((step, i) => {
             const StepIcon = LOOP_ICONS[step];

@@ -1,20 +1,13 @@
 import { useTranslations } from "next-intl";
 import { Eyebrow, container } from "./cta-link";
-import {
-  BriefIcon,
-  ConversationIcon,
-  HeartPulseIcon,
-  IconBadge,
-  PatternIcon,
-} from "../little-icons";
+import { BriefIcon, HeartPulseIcon, IconBadge, PatternIcon } from "../little-icons";
 
 const MOMENTS = ["m1", "m2", "m3", "m4"] as const;
-const STEPS = ["track", "patterns", "brief", "care"] as const;
+const STEPS = ["record", "patterns", "prepare"] as const;
 const STEP_ICONS = {
-  track: HeartPulseIcon,
+  record: HeartPulseIcon,
   patterns: PatternIcon,
-  brief: BriefIcon,
-  care: ConversationIcon,
+  prepare: BriefIcon,
 } as const;
 
 export function ProductStory() {
@@ -64,7 +57,7 @@ export function ProductStory() {
           >
             {t("stepsHeading")}
           </h2>
-          <ol className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          <ol className="mt-12 grid gap-10 sm:grid-cols-3 lg:gap-8">
             {STEPS.map((step, i) => {
               const StepIcon = STEP_ICONS[step];
               return (
