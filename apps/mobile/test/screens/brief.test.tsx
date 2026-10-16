@@ -943,6 +943,23 @@ describe("Brief screen — last period day logged", () => {
     ).toBeInTheDocument();
   });
 
+  it("labels a date she reported in Settings as her own answer", async () => {
+    mockHistoryOf(
+      brief({
+        lastRecordedPeriod: { date: "2025-01-10", monthsBeforeBriefEnd: 12, source: "reported" },
+      }),
+    );
+    await renderAndExpandBrief();
+    expect(
+      await screen.findByText(
+        "Last period, as you reported it in Settings: 2025-01-10 (12 months before the end of this BRIEF)",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your own answer in Settings, not a period day logged in EMBR."),
+    ).toBeInTheDocument();
+  });
+
   it("says less than a month for a recent one", async () => {
     mockHistoryOf(brief({ lastRecordedPeriod: { date: "2026-01-20", monthsBeforeBriefEnd: 0 } }));
     await renderAndExpandBrief();

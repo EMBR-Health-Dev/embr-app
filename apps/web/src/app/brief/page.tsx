@@ -875,15 +875,26 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         {brief.lastRecordedPeriod && (
           <>
             <p className="mt-1 text-foreground">
-              {brief.lastRecordedPeriod.date !== null &&
-              brief.lastRecordedPeriod.monthsBeforeBriefEnd !== null
-                ? t("lastPeriodDay", {
-                    date: brief.lastRecordedPeriod.date,
-                    months: brief.lastRecordedPeriod.monthsBeforeBriefEnd,
-                  })
-                : t("noPeriodDayLogged")}
+              {brief.lastRecordedPeriod.date === null ||
+              brief.lastRecordedPeriod.monthsBeforeBriefEnd === null
+                ? t("noPeriodDayLogged")
+                : t(
+                    brief.lastRecordedPeriod.source === "reported"
+                      ? "reportedLastPeriod"
+                      : "lastPeriodDay",
+                    {
+                      date: brief.lastRecordedPeriod.date,
+                      months: brief.lastRecordedPeriod.monthsBeforeBriefEnd,
+                    },
+                  )}
             </p>
-            <p className="mt-1 text-xs text-foreground/60">{t("lastPeriodDayNote")}</p>
+            <p className="mt-1 text-xs text-foreground/60">
+              {t(
+                brief.lastRecordedPeriod.source === "reported"
+                  ? "reportedLastPeriodNote"
+                  : "lastPeriodDayNote",
+              )}
+            </p>
           </>
         )}
       </div>

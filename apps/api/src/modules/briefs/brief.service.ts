@@ -118,6 +118,7 @@ async function generateBriefContent(
     nightSweatsAnswers,
     workImpactAnswers,
     lastPeriodDay,
+    reportedLastPeriod,
   ] = await Promise.all([
     exportRepository.listSymptomLogsForExport(userId, query),
     exportRepository.listCycleEntriesForExport(userId, query),
@@ -131,6 +132,7 @@ async function generateBriefContent(
       userId,
       new Date(`${briefPeriodLabel(fromDate, toDate).toDate}T00:00:00.000Z`),
     ),
+    briefRepository.findReportedLastPeriod(userId),
   ]);
 
   // Its own deterministic count, never merged into symptomSummary and
@@ -144,6 +146,7 @@ async function generateBriefContent(
   // AI input. See last-recorded-period.ts.
   const lastRecordedPeriod = summarizeLastRecordedPeriod(
     lastPeriodDay,
+    reportedLastPeriod,
     briefPeriodLabel(fromDate, toDate).toDate,
   );
 

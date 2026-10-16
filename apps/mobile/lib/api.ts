@@ -199,6 +199,7 @@ export const api = {
       noticedAreas?: string[];
       appointmentStatus?: string;
       lifeStage?: string | null;
+      lastPeriodDate?: string | null;
       status?: "completed" | "skipped";
     }) => apiFetch<OnboardingProfileDto>("/onboarding", { method: "PATCH", body: input }),
   },

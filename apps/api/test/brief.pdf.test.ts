@@ -394,6 +394,22 @@ describe("buildClinicalBriefPdf — last period day logged", () => {
     expect(ja).toContain("最後に記録された生理日：2025-03-10（このBRIEFの終了日の10か月前）");
   });
 
+  it("labels a date she reported in Settings as her own answer", async () => {
+    const text = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({
+          lastRecordedPeriod: { date: "2025-01-10", monthsBeforeBriefEnd: 12, source: "reported" },
+        }),
+        "person@embr.health",
+      ),
+    );
+    expect(text).toContain(
+      "Last period, as she reported it in Settings: 2025-01-10 (12 months before the end of this BRIEF)",
+    );
+    expect(text).toContain("Her own answer in Settings, not a period day logged in EMBR.");
+    expect(text).not.toContain("Last period day logged");
+  });
+
   it("says when none was logged, and prints nothing for a BRIEF made before this existed", async () => {
     const none = await extractPdfText(
       buildClinicalBriefPdf(

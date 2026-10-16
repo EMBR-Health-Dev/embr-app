@@ -701,13 +701,29 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
             brief.lastRecordedPeriod.monthsBeforeBriefEnd === null
               ? t("brief.noPeriodDayLogged")
               : brief.lastRecordedPeriod.monthsBeforeBriefEnd === 0
-                ? t("brief.lastPeriodDayRecent", { date: brief.lastRecordedPeriod.date })
-                : t("brief.lastPeriodDay", {
-                    date: brief.lastRecordedPeriod.date,
-                    count: brief.lastRecordedPeriod.monthsBeforeBriefEnd,
-                  })}
+                ? t(
+                    brief.lastRecordedPeriod.source === "reported"
+                      ? "brief.reportedLastPeriodRecent"
+                      : "brief.lastPeriodDayRecent",
+                    { date: brief.lastRecordedPeriod.date },
+                  )
+                : t(
+                    brief.lastRecordedPeriod.source === "reported"
+                      ? "brief.reportedLastPeriod"
+                      : "brief.lastPeriodDay",
+                    {
+                      date: brief.lastRecordedPeriod.date,
+                      count: brief.lastRecordedPeriod.monthsBeforeBriefEnd,
+                    },
+                  )}
           </Text>
-          <Text style={styles.summaryLine}>{t("brief.lastPeriodDayNote")}</Text>
+          <Text style={styles.summaryLine}>
+            {t(
+              brief.lastRecordedPeriod.source === "reported"
+                ? "brief.reportedLastPeriodNote"
+                : "brief.lastPeriodDayNote",
+            )}
+          </Text>
         </>
       )}
 

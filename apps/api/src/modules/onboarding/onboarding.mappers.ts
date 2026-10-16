@@ -8,6 +8,7 @@ export function toOnboardingProfileDto(profile: OnboardingProfile | null): Onboa
       noticedAreas: [],
       appointmentStatus: null,
       lifeStage: null,
+      lastPeriodDate: null,
       currentStep: null,
       skipped: false,
       completedAt: null,
@@ -19,6 +20,9 @@ export function toOnboardingProfileDto(profile: OnboardingProfile | null): Onboa
     noticedAreas: profile.noticedAreas,
     appointmentStatus: profile.appointmentStatus,
     lifeStage: profile.lifeStage,
+    lastPeriodDate: profile.lastPeriodDate
+      ? profile.lastPeriodDate.toISOString().slice(0, 10)
+      : null,
     currentStep: profile.currentStep,
     skipped: profile.skipped,
     completedAt: profile.completedAt ? profile.completedAt.toISOString() : null,
