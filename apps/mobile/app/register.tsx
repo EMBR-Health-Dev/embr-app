@@ -7,23 +7,23 @@ import { registerSchema } from "@embr/validation";
 import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
 import { errorMarker, theme } from "../lib/theme";
-import { EARLY_ACCESS_HREF, isRegistrationOpen } from "../lib/registration";
+import { WEB_SIGN_UP_HREF, isRegistrationOpen } from "../lib/registration";
 import { BrandWordmark } from "../components/brand-wordmark";
 
-function EarlyAccessScreen() {
+function WebSignUpScreen() {
   const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
         <BrandWordmark />
-        <Text style={styles.title}>{t("register.earlyAccessTitle")}</Text>
-        <Text style={styles.body}>{t("register.earlyAccessBody")}</Text>
+        <Text style={styles.title}>{t("register.webSignUpTitle")}</Text>
+        <Text style={styles.body}>{t("register.webSignUpBody")}</Text>
         <Pressable
           style={styles.button}
           accessibilityRole="link"
-          onPress={() => void Linking.openURL(EARLY_ACCESS_HREF)}
+          onPress={() => void Linking.openURL(WEB_SIGN_UP_HREF)}
         >
-          <Text style={styles.buttonText}>{t("register.earlyAccessAction")}</Text>
+          <Text style={styles.buttonText}>{t("register.webSignUpAction")}</Text>
         </Pressable>
         <Link href="/login" style={styles.link}>
           <Text>
@@ -37,7 +37,7 @@ function EarlyAccessScreen() {
 }
 
 export default function RegisterScreen() {
-  return isRegistrationOpen() ? <RegisterForm /> : <EarlyAccessScreen />;
+  return isRegistrationOpen() ? <RegisterForm /> : <WebSignUpScreen />;
 }
 
 function RegisterForm() {

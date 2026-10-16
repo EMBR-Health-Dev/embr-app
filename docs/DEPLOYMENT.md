@@ -280,28 +280,22 @@ See `docs/BACKUPS.md`.
 
 ## Mobile app builds & submission
 
-`apps/mobile/eas.json` defines three EAS Build profiles:
+`apps/mobile/eas.json` defines four EAS Build profiles:
 
 - **development** — `developmentClient: true`, internal distribution,
   points at `localhost:4000`. For running a custom dev client against
   a locally-running API.
-- **preview** — internal distribution (no App Store/Play Store
-  submission), points at a `staging-api.embr.health` placeholder.
-  Update this once a real staging API domain exists. Use this profile
-  for TestFlight-internal or ad-hoc Android builds during the beta.
+- **preview** — internal distribution (ad hoc installs, no store),
+  points at the production API (`embrapi-production.up.railway.app`,
+  the API's only domain on Railway).
+- **beta** — store builds for TestFlight and Google Play internal
+  testing, same API, build number auto-increments. Submitted with the
+  `beta` submit profile (Android goes to the internal track). See
+  `docs/MOBILE-BETA.md` for the full runbook.
 - **production** — auto-increments the build number, points at an
   `api.embr.health` placeholder. Update this once the real production
   API domain exists — **do not ship a production build with a
   placeholder API URL.**
-
-Both non-development `EXPO_PUBLIC_API_URL` values in `eas.json` are
-placeholders following this product's intended domain (matching
-`SMTP_FROM`'s existing `@embr.health` convention in `.env.example`) —
-neither domain is registered or deployed yet as of this writing. This
-is safe to commit as-is (it's a public, non-secret build-time value,
-not a credential) but must be corrected before running a real preview
-or production build, or the built app will simply fail to reach any
-API.
 
 **One-time setup, not yet done** (needs an Expo account, so it can't
 be run from an unattended environment): `eas init` (or `eas
