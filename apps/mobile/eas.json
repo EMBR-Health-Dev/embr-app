@@ -17,7 +17,14 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging-api.embr.health"
+        "EXPO_PUBLIC_API_URL": "https://embrapi-production.up.railway.app"
+      }
+    },
+    "beta": {
+      "autoIncrement": true,
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://embrapi-production.up.railway.app"
       }
     },
     "production": {
@@ -28,6 +35,12 @@
     }
   },
   "submit": {
+    "beta": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
+      }
+    },
     "production": {}
   }
 }

@@ -22,7 +22,7 @@ beforeAll(async () => {
 });
 
 describe("Register screen while sign up is closed", () => {
-  it("shows early access instead of the sign up form", async () => {
+  it("sends people to sign up on the web instead of the sign up form", async () => {
     process.env.EXPO_PUBLIC_REGISTRATION_OPEN = "false";
     const { default: RegisterScreen } = await import("../../app/register");
     render(
@@ -31,9 +31,9 @@ describe("Register screen while sign up is closed", () => {
       </I18nextProvider>,
     );
 
-    expect(screen.getByText("EMBR is in private early access")).toBeInTheDocument();
+    expect(screen.getByText("Create your account on the web")).toBeInTheDocument();
     expect(screen.queryByText("Create account")).not.toBeInTheDocument();
-    expect(screen.getByText("Request early access")).toBeInTheDocument();
+    expect(screen.getByText("Sign up on the web")).toBeInTheDocument();
     process.env.EXPO_PUBLIC_REGISTRATION_OPEN = "true";
   });
 });

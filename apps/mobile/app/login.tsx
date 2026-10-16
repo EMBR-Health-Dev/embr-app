@@ -8,7 +8,7 @@ import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api-client";
 import { LanguageSwitcher } from "../components/language-switcher";
 import { errorMarker, theme } from "../lib/theme";
-import { EARLY_ACCESS_HREF, isRegistrationOpen } from "../lib/registration";
+import { WEB_SIGN_UP_HREF, isRegistrationOpen } from "../lib/registration";
 import { BrandWordmark } from "../components/brand-wordmark";
 
 export default function LoginScreen() {
@@ -113,11 +113,10 @@ export default function LoginScreen() {
           <Pressable
             style={styles.link}
             accessibilityRole="link"
-            onPress={() => void Linking.openURL(EARLY_ACCESS_HREF)}
+            onPress={() => void Linking.openURL(WEB_SIGN_UP_HREF)}
           >
             <Text>
-              {t("login.newToEmbr")}{" "}
-              <Text style={styles.linkText}>{t("login.requestEarlyAccess")}</Text>
+              {t("login.newToEmbr")} <Text style={styles.linkText}>{t("login.signUpOnWeb")}</Text>
             </Text>
           </Pressable>
         )}
