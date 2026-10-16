@@ -28,6 +28,7 @@ function mockEnv(overrides: Partial<Record<string, unknown>> = {}) {
       APP_URL: "http://localhost:3000",
       EMAIL_VERIFICATION_TTL_SECONDS: 86400,
       PASSWORD_RESET_TTL_SECONDS: 3600,
+      LOGIN_LINK_TTL_SECONDS: 900,
       ORG_INVITE_TTL_SECONDS: 604800,
       ...overrides,
     },
@@ -152,6 +153,26 @@ describe("sendPasswordResetEmail", () => {
         html: expect.stringContaining("reset-token"),
       }),
     );
+  });
+});
+
+describe("sendLoginLinkEmail", () => {
+  it("sends the sign in link with its expiry", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_789" }, error: null });
+    const { sendLoginLinkEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendLoginLinkEmail("user@example.com", "link-token");
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "user@example.com",
+        subject: "Your EMBR sign in link",
+        html: expect.stringContaining("http://localhost:3000/login-link?token=link-token"),
+        text: expect.stringContaining("http://localhost:3000/login-link?token=link-token"),
+      }),
+    );
+    expect(mockSend.mock.calls[0]![0].html).toContain("expires in 15 minutes");
   });
 });
 

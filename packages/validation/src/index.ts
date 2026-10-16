@@ -162,6 +162,16 @@ export const forgotPasswordSchema = z.object({
 });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
+export const loginLinkRequestSchema = z.object({
+  email: emailSchema,
+});
+export type LoginLinkRequestInput = z.infer<typeof loginLinkRequestSchema>;
+
+export const loginLinkConsumeSchema = z.object({
+  token: z.string().min(1),
+});
+export type LoginLinkConsumeInput = z.infer<typeof loginLinkConsumeSchema>;
+
 export const resetPasswordSchema = z.object({
   token: z.string().min(1),
   password: passwordSchema,

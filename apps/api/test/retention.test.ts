@@ -1,18 +1,23 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const { mockDeleteManySession, mockDeleteManyVerification, mockDeleteManyReset } = vi.hoisted(
-  () => ({
-    mockDeleteManySession: vi.fn(),
-    mockDeleteManyVerification: vi.fn(),
-    mockDeleteManyReset: vi.fn(),
-  }),
-);
+const {
+  mockDeleteManySession,
+  mockDeleteManyVerification,
+  mockDeleteManyReset,
+  mockDeleteManyLoginLink,
+} = vi.hoisted(() => ({
+  mockDeleteManySession: vi.fn(),
+  mockDeleteManyVerification: vi.fn(),
+  mockDeleteManyReset: vi.fn(),
+  mockDeleteManyLoginLink: vi.fn(),
+}));
 
 vi.mock("../src/lib/prisma.js", () => ({
   prisma: {
     session: { deleteMany: mockDeleteManySession },
     emailVerificationToken: { deleteMany: mockDeleteManyVerification },
     passwordResetToken: { deleteMany: mockDeleteManyReset },
+    loginLinkToken: { deleteMany: mockDeleteManyLoginLink },
   },
 }));
 
@@ -26,6 +31,7 @@ beforeEach(() => {
   mockDeleteManySession.mockReset().mockResolvedValue({ count: 0 });
   mockDeleteManyVerification.mockReset().mockResolvedValue({ count: 0 });
   mockDeleteManyReset.mockReset().mockResolvedValue({ count: 0 });
+  mockDeleteManyLoginLink.mockReset().mockResolvedValue({ count: 0 });
 });
 
 describe("retentionService.runCleanup", () => {
@@ -59,18 +65,23 @@ describe("retentionService.runCleanup", () => {
     const resetWhere = mockDeleteManyReset.mock.calls[0][0].where;
     expect(verificationWhere).toEqual({ expiresAt: { lt: expect.any(Date) } });
     expect(resetWhere).toEqual({ expiresAt: { lt: expect.any(Date) } });
+    expect(mockDeleteManyLoginLink.mock.calls[0][0].where).toEqual({
+      expiresAt: { lt: expect.any(Date) },
+    });
   });
 
   it("returns accurate counts from each deletion", async () => {
     mockDeleteManySession.mockResolvedValue({ count: 5 });
     mockDeleteManyVerification.mockResolvedValue({ count: 2 });
     mockDeleteManyReset.mockResolvedValue({ count: 1 });
+    mockDeleteManyLoginLink.mockResolvedValue({ count: 3 });
 
     const result = await retentionService.runCleanup();
 
     expect(result.sessionsDeleted).toBe(5);
     expect(result.emailVerificationTokensDeleted).toBe(2);
     expect(result.passwordResetTokensDeleted).toBe(1);
+    expect(result.loginLinkTokensDeleted).toBe(3);
     expect(result.cutoff).toBeTypeOf("string");
   });
 

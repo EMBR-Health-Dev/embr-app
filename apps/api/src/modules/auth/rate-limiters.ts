@@ -59,6 +59,17 @@ export const passwordResetLimiter = rateLimit({
   skip: skipInTest,
 });
 
+export const loginLinkLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: keyByEmailAndIp,
+  handler: rateLimitExceededHandler,
+  store: redisRateLimitStore("rl:login-link:"),
+  skip: skipInTest,
+});
+
 export const refreshLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,

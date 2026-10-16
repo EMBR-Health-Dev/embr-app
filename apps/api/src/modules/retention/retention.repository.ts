@@ -34,4 +34,10 @@ export const retentionRepository = {
       where: { expiresAt: { lt: cutoff } },
     });
   },
+
+  deleteStaleLoginLinkTokens(cutoff: Date) {
+    return prisma.loginLinkToken.deleteMany({
+      where: { expiresAt: { lt: cutoff } },
+    });
+  },
 };

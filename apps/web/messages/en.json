@@ -63,6 +63,24 @@
     "checkEmailBody": "If an account exists for that email, a password reset link is on its way.",
     "backToLogin": "Back to login"
   },
+  "LoginLink": {
+    "fromLogin": "Email me a sign in link",
+    "title": "Sign in with an email link",
+    "subtitle": "Enter the email you signed up with. We'll send a link that signs you in, no password needed.",
+    "emailLabel": "Email",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "submit": "Send sign in link",
+    "submitting": "Sending…",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "If an account exists for that email, a sign in link is on its way. It works once and expires in 15 minutes.",
+    "backToLogin": "Back to login",
+    "useTitle": "Sign in to EMBR",
+    "useSubtitle": "Continue to sign in with the link from your email.",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "expired": "This link has expired or has already been used.",
+    "sendNew": "Send me a new link"
+  },
   "ResetPassword": {
     "title": "Choose a new password",
     "subtitle": "Enter a new password for your account.",

@@ -98,6 +98,16 @@ export async function sendPasswordResetEmail(to: string, token: string) {
   );
 }
 
+export async function sendLoginLinkEmail(to: string, token: string) {
+  const link = `${env.APP_URL}/login-link?token=${encodeURIComponent(token)}`;
+  await sendMail(
+    to,
+    "Your EMBR sign in link",
+    `<p>Use this link to sign in to EMBR:</p><p><a href="${link}">${link}</a></p><p>It works once and expires in ${Math.round(env.LOGIN_LINK_TTL_SECONDS / 60)} minutes. If you didn't request this, you can safely ignore this email.</p>`,
+    `Sign in to EMBR: ${link}`,
+  );
+}
+
 export async function sendOrganizationInviteEmail(
   to: string,
   organizationName: string,

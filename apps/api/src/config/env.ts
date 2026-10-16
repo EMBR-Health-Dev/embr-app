@@ -119,6 +119,11 @@ const apiEnvSchema = z.object({
     .int()
     .positive()
     .default(60 * 60),
+  LOGIN_LINK_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(15 * 60),
   COOKIE_DOMAIN: z.string().optional(),
   // Defaults to true outside development/test rather than a blanket
   // `false` — a security-relevant setting should fail toward the safe
