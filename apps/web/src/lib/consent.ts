@@ -31,6 +31,7 @@ const ALWAYS_REACHABLE = [
   "/forgot-password",
   "/reset-password",
   "/login-link",
+  "/beta",
 ];
 
 export function isConsentExempt(pathname: string): boolean {

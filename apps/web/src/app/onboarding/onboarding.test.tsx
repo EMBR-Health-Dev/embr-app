@@ -48,6 +48,7 @@ function emptyProfile(overrides: Partial<OnboardingProfileDto> = {}): Onboarding
     noticedAreas: [],
     appointmentStatus: null,
     lifeStage: null,
+    lastPeriodDate: null,
     currentStep: null,
     skipped: false,
     completedAt: null,

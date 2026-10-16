@@ -13,23 +13,33 @@ export function wholeMonthsBetween(from: string, to: string): number {
 }
 
 /**
- * The most recent day with period flow logged up to the end of the
- * brief, and how many whole months before that end it was. Looked up
- * across the whole record, not only the brief's range: a clinician
- * reading the brief cannot otherwise tell how long ago the last period
- * was, and that interval matters more in this transition than age does.
+ * Her last period up to the end of the brief, and how many whole months
+ * before that end it was. Two sources: the most recent day with period
+ * flow logged anywhere in the record, and the date she gave in Settings
+ * (for a last period before she used EMBR). The later of the two is
+ * used, and the BRIEF says which; on the same day, the logged day wins.
+ * A reported date after the brief's end is ignored, like a later log.
  *
- * A fact about the record, not about the body: a gap may mean periods
- * stopped or simply that they were not logged, so nothing here labels
- * a stage. Shown only in the person's own BRIEF; never sent to the AI.
+ * A clinician reading the brief cannot otherwise tell how long ago the
+ * last period was, and that interval matters more in this transition
+ * than age does. A fact about the record, not about the body: nothing
+ * here labels a stage. Shown only in the person's own BRIEF; never sent
+ * to the AI.
  */
 export function summarizeLastRecordedPeriod(
-  lastPeriodDay: string | null,
+  lastLoggedDay: string | null,
+  reportedDate: string | null,
   briefEndDay: string,
 ): LastRecordedPeriodDto {
-  if (lastPeriodDay === null) return { date: null, monthsBeforeBriefEnd: null };
+  const reported = reportedDate !== null && reportedDate <= briefEndDay ? reportedDate : null;
+  if (lastLoggedDay === null && reported === null) {
+    return { date: null, monthsBeforeBriefEnd: null };
+  }
+  const useReported = reported !== null && (lastLoggedDay === null || reported > lastLoggedDay);
+  const date = useReported ? reported : lastLoggedDay!;
   return {
-    date: lastPeriodDay,
-    monthsBeforeBriefEnd: wholeMonthsBetween(lastPeriodDay, briefEndDay),
+    date,
+    monthsBeforeBriefEnd: wholeMonthsBetween(date, briefEndDay),
+    source: useReported ? "reported" : "logged",
   };
 }

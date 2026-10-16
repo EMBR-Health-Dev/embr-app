@@ -227,6 +227,7 @@ describe("GET /onboarding", () => {
       noticedAreas: [],
       appointmentStatus: null,
       lifeStage: null,
+      lastPeriodDate: null,
       currentStep: null,
       skipped: false,
       completedAt: null,
@@ -368,6 +369,34 @@ describe("PATCH /onboarding", () => {
     const cleared = await agent.patch("/onboarding").send({ lifeStage: null });
     expect(cleared.status).toBe(200);
     expect(cleared.body.data.lifeStage).toBeNull();
+  });
+
+  it("stores her reported last period date as a calendar day and clears it with null", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+
+    await registerAndLogin(agent, "last-period@embr.health");
+
+    const set = await agent.patch("/onboarding").send({ lastPeriodDate: "2025-04-20" });
+    expect(set.status).toBe(200);
+    expect(set.body.data.lastPeriodDate).toBe("2025-04-20");
+
+    const cleared = await agent.patch("/onboarding").send({ lastPeriodDate: null });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.data.lastPeriodDate).toBeNull();
+  });
+
+  it("rejects a last period date that is in the future, not a real day, or not a date", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+
+    await registerAndLogin(agent, "last-period-invalid@embr.health");
+
+    const nextYear = `${new Date().getUTCFullYear() + 1}-01-01`;
+    for (const lastPeriodDate of [nextYear, "2025-02-30", "1949-12-31", "20/04/2025"]) {
+      const res = await agent.patch("/onboarding").send({ lastPeriodDate });
+      expect(res.status, lastPeriodDate).toBe(400);
+    }
   });
 
   it("rejects a life stage outside the closed set", async () => {

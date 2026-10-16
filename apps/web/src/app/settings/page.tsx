@@ -18,6 +18,7 @@ import { richText } from "../../lib/rich-text";
 import { TextSizeControl } from "../../components/text-size-control";
 import { ThemeControl } from "../../components/theme-control";
 import { LifeStageControl } from "../../components/life-stage-control";
+import { LastPeriodControl } from "../../components/last-period-control";
 import { WeeklyEmailControl } from "../../components/weekly-email-control";
 
 export default function SettingsPage() {
@@ -203,6 +204,12 @@ export default function SettingsPage() {
           <h2 className="font-display text-heading-m text-foreground">{t("lifeStageTitle")}</h2>
           <p className="mt-1 text-sm text-foreground/60">{t("lifeStageHelp")}</p>
           <LifeStageControl />
+        </section>
+
+        <section className="mt-10">
+          <h2 className="font-display text-heading-m text-foreground">{t("lastPeriodTitle")}</h2>
+          <p className="mt-1 text-sm text-foreground/60">{t("lastPeriodHelp")}</p>
+          <LastPeriodControl />
         </section>
 
         <section className="mt-10">

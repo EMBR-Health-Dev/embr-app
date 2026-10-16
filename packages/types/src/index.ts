@@ -299,6 +299,10 @@ export interface LastRecordedPeriodDto {
   /** YYYY-MM-DD */
   date: string | null;
   monthsBeforeBriefEnd: number | null;
+  /** Where the date came from: a period day logged in EMBR, or the
+   * date she gave in Settings. Absent on briefs made before Settings
+   * asked, which only ever used logged days. */
+  source?: "logged" | "reported";
 }
 
 export type NoteCover = "LILAC" | "PLUM" | "PEARL" | "ICE" | "ROSE";
@@ -960,6 +964,9 @@ export interface OnboardingProfileDto {
   /** PERIMENOPAUSE, POSTMENOPAUSE or NOT_SURE, as she reported it; null
    * if unanswered. Never inferred from her logs. */
   lifeStage: string | null;
+  /** YYYY-MM-DD, her last period as she reported it in Settings; null
+   * if unanswered. Never inferred from her logs. */
+  lastPeriodDate: string | null;
   currentStep: string | null;
   skipped: boolean;
   completedAt: string | null;

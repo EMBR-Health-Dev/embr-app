@@ -11,6 +11,7 @@ import { ApiError } from "../../lib/api-client";
 import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { LifeStageControl } from "../../components/life-stage-control";
+import { LastPeriodControl } from "../../components/last-period-control";
 import { ReminderControl } from "../../components/reminder-control";
 import { WeeklyEmailControl } from "../../components/weekly-email-control";
 import { remindersSupported } from "../../lib/reminders";
@@ -208,6 +209,10 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>{t("settings.lifeStageTitle")}</Text>
             <Text style={styles.sectionHint}>{t("settings.lifeStageHelp")}</Text>
             <LifeStageControl />
+
+            <Text style={styles.sectionTitle}>{t("settings.lastPeriodTitle")}</Text>
+            <Text style={styles.sectionHint}>{t("settings.lastPeriodHelp")}</Text>
+            <LastPeriodControl />
 
             {remindersSupported && (
               <>

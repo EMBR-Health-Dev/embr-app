@@ -654,6 +654,19 @@ export const onboardingAppointmentStatusSchema = z.enum([
 export const lifeStageSchema = z.enum(["PERIMENOPAUSE", "POSTMENOPAUSE", "NOT_SURE"]);
 export type LifeStageValue = z.infer<typeof lifeStageSchema>;
 
+/** Her last period as she reports it: a real calendar date, not in the
+ * future (one day of slack for timezones ahead of UTC) and not absurdly
+ * old. A best guess is fine; the API stores the day only. */
+export const lastPeriodDateSchema = isoCalendarDate.refine(
+  (value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) return false;
+    const latest = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    return value >= "1950-01-01" && value <= latest;
+  },
+  { message: "Enter a real date that is not in the future" },
+);
+
 export const onboardingStepSchema = z.enum([
   "WELCOME",
   "JOB_TO_BE_DONE",
@@ -676,6 +689,8 @@ export const patchOnboardingSchema = z
     appointmentStatus: onboardingAppointmentStatusSchema.optional(),
     // null clears it, for "prefer not to say" in Settings.
     lifeStage: lifeStageSchema.nullable().optional(),
+    // YYYY-MM-DD; null clears it. Settings only.
+    lastPeriodDate: lastPeriodDateSchema.nullable().optional(),
     // Two distinct terminal actions, not a boolean "done" flag — a
     // skip and a full completion both end onboarding the same way
     // (completedAt gets set, onboarding never shows again) but mean
