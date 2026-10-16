@@ -1257,5 +1257,108 @@
     "nudgeBody": "That is enough for a first EMBR BRIEF: a clear summary of what you logged, to review and bring to your next appointment if you choose.",
     "nudgeAction": "Create my BRIEF",
     "notNow": "Not now"
+  },
+  "Beta": {
+    "metaTitle": "EMBR beta guide",
+    "eyebrow": "EMBR beta",
+    "headline": "Welcome to <phrase>the EMBR beta</phrase>",
+    "lead": "Thank you for testing EMBR. For the next few weeks, record how you feel each day and tell us where the app gets in your way.",
+    "about": "EMBR helps you keep a record of perimenopause and menopause symptoms, see patterns over time, and take a clear summary, the BRIEF, to your clinician. It does not diagnose anything and does not replace medical advice.",
+    "createAccount": "Create your account",
+    "logIn": "Log in",
+    "ask": {
+      "title": "What we ask of you",
+      "items": {
+        "checkIn": "Check in most days. It takes under a minute.",
+        "firstBrief": "After a week, create your first BRIEF.",
+        "tellUs": "Tell us when something is confusing, slow or wrong, even if it seems small."
+      }
+    },
+    "start": {
+      "title": "Getting started",
+      "intro": "Create your account on the web first, even if you plan to use the phone app.",
+      "steps": {
+        "signUp": {
+          "title": "Sign up at app.embrhealthcare.com",
+          "body": "Use the email you want to keep for EMBR. The password needs at least 12 characters, with an uppercase letter, a lowercase letter and a number. Tap Show to check what you typed."
+        },
+        "verify": {
+          "title": "Verify your email",
+          "body": "Open the email from no-reply@embrhealthcare.com and click the link. Check spam if it has not arrived within a few minutes. You need a verified email to create a BRIEF."
+        },
+        "welcome": {
+          "title": "Answer the welcome questions",
+          "body": "You can skip any of them and change your answers later in Settings."
+        },
+        "phone": {
+          "title": "Add the phone app when it arrives",
+          "body": "When we send you a TestFlight (iPhone) or Google Play (Android) invite, install the app and log in with the same email and password. Until then, the website works well in your phone's browser."
+        }
+      },
+      "language": "EMBR is in English and Japanese. Switch language at the top of this page, the login page, or in Settings."
+    },
+    "week": {
+      "title": "Your first week",
+      "intro": "Your dashboard shows a Start here list for the first two weeks. It ticks itself off as you go.",
+      "items": {
+        "logToday": "Log how you feel today. About ten seconds; a hot flash can be one tap.",
+        "lifeStage": "Add your life stage in Settings.",
+        "aWeek": "Log on a few days this week. A week of entries is enough to start seeing patterns.",
+        "firstBrief": "Create your first BRIEF."
+      },
+      "quietDays": "Log the days you feel fine too. A quiet day is information, and patterns only show up against it.",
+      "brief": "Once your record covers a week, the dashboard suggests your first BRIEF: a summary of what you logged, for you to review and bring to an appointment if you choose. Read it before you share it, and tell us anything in it that looks wrong."
+    },
+    "login": {
+      "title": "If you can't log in",
+      "intro": "Most login problems so far have been a mistyped password or a different email from the one used to sign up. Try these in order.",
+      "steps": {
+        "email": "Check the email is exactly the one you signed up with, including work and personal addresses.",
+        "show": "Tap Show next to the password to see what you typed.",
+        "link": "Choose Email me a sign in link on the login page. It signs you in without a password, works once and expires after 15 minutes.",
+        "reset": "Or choose Forgot password? to set a new one. The reset link expires after one hour."
+      },
+      "stillStuck": "Still stuck? Email us from the address you signed up with:",
+      "neverPassword": "Never send us your password."
+    },
+    "limits": {
+      "title": "Your record, and what EMBR does not do",
+      "intro": "Your record is yours, and EMBR is a record keeping tool, not a medical one.",
+      "items": {
+        "diagnosis": {
+          "title": "Not a diagnosis",
+          "body": "EMBR counts and compares what you logged. It never tells you what condition you have or what treatment to take. Talk to a clinician about anything that worries you."
+        },
+        "brief": {
+          "title": "How the BRIEF is written",
+          "body": "The patterns in a BRIEF are calculated by fixed rules from your entries. AI only puts those results into plain words, and it receives counts and patterns, never your notes, notebook pages or treatment names."
+        },
+        "encrypted": {
+          "title": "Stored encrypted",
+          "body": "Your notes, treatment names and BRIEF wording are encrypted before they are saved."
+        },
+        "yours": {
+          "title": "Export or delete any time",
+          "body": "Download your data from the Export page. Delete your account and everything in it from Settings."
+        },
+        "beta": {
+          "title": "This is a beta",
+          "body": "Expect rough edges, and please don't rely on EMBR as your only record during the test."
+        }
+      }
+    },
+    "feedback": {
+      "title": "Sending feedback",
+      "how": "Use Send feedback in the app menu (under More on a computer). It opens an email to info@embrhealthcare.com that already says which page you were on and which browser you use. It never includes your health entries.",
+      "helpsTitle": "What helps us most",
+      "helps": {
+        "what": "What you were trying to do, and what happened instead.",
+        "screenshot": "A screenshot, if you can. Crop out anything personal you would rather not share.",
+        "missing": "Anything you expected to find and couldn't.",
+        "nearlyGaveUp": "Moments you nearly gave up, even if you worked it out in the end."
+      },
+      "iphone": "On iPhone, TestFlight also lets you send a screenshot with a comment straight to us."
+    },
+    "closing": "Ready when you are."
   }
 }
