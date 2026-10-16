@@ -176,6 +176,27 @@ describe("sendLoginLinkEmail", () => {
   });
 });
 
+describe("sendWeeklyReminderEmail", () => {
+  it("links to the timeline and Settings, in English and Japanese, with nothing from her record", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_weekly" }, error: null });
+    const { sendWeeklyReminderEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendWeeklyReminderEmail("user@example.com");
+
+    const sent = mockSend.mock.calls[0]![0];
+    expect(sent).toMatchObject({
+      to: "user@example.com",
+      subject: "Your week in EMBR / EMBRの1週間",
+    });
+    expect(sent.html).toContain("http://localhost:3000/timeline");
+    expect(sent.html).toContain("http://localhost:3000/settings");
+    expect(sent.text).toContain("EMBRから週に一度のお知らせです");
+    // Fixed copy only: the function takes an address and nothing else.
+    expect(sendWeeklyReminderEmail.length).toBe(1);
+  });
+});
+
 describe("sendOrganizationInviteEmail", () => {
   it("sends via Resend with the org name in the subject and body", async () => {
     mockEnv();

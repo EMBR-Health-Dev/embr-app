@@ -686,6 +686,15 @@ export const patchOnboardingSchema = z
   .strict();
 export type PatchOnboardingInput = z.infer<typeof patchOnboardingSchema>;
 
+// ---- Notification preferences ----
+
+export const notificationPreferencesSchema = z
+  .object({
+    weeklyEmail: z.boolean(),
+  })
+  .strict();
+export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesSchema>;
+
 // ---- Account deletion (closed-beta minimum) ----
 
 // Same password-confirmation bar as changePasswordSchema — this is a

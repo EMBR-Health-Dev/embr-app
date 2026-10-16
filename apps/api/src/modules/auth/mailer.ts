@@ -108,6 +108,28 @@ export async function sendLoginLinkEmail(to: string, token: string) {
   );
 }
 
+/**
+ * The weekly reminder. Deliberately carries nothing from her record (no
+ * counts, symptoms or dates): an inbox is not a private place. English
+ * and Japanese together, since the account stores no language.
+ */
+export async function sendWeeklyReminderEmail(to: string) {
+  const open = `${env.APP_URL}/timeline`;
+  const settings = `${env.APP_URL}/settings`;
+  await sendMail(
+    to,
+    "Your week in EMBR / EMBRの1週間",
+    `<p>A short weekly reminder from EMBR. Take a minute to look back at your week: open your timeline to see what you recorded, log today, and create a BRIEF when you're ready.</p>` +
+      `<p><a href="${open}">Open EMBR</a></p>` +
+      `<p>EMBRから週に一度のお知らせです。少し時間をとって、この1週間を振り返ってみましょう。タイムラインで記録を確認し、今日の体調を記録して、準備ができたらBRIEFを作成してください。</p>` +
+      `<p><a href="${open}">EMBRを開く</a></p>` +
+      `<p>To stop these emails, turn off Weekly email in <a href="${settings}">Settings</a>.<br>このメールを停止するには、<a href="${settings}">設定</a>で週1回のメールをオフにしてください。</p>`,
+    `A short weekly reminder from EMBR. Take a minute to look back at your week: open your timeline to see what you recorded, log today, and create a BRIEF when you're ready.\n${open}\n\n` +
+      `EMBRから週に一度のお知らせです。少し時間をとって、この1週間を振り返ってみましょう。タイムラインで記録を確認し、今日の体調を記録して、準備ができたらBRIEFを作成してください。\n${open}\n\n` +
+      `To stop these emails, turn off Weekly email in Settings: ${settings}\nこのメールを停止するには、設定で週1回のメールをオフにしてください：${settings}`,
+  );
+}
+
 export async function sendOrganizationInviteEmail(
   to: string,
   organizationName: string,

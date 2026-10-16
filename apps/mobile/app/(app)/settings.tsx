@@ -12,6 +12,7 @@ import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { LifeStageControl } from "../../components/life-stage-control";
 import { ReminderControl } from "../../components/reminder-control";
+import { WeeklyEmailControl } from "../../components/weekly-email-control";
 import { remindersSupported } from "../../lib/reminders";
 import { errorMarker, destructiveText, theme } from "../../lib/theme";
 
@@ -215,6 +216,10 @@ export default function SettingsScreen() {
                 <ReminderControl />
               </>
             )}
+
+            <Text style={styles.sectionTitle}>{t("settings.weeklyEmailTitle")}</Text>
+            <Text style={styles.sectionHint}>{t("settings.weeklyEmailHelp")}</Text>
+            <WeeklyEmailControl />
 
             <Text style={styles.sectionTitle}>{t("settings.changePasswordTitle")}</Text>
             <Text style={styles.sectionHint}>{t("settings.changePasswordHint")}</Text>

@@ -434,6 +434,11 @@
     "lifeStageHelp": "Your own answer. EMBR never guesses this from your logs, and it is never sent to the AI.",
     "lifeStageSaved": "Saved",
     "lifeStageError": "Could not save. Please try again.",
+    "weeklyEmailTitle": "Weekly email",
+    "weeklyEmailHelp": "A short reminder once a week, on Sunday, to look back at your week in EMBR. It never includes anything from your record. Off unless you turn it on.",
+    "weeklyEmailToggle": "Send me a weekly email",
+    "weeklyEmailOn": "On. The next one comes on Sunday.",
+    "weeklyEmailError": "Could not save. Please try again.",
     "lifeStage": {
       "perimenopause": "My periods are changing or irregular (perimenopause)",
       "postmenopause": "No period for 12 months or more (postmenopause)",

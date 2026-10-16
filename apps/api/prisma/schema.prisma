@@ -44,13 +44,20 @@ enum Role {
 /// the `requireVerifiedEmail` middleware (auth.middleware.ts) applied
 /// on exactly those routes.
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  passwordHash    String
-  role            Role      @default(MEMBER)
-  emailVerifiedAt DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String
+  role                  Role      @default(MEMBER)
+  emailVerifiedAt       DateTime?
+  /// The weekly email reminder: off until she turns it on in Settings.
+  /// It never contains anything from her record. See
+  /// modules/notifications/weekly-email.ts.
+  weeklyEmailOptIn      Boolean   @default(false)
+  /// When the last weekly email was claimed for sending; the job skips
+  /// anyone sent one in the last six days, so a restart never repeats it.
+  weeklyEmailLastSentAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   sessions                Session[]
   emailVerificationTokens EmailVerificationToken[]
@@ -335,18 +342,18 @@ enum TreatmentStopReason {
 /// afterward" without a new table to keep in sync — see
 /// trends.repository.ts if that ever needs its own dedicated endpoint.
 model Treatment {
-  id        String            @id @default(uuid())
-  userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  category  TreatmentCategory
-  startDate DateTime          @db.Date
-  endDate   DateTime?         @db.Date
+  id         String               @id @default(uuid())
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  category   TreatmentCategory
+  startDate  DateTime             @db.Date
+  endDate    DateTime?            @db.Date
   /// Null while ongoing, and when she chose not to answer.
   stopReason TreatmentStopReason?
-  notes     String?
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  notes      String?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
 
   @@index([userId, startDate])
   @@map("treatments")
@@ -646,7 +653,7 @@ model ClinicalBrief {
   /// work-impact.ts. Breakdown only from 7 answered days. Never sent to
   /// the AI and never part of organisation statistics. Null means
   /// "never computed for this brief".
-  workImpact Json?
+  workImpact         Json?
   /// { date: "YYYY-MM-DD" | null, monthsBeforeBriefEnd: number | null }
   /// The last day with period flow logged anywhere in the record up to
   /// the brief's end. Nullable: earlier briefs read as "never

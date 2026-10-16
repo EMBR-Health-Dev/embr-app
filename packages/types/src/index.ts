@@ -965,6 +965,14 @@ export interface OnboardingProfileDto {
   completedAt: string | null;
 }
 
+// ---- Notification preferences ----
+
+/** Email she has asked for. Off until she turns it on. */
+export interface NotificationPreferencesDto {
+  /** A weekly reminder email that carries nothing from her record. */
+  weeklyEmail: boolean;
+}
+
 // ---- Admin metrics ----
 
 /**
