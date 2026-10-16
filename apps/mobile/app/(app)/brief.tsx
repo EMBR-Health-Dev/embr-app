@@ -693,6 +693,23 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
               count: brief.cycleSummary.cycleCount,
             })}
       </Text>
+      {/* Absent on a BRIEF made before this was recorded. */}
+      {brief.lastRecordedPeriod && (
+        <>
+          <Text style={styles.summaryLine}>
+            {brief.lastRecordedPeriod.date === null ||
+            brief.lastRecordedPeriod.monthsBeforeBriefEnd === null
+              ? t("brief.noPeriodDayLogged")
+              : brief.lastRecordedPeriod.monthsBeforeBriefEnd === 0
+                ? t("brief.lastPeriodDayRecent", { date: brief.lastRecordedPeriod.date })
+                : t("brief.lastPeriodDay", {
+                    date: brief.lastRecordedPeriod.date,
+                    count: brief.lastRecordedPeriod.monthsBeforeBriefEnd,
+                  })}
+          </Text>
+          <Text style={styles.summaryLine}>{t("brief.lastPeriodDayNote")}</Text>
+        </>
+      )}
 
       <Text style={styles.contentSectionTitle}>{t("brief.treatmentsLoggedDuringPeriod")}</Text>
       {brief.treatmentSummary.length === 0 ? (

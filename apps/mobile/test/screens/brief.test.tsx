@@ -138,6 +138,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
     aiNarrative: "A narrative.",
@@ -928,6 +929,28 @@ describe("Brief screen — night sweats recalled in the morning", () => {
 
     expect(await screen.findByText("A narrative.")).toBeInTheDocument();
     expect(screen.queryByText("Night sweats recalled in the morning")).not.toBeInTheDocument();
+  });
+});
+
+describe("Brief screen — last period day logged", () => {
+  it("states the date and whole months before the BRIEF's end", async () => {
+    mockHistoryOf(brief({ lastRecordedPeriod: { date: "2025-03-10", monthsBeforeBriefEnd: 10 } }));
+    await renderAndExpandBrief();
+    expect(
+      await screen.findByText(
+        "Last period day logged: 2025-03-10 (10 months before the end of this BRIEF)",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says less than a month for a recent one", async () => {
+    mockHistoryOf(brief({ lastRecordedPeriod: { date: "2026-01-20", monthsBeforeBriefEnd: 0 } }));
+    await renderAndExpandBrief();
+    expect(
+      await screen.findByText(
+        "Last period day logged: 2026-01-20 (less than a month before the end of this BRIEF)",
+      ),
+    ).toBeInTheDocument();
   });
 });
 

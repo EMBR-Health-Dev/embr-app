@@ -90,6 +90,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
     aiNarrative: "A narrative.",
@@ -783,6 +784,27 @@ describe("Brief page — deterministic evidence sections", () => {
     await generateWith(brief({ nightSweatsRecall: { morningsAnswered: 0, breakdown: null } }));
     expect(await screen.findByText("A narrative.")).toBeInTheDocument();
     expect(screen.queryByText("Night sweats recalled in the morning")).not.toBeInTheDocument();
+  });
+
+  it("states the last period day logged and how long before the BRIEF's end it was", async () => {
+    await generateWith(
+      brief({ lastRecordedPeriod: { date: "2025-03-10", monthsBeforeBriefEnd: 10 } }),
+    );
+    expect(
+      await screen.findByText(
+        "Last period day logged: 2025-03-10 (10 months before the end of this BRIEF)",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Counts only period days logged in EMBR, across the whole record."),
+    ).toBeInTheDocument();
+  });
+
+  it("says when no period day was logged", async () => {
+    await generateWith(brief({ lastRecordedPeriod: { date: null, monthsBeforeBriefEnd: null } }));
+    expect(
+      await screen.findByText("No period days logged in EMBR up to the end of this BRIEF."),
+    ).toBeInTheDocument();
   });
 
   it("says so when no symptoms were logged in the range, rather than an empty heading", async () => {

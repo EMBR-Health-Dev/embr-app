@@ -291,6 +291,16 @@ export interface WorkImpactSummaryDto {
   breakdown: Record<WorkImpact, number> | null;
 }
 
+/** The last day with period flow logged up to a brief's end, and how
+ * many whole months before that end it was. Both null when no period
+ * day was logged. A fact about the record only: it never labels a
+ * stage, since a gap can also mean periods went unlogged. */
+export interface LastRecordedPeriodDto {
+  /** YYYY-MM-DD */
+  date: string | null;
+  monthsBeforeBriefEnd: number | null;
+}
+
 export type NoteCover = "LILAC" | "PLUM" | "PEARL" | "ICE" | "ROSE";
 
 /** A page in the personal notebook. Never sent to the AI or the BRIEF. */
@@ -850,6 +860,10 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * and never part of organisation statistics. Null for a brief
    * generated before this field existed. */
   workImpact: WorkImpactSummaryDto | null;
+  /** Last period day logged anywhere in the record up to the brief's
+   * end. Never sent to the AI. Null for a brief generated before this
+   * field existed. */
+  lastRecordedPeriod: LastRecordedPeriodDto | null;
   /** The canonical Stage 4 result — the same object computed once
    * during generation, used to validate the AI's response, and
    * persisted here, never recomputed. Safe to render in full,

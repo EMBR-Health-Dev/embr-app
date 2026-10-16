@@ -630,6 +630,11 @@ model ClinicalBrief {
   /// the AI and never part of organisation statistics. Null means
   /// "never computed for this brief".
   workImpact Json?
+  /// { date: "YYYY-MM-DD" | null, monthsBeforeBriefEnd: number | null }
+  /// The last day with period flow logged anywhere in the record up to
+  /// the brief's end. Nullable: earlier briefs read as "never
+  /// computed". See last-recorded-period.ts. Never sent to the AI.
+  lastRecordedPeriod Json?
 
   /// { interpretationVersion: string, patterns: Stage4Pattern[] }
   /// The canonical Stage 4 result (see @embr/types and
