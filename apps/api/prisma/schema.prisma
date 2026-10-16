@@ -868,6 +868,11 @@ model OnboardingProfile {
   noticedAreas      OnboardingArea[]             @default([])
   appointmentStatus OnboardingAppointmentStatus?
   lifeStage         LifeStage?
+  /// The date of her last period as she reported it in Settings, for
+  /// when it came before she logged in EMBR. Self reported, never
+  /// inferred; null if unanswered. Shown in her BRIEF beside the last
+  /// period day logged, whichever is later. Never sent to the AI.
+  lastPeriodDate    DateTime?                    @db.Date
   currentStep       OnboardingStep?
 
   /// True if the person explicitly skipped to the dashboard rather than

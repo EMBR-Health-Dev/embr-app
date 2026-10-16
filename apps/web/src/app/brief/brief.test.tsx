@@ -800,6 +800,24 @@ describe("Brief page — deterministic evidence sections", () => {
     ).toBeInTheDocument();
   });
 
+  it("labels a date she reported in Settings as her own answer", async () => {
+    await generateWith(
+      brief({
+        lastRecordedPeriod: { date: "2025-01-10", monthsBeforeBriefEnd: 12, source: "reported" },
+      }),
+    );
+    expect(
+      await screen.findByText(
+        "Last period, as you reported it in Settings: 2025-01-10 (12 months before the end of this BRIEF)",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your own answer in Settings, not a period day logged in EMBR. It may be approximate.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("says when no period day was logged", async () => {
     await generateWith(brief({ lastRecordedPeriod: { date: null, monthsBeforeBriefEnd: null } }));
     expect(

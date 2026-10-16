@@ -35,6 +35,8 @@ const { state, nextId } = vi.hoisted(() => {
         nightSweats: string | null;
         workImpact?: string | null;
       }>,
+      // Her last period as reported in Settings, by userId.
+      reportedLastPeriods: {} as Record<string, Date>,
       cycleEntries: [] as Array<{
         id: string;
         userId: string;
@@ -291,7 +293,15 @@ vi.mock("../src/lib/prisma.js", () => ({
       create: vi.fn().mockResolvedValue({}),
     },
     onboardingProfile: {
-      findUnique: vi.fn().mockResolvedValue(null),
+      // Only brief.repository.ts's findReportedLastPeriod selects
+      // lastPeriodDate; every other caller sees no profile, as before.
+      findUnique: vi.fn(
+        ({ where, select }: { where: { userId: string }; select?: { lastPeriodDate?: true } }) => {
+          if (!select?.lastPeriodDate) return Promise.resolve(null);
+          const date = state.reportedLastPeriods[where.userId];
+          return Promise.resolve(date ? { lastPeriodDate: date } : null);
+        },
+      ),
     },
     symptomLog: {
       // Supports both upper-bound styles real call sites use:
@@ -568,6 +578,7 @@ function addTreatment(userId: string, overrides: Partial<(typeof state.treatment
 beforeEach(() => {
   state.users = [];
   state.symptomLogs = [];
+  state.reportedLastPeriods = {};
   state.cycleEntries = [];
   state.contextLogs = [];
   state.treatments = [];
@@ -895,9 +906,46 @@ describe("POST /briefs — last period day logged", () => {
     expect(res.body.data.lastRecordedPeriod).toEqual({
       date: "2025-03-10",
       monthsBeforeBriefEnd: 10,
+      source: "logged",
     });
     const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
     expect(aiInput).not.toMatch(/lastRecordedPeriod|2025-03-10|monthsBeforeBriefEnd/);
+  });
+
+  it("uses her reported date when it is later than any logged day, and keeps it out of the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "reported-period@embr.health");
+    addPeriodDay(userId, "2024-11-02", "LIGHT");
+    state.reportedLastPeriods[userId] = new Date("2025-06-15T00:00:00.000Z");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.lastRecordedPeriod).toEqual({
+      date: "2025-06-15",
+      monthsBeforeBriefEnd: 7,
+      source: "reported",
+    });
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/2025-06-15|reported|lastRecordedPeriod/);
+  });
+
+  it("keeps a later logged day over an earlier reported date", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "logged-later@embr.health");
+    addPeriodDay(userId, "2025-12-20", "MEDIUM");
+    state.reportedLastPeriods[userId] = new Date("2025-06-15T00:00:00.000Z");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.lastRecordedPeriod).toEqual({
+      date: "2025-12-20",
+      monthsBeforeBriefEnd: 1,
+      source: "logged",
+    });
   });
 
   it("says no period day was logged rather than guessing", async () => {

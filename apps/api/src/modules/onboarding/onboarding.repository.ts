@@ -14,6 +14,8 @@ export interface OnboardingUpsertData {
   noticedAreas?: string[];
   appointmentStatus?: string;
   lifeStage?: string | null;
+  /** YYYY-MM-DD, or null to clear. */
+  lastPeriodDate?: string | null;
   completedAt?: Date;
   skipped?: boolean;
 }
@@ -52,6 +54,11 @@ export const onboardingRepository = {
           lifeStage: data.lifeStage as LifeStage | null,
         }),
 
+        ...(data.lastPeriodDate !== undefined && {
+          lastPeriodDate:
+            data.lastPeriodDate === null ? null : new Date(`${data.lastPeriodDate}T00:00:00.000Z`),
+        }),
+
         ...(data.completedAt !== undefined && {
           completedAt: data.completedAt,
         }),
@@ -82,6 +89,11 @@ export const onboardingRepository = {
 
         ...(data.lifeStage !== undefined && {
           lifeStage: data.lifeStage as LifeStage | null,
+        }),
+
+        ...(data.lastPeriodDate !== undefined && {
+          lastPeriodDate:
+            data.lastPeriodDate === null ? null : new Date(`${data.lastPeriodDate}T00:00:00.000Z`),
         }),
 
         ...(data.completedAt !== undefined && {

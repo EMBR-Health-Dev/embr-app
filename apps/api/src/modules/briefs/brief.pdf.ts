@@ -385,14 +385,17 @@ export function buildClinicalBriefPdf(
   doc.fillColor(INK_MUTED).text(t.periodDaysLoggedLine(periodDaysLogged));
   // Skipped for a brief that predates the field.
   if (brief.lastRecordedPeriod) {
-    const { date, monthsBeforeBriefEnd } = brief.lastRecordedPeriod;
+    const { date, monthsBeforeBriefEnd, source } = brief.lastRecordedPeriod;
+    const reported = source === "reported";
     doc.fillColor(INK);
     doc.text(
-      date !== null && monthsBeforeBriefEnd !== null
-        ? t.lastPeriodDayLine(date, monthsBeforeBriefEnd)
-        : t.noPeriodDayLoggedText,
+      date === null || monthsBeforeBriefEnd === null
+        ? t.noPeriodDayLoggedText
+        : reported
+          ? t.reportedLastPeriodLine(date, monthsBeforeBriefEnd)
+          : t.lastPeriodDayLine(date, monthsBeforeBriefEnd),
     );
-    doc.fillColor(INK_MUTED).text(t.lastPeriodDayNote);
+    doc.fillColor(INK_MUTED).text(reported ? t.reportedLastPeriodNote : t.lastPeriodDayNote);
   }
 
   doc.moveDown(1);

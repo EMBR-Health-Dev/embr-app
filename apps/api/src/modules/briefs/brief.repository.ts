@@ -40,6 +40,16 @@ export const briefRepository = {
     return row ? row.date.toISOString().slice(0, 10) : null;
   },
 
+  /** Her last period as she reported it in Settings, as YYYY-MM-DD, or
+   * null. Only that one field is selected. */
+  async findReportedLastPeriod(userId: string): Promise<string | null> {
+    const row = await prisma.onboardingProfile.findUnique({
+      where: { userId },
+      select: { lastPeriodDate: true },
+    });
+    return row?.lastPeriodDate ? row.lastPeriodDate.toISOString().slice(0, 10) : null;
+  },
+
   /**
    * Second line of defense against the same double-generation this
    * flow's Redis lock (see brief.service.ts) exists to prevent in the

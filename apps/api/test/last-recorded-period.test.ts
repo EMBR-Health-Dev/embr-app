@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   summarizeLastRecordedPeriod,
@@ -18,17 +20,61 @@ describe("wholeMonthsBetween", () => {
 });
 
 describe("summarizeLastRecordedPeriod", () => {
-  it("reports the date and whole months before the BRIEF's end", () => {
-    expect(summarizeLastRecordedPeriod("2025-01-31", "2026-02-01")).toEqual({
+  it("reports a logged day and whole months before the BRIEF's end", () => {
+    expect(summarizeLastRecordedPeriod("2025-01-31", null, "2026-02-01")).toEqual({
       date: "2025-01-31",
       monthsBeforeBriefEnd: 12,
+      source: "logged",
     });
   });
 
-  it("reports nothing logged as nulls, never as a stage", () => {
-    expect(summarizeLastRecordedPeriod(null, "2026-02-01")).toEqual({
+  it("uses her reported date when it is the later one", () => {
+    expect(summarizeLastRecordedPeriod("2024-05-01", "2025-01-10", "2026-02-01")).toEqual({
+      date: "2025-01-10",
+      monthsBeforeBriefEnd: 12,
+      source: "reported",
+    });
+    expect(summarizeLastRecordedPeriod(null, "2025-01-10", "2026-02-01")?.source).toBe("reported");
+  });
+
+  it("keeps the logged day when it is later, or the same day", () => {
+    expect(summarizeLastRecordedPeriod("2025-09-01", "2025-01-10", "2026-02-01")?.source).toBe(
+      "logged",
+    );
+    expect(summarizeLastRecordedPeriod("2025-01-10", "2025-01-10", "2026-02-01")?.source).toBe(
+      "logged",
+    );
+  });
+
+  it("ignores a reported date after the BRIEF's end", () => {
+    expect(summarizeLastRecordedPeriod(null, "2026-03-01", "2026-02-01")).toEqual({
       date: null,
       monthsBeforeBriefEnd: null,
     });
   });
+
+  it("reports nothing as nulls, never as a stage", () => {
+    expect(summarizeLastRecordedPeriod(null, null, "2026-02-01")).toEqual({
+      date: null,
+      monthsBeforeBriefEnd: null,
+    });
+  });
+});
+
+// Her last period, logged or reported, is for her own BRIEF only.
+// Organisation statistics are built only from the organisations and
+// admin modules; neither may read it.
+describe("last period dates never reach organisation statistics", () => {
+  const modulesDir = join(import.meta.dirname, "../src/modules");
+  for (const mod of ["organizations", "admin"]) {
+    it(`the ${mod} module never reads a last period date`, () => {
+      const dir = join(modulesDir, mod);
+      for (const file of readdirSync(dir).filter((f) => f.endsWith(".ts"))) {
+        const source = readFileSync(join(dir, file), "utf8");
+        expect(source, `${mod}/${file}`).not.toMatch(
+          /lastPeriodDate|lastRecordedPeriod|LastPeriod/,
+        );
+      }
+    });
+  }
 });
