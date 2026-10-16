@@ -812,7 +812,9 @@ describe("Brief page — deterministic evidence sections", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Your own answer in Settings, not a period day logged in EMBR."),
+      screen.getByText(
+        "Your own answer in Settings, not a period day logged in EMBR. It may be approximate.",
+      ),
     ).toBeInTheDocument();
   });
 

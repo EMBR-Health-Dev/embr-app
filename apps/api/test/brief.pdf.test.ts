@@ -406,7 +406,9 @@ describe("buildClinicalBriefPdf — last period day logged", () => {
     expect(text).toContain(
       "Last period, as she reported it in Settings: 2025-01-10 (12 months before the end of this BRIEF)",
     );
-    expect(text).toContain("Her own answer in Settings, not a period day logged in EMBR.");
+    expect(text).toContain(
+      "Her own answer in Settings, not a period day logged in EMBR. It may be approximate.",
+    );
     expect(text).not.toContain("Last period day logged");
   });
 

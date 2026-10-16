@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   summarizeLastRecordedPeriod,
@@ -57,4 +59,22 @@ describe("summarizeLastRecordedPeriod", () => {
       monthsBeforeBriefEnd: null,
     });
   });
+});
+
+// Her last period, logged or reported, is for her own BRIEF only.
+// Organisation statistics are built only from the organisations and
+// admin modules; neither may read it.
+describe("last period dates never reach organisation statistics", () => {
+  const modulesDir = join(import.meta.dirname, "../src/modules");
+  for (const mod of ["organizations", "admin"]) {
+    it(`the ${mod} module never reads a last period date`, () => {
+      const dir = join(modulesDir, mod);
+      for (const file of readdirSync(dir).filter((f) => f.endsWith(".ts"))) {
+        const source = readFileSync(join(dir, file), "utf8");
+        expect(source, `${mod}/${file}`).not.toMatch(
+          /lastPeriodDate|lastRecordedPeriod|LastPeriod/,
+        );
+      }
+    });
+  }
 });

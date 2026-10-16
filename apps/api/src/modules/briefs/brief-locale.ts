@@ -211,7 +211,8 @@ const EN: PdfStrings = {
     `Last period, as she reported it in Settings: ${date} (${
       months === 0 ? "less than a month" : `${months} month${months === 1 ? "" : "s"}`
     } before the end of this BRIEF)`,
-  reportedLastPeriodNote: "Her own answer in Settings, not a period day logged in EMBR.",
+  reportedLastPeriodNote:
+    "Her own answer in Settings, not a period day logged in EMBR. It may be approximate.",
   treatmentsHeading: "Treatments logged during this period",
   noTreatmentsText: "No treatments logged in this range.",
   ongoingLabel: "Ongoing",
@@ -313,7 +314,8 @@ const JA: PdfStrings = {
     `最後の生理（本人が設定で回答）：${date}（${
       months === 0 ? "このBRIEFの終了日から1か月以内" : `このBRIEFの終了日の${months}か月前`
     }）`,
-  reportedLastPeriodNote: "本人が設定で回答した日付で、EMBRに記録された生理日ではありません。",
+  reportedLastPeriodNote:
+    "本人が設定で回答した日付で、EMBRに記録された生理日ではありません。おおよその日付の場合があります。",
   treatmentsHeading: "この期間に記録された治療",
   noTreatmentsText: "この期間に記録された治療はありません。",
   ongoingLabel: "継続中",
