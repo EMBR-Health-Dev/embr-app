@@ -29,6 +29,7 @@ Sign off:
 | Anxiety and urgent help |           |          |
 | Menopause and the brain |           |          |
 | How EMBR uses research  |           |          |
+| The final period        |           |          |
 
 ## Questions to ask your healthcare provider
 
@@ -217,6 +218,70 @@ possible causes.
 Questions for the clinician reviewer: is a page on this topic useful at all
 before launch, or should it wait?
 
+## The final period and what changes around it
+
+_Draft added 16 October 2026 from one large observational study
+(Pridham et al., Nature Medicine 2026, in Sources). The app already shows
+the last period day she logged in her BRIEF, as a plain fact from her
+record; this page would explain why it is there._
+
+**English**
+
+Menopause is dated from the final period. It is confirmed once 12 months
+have passed without one.
+
+A 2026 study of more than 300 million blood test results from over a
+million women in the United States and Israel lined the results up by time
+from each woman's final period instead of by age. Many results shifted
+sharply around the final period rather than drifting slowly with age,
+including tests of bone, liver, kidney, cholesterol and blood counts. Men
+of the same ages showed no such shift.
+
+In the same study, low mood and trouble falling asleep were more common in
+the first year after the final period than in the years after it. On
+average this eased, but not for everyone. If low mood lasts or worries
+you, talk to your healthcare provider.
+
+Hormone levels began changing earlier than earlier studies described, on
+average more than ten years before the final period. These are averages
+across many women, not a timeline for any one person, and not a reason to
+expect symptoms at a particular age.
+
+This is why your BRIEF shows the last period day you logged: the time since
+your final period helps a clinician read the rest of your record.
+
+**Japanese**
+
+閉経は最後の生理の日を基準に考えます。生理がない状態が12か月続いたときに確認されます。
+
+2026年の研究では、米国とイスラエルの100万人以上の女性による3億件以上の血液検査の結果を、年齢ではなく、それぞれの最後の生理からの時間で並べ直しました。その結果、多くの検査値が、年齢とともにゆっくり変わるのではなく、最後の生理の前後で大きく変化していました。骨、肝臓、腎臓、コレステロール、血球の検査が含まれます。同じ年代の男性には、このような変化は見られませんでした。
+
+同じ研究では、気分の落ち込みと寝つきの悪さが、最後の生理から1年目に、その後の年よりも多く見られました。平均すると和らいでいきますが、全員がそうとは限りません。気分の落ち込みが続く、または気になる場合は、医療者にご相談ください。
+
+ホルモンの値は、これまでの研究で示されていたより早く、平均すると最後の生理の10年以上前から変わり始めていました。これは多くの女性の平均であり、一人ひとりの経過を示すものでも、特定の年齢で症状が出ると考える理由でもありません。
+
+BRIEFに最後に記録された生理日が表示されるのはこのためです。最後の生理からの期間は、医療者があなたの記録を読み解く助けになります。
+
+**Proposed additions to the questions sheet** (under My cycle):
+
+- My last period was on [date]. Does that change anything you would check,
+  such as my bones, blood pressure or cholesterol?
+- My mood or sleep has changed since my periods stopped. Should we look at
+  that?
+
+**For the reviewer: what this page deliberately leaves out**
+
+- Hormone therapy. The study found smaller shifts in women taking it, but
+  the authors call this observational and ask for randomised trials: users
+  were about 9% of the US sample, the products were oral pills, and they
+  name healthy user bias. Only the bone finding agrees with trial evidence.
+  Nothing from this study about hormone therapy goes into EMBR.
+- Any risk estimate for a person. The study describes population averages
+  and says so; nothing here is linked to her own record.
+- "Menopause causes depression." The study reports a higher rate in the
+  first year (19% against 11% in later years, PHQ-9 of 10 or more), not a
+  cause.
+
 ## How EMBR uses research
 
 The PRISMA passage that was shared is the methods section of someone else's
@@ -250,19 +315,20 @@ Seven of the shared links were opened and checked on the date above and two
 blocked automated reading; peer reviewed and clinical body sources are
 kept, the rest dropped.
 
-| Source                                                                                                                               | What it is                              | Used for                                        | Status                                                             |
-| ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
-| [Harlow et al., STRAW+10 executive summary](https://pmc.ncbi.nlm.nih.gov/articles/PMC3340903/)                                       | Menopause 2012, consensus staging paper | Transition page                                 | Kept, criteria checked                                             |
-| [Nature Reviews Neurology roadmap](https://www.nature.com/articles/s41582-026-01244-5)                                               | Peer reviewed research roadmap          | Brain page                                      | Kept                                                               |
-| [Structured review of MRI studies](https://pmc.ncbi.nlm.nih.gov/articles/PMC10561270/)                                               | Peer reviewed review, 14 studies        | Brain page                                      | Kept                                                               |
-| [The Menopause Society press release](https://menopause.org/press-releases/how-menopause-restructures-a-womans-brain)                | Clinical society, conference abstract   | Brain page                                      | Kept as secondary                                                  |
-| [Systematic review, trauma and reproductive ageing](https://pmc.ncbi.nlm.nih.gov/articles/PMC11721711/)                              | Peer reviewed, PRISMA, 21 studies       | Background only                                 | Kept, not on a page                                                |
-| [Perimenopausal age, PTSD and depression](https://pmc.ncbi.nlm.nih.gov/articles/PMC10527101/)                                        | Peer reviewed cross sectional study     | Background only                                 | Kept, not on a page                                                |
-| [PTSD and timing of menopause, Nurses' Health Study II](https://pmc.ncbi.nlm.nih.gov/articles/PMC9197996/)                           | Peer reviewed cohort study              | Background only                                 | Kept, not on a page                                                |
-| [Johns Hopkins, Perimenopause and Anxiety](https://www.hopkinsmedicine.org/health/wellness-and-prevention/perimenopause-and-anxiety) | Academic medical centre patient page    | Anxiety page                                    | Blocked to automated reading; check by hand                        |
-| [JAMA Network Open article](https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2853260)                                    | Peer reviewed journal                   | Not used                                        | Blocked to automated reading; check by hand                        |
-| [Abrahamsson, Barschkett and Flatø, IZA DP 17789](https://www.iza.org/publications/dp/17789)                                         | Working paper, not peer reviewed, 2025  | Employer and investor materials; Work questions | Kept, cited as a working paper only; see `career-cost-research.md` |
-| YouTube, Instagram, brand blog links                                                                                                 | Video, social post, company blog        | Not used                                        | Dropped: not citable sources                                       |
+| Source                                                                                                                                                    | What it is                                          | Used for                                        | Status                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| [Harlow et al., STRAW+10 executive summary](https://pmc.ncbi.nlm.nih.gov/articles/PMC3340903/)                                                            | Menopause 2012, consensus staging paper             | Transition page                                 | Kept, criteria checked                                             |
+| [Nature Reviews Neurology roadmap](https://www.nature.com/articles/s41582-026-01244-5)                                                                    | Peer reviewed research roadmap                      | Brain page                                      | Kept                                                               |
+| [Structured review of MRI studies](https://pmc.ncbi.nlm.nih.gov/articles/PMC10561270/)                                                                    | Peer reviewed review, 14 studies                    | Brain page                                      | Kept                                                               |
+| [The Menopause Society press release](https://menopause.org/press-releases/how-menopause-restructures-a-womans-brain)                                     | Clinical society, conference abstract               | Brain page                                      | Kept as secondary                                                  |
+| [Systematic review, trauma and reproductive ageing](https://pmc.ncbi.nlm.nih.gov/articles/PMC11721711/)                                                   | Peer reviewed, PRISMA, 21 studies                   | Background only                                 | Kept, not on a page                                                |
+| [Perimenopausal age, PTSD and depression](https://pmc.ncbi.nlm.nih.gov/articles/PMC10527101/)                                                             | Peer reviewed cross sectional study                 | Background only                                 | Kept, not on a page                                                |
+| [PTSD and timing of menopause, Nurses' Health Study II](https://pmc.ncbi.nlm.nih.gov/articles/PMC9197996/)                                                | Peer reviewed cohort study                          | Background only                                 | Kept, not on a page                                                |
+| [Johns Hopkins, Perimenopause and Anxiety](https://www.hopkinsmedicine.org/health/wellness-and-prevention/perimenopause-and-anxiety)                      | Academic medical centre patient page                | Anxiety page                                    | Blocked to automated reading; check by hand                        |
+| [JAMA Network Open article](https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2853260)                                                         | Peer reviewed journal                               | Not used                                        | Blocked to automated reading; check by hand                        |
+| [Abrahamsson, Barschkett and Flatø, IZA DP 17789](https://www.iza.org/publications/dp/17789)                                                              | Working paper, not peer reviewed, 2025              | Employer and investor materials; Work questions | Kept, cited as a working paper only; see `career-cost-research.md` |
+| [Pridham et al., Population-scale reconstruction of menopause dynamics, Nat Med 32, 3823–3831 (2026)](https://www.nature.com/articles/s41591-026-04614-0) | Peer reviewed, cross sectional, 2 national datasets | Final period page; the BRIEF's last period day  | Kept; figures checked against the full text on 16 October 2026     |
+| YouTube, Instagram, brand blog links                                                                                                                      | Video, social post, company blog                    | Not used                                        | Dropped: not citable sources                                       |
 
 The three trauma papers are kept as background for product decisions (an
 optional surgical menopause question in onboarding, trauma aware wording),

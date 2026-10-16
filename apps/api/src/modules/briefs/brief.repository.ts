@@ -28,6 +28,18 @@ export const briefRepository = {
     return rows.map((row) => row.workImpact);
   },
 
+  /** The most recent day with period flow logged on or before
+   * `onOrBefore`, across the whole record, as YYYY-MM-DD. Only the date
+   * is selected; see last-recorded-period.ts. */
+  async findLastPeriodDay(userId: string, onOrBefore: Date): Promise<string | null> {
+    const row = await prisma.cycleEntry.findFirst({
+      where: { userId, flow: { not: null }, date: { lte: onOrBefore } },
+      orderBy: { date: "desc" },
+      select: { date: true },
+    });
+    return row ? row.date.toISOString().slice(0, 10) : null;
+  },
+
   /**
    * Second line of defense against the same double-generation this
    * flow's Redis lock (see brief.service.ts) exists to prevent in the
@@ -53,6 +65,7 @@ export const briefRepository = {
     persistentSymptoms: Prisma.InputJsonValue;
     nightSweatsRecall: Prisma.InputJsonValue;
     workImpact: Prisma.InputJsonValue;
+    lastRecordedPeriod: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;
     aiNarrative: string;

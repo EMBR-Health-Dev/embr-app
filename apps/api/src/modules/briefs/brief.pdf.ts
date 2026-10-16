@@ -383,6 +383,17 @@ export function buildClinicalBriefPdf(
     doc.text(t.averageCycleLengthLine(averageCycleLengthDays, cycleCount));
   }
   doc.fillColor(INK_MUTED).text(t.periodDaysLoggedLine(periodDaysLogged));
+  // Skipped for a brief that predates the field.
+  if (brief.lastRecordedPeriod) {
+    const { date, monthsBeforeBriefEnd } = brief.lastRecordedPeriod;
+    doc.fillColor(INK);
+    doc.text(
+      date !== null && monthsBeforeBriefEnd !== null
+        ? t.lastPeriodDayLine(date, monthsBeforeBriefEnd)
+        : t.noPeriodDayLoggedText,
+    );
+    doc.fillColor(INK_MUTED).text(t.lastPeriodDayNote);
+  }
 
   doc.moveDown(1);
 

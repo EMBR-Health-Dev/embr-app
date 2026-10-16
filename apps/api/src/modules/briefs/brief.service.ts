@@ -35,6 +35,7 @@ import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.j
 import { briefPeriodLabel } from "./brief-period-label.js";
 import { summarizeNightSweatsRecall } from "./night-sweats-recall.js";
 import { summarizeWorkImpact } from "./work-impact.js";
+import { summarizeLastRecordedPeriod } from "./last-recorded-period.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
@@ -116,6 +117,7 @@ async function generateBriefContent(
     previousSymptomLogs,
     nightSweatsAnswers,
     workImpactAnswers,
+    lastPeriodDay,
   ] = await Promise.all([
     exportRepository.listSymptomLogsForExport(userId, query),
     exportRepository.listCycleEntriesForExport(userId, query),
@@ -123,6 +125,12 @@ async function generateBriefContent(
     exportRepository.listSymptomLogsForExport(userId, previousQuery),
     briefRepository.listNightSweatsRecall(userId, fromDate, toDate),
     briefRepository.listWorkImpact(userId, fromDate, toDate),
+    // Cycle dates are calendar days, so compare against the brief's
+    // last calendar day as the person picked it.
+    briefRepository.findLastPeriodDay(
+      userId,
+      new Date(`${briefPeriodLabel(fromDate, toDate).toDate}T00:00:00.000Z`),
+    ),
   ]);
 
   // Its own deterministic count, never merged into symptomSummary and
@@ -132,6 +140,12 @@ async function generateBriefContent(
   // person's BRIEF, never in the AI input and never in organisation
   // statistics. See work-impact.ts.
   const workImpact = summarizeWorkImpact(workImpactAnswers);
+  // Same rules again: shown only in this person's BRIEF, never in the
+  // AI input. See last-recorded-period.ts.
+  const lastRecordedPeriod = summarizeLastRecordedPeriod(
+    lastPeriodDay,
+    briefPeriodLabel(fromDate, toDate).toDate,
+  );
 
   const symptomSummary = computeSymptomSummary(symptomLogs);
   const cycleSummary = computeCycleSummary(cycleEntries);
@@ -320,6 +334,7 @@ async function generateBriefContent(
     persistentSymptoms: JSON.parse(JSON.stringify(persistentSymptoms)),
     nightSweatsRecall: JSON.parse(JSON.stringify(nightSweatsRecall)),
     workImpact: JSON.parse(JSON.stringify(workImpact)),
+    lastRecordedPeriod: JSON.parse(JSON.stringify(lastRecordedPeriod)),
     // The exact same canonical object computed once above — used to
     // build the AI-safe projection and to validate the AI's
     // response — persisted here unchanged, never recomputed. This

@@ -126,6 +126,9 @@ interface PdfStrings {
   notEnoughCycleDataText: string;
   averageCycleLengthLine: (days: number, cycleCount: number) => string;
   periodDaysLoggedLine: (days: number) => string;
+  lastPeriodDayLine: (date: string, months: number) => string;
+  noPeriodDayLoggedText: string;
+  lastPeriodDayNote: string;
   treatmentsHeading: string;
   noTreatmentsText: string;
   ongoingLabel: string;
@@ -196,6 +199,12 @@ const EN: PdfStrings = {
   averageCycleLengthLine: (days, cycleCount) =>
     `Average cycle length: ${days} days (${cycleCount} cycle${cycleCount === 1 ? "" : "s"} recorded)`,
   periodDaysLoggedLine: (days) => `${days} period day${days === 1 ? "" : "s"} logged`,
+  lastPeriodDayLine: (date, months) =>
+    `Last period day logged: ${date} (${
+      months === 0 ? "less than a month" : `${months} month${months === 1 ? "" : "s"}`
+    } before the end of this BRIEF)`,
+  noPeriodDayLoggedText: "No period days logged in EMBR up to the end of this BRIEF.",
+  lastPeriodDayNote: "Counts only period days logged in EMBR, across the whole record.",
   treatmentsHeading: "Treatments logged during this period",
   noTreatmentsText: "No treatments logged in this range.",
   ongoingLabel: "Ongoing",
@@ -287,6 +296,12 @@ const JA: PdfStrings = {
   notEnoughCycleDataText: "この期間の周期の長さを計算するには、生理開始日の記録が不足しています。",
   averageCycleLengthLine: (days, cycleCount) => `平均周期：${days}日（${cycleCount}周期記録あり）`,
   periodDaysLoggedLine: (days) => `記録された生理日数：${days}日`,
+  lastPeriodDayLine: (date, months) =>
+    `最後に記録された生理日：${date}（${
+      months === 0 ? "このBRIEFの終了日から1か月以内" : `このBRIEFの終了日の${months}か月前`
+    }）`,
+  noPeriodDayLoggedText: "このBRIEFの終了日までに、EMBRに記録された生理日はありません。",
+  lastPeriodDayNote: "EMBRに記録された生理日のみを、記録全体から数えています。",
   treatmentsHeading: "この期間に記録された治療",
   noTreatmentsText: "この期間に記録された治療はありません。",
   ongoingLabel: "継続中",

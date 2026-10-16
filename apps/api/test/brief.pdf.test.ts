@@ -52,6 +52,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     persistentSymptoms: null,
     nightSweatsRecall: null,
     workImpact: null,
+    lastRecordedPeriod: null,
     interpretation: null,
     citedPatternIds: null,
     aiNarrative: "No significant patterns were noted in this period.",
@@ -368,6 +369,43 @@ describe("buildClinicalBriefPdf — days symptoms affected work", () => {
     const brief = baseBrief({ workImpact: { daysAnswered: 0, breakdown: null } });
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
     expect(text).not.toContain("employer");
+  });
+});
+
+describe("buildClinicalBriefPdf — last period day logged", () => {
+  it("prints the date and months before the BRIEF's end, in English and Japanese", async () => {
+    const lastRecordedPeriod = { date: "2025-03-10", monthsBeforeBriefEnd: 10 };
+    const en = await extractPdfText(
+      buildClinicalBriefPdf(baseBrief({ lastRecordedPeriod }), "person@embr.health"),
+    );
+    expect(en).toContain(
+      "Last period day logged: 2025-03-10 (10 months before the end of this BRIEF)",
+    );
+    expect(en).toContain("Counts only period days logged in EMBR, across the whole record.");
+
+    const ja = (
+      await extractPdfText(
+        buildClinicalBriefPdf(
+          baseBrief({ locale: "ja", lastRecordedPeriod }),
+          "person@embr.health",
+        ),
+      )
+    ).replace(/\s+/g, "");
+    expect(ja).toContain("最後に記録された生理日：2025-03-10（このBRIEFの終了日の10か月前）");
+  });
+
+  it("says when none was logged, and prints nothing for a BRIEF made before this existed", async () => {
+    const none = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({ lastRecordedPeriod: { date: null, monthsBeforeBriefEnd: null } }),
+        "person@embr.health",
+      ),
+    );
+    expect(none).toContain("No period days logged in EMBR up to the end of this BRIEF.");
+
+    const older = await extractPdfText(buildClinicalBriefPdf(baseBrief(), "person@embr.health"));
+    expect(older).not.toContain("Last period day logged");
+    expect(older).not.toContain("No period days logged");
   });
 });
 

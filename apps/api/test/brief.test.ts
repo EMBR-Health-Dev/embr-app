@@ -371,6 +371,14 @@ vi.mock("../src/lib/prisma.js", () => ({
           return Promise.resolve(results);
         },
       ),
+      // Matches brief.repository.ts's findLastPeriodDay: latest entry
+      // with flow, on or before a date, date selected only.
+      findFirst: vi.fn(({ where }: { where: { userId: string; date: { lte: Date } } }) => {
+        const latest = state.cycleEntries
+          .filter((e) => e.userId === where.userId && e.flow !== null && e.date <= where.date.lte)
+          .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+        return Promise.resolve(latest ? { date: latest.date } : null);
+      }),
     },
     treatment: {
       // Matches treatment.repository.ts's listOverlappingRange exactly:
@@ -856,6 +864,51 @@ describe("POST /briefs — days symptoms affected work", () => {
     });
     // Night sweats are counted from their own field only.
     expect(res.body.data.nightSweatsRecall).toEqual({ morningsAnswered: 0, breakdown: null });
+  });
+});
+
+describe("POST /briefs — last period day logged", () => {
+  function addPeriodDay(userId: string, day: string, flow: string | null) {
+    state.cycleEntries.push({
+      id: nextId(),
+      userId,
+      date: new Date(`${day}T00:00:00.000Z`),
+      flow,
+      isPeriodStart: false,
+      isPeriodEnd: false,
+      notes: null,
+    });
+  }
+
+  it("finds it across the whole record up to the BRIEF's end, and keeps it out of the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "last-period@embr.health");
+    addPeriodDay(userId, "2025-03-10", "LIGHT"); // before the range: still counts
+    addPeriodDay(userId, "2025-12-01", null); // no flow: not a period day
+    addPeriodDay(userId, "2026-03-05", "HEAVY"); // after the BRIEF ends: ignored
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.lastRecordedPeriod).toEqual({
+      date: "2025-03-10",
+      monthsBeforeBriefEnd: 10,
+    });
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/lastRecordedPeriod|2025-03-10|monthsBeforeBriefEnd/);
+  });
+
+  it("says no period day was logged rather than guessing", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "no-period@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.lastRecordedPeriod).toEqual({ date: null, monthsBeforeBriefEnd: null });
   });
 });
 
