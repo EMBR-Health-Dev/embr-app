@@ -22,7 +22,10 @@
     "createAccount": "Create an account",
     "sessionExpired": "Your session expired. Log in again to continue.",
     "accountDeleted": "Your account and everything in it have been deleted.",
-    "requestEarlyAccess": "Request early access"
+    "requestEarlyAccess": "Request early access",
+    "emailHint": "Use the email you signed up with.",
+    "failedHelp": "Check the email is the one you signed up with, or",
+    "resetPassword": "reset your password"
   },
   "LanguageSwitcher": {
     "label": "Language",
@@ -368,7 +371,12 @@
     "notes": "Notebook",
     "export": "Export",
     "organization": "Organization",
-    "logout": "Log out"
+    "logout": "Log out",
+    "feedback": "Send feedback",
+    "feedbackSubject": "EMBR feedback",
+    "feedbackIntro": "What happened, or what would make EMBR better for you?",
+    "feedbackPage": "Page",
+    "feedbackBrowser": "Browser"
   },
   "Timeline": {
     "title": "Timeline",
@@ -1184,5 +1192,38 @@
       "ICE": "Ice",
       "ROSE": "Rose"
     }
+  },
+  "PasswordField": {
+    "show": "Show",
+    "hide": "Hide"
+  },
+  "GettingStarted": {
+    "title": "Start here",
+    "intro": "Four small steps to get the most from your first two weeks.",
+    "hide": "Hide",
+    "doneLabel": "Done:",
+    "todoLabel": "To do:",
+    "steps": {
+      "logToday": {
+        "title": "Log how you feel today",
+        "body": "It takes about ten seconds. A hot flash can be one tap."
+      },
+      "lifeStage": {
+        "title": "Add your life stage",
+        "body": "In Settings. It shapes what EMBR shows you."
+      },
+      "aWeek": {
+        "title": "Log on a few days this week",
+        "body": "A week of entries is enough to start seeing patterns."
+      },
+      "firstBrief": {
+        "title": "Create your first BRIEF",
+        "body": "A clear summary of your record to bring to an appointment."
+      }
+    },
+    "nudgeTitle": "You have a week of records",
+    "nudgeBody": "That is enough for a first EMBR BRIEF: a clear summary of what you logged, to review and bring to your next appointment if you choose.",
+    "nudgeAction": "Create my BRIEF",
+    "notNow": "Not now"
   }
 }
