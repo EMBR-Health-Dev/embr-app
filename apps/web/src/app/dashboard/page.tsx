@@ -24,6 +24,7 @@ import { WeekOnTrack } from "../../components/week-on-track";
 import { CollapsibleCard } from "../../components/collapsible-card";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
+import { GettingStarted } from "../../components/getting-started";
 import { DailyCheckIn } from "../../components/daily-check-in";
 import { SeverityMark } from "../../components/severity-mark";
 import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
@@ -117,6 +118,7 @@ function DashboardContent() {
   }, []);
   const [weeklyFrequency, setWeeklyFrequency] = useState<SymptomFrequencyDto[]>([]);
   const [latestBrief, setLatestBrief] = useState<ClinicalBriefListItemDto | null>(null);
+  const [latestBriefLoaded, setLatestBriefLoaded] = useState(false);
   // Bumped on every successful log submission — ReflectionsSection
   // re-fetches whenever this changes. Same "acknowledge right after
   // logging" contract as apps/mobile/app/(app)/index.tsx's identical
@@ -269,7 +271,8 @@ function DashboardContent() {
     api.briefs
       .list({ pageSize: 1 })
       .then((page) => setLatestBrief(page.items[0] ?? null))
-      .catch(() => setLatestBrief(null));
+      .catch(() => setLatestBrief(null))
+      .finally(() => setLatestBriefLoaded(true));
   }, [user]);
 
   async function logHotFlashNow() {
@@ -454,6 +457,17 @@ function DashboardContent() {
         <p className={`text-sm text-foreground/60 ${startingPointKey ? "mt-3" : ""}`}>
           {t("homeIntro")}
         </p>
+
+        {recordSpan && latestBriefLoaded && (
+          <GettingStarted
+            userId={user.id}
+            accountCreatedAt={user.createdAt}
+            recordStart={recordSpan.start}
+            symptomCount={recordSpan.symptomCount}
+            hasLifeStage={Boolean(onboardingProfile?.lifeStage)}
+            hasBrief={latestBrief !== null}
+          />
+        )}
 
         {/* ---- TODAY ---- */}
         <section className="mt-10">

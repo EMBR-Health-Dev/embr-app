@@ -11,6 +11,7 @@ import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { PasswordField } from "../../components/password-field";
 import { ConsentItems } from "../../components/consent-items";
 import { LanguageSwitcher } from "../../components/language-switcher";
 
@@ -137,9 +138,8 @@ function RegisterForm() {
             onChange={(e) => setEmail(e.target.value)}
             error={fieldErrors.email}
           />
-          <Field
+          <PasswordField
             label={t("passwordLabel")}
-            type="password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

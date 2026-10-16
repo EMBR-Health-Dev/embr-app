@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BrandWordmark } from "./brand-wordmark";
+import { feedbackHref } from "../lib/feedback";
 
 interface NavLink {
   href: string;
@@ -62,6 +63,16 @@ export function AppNav({
     { href: "/settings", label: t("settings") },
   ];
 
+  // Built when the menu renders, so it names the page the person is on.
+  const feedback = feedbackHref({
+    subject: t("feedbackSubject"),
+    intro: t("feedbackIntro"),
+    pageLabel: t("feedbackPage"),
+    browserLabel: t("feedbackBrowser"),
+    pathname,
+    userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
+  });
+
   function isActive(href: string): boolean {
     // Detail views (e.g. /timeline/BRAIN_FOG) keep their section active.
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -117,6 +128,9 @@ export function AppNav({
                   {link.label}
                 </Link>
               ))}
+              <a href={feedback} className="rounded-sm px-2 py-1.5 text-foreground hover:bg-muted">
+                {t("feedback")}
+              </a>
               <div className="my-1 h-px bg-border-subtle" aria-hidden="true" />
               <span className="truncate px-2 py-1 text-xs text-muted-foreground">{userEmail}</span>
               <button
@@ -162,6 +176,9 @@ export function AppNav({
                 {link.label}
               </Link>
             ))}
+            <a href={feedback} className="rounded-sm px-2 py-1.5 text-foreground hover:bg-muted">
+              {t("feedback")}
+            </a>
             <div className="my-1 h-px bg-border-subtle" aria-hidden="true" />
             <span className="truncate px-2 py-1 text-xs text-muted-foreground">{userEmail}</span>
             <button

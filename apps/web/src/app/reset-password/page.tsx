@@ -8,7 +8,7 @@ import { passwordSchema } from "@embr/validation";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
-import { Field } from "../../components/field";
+import { PasswordField } from "../../components/password-field";
 
 function ResetPasswordForm() {
   const t = useTranslations("ResetPassword");
@@ -92,18 +92,16 @@ function ResetPasswordForm() {
         <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
 
         <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-5" noValidate>
-          <Field
+          <PasswordField
             label={t("newPasswordLabel")}
-            type="password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
           />
           <p className="text-xs text-foreground/50">{t("passwordHint")}</p>
-          <Field
+          <PasswordField
             label={t("confirmPasswordLabel")}
-            type="password"
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

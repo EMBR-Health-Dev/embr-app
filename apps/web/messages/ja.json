@@ -22,7 +22,10 @@
     "createAccount": "アカウントを作成",
     "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
     "accountDeleted": "アカウントとその中のすべてのデータを削除しました。",
-    "requestEarlyAccess": "早期アクセスを申し込む"
+    "requestEarlyAccess": "早期アクセスを申し込む",
+    "emailHint": "登録したメールアドレスを入力してください。",
+    "failedHelp": "登録したメールアドレスかどうかを確認するか、",
+    "resetPassword": "パスワードを再設定してください"
   },
   "LanguageSwitcher": {
     "label": "言語",
@@ -368,7 +371,12 @@
     "notes": "ノート",
     "export": "エクスポート",
     "organization": "組織",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "feedback": "フィードバックを送る",
+    "feedbackSubject": "EMBRへのフィードバック",
+    "feedbackIntro": "何が起きましたか？ EMBRをより使いやすくするためのご意見もお聞かせください。",
+    "feedbackPage": "ページ",
+    "feedbackBrowser": "ブラウザ"
   },
   "Timeline": {
     "title": "タイムライン",
@@ -1184,5 +1192,38 @@
       "ICE": "アイス",
       "ROSE": "ローズ"
     }
+  },
+  "PasswordField": {
+    "show": "表示",
+    "hide": "隠す"
+  },
+  "GettingStarted": {
+    "title": "はじめに",
+    "intro": "最初の2週間を活かすための、4つの小さなステップです。",
+    "hide": "閉じる",
+    "doneLabel": "完了：",
+    "todoLabel": "未完了：",
+    "steps": {
+      "logToday": {
+        "title": "今日の体調を記録する",
+        "body": "約10秒で記録できます。ホットフラッシュはワンタップです。"
+      },
+      "lifeStage": {
+        "title": "ライフステージを設定する",
+        "body": "設定から選べます。EMBRの表示内容に反映されます。"
+      },
+      "aWeek": {
+        "title": "今週、数日記録する",
+        "body": "1週間分の記録があれば、パターンが見え始めます。"
+      },
+      "firstBrief": {
+        "title": "最初のBRIEFをつくる",
+        "body": "記録をわかりやすくまとめた要約を、診察に持っていけます。"
+      }
+    },
+    "nudgeTitle": "1週間分の記録がそろいました",
+    "nudgeBody": "最初のEMBR BRIEFをつくるのに十分です。記録した内容をわかりやすくまとめ、確認したうえで、必要なら次の診察に持っていけます。",
+    "nudgeAction": "BRIEFをつくる",
+    "notNow": "あとで"
   }
 }

@@ -13,6 +13,7 @@ import { safeRedirect } from "../../lib/safe-redirect";
 import { consentHref, needsConsentReview } from "../../lib/consent";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { PasswordField } from "../../components/password-field";
 import { LanguageSwitcher } from "../../components/language-switcher";
 
 function LoginForm() {
@@ -33,11 +34,13 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [credentialsRejected, setCredentialsRejected] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
+    setCredentialsRejected(false);
     setFieldErrors({});
 
     const parsed = loginSchema.safeParse({ email, password });
@@ -72,6 +75,7 @@ function LoginForm() {
       // both "wrong password" and "no such account" — no reason for the
       // client to behave differently and risk implying otherwise.
       setFormError(err instanceof ApiError ? err.message : t("genericError"));
+      setCredentialsRejected(err instanceof ApiError && err.status === 401);
     } finally {
       setSubmitting(false);
     }
@@ -143,9 +147,9 @@ function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           error={fieldErrors.email}
         />
-        <Field
+        <p className="-mt-3 text-xs text-foreground/60">{t("emailHint")}</p>
+        <PasswordField
           label={t("passwordLabel")}
-          type="password"
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -154,15 +158,28 @@ function LoginForm() {
 
         <Link
           href="/forgot-password"
-          className="self-end text-xs font-medium text-primary underline underline-offset-2"
+          className="self-end text-sm font-medium text-primary underline underline-offset-2"
         >
           {t("forgotPassword")}
         </Link>
 
         {formError && (
-          <p role="alert" className="text-sm font-medium text-foreground">
-            {formError}
-          </p>
+          <div role="alert" className="text-sm text-foreground">
+            <p className="font-medium">{formError}</p>
+            {/* The commonest reasons in early access: a mistyped password,
+                or a different email than the one used to sign up. */}
+            {credentialsRejected && (
+              <p className="mt-1 text-foreground/70">
+                {t("failedHelp")}{" "}
+                <Link
+                  href="/forgot-password"
+                  className="font-medium text-primary underline underline-offset-2"
+                >
+                  {t("resetPassword")}
+                </Link>
+              </p>
+            )}
+          </div>
         )}
 
         <Button type="submit" disabled={submitting} className="mt-4">
