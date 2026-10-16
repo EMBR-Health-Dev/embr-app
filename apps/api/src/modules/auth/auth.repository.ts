@@ -140,6 +140,38 @@ export const authRepository = {
     });
   },
 
+  // ---- Sign in by email link ----
+
+  async createLoginLinkToken(userId: string, tokenHash: string) {
+    await prisma.loginLinkToken.updateMany({
+      where: { userId, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    return prisma.loginLinkToken.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt: new Date(Date.now() + env.LOGIN_LINK_TTL_SECONDS * 1000),
+      },
+    });
+  },
+
+  /**
+   * Consumes a live token in one conditional write and returns its
+   * userId, or null. Two requests racing with the same link cannot both
+   * succeed: only one of them matches `consumedAt: null`.
+   */
+  async consumeLoginLinkToken(tokenHash: string): Promise<string | null> {
+    const now = new Date();
+    const { count } = await prisma.loginLinkToken.updateMany({
+      where: { tokenHash, consumedAt: null, expiresAt: { gt: now } },
+      data: { consumedAt: now },
+    });
+    if (count !== 1) return null;
+    const record = await prisma.loginLinkToken.findUnique({ where: { tokenHash } });
+    return record?.userId ?? null;
+  },
+
   // ---- Account deletion ----
 
   /**

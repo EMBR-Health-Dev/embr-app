@@ -125,6 +125,45 @@ paths:
             rely on the cookies and can ignore both fields.
         "401": { description: Invalid email or password }
         "429": { description: Too many login attempts for this account/IP }
+  /auth/login-link:
+    post:
+      summary: Email a one time sign in link
+      description: >
+        Always returns 202 regardless of whether the account exists, to
+        avoid email enumeration. The link expires after 15 minutes
+        (LOGIN_LINK_TTL_SECONDS) and only the newest one works.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202": { description: Accepted }
+        "429": { description: Too many requests for this account/IP }
+  /auth/login-link/consume:
+    post:
+      summary: Sign in with an emailed link token
+      description: >
+        Uses the token once. Marks the email verified, since opening the
+        link proves the address. Same response and cookies as /auth/login.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200": { description: Signed in, same body and cookies as /auth/login }
+        "401": { description: Link invalid, expired or already used }
   /auth/refresh:
     post:
       summary: Rotate the refresh token and issue a new access token

@@ -6,6 +6,8 @@ import {
   deleteAccountSchema,
   forgotPasswordSchema,
   idParamSchema,
+  loginLinkConsumeSchema,
+  loginLinkRequestSchema,
   loginSchema,
   refreshTokenBodySchema,
   registerSchema,
@@ -33,6 +35,7 @@ import {
 import { hashToken } from "./tokens.js";
 import {
   loginLimiter,
+  loginLinkLimiter,
   passwordResetLimiter,
   refreshLimiter,
   registerLimiter,
@@ -100,6 +103,36 @@ router.post(
     // Browser clients rely on the httpOnly cookie and ignore this
     // field; mobile has no cookie, so this is the only place it gets
     // one at all.
+    res.status(200).json({ data: { user, accessToken, refreshToken }, requestId: req.requestId });
+  }),
+);
+
+router.post(
+  "/auth/login-link",
+  loginLinkLimiter,
+  validate(loginLinkRequestSchema),
+  asyncHandler(async (req, res) => {
+    await authService.requestLoginLink(req, req.body.email);
+    // Always 202, see /auth/resend-verification.
+    res.status(202).json({ message: "If that account exists, a sign in link is on its way" });
+  }),
+);
+
+// A POST, not the GET the email link opens: mail scanners that open
+// links on arrival would otherwise use up the one time link before the
+// person does. The web page behind the link asks for one click first.
+router.post(
+  "/auth/login-link/consume",
+  loginLimiter,
+  validate(loginLinkConsumeSchema),
+  asyncHandler(async (req, res) => {
+    const { user, accessToken, refreshToken } = await authService.loginWithLink(
+      req,
+      req.body.token,
+    );
+    setAccessTokenCookie(res, accessToken);
+    setRefreshTokenCookie(res, refreshToken);
+    issueCsrfToken(res);
     res.status(200).json({ data: { user, accessToken, refreshToken }, requestId: req.requestId });
   }),
 );

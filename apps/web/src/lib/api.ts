@@ -68,6 +68,15 @@ export const api = {
     resendVerification: (email: string) =>
       apiFetch<void>("/auth/resend-verification", { method: "POST", body: { email } }),
 
+    requestLoginLink: (email: string) =>
+      apiFetch<void>("/auth/login-link", { method: "POST", body: { email } }),
+
+    consumeLoginLink: (token: string) =>
+      apiFetch<AuthSessionResponse>("/auth/login-link/consume", {
+        method: "POST",
+        body: { token },
+      }),
+
     forgotPassword: (email: string) =>
       apiFetch<void>("/auth/forgot-password", { method: "POST", body: { email } }),
 

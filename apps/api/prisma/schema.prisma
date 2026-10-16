@@ -55,6 +55,7 @@ model User {
   sessions                Session[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
+  loginLinkTokens         LoginLinkToken[]
   auditLogs               AuditLog[]
   symptomLogs             SymptomLog[]
   cycleEntries            CycleEntry[]
@@ -123,6 +124,22 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+/// Single-use token emailed to sign in without a password. Same hashed,
+/// single-consumption pattern as PasswordResetToken; issuing a new one
+/// invalidates prior unconsumed tokens for the same user.
+model LoginLinkToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("login_link_tokens")
 }
 
 /// Append-only security/audit trail for auth events (register, login,

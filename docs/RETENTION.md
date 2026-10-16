@@ -5,7 +5,7 @@
 - `apps/api/src/modules/retention/` — deletes rows that are already
   functionally dead: `Session` rows past their `expiresAt` (or revoked
   and past a grace period), and `EmailVerificationToken`/
-  `PasswordResetToken` rows past their `expiresAt`. A 30-day grace
+  `PasswordResetToken`/`LoginLinkToken` rows past their `expiresAt`. A 30-day grace
   period beyond raw expiry (`RETENTION_GRACE_PERIOD_DAYS`, default 30)
   exists for two reasons: clock skew between this process and whatever
   issued the row, and keeping a recently-expired session/token on hand

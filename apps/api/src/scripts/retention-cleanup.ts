@@ -1,5 +1,5 @@
-// Deletes already-dead Session/EmailVerificationToken/PasswordResetToken
-// rows past a grace period beyond their expiry — see
+// Deletes already-dead Session/EmailVerificationToken/PasswordResetToken/
+// LoginLinkToken rows past a grace period beyond their expiry — see
 // retention.repository.ts's doc comment for exactly what counts as
 // "dead" and why a grace period exists at all.
 //

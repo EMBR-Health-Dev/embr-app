@@ -18,6 +18,7 @@ import { LanguageSwitcher } from "../../components/language-switcher";
 
 function LoginForm() {
   const t = useTranslations("Login");
+  const tLink = useTranslations("LoginLink");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refresh } = useAuth();
@@ -196,6 +197,13 @@ function LoginForm() {
       <Button variant="ghost" className="mt-6 w-full" onClick={handleSsoClick}>
         {t("continueWithSso")}
       </Button>
+
+      <Link
+        href="/login-link"
+        className="mt-3 block text-center text-sm font-medium text-primary underline underline-offset-2"
+      >
+        {tLink("fromLogin")}
+      </Link>
 
       <p className="mt-6 text-center text-sm text-foreground/60">
         {t("newToEmbr")}{" "}

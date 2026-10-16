@@ -5,7 +5,7 @@ import { env } from "../../config/env.js";
 import { authRepository } from "./auth.repository.js";
 import { hashPassword, verifyPassword } from "./password.js";
 import { generateRefreshToken, generateOpaqueToken, hashToken, signAccessToken } from "./tokens.js";
-import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
+import { sendLoginLinkEmail, sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
 import { writeAuditLog } from "./audit.js";
 import { toUserDto } from "./auth.mappers.js";
 import { onboardingRepository } from "../onboarding/onboarding.repository.js";
@@ -127,6 +127,45 @@ export const authService = {
     const consents = await consentService.statesFor(user.id);
     return {
       user: toUserDto(user, onboarding?.completedAt ?? null, consents),
+      accessToken,
+      refreshToken,
+    };
+  },
+
+  async requestLoginLink(req: Request, email: string): Promise<void> {
+    const user = await authRepository.findUserByEmail(email);
+    // Silent on non-existent accounts, see resendVerification.
+    if (!user) return;
+
+    const token = generateOpaqueToken();
+    await authRepository.createLoginLinkToken(user.id, hashToken(token));
+    await sendLoginLinkEmail(user.email, token);
+    await writeAuditLog(req, "LOGIN_LINK_REQUESTED", user.id);
+  },
+
+  async loginWithLink(req: Request, token: string): Promise<IssuedSession> {
+    const userId = await authRepository.consumeLoginLinkToken(hashToken(token));
+    const user = userId ? await authRepository.findUserById(userId) : null;
+    if (!user) {
+      await writeAuditLog(req, "LOGIN_FAILED", null, { method: "email_link" });
+      throw AppError.unauthorized("This sign in link is invalid or has expired");
+    }
+
+    // Opening a link sent to the address proves the address, the same
+    // proof the verification email asks for.
+    let current = user;
+    if (!user.emailVerifiedAt) {
+      current = await authRepository.markEmailVerified(user.id);
+      await writeAuditLog(req, "EMAIL_VERIFIED", user.id, { method: "email_link" });
+    }
+
+    const { accessToken, refreshToken } = await issueSession(req, user);
+    await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id, { method: "email_link" });
+
+    const onboarding = await onboardingRepository.findByUserId(user.id);
+    const consents = await consentService.statesFor(user.id);
+    return {
+      user: toUserDto(current, onboarding?.completedAt ?? null, consents),
       accessToken,
       refreshToken,
     };
