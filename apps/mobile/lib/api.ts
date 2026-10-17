@@ -1,4 +1,5 @@
 import type {
+  NotificationPreferencesDto,
   AuthSessionResponse,
   BriefTrendsDto,
   ClinicalBriefDto,
@@ -188,6 +189,15 @@ export const api = {
     get: (id: string) => apiFetch<ClinicalBriefDto>(`/briefs/${id}`),
 
     delete: (id: string) => apiFetch<void>(`/briefs/${id}`, { method: "DELETE" }),
+  },
+
+  notifications: {
+    get: () => apiFetch<NotificationPreferencesDto>("/notifications/preferences"),
+    patch: (input: { weeklyEmail: boolean }) =>
+      apiFetch<NotificationPreferencesDto>("/notifications/preferences", {
+        method: "PATCH",
+        body: input,
+      }),
   },
 
   onboarding: {

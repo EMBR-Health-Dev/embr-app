@@ -667,6 +667,11 @@
     "lastPeriodSaved": "保存しました",
     "lastPeriodRemoved": "削除しました",
     "lastPeriodError": "保存できませんでした。もう一度お試しください。",
+    "weeklyEmailTitle": "週1回のメール",
+    "weeklyEmailHelp": "週に一度、日曜日に、EMBRでの1週間を振り返るための短いお知らせを送ります。記録の内容が含まれることはありません。オンにしない限り送られません。",
+    "weeklyEmailToggle": "週1回のメールを受け取る",
+    "weeklyEmailOn": "オンです。次回は日曜日に届きます。",
+    "weeklyEmailError": "保存できませんでした。もう一度お試しください。",
     "lifeStage": {
       "perimenopause": "月経の周期や量が変わってきた（周閉経期）",
       "postmenopause": "12か月以上月経がない（閉経後）",

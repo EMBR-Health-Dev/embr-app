@@ -164,6 +164,32 @@ paths:
       responses:
         "200": { description: Signed in, same body and cookies as /auth/login }
         "401": { description: Link invalid, expired or already used }
+  /notifications/preferences:
+    get:
+      summary: Her email preferences
+      security: [{ cookieAuth: [] }]
+      tags: [Notifications]
+      responses:
+        "200": { description: "{ weeklyEmail: boolean }, false until she turns it on" }
+    patch:
+      summary: Turn the weekly reminder email on or off
+      description: >
+        Not behind the consent gate, so it can always be turned off. The
+        email itself carries nothing from her record.
+      security: [{ cookieAuth: [] }]
+      tags: [Notifications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weeklyEmail]
+              properties:
+                weeklyEmail: { type: boolean }
+      responses:
+        "200": { description: The saved preference }
+        "400": { description: Not a boolean }
   /auth/refresh:
     post:
       summary: Rotate the refresh token and issue a new access token

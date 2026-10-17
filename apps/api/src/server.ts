@@ -4,6 +4,7 @@ import { logger } from "./lib/logger.js";
 import { prisma } from "./lib/prisma.js";
 import { redis } from "./lib/redis.js";
 import { initSentry, captureException } from "./lib/sentry.js";
+import { startWeeklyEmailScheduler } from "./modules/notifications/weekly-email.js";
 
 // Must run before createApp() so errors during route registration are
 // still captured, and before the process-level handlers below so they
@@ -16,8 +17,12 @@ const server = app.listen(env.API_PORT, env.API_HOST, () => {
   logger.info({ port: env.API_PORT, host: env.API_HOST, env: env.NODE_ENV }, "api listening");
 });
 
+// Started here, not in createApp(), so tests never run it.
+const stopWeeklyEmails = startWeeklyEmailScheduler();
+
 async function shutdown(signal: string) {
   logger.info({ signal }, "shutdown signal received, closing gracefully");
+  stopWeeklyEmails();
 
   server.close(async (err) => {
     if (err) {

@@ -48,6 +48,10 @@ vi.mock("../../lib/api", () => ({
       get: (...args: unknown[]) => onboardingGetMock(...args),
       patch: (...args: unknown[]) => onboardingPatchMock(...args),
     },
+    notifications: {
+      get: vi.fn().mockResolvedValue({ weeklyEmail: false }),
+      patch: vi.fn().mockResolvedValue({ weeklyEmail: true }),
+    },
   },
 }));
 
