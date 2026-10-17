@@ -111,9 +111,12 @@ const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 // Auth endpoints never go through the refresh-and-retry path below — a
 // 401 from /auth/login is just "wrong password," not "your session
 // expired," and retrying /auth/refresh itself on its own 401 would
-// recurse. Mirrors apps/mobile/lib/api-client.ts's identical set.
+// recurse. Mirrors apps/mobile/lib/api-client.ts's set, plus the
+// sign in link, which only the web app consumes: a 401 there means the
+// link was already used or expired, not that a session ended.
 const NO_REFRESH_PATHS = new Set([
   "/auth/login",
+  "/auth/login-link/consume",
   "/auth/register",
   "/auth/refresh",
   "/auth/forgot-password",

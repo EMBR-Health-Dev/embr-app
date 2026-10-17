@@ -132,6 +132,22 @@ describe("apiFetch — refresh-and-retry on 401", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("never attempts a refresh when a sign in link was already used or has expired", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(401, {
+        error: { code: "UNAUTHORIZED", message: "This link has expired or has already been used" },
+      }),
+    );
+
+    await expect(
+      apiFetch("/auth/login-link/consume", { method: "POST", body: { token: "used" } }),
+    ).rejects.toMatchObject({ status: 401 });
+
+    // A dead link says nothing about whether this browser's session is
+    // alive, so it must not spend (and rotate) the refresh token.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("de-duplicates concurrent 401s into a single refresh attempt", async () => {
     fetchMock
       .mockResolvedValueOnce(
