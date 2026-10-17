@@ -10,6 +10,7 @@ import {
   setConsentRequiredHandler,
   setSessionExpiredHandler,
 } from "./api-client";
+import { worksSignedOut } from "./signed-out-pages";
 import { consentHref, isConsentExempt, needsConsentReview } from "./consent";
 
 interface AuthContextValue {
@@ -62,7 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // new value, not a new one invented for this.
     setSessionExpiredHandler(() => {
       setUser(null);
-      router.replace("/login?reason=session-expired");
+      // Not from a page that works signed out: on a sign in link, reset
+      // or verification page the redirect would drop the one time token
+      // in its address, and the person would never reach its button.
+      if (!worksSignedOut(window.location.pathname)) {
+        router.replace("/login?reason=session-expired");
+      }
     });
     return () => setSessionExpiredHandler(null);
   }, [router]);
