@@ -47,12 +47,14 @@ Railway").
 
 Times in UTC. Add a line for every step.
 
-| When                | What                                                                  |
-| ------------------- | --------------------------------------------------------------------- |
-| 2026-10-20 13:58    | Railway incident window starts                                        |
-| 2026-10-21          | Railway publishes its disclosure and emails customers                 |
-| 2026-10-22 03:32    | Railway confirms the attacker no longer has access                    |
-| 2026-10-23 (time: ) | EMBR founder reviews the notice; rotation starts (fill in exact time) |
+| When                | What                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 2026-10-20 13:58    | Railway incident window starts                                                                                |
+| 2026-10-21          | Railway publishes its disclosure and emails customers                                                         |
+| 2026-10-22 03:32    | Railway confirms the attacker no longer has access                                                            |
+| 2026-10-23 (time: ) | EMBR founder reviews the notice; rotation starts (fill in exact time)                                         |
+| 2026-10-23          | Postgres and Redis confirmed private (no public access)                                                       |
+| 2026-10-23          | Anthropic console: no spend since 2026-10-11, so no sign the key was used during or after the incident window |
 
 ## Rotation checklist
 
