@@ -62,10 +62,13 @@ setting it in Railway. Generate random secrets with `openssl rand -base64 48`
 
 ### 1. Check what is reachable from the internet
 
-- [ ] Postgres service, **Settings > Networking**: no TCP proxy, no public
+- [x] Postgres service, **Settings > Networking**: no TCP proxy, no public
       domain. If one exists, remove it.
-- [ ] Redis service: the same.
-- [ ] Note the result here: \_\_\_
+- [x] Redis service: the same.
+- [x] Result (2026-10-23): neither has public access. Both Networking pages
+      offer only "Add public access", and no `DATABASE_PUBLIC_URL` or
+      `REDIS_PUBLIC_URL` is set. Reachable only on Railway's private
+      network, so the leaked passwords alone give no way in.
 
 ### 2. Provider keys (rotate at the provider, then paste into Railway)
 
