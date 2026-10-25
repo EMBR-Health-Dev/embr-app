@@ -55,6 +55,9 @@ Times in UTC. Add a line for every step.
 | 2026-10-23 (time: ) | EMBR founder reviews the notice; rotation starts (fill in exact time)                                         |
 | 2026-10-23          | Postgres and Redis confirmed private (no public access)                                                       |
 | 2026-10-23          | Anthropic console: no spend since 2026-10-11, so no sign the key was used during or after the incident window |
+| 2026-10-24          | New Anthropic key being created ("embr prod v2", Default workspace). Not yet confirmed set in Railway         |
+| 2026-10-24          | New JWT secret values generated. Not yet confirmed set in Railway                                             |
+| 2026-10-24          | GitHub repository secrets reviewed: only `PRODUCTION_DATA_ENCRYPTION_KEY` exists                              |
 
 ## Rotation checklist
 
@@ -74,11 +77,12 @@ setting it in Railway. Generate random secrets with `openssl rand -base64 48`
 
 ### 2. Provider keys (rotate at the provider, then paste into Railway)
 
-- [ ] **Anthropic** (console.anthropic.com > API keys): check usage for
-      2026-10-20 onwards for spend EMBR did not make, delete the old key,
-      create a new one, set `ANTHROPIC_API_KEY` on `@embr/api`. If Anthropic
-      already revoked the old key, BRIEF generation is failing until this is
-      done.
+- [x] **Anthropic**, usage: no spend since 2026-10-11 (checked 2026-10-23).
+- [ ] **Anthropic**, key: create a new key, set `ANTHROPIC_API_KEY` on
+      `@embr/api`, deploy, delete the old key, then generate a BRIEF and see
+      its spend appear in the same console. If Anthropic already revoked the
+      old key, BRIEF generation is failing until this is done. (Started
+      2026-10-24.)
 - [ ] **Resend**: check the sending log for mail EMBR did not send, delete the
       old key, create a new one, set `RESEND_API_KEY`.
 - [ ] **Stripe**: roll the secret key (Developers > API keys) and the webhook
@@ -88,9 +92,10 @@ setting it in Railway. Generate random secrets with `openssl rand -base64 48`
 
 ### 3. Session secrets (signs every user out once)
 
-- [ ] New `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` on `@embr/api`. Check
-      `@embr/admin` and `@embr/worker` for the same names and use the same
-      new values there.
+- [ ] New `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` on `@embr/api`, then
+      deploy. Only the API reads these (`apps/api/src/modules/auth/tokens.ts`);
+      web and admin reach the API through their proxy, so they need no change.
+      (Values generated 2026-10-24.)
 - [ ] After the redeploy, sign in again on web and on the phone.
 
 ### 4. Database and Redis passwords
@@ -134,9 +139,14 @@ change `DATA_ENCRYPTION_KEY` in Railway until that change is deployed.
       to `EMBR-Health-Dev`. Railway re-issued every GitHub App installation.
 - [ ] Organisation audit log (Settings > Audit log) from 2026-10-20: look for
       new deploy keys, tokens, collaborators, or pushes nobody made.
-- [ ] Repository secrets: update every `PRODUCTION_*` and `BACKUP_*` secret
-      to the new values, or the retention and backfill workflows will fail.
-      These were stored on GitHub, not Railway, but hold the same values.
+- [x] Repository secrets reviewed (2026-10-24): the only one is
+      `PRODUCTION_DATA_ENCRYPTION_KEY`. None of the other `PRODUCTION_*` or
+      `BACKUP_*` secrets the workflows name exist, so there is nothing to
+      update after rotating.
+- [ ] Delete `PRODUCTION_DATA_ENCRYPTION_KEY` from GitHub. No workflow can
+      use it: GitHub's runners cannot reach the private database, and the
+      backfill was run through `railway ssh` instead. Removing it leaves the
+      key only in Railway and the password manager.
 
 ### 8. Railway account
 
@@ -144,6 +154,14 @@ change `DATA_ENCRYPTION_KEY` in Railway until that change is deployed.
       authentication if it is not on.
 - [ ] Recreate any Railway API tokens (the Railway CLI and the claude.ai
       Railway connector both need re-authorising).
+
+## Follow ups found during the incident
+
+- The weekly "Retention Cleanup" GitHub workflow fails every run: its
+  secrets were never added, and it cannot reach the private database
+  anyway. It only deletes expired sessions and tokens, so nothing is at
+  risk, but it should move into Railway as a cron service, the same way the
+  daily backup runs.
 
 ## Questions for Railway (support@railway.com)
 
