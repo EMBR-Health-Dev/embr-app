@@ -628,6 +628,110 @@ describe("Dashboard — context quick-log", () => {
     ).toBeDisabled();
   });
 
+  it("records yesterday's context from yesterday's own entry, never touching today's", async () => {
+    const iso = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const now = new Date();
+    const before = new Date(now);
+    before.setDate(now.getDate() - 1);
+    const todayIso = iso(now);
+    const yesterdayIso = iso(before);
+    const entry = (date: string, fields: Record<string, unknown>) => ({
+      id: `ctx-${date}`,
+      date,
+      sleepDuration: null,
+      caffeineAfternoon: null,
+      alcohol: null,
+      stressLevel: null,
+      nightSweats: null,
+      workImpact: null,
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-01T00:00:00Z",
+      ...fields,
+    });
+    contextLogsList.mockImplementation((query: { from: string }) =>
+      Promise.resolve({
+        ...emptyPage,
+        items:
+          query.from === todayIso
+            ? [entry(todayIso, { sleepDuration: "SEVEN_PLUS_H", workImpact: "NONE" })]
+            : [entry(yesterdayIso, { nightSweats: "ONE" })],
+      }),
+    );
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: /Today's context/ }));
+    await waitFor(() =>
+      expect((screen.getByLabelText("Sleep last night") as HTMLSelectElement).value).toBe(
+        "SEVEN_PLUS_H",
+      ),
+    );
+    await user.click(screen.getByRole("radio", { name: "Yesterday" }));
+
+    // The target date is spelled out before saving.
+    const longDate = new Intl.DateTimeFormat("en", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    }).format(before);
+    expect(await screen.findByText(longDate)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText("Night sweats the night before yesterday") as HTMLSelectElement)
+          .value,
+      ).toBe("ONE"),
+    );
+    // Today's answers are not carried over into yesterday.
+    expect(
+      (screen.getByLabelText("Sleep the night before yesterday") as HTMLSelectElement).value,
+    ).toBe("");
+    await user.selectOptions(
+      screen.getByLabelText("Did symptoms affect your work yesterday?"),
+      "MISSED_TIME",
+    );
+    await user.click(screen.getByRole("button", { name: "Save yesterday's entry" }));
+
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(1));
+    const [input] = contextLogsUpsert.mock.calls[0] as [Record<string, unknown>];
+    expect(input).toMatchObject({
+      date: yesterdayIso,
+      nightSweats: "ONE",
+      workImpact: "MISSED_TIME",
+    });
+    expect(input.sleepDuration).toBeUndefined();
+
+    // Back to today: today's own answers, reloaded.
+    await user.click(screen.getByRole("radio", { name: "Today" }));
+    await waitFor(() =>
+      expect((screen.getByLabelText("Sleep last night") as HTMLSelectElement).value).toBe(
+        "SEVEN_PLUS_H",
+      ),
+    );
+    expect(
+      (screen.getByLabelText("Did symptoms affect your work today?") as HTMLSelectElement).value,
+    ).toBe("NONE");
+  });
+
+  it("pauses saving yesterday's context when it could not be loaded", async () => {
+    contextLogsList.mockImplementation((query: { from: string }) => {
+      const now = new Date();
+      const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      return query.from === todayIso ? Promise.resolve(emptyPage) : Promise.reject(new Error("x"));
+    });
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: /Today's context/ }));
+    await user.click(screen.getByRole("radio", { name: "Yesterday" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Yesterday's entry could not be loaded",
+    );
+    expect(screen.getByRole("button", { name: "Save yesterday's entry" })).toBeDisabled();
+  });
+
   it("says so when today's context could not be saved", async () => {
     contextLogsUpsert.mockRejectedValueOnce(new Error("offline"));
     const user = userEvent.setup();

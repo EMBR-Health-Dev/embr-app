@@ -60,6 +60,12 @@ const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
 const WORK_IMPACT = ["NONE", "DID_LESS", "MISSED_TIME"] as const;
 const LOGS_PAGE_SIZE = 5;
 
+function dayBefore(isoDate: string): string {
+  const d = new Date(`${isoDate}T12:00:00`);
+  d.setDate(d.getDate() - 1);
+  return toIsoDate(d);
+}
+
 function isCategory(value: string | null): value is (typeof CATEGORIES)[number] {
   return value !== null && (CATEGORIES as readonly string[]).includes(value);
 }
@@ -168,24 +174,47 @@ function DashboardContent() {
   // apps/mobile/components/work-impact-card.tsx.
   const [contextLoad, setContextLoad] = useState<"loading" | "ready" | "failed">("loading");
   const [cycleLoad, setCycleLoad] = useState<"loading" | "ready" | "failed">("loading");
+  // Context can be filled in for yesterday too (work impact after a
+  // late finish, say). The day is fixed when the page opens, and each
+  // day loads and saves its own entry, so one day can never overwrite
+  // the other.
+  const [contextToday] = useState(() => toIsoDate(new Date()));
+  const [contextDay, setContextDay] = useState<"today" | "yesterday">("today");
+  const contextDate = contextDay === "today" ? contextToday : dayBefore(contextToday);
+  function switchContextDay(next: "today" | "yesterday") {
+    if (next === contextDay) return;
+    setContextDay(next);
+    setContextLoad("loading");
+    setContextSaved(false);
+    setContextError(null);
+  }
+  useEffect(() => {
+    if (!user?.onboardingCompletedAt) return;
+    let cancelled = false;
+    api.contextLogs
+      .list({ from: contextDate, to: contextDate, pageSize: 1 })
+      .then((page) => {
+        if (cancelled) return;
+        const entry = page.items.find((e: ContextLogDto) => e.date === contextDate);
+        setSleepDuration(entry?.sleepDuration ?? "");
+        setCaffeineAfternoon(entry?.caffeineAfternoon ?? false);
+        setAlcohol(entry?.alcohol ?? false);
+        setStressLevel(entry?.stressLevel ?? "");
+        setNightSweats(entry?.nightSweats ?? "");
+        setWorkImpact(entry?.workImpact ?? "");
+        setContextLoad("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setContextLoad("failed");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, contextDate]);
   useEffect(() => {
     if (!user?.onboardingCompletedAt) return;
     const today = toIsoDate(new Date());
     const query = { from: today, to: today, pageSize: 1 };
-    api.contextLogs
-      .list(query)
-      .then((page) => {
-        setContextLoad("ready");
-        const entry = page.items.find((e: ContextLogDto) => e.date === today);
-        if (!entry) return;
-        setSleepDuration(entry.sleepDuration ?? "");
-        setCaffeineAfternoon(entry.caffeineAfternoon ?? false);
-        setAlcohol(entry.alcohol ?? false);
-        setStressLevel(entry.stressLevel ?? "");
-        setNightSweats(entry.nightSweats ?? "");
-        setWorkImpact(entry.workImpact ?? "");
-      })
-      .catch(() => setContextLoad("failed"));
     api.cycleEntries
       .list(query)
       .then((page) => {
@@ -455,7 +484,7 @@ function DashboardContent() {
     setContextError(null);
     try {
       await api.contextLogs.upsert({
-        date: toIsoDate(new Date()),
+        date: contextDate,
         sleepDuration: sleepDuration || undefined,
         caffeineAfternoon,
         alcohol,
@@ -488,6 +517,14 @@ function DashboardContent() {
     month: "long",
     year: "numeric",
   }).format(new Date());
+
+  // Context copy that names the day has a Yesterday twin.
+  const contextKey = (key: string) => (contextDay === "today" ? key : `${key}Yesterday`);
+  const contextDateLabel = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(`${contextDate}T12:00:00`));
 
   async function handleLogout() {
     await logout();
@@ -798,18 +835,45 @@ function DashboardContent() {
             </Button>
           </CollapsibleCard>
 
-          {/* Context quick-log for today — a deliberately small, fixed
-              set of factors (see the embr-clinical-logic skill
-              doctrine), never free text or an open-ended system. */}
+          {/* Context quick-log for today or yesterday — a deliberately
+              small, fixed set of factors (see the embr-clinical-logic
+              skill doctrine), never free text or an open-ended system. */}
           <CollapsibleCard
             id="context-entry"
-            title={t("todaysContextEntry")}
+            title={t(contextKey("todaysContextEntry"))}
             status={contextSaved ? t("saved") : t("contextCollapsedHint")}
             open={openPanel === "context"}
             onToggle={() => togglePanel("context")}
           >
+            <fieldset className="mb-2">
+              <legend className="sr-only">{t("contextDayLabel")}</legend>
+              <div className="inline-flex rounded-sm border border-border p-0.5">
+                {(["today", "yesterday"] as const).map((d) => (
+                  <label key={d} className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="context-day"
+                      className="peer sr-only"
+                      checked={contextDay === d}
+                      disabled={contextSaving}
+                      onChange={() => switchContextDay(d)}
+                    />
+                    <span className="inline-flex min-h-9 items-center rounded-sm px-3 text-sm text-foreground/70 transition-colors peer-checked:bg-lilac-100 peer-checked:font-medium peer-checked:text-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+                      {t(d === "today" ? "contextDayToday" : "contextDayYesterday")}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {/* The date is spelled out so it is never a guess which day a save lands on. */}
+            <p className="mb-4 text-sm text-foreground/70">
+              {t.rich("contextRecordingFor", { ...richText, date: contextDateLabel })}
+            </p>
+
             <label className="flex max-w-xs flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">{t("sleepDurationLabel")}</span>
+              <span className="font-medium text-foreground">
+                {t(contextKey("sleepDurationLabel"))}
+              </span>
               <select
                 value={sleepDuration}
                 onChange={(e) => {
@@ -829,7 +893,7 @@ function DashboardContent() {
 
             <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
               <label htmlFor="night-sweats" className="font-medium text-foreground">
-                {t("nightSweatsLabel")}
+                {t(contextKey("nightSweatsLabel"))}
               </label>
               <select
                 id="night-sweats"
@@ -854,7 +918,9 @@ function DashboardContent() {
             </div>
 
             <label className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">{t("stressLevelLabel")}</span>
+              <span className="font-medium text-foreground">
+                {t(contextKey("stressLevelLabel"))}
+              </span>
               <select
                 value={stressLevel}
                 onChange={(e) => {
@@ -874,7 +940,7 @@ function DashboardContent() {
 
             <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
               <label htmlFor="work-impact" className="font-medium text-foreground">
-                {t("workImpactLabel")}
+                {t(contextKey("workImpactLabel"))}
               </label>
               <select
                 id="work-impact"
@@ -929,7 +995,7 @@ function DashboardContent() {
                 role="alert"
                 className="mt-4 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4"
               >
-                {contextError ?? t("todaysEntryLoadError")}
+                {contextError ?? t(contextKey("todaysEntryLoadError"))}
               </p>
             )}
             <Button
@@ -938,7 +1004,11 @@ function DashboardContent() {
               disabled={contextSaving || contextLoad !== "ready"}
               className="mt-4"
             >
-              {contextSaving ? t("saving") : contextSaved ? t("saved") : t("saveTodaysEntry")}
+              {contextSaving
+                ? t("saving")
+                : contextSaved
+                  ? t("saved")
+                  : t(contextKey("saveTodaysEntry"))}
             </Button>
           </CollapsibleCard>
 

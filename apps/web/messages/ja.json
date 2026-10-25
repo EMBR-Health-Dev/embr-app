@@ -354,7 +354,18 @@
     "bleedingHint": "出血や少量の出血があれば、ここに記録してください。担当医のための記録として残ります。",
     "cycleCollapsedHint": "月経の開始・終了や出血があった日のみ",
     "contextCollapsedHint": "睡眠、寝汗、ストレス、仕事への影響",
-    "todaysEntryLoadError": "今日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。"
+    "todaysEntryLoadError": "今日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。",
+    "contextDayLabel": "記録する日",
+    "contextDayToday": "今日",
+    "contextDayYesterday": "昨日",
+    "contextRecordingFor": "<b>{date}</b>の記録",
+    "todaysContextEntryYesterday": "昨日の状況",
+    "sleepDurationLabelYesterday": "一昨日の夜の睡眠",
+    "nightSweatsLabelYesterday": "一昨日の夜の寝汗",
+    "stressLevelLabelYesterday": "昨日のストレス",
+    "workImpactLabelYesterday": "昨日、症状が仕事に影響しましたか？",
+    "saveTodaysEntryYesterday": "昨日の記録を保存",
+    "todaysEntryLoadErrorYesterday": "昨日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。"
   },
   "Week": {
     "title": "今週の記録",
