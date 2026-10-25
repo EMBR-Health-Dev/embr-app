@@ -103,12 +103,9 @@ describe("DailyCheckIn", () => {
     expect(
       screen.getByText(
         (_content: string, el: Element | null) =>
-          el?.textContent ===
-            "Today's check in is saved. You can edit it until the end of today." &&
+          el?.textContent === "Today's check in is saved. You can still edit it tomorrow." &&
           ![...(el?.children ?? [])].some(
-            (c) =>
-              c.textContent ===
-              "Today's check in is saved. You can edit it until the end of today.",
+            (c) => c.textContent === "Today's check in is saved. You can still edit it tomorrow.",
           ),
       ),
     ).toBeInTheDocument();
@@ -120,7 +117,9 @@ describe("DailyCheckIn", () => {
     const user = userEvent.setup();
     await renderCheckIn();
     await user.click(await screen.findByRole("checkbox", { name: "Fatigue" }));
-    const radios = screen.getAllByRole("radio").map((r) => r.closest("label")!.textContent);
+    const radios = within(screen.getByRole("group", { name: "Severity for Fatigue" }))
+      .getAllByRole("radio")
+      .map((r) => r.closest("label")!.textContent);
     expect(radios).toEqual(["Mild", "Moderate", "Severe"]);
     expect(screen.queryByRole("checkbox", { name: /none/i })).not.toBeInTheDocument();
   });
@@ -185,5 +184,45 @@ describe("DailyCheckIn", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "今日の記録を保存" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "ほかの症状を追加" })).toBeInTheDocument();
+  });
+
+  it("fills in yesterday's check in when today was missed", async () => {
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = toIsoDate(yesterdayDate);
+    getCheckIn.mockImplementation((date: string) => Promise.resolve({ date, entries: [] }));
+    saveCheckIn.mockImplementation((date: string) =>
+      Promise.resolve({
+        date,
+        entries: [{ id: "y1", category: "BRAIN_FOG", severity: "SEVERE", occurredAt: "" }],
+      }),
+    );
+    const user = userEvent.setup();
+    const onSaved = await renderCheckIn();
+
+    await screen.findByRole("heading", { name: "How are you feeling today?" });
+    await user.click(screen.getByRole("radio", { name: "Yesterday" }));
+    await screen.findByRole("heading", { name: "How were you feeling yesterday?" });
+    expect(getCheckIn).toHaveBeenLastCalledWith(yesterday);
+
+    await user.click(screen.getByRole("checkbox", { name: "Brain Fog" }));
+    await user.click(
+      within(screen.getByRole("group", { name: "Severity for Brain Fog" })).getByRole("radio", {
+        name: /Severe/,
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Save yesterday's check in" }));
+
+    await waitFor(() => expect(saveCheckIn).toHaveBeenCalledTimes(1));
+    expect(saveCheckIn.mock.calls[0]![0]).toBe(yesterday);
+    expect(
+      await screen.findByRole("heading", { name: "Yesterday's symptoms" }),
+    ).toBeInTheDocument();
+    expect(onSaved).toHaveBeenCalled();
+
+    // Back to today: today's own check in, untouched.
+    await user.click(screen.getByRole("radio", { name: "Today" }));
+    await screen.findByRole("heading", { name: "How are you feeling today?" });
+    expect(getCheckIn).toHaveBeenLastCalledWith(today);
   });
 });

@@ -353,7 +353,8 @@
     "todaysBleedingEntry": "Bleeding or spotting today",
     "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician.",
     "cycleCollapsedHint": "Only if your period started, ended or you had flow",
-    "contextCollapsedHint": "Sleep, night sweats, stress and work"
+    "contextCollapsedHint": "Sleep, night sweats, stress and work",
+    "todaysEntryLoadError": "Today's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again."
   },
   "Week": {
     "title": "Your week",
@@ -1195,14 +1196,26 @@
     "severityRequired": "Choose Mild, Moderate or Severe for each selected symptom.",
     "save": "Save today's check in",
     "saving": "Saving…",
-    "saved": "Today's check in is saved. You can edit it <b>until the end of today</b>.",
+    "saved": "Today's check in is saved. You can still edit it <b>tomorrow</b>.",
     "savedEmpty": "Today's check in now has no symptoms recorded.",
     "todayHeading": "Today's symptoms",
     "edit": "Edit today's check in",
     "cancel": "Cancel",
     "saveError": "Your check in could not be saved. Please try again.",
     "loadError": "Today's check in could not be loaded. Please try again.",
-    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day."
+    "severityGuide": "<b>Mild:</b> noticeable. <b>Moderate:</b> gets in the way of your day. <b>Severe:</b> hard to get through your day.",
+    "dayLabel": "Day to record",
+    "dayToday": "Today",
+    "dayYesterday": "Yesterday",
+    "titleYesterday": "How were you feeling yesterday?",
+    "introYesterday": "Missed a day? Select any symptoms you had yesterday, then choose how severe each one was. Anything you don't select is <b>simply not recorded</b> for yesterday.",
+    "symptomsLabelYesterday": "Symptoms yesterday",
+    "saveYesterday": "Save yesterday's check in",
+    "savedYesterday": "Yesterday's check in is saved. You can edit it <b>until the end of today</b>.",
+    "savedEmptyYesterday": "Yesterday's check in now has no symptoms recorded.",
+    "todayHeadingYesterday": "Yesterday's symptoms",
+    "editYesterday": "Edit yesterday's check in",
+    "loadErrorYesterday": "Yesterday's check in could not be loaded. Please try again."
   },
   "Notes": {
     "title": "Notebook",
