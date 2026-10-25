@@ -204,6 +204,20 @@ jobs:
       # release (watch https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
       # adding a braces override to that release if the tools lag.
       #
+      # GHSA-mrhx-c7xc-m3w5: zod@<4.6.6 (memory exhaustion: an array
+      # schema keeps one issue per failing element, with no early exit).
+      # Unlike the entries above this IS a production dependency (api,
+      # worker, validation), and the only patched releases are zod 4.x,
+      # a major migration across every request schema. Mitigated in code
+      # instead: every array in a request body goes through
+      # boundedArray() in packages/validation, which rejects an oversized
+      # array before any element is parsed (pinned by
+      # apps/api/test/bounded-array.test.ts). The remaining z.array()
+      # calls in brief.ai.ts parse the model's own response, not user
+      # input. New request schemas must use boundedArray, not z.array.
+      # REMOVE-BY: drop it from IGNORED_GHSAS in the PR that migrates
+      # to zod >=4.6.6.
+      #
       # Two additional MODERATE advisories currently exist
       # (decode-uri-component GHSA-vcc3-ghjq-m6fr, @opentelemetry/core
       # GHSA-8988-4f7v-96qf) -- both DO have patched releases available
@@ -219,7 +233,7 @@ jobs:
       # release exists.
       - name: Dependency audit (pnpm audit)
         run: |
-          IGNORED_GHSAS=("GHSA-w3rx-r6r6-pgpr" "GHSA-5p2g-fcmc-qvqq" "GHSA-86w9-cpqp-85rv" "GHSA-vfj7-8cjw-p6xm")
+          IGNORED_GHSAS=("GHSA-w3rx-r6r6-pgpr" "GHSA-5p2g-fcmc-qvqq" "GHSA-86w9-cpqp-85rv" "GHSA-vfj7-8cjw-p6xm" "GHSA-mrhx-c7xc-m3w5")
 
           REPORT="$(pnpm audit --json || true)"
 
