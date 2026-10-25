@@ -7,6 +7,22 @@ import { z } from "zod";
  * (request validation) and the frontend (React Hook Form resolvers).
  */
 
+/**
+ * An array schema that rejects an oversized array before any element is
+ * parsed. Zod 3 validates every element even when `.max()` already
+ * failed, and keeps an issue object per bad element
+ * (GHSA-mrhx-c7xc-m3w5, no patched 3.x release), so a 1 MB body of junk
+ * elements costs about 160 MB of heap. The length check runs first, so
+ * that body costs one issue. Use this for every array in a request body.
+ */
+export function boundedArray<T extends z.ZodTypeAny>(item: T, max: number) {
+  return z
+    .custom<unknown[]>((value) => Array.isArray(value) && value.length <= max, {
+      message: `Expected an array of at most ${max} items`,
+    })
+    .pipe(z.array(item).max(max));
+}
+
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -92,12 +108,12 @@ export const consentAcceptanceSchema = z.object({
 });
 export type ConsentAcceptance = z.infer<typeof consentAcceptanceSchema>;
 
-const consentAcceptancesSchema = z
-  .array(consentAcceptanceSchema)
-  .max(CONSENT_TYPES.length)
-  .refine((items) => new Set(items.map((i) => i.type)).size === items.length, {
+const consentAcceptancesSchema = boundedArray(consentAcceptanceSchema, CONSENT_TYPES.length).refine(
+  (items) => new Set(items.map((i) => i.type)).size === items.length,
+  {
     message: "Each consent item may only appear once",
-  });
+  },
+);
 
 export const consentClientSchema = z.enum(["web", "mobile"]);
 
@@ -448,12 +464,12 @@ export const symptomCheckInParamsSchema = z.object({ date: isoCalendarDate });
  */
 export const saveSymptomCheckInSchema = z.object({
   timeZone: z.string().min(1).max(64),
-  entries: z
-    .array(z.object({ category: symptomCategorySchema, severity: severityLevelSchema }))
-    .max(symptomCategorySchema.options.length)
-    .refine((entries) => new Set(entries.map((e) => e.category)).size === entries.length, {
-      message: "Each symptom can appear only once",
-    }),
+  entries: boundedArray(
+    z.object({ category: symptomCategorySchema, severity: severityLevelSchema }),
+    symptomCategorySchema.options.length,
+  ).refine((entries) => new Set(entries.map((e) => e.category)).size === entries.length, {
+    message: "Each symptom can appear only once",
+  }),
 });
 export type SaveSymptomCheckInInput = z.infer<typeof saveSymptomCheckInSchema>;
 
@@ -685,7 +701,10 @@ export const patchOnboardingSchema = z
   .object({
     currentStep: onboardingStepSchema.optional(),
     jobToBeDone: onboardingJobToBeDoneSchema.optional(),
-    noticedAreas: z.array(onboardingAreaSchema).optional(),
+    noticedAreas: boundedArray(
+      onboardingAreaSchema,
+      onboardingAreaSchema.options.length,
+    ).optional(),
     appointmentStatus: onboardingAppointmentStatusSchema.optional(),
     // null clears it, for "prefer not to say" in Settings.
     lifeStage: lifeStageSchema.nullable().optional(),
@@ -731,7 +750,7 @@ export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 // request-level sanity bound.
 export const perimenopauseAssessmentSchema = z
   .object({
-    symptoms: z.array(symptomCategorySchema).max(20),
+    symptoms: boundedArray(symptomCategorySchema, 20),
     hasIrregularPeriods: z.boolean(),
   })
   .strict();
