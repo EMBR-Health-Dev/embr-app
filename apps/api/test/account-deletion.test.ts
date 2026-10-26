@@ -25,6 +25,7 @@ const { state, nextId } = vi.hoisted(() => {
       emailVerificationTokens: [] as Array<{ id: string; userId: string }>,
       passwordResetTokens: [] as Array<{ id: string; userId: string }>,
       auditLogEntries: [] as Array<{ id: string; userId: string | null; action: string }>,
+      deletedAccounts: [] as Array<Record<string, unknown>>,
       organizationMemberships: [] as Array<{
         id: string;
         organizationId: string;
@@ -76,6 +77,17 @@ function deleteUserWhereCascade(userId: string) {
 
 vi.mock("../src/lib/prisma.js", () => {
   const txClient = {
+    // recordDeletedAccount's lookup: her signup date and week 4 activity.
+    $queryRawUnsafe: vi.fn((_sql: string, userId: string) => {
+      const user = state.users.find((u) => u.id === userId && u.role !== "ADMIN");
+      return Promise.resolve(user ? [{ signup_date: user.createdAt, active_week4: false }] : []);
+    }),
+    deletedAccount: {
+      create: vi.fn(({ data }: { data: Record<string, unknown> }) => {
+        state.deletedAccounts.push(data);
+        return Promise.resolve({ id: nextId(), ...data });
+      }),
+    },
     auditLog: {
       create: vi.fn(({ data }: { data: { userId: string | null; action: string } }) => {
         const entry = { id: nextId(), ...data };
@@ -236,6 +248,7 @@ async function registerAndLogin(agent: ReturnType<typeof request.agent>, email: 
 }
 
 beforeEach(() => {
+  state.deletedAccounts = [];
   state.users = [];
   state.sessions = [];
   state.symptomLogs = [];
@@ -319,6 +332,17 @@ describe("DELETE /auth/me", () => {
 
     const deletionEntry = state.auditLogEntries.find((e) => e.action === "ACCOUNT_DELETED");
     expect(deletionEntry).toBeDefined();
+
+    // One anonymous row for retention: two dates and a flag, nothing
+    // that leads back to her.
+    expect(state.deletedAccounts).toHaveLength(1);
+    expect(Object.keys(state.deletedAccounts[0]!).sort()).toEqual([
+      "activeWeek4",
+      "deletedDate",
+      "signupDate",
+    ]);
+    expect(JSON.stringify(state.deletedAccounts)).not.toContain(userId);
+    expect(JSON.stringify(state.deletedAccounts)).not.toContain("deleteme@embr.health");
   });
 
   // Confirmed as a real, untested gap before writing anything here:

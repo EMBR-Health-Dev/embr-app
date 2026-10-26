@@ -44,7 +44,8 @@ signing up, where the signup day is day 0. In other words, active during
 her fourth week.
 
 **Cohort (the denominator):** everyone who signed up 28 to 55 days ago,
-counted by calendar date.
+counted by calendar date, including people who have since deleted
+their account (see Known limits).
 
 - Someone who signed up 28 days ago reached day 27 yesterday, so her
   week 4 is complete.
@@ -60,12 +61,15 @@ counted by calendar date.
 
 ## Known limits
 
-- **Deleted accounts leave the denominator.** Deleting an account
-  removes it immediately (`DELETE /auth/me`), along with its signup date.
-  People who left and deleted their account no longer count against
-  retention, which flatters the rate. A fix needs a schema change, such
-  as an anonymous record of signup and deletion dates that keeps no
-  personal data. That needs a decision before it is built.
+- **Deleted accounts stay in the cohort, but nowhere else.** Deleting
+  an account (`DELETE /auth/me`) removes everything about her. In the
+  same transaction, just before her data is removed, one anonymous row
+  is written to `deleted_accounts`. It holds her signup date, the
+  deletion date, and whether she made or changed an entry on days 21 to 27. It has no id, email or link to any other row. Week 4 retention
+  adds these rows to the cohort and the retained count, so leaving and
+  deleting does not flatter the rate. Admin accounts get no row. The
+  other metrics (accounts, new accounts, active people, the weekly
+  table) count only accounts that still exist.
 - **Unverified and never-active accounts are in the cohort.** Someone
   who signed up but never verified her email or made a single entry
   counts in the denominator. That is the honest view of signups. An
