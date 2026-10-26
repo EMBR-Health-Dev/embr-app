@@ -267,6 +267,12 @@
       "CANCELED": "Canceled",
       "UNPAID": "Unpaid",
       "PAUSED": "Paused"
+    },
+    "exercise": {
+      "NONE": "None",
+      "LIGHT": "Light",
+      "MODERATE": "Moderate",
+      "VIGOROUS": "Vigorous"
     }
   },
   "Dashboard": {
@@ -367,7 +373,11 @@
     "saveTodaysEntryYesterday": "Save yesterday's entry",
     "todaysEntryLoadErrorYesterday": "Yesterday's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again.",
     "recentToday": "Today",
-    "recentYesterday": "Yesterday"
+    "recentYesterday": "Yesterday",
+    "exerciseLabel": "Exercise today",
+    "exerciseLabelYesterday": "Exercise yesterday",
+    "exerciseNone": "Not logged",
+    "exerciseHelp": "Any sport, workout or movement that raised your breathing. Light: a walk or stretching. Moderate: brisk walking, cycling or a class. Vigorous: running, a match or hard training."
   },
   "Week": {
     "title": "Your week",
@@ -449,7 +459,8 @@
     "monthNoEntryDetail": "No entry recorded for this day.",
     "chronologyLabel": "Your record, newest first",
     "today": "Today",
-    "noEntryGap": "{count, plural, one {No entry recorded for 1 day} other {No entry recorded for # days}}"
+    "noEntryGap": "{count, plural, one {No entry recorded for 1 day} other {No entry recorded for # days}}",
+    "exerciseAnswered": "Exercise: {value}"
   },
   "Trends": {
     "title": "Signals",

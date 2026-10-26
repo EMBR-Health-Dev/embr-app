@@ -568,6 +568,31 @@ describe("Dashboard — context quick-log", () => {
     expect(symptomLogsCreate).not.toHaveBeenCalled();
   });
 
+  it("saves how hard she exercised, and sends null when left as not logged", async () => {
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Today's context/ }));
+    expect(
+      screen.getByText(/Any sport, workout or movement that raised your breathing/),
+    ).toBeInTheDocument();
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+
+    // Left blank: sent as null, so a cleared answer is saved as cleared.
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(1));
+    expect((contextLogsUpsert.mock.calls[0] as [Record<string, unknown>])[0].exercise).toBeNull();
+
+    await user.selectOptions(screen.getByLabelText("Exercise today"), "VIGOROUS");
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(2));
+    expect((contextLogsUpsert.mock.calls[1] as [Record<string, unknown>])[0].exercise).toBe(
+      "VIGOROUS",
+    );
+  });
+
   it("saves the selected factors for today's date and confirms with the shared Saved state", async () => {
     const user = userEvent.setup();
     const { default: DashboardPage } = await import("./page");

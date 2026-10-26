@@ -276,6 +276,16 @@ enum WorkImpact {
   MISSED_TIME
 }
 
+/// How hard she exercised that day, as she judges it: any sport,
+/// workout or movement that raised her breathing. A fixed scale, never
+/// minutes or free text. Null means not recorded, never "none".
+enum ExerciseLevel {
+  NONE
+  LIGHT
+  MODERATE
+  VIGOROUS
+}
+
 /// Morning recall of how many night sweats happened last night. A
 /// bucketed estimate, kept apart from SymptomLog so recalled ranges
 /// never enter symptom counts. Null means not recorded.
@@ -304,6 +314,7 @@ model ContextLog {
   stressLevel       StressLevel?
   nightSweats       NightSweatsRecall?
   workImpact        WorkImpact?
+  exercise          ExerciseLevel?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 

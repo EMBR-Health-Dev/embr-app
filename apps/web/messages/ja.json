@@ -267,6 +267,12 @@
       "CANCELED": "解約済み",
       "UNPAID": "未払い",
       "PAUSED": "一時停止中"
+    },
+    "exercise": {
+      "NONE": "なし",
+      "LIGHT": "軽い",
+      "MODERATE": "中程度",
+      "VIGOROUS": "激しい"
     }
   },
   "Dashboard": {
@@ -367,7 +373,11 @@
     "saveTodaysEntryYesterday": "昨日の記録を保存",
     "todaysEntryLoadErrorYesterday": "昨日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。",
     "recentToday": "今日",
-    "recentYesterday": "昨日"
+    "recentYesterday": "昨日",
+    "exerciseLabel": "今日の運動",
+    "exerciseLabelYesterday": "昨日の運動",
+    "exerciseNone": "未記録",
+    "exerciseHelp": "息が上がるようなスポーツ、トレーニング、体の動きすべてが対象です。軽い：散歩やストレッチ。中程度：早歩き、サイクリング、クラス。激しい：ランニング、試合、ハードなトレーニング。"
   },
   "Week": {
     "title": "今週の記録",
@@ -449,7 +459,8 @@
     "monthNoEntryDetail": "この日の記録はありません。",
     "chronologyLabel": "あなたの記録（新しい順）",
     "today": "今日",
-    "noEntryGap": "{count}日間、記録なし"
+    "noEntryGap": "{count}日間、記録なし",
+    "exerciseAnswered": "運動：{value}"
   },
   "Trends": {
     "title": "シグナル",

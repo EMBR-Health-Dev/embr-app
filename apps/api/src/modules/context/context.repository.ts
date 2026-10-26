@@ -23,6 +23,7 @@ export const contextRepository = {
         stressLevel: input.stressLevel ?? null,
         nightSweats: input.nightSweats ?? null,
         workImpact: input.workImpact ?? null,
+        exercise: input.exercise ?? null,
       },
       update: {
         sleepDuration: input.sleepDuration ?? null,
@@ -31,6 +32,8 @@ export const contextRepository = {
         stressLevel: input.stressLevel ?? null,
         nightSweats: input.nightSweats ?? null,
         workImpact: input.workImpact ?? null,
+        // Left out means keep it (see upsertContextLogSchema).
+        ...(input.exercise !== undefined ? { exercise: input.exercise } : {}),
       },
     });
   },
