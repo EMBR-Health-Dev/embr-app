@@ -21,6 +21,8 @@ import {
   PDF_TINT,
 } from "../../lib/pdf-palette.js";
 import { EMBR_WORDMARK } from "../../lib/brand-wordmark.js";
+import { briefDayGrid } from "./brief-day-grid.js";
+import type { Locale } from "../../lib/locale.js";
 
 // Palette shared with the summary export: see lib/pdf-palette.ts.
 const INK = PDF_INK;
@@ -86,6 +88,106 @@ function severityBar(
     doc.rect(cursor, y, w, height).fill(PDF_SEVERITY_FILL[severity]);
     cursor += w;
   }
+}
+
+/**
+ * The BRIEF's period as a strip of days per symptom, oldest on the
+ * left. A recorded day is filled; a day with other symptoms is a pale
+ * tint; a day with no entry at all is outlined and struck through, so
+ * the three stay distinct in greyscale and on paper. Presence only: the
+ * BRIEF stores which days each symptom was recorded, not severity per day.
+ */
+function dayByDay(
+  doc: PDFKit.PDFDocument,
+  brief: ClinicalBriefDto,
+  locale: Locale,
+  t: ReturnType<typeof pdfStrings>,
+): void {
+  const grid = briefDayGrid(brief);
+  if (!grid || grid.rows.length === 0) return;
+  const labelWidth = 110;
+  const stripX = LEFT_MARGIN + labelWidth;
+  const stripWidth = RIGHT_MARGIN - stripX;
+  const total = grid.days.length;
+  const pitch = stripWidth / total;
+  const gap = Math.min(1, pitch * 0.15);
+  const cell = pitch - gap;
+  const rowHeight = 9;
+  const rowPitch = 14;
+
+  // Heading, intro, legend and grid stay together on one page.
+  const sectionHeight = 70 + grid.rows.length * rowPitch + 30;
+  if (doc.y + sectionHeight > doc.page.height - doc.page.margins.bottom) doc.addPage();
+
+  sectionHeading(doc, t.dayByDayHeading);
+  doc
+    .fontSize(8.5)
+    .font(EMBR_PDF_BODY_FONT)
+    .fillColor(INK_MUTED)
+    .text(t.dayByDayIntro, {
+      width: RIGHT_MARGIN - LEFT_MARGIN,
+    });
+  doc.moveDown(0.4);
+
+  const drawCell = (x: number, y: number, kind: "logged" | "other" | "none", w = cell) => {
+    if (kind === "logged") doc.rect(x, y, w, rowHeight).fill(PDF_PLUM);
+    else if (kind === "other") doc.rect(x, y, w, rowHeight).fill(PDF_TINT);
+    else {
+      doc.lineWidth(0.4).rect(x, y, w, rowHeight).stroke(INK_FAINT);
+      doc
+        .moveTo(x, y + rowHeight)
+        .lineTo(x + w, y)
+        .stroke(INK_FAINT);
+    }
+  };
+
+  // Legend.
+  let legendX = LEFT_MARGIN;
+  const legendY = doc.y;
+  doc.fontSize(8).font(EMBR_PDF_BODY_FONT);
+  for (const [kind, label] of [
+    ["logged", t.dayByDayLegendLogged],
+    ["other", t.dayByDayLegendOther],
+    ["none", t.dayByDayLegendNoEntry],
+  ] as const) {
+    drawCell(legendX, legendY, kind, 9);
+    doc.fillColor(INK_MUTED).text(label, legendX + 13, legendY + 0.5, { lineBreak: false });
+    legendX += 13 + doc.widthOfString(label) + 16;
+  }
+  doc.x = LEFT_MARGIN;
+  doc.y = legendY + 16;
+
+  for (const { category, logged } of grid.rows) {
+    const y = doc.y;
+    doc
+      .fontSize(8.5)
+      .font(EMBR_PDF_BODY_FONT)
+      .fillColor(INK)
+      .text(categoryLabel(category, locale), LEFT_MARGIN, y, {
+        width: labelWidth - 8,
+        lineBreak: false,
+        ellipsis: true,
+      });
+    grid.days.forEach((day, i) => {
+      const kind = logged.has(day) ? "logged" : grid.recorded.has(day) ? "other" : "none";
+      drawCell(stripX + i * pitch, y, kind);
+    });
+    doc.y = y + rowPitch;
+  }
+
+  // First and last dates under the strip.
+  const axisY = doc.y;
+  doc.fontSize(7.5).fillColor(INK_MUTED);
+  doc.text(grid.days[0]!, stripX, axisY, { lineBreak: false });
+  const lastLabel = grid.days[total - 1]!;
+  doc.text(lastLabel, RIGHT_MARGIN - doc.widthOfString(lastLabel), axisY, { lineBreak: false });
+  doc.x = LEFT_MARGIN;
+  doc.y = axisY + 14;
+  doc
+    .fontSize(8.5)
+    .fillColor(INK_MUTED)
+    .text(t.dayByDayCoverage(grid.recorded.size, total), LEFT_MARGIN, doc.y);
+  doc.moveDown(1);
 }
 
 /**
@@ -284,6 +386,9 @@ export function buildClinicalBriefPdf(
   }
 
   doc.moveDown(1);
+
+  // ---- Day by day: when, not only how often ----
+  dayByDay(doc, brief, locale, t);
 
   // ---- Frequency comparison vs. the immediately preceding period ----
   // Only rendered when present — see ClinicalBriefDto's own doc

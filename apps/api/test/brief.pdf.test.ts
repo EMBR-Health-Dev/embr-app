@@ -138,6 +138,30 @@ describe("buildClinicalBriefPdf — Unicode rendering", () => {
     expect(text).toContain("No significant patterns were noted in this period.");
   });
 
+  it("draws the period day by day, with its legend and coverage line", async () => {
+    const brief = baseBrief({
+      fromDate: "2026-10-01",
+      toDate: "2026-10-10",
+      symptomSummary: [{ category: "HOT_FLASH", count: 3, severityBreakdown: { MILD: 3 } }],
+      frequencyComparison: [
+        {
+          category: "HOT_FLASH",
+          currentCount: 3,
+          previousCount: 0,
+          absoluteChange: 3,
+          percentageChange: null,
+          direction: "increased",
+          currentDates: ["2026-10-01", "2026-10-04", "2026-10-09"],
+          previousDates: [],
+        },
+      ],
+    });
+    const text = await extractPdfText(buildClinicalBriefPdf(brief));
+    expect(text).toContain("DAY BY DAY");
+    expect(text).toContain("No entry recorded");
+    expect(text).toContain("Entries on 3 of 10 days. No entry recorded on 7 days.");
+  });
+
   it("generates a minimal, empty-data brief without throwing, with all empty-state text intact", async () => {
     const brief = baseBrief();
 

@@ -104,6 +104,12 @@ interface PdfStrings {
   symptomSignalsHeading: string;
   noSymptomsText: string;
   occurrenceLine: (count: number, severityBreakdown: string) => string;
+  dayByDayHeading: string;
+  dayByDayIntro: string;
+  dayByDayLegendLogged: string;
+  dayByDayLegendOther: string;
+  dayByDayLegendNoEntry: string;
+  dayByDayCoverage: (recorded: number, total: number) => string;
   comparedWithPreviousHeading: string;
   frequencyComparisonLine: (currentCount: number, previousCount: number) => string;
   ongoingSymptomsHeading: string;
@@ -172,6 +178,16 @@ const EN: PdfStrings = {
   noSymptomsText: "No symptoms logged in this range.",
   occurrenceLine: (count, severityBreakdown) =>
     `${count} occurrence${count === 1 ? "" : "s"} (${severityBreakdown})`,
+  dayByDayHeading: "Day by day",
+  dayByDayIntro:
+    "Each column is one day of this BRIEF, oldest on the left. It shows which days each symptom was recorded, not how severe it was.",
+  dayByDayLegendLogged: "Recorded",
+  dayByDayLegendOther: "Other symptoms recorded",
+  dayByDayLegendNoEntry: "No entry recorded",
+  dayByDayCoverage: (recorded, total) => {
+    const missing = total - recorded;
+    return `Entries on ${recorded} of ${total} days. No entry recorded on ${missing} day${missing === 1 ? "" : "s"}.`;
+  },
   comparedWithPreviousHeading: "Compared with the previous period",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `Logged ${currentCount} time${currentCount === 1 ? "" : "s"}, compared with` +
@@ -280,6 +296,14 @@ const JA: PdfStrings = {
   symptomSignalsHeading: "症状の頻度",
   noSymptomsText: "この期間に記録された症状はありません。",
   occurrenceLine: (count, severityBreakdown) => `${count}回（${severityBreakdown}）`,
+  dayByDayHeading: "日ごとの記録",
+  dayByDayIntro:
+    "1列が1日を表し、左が最も古い日です。各症状が記録された日を示し、重症度は示しません。",
+  dayByDayLegendLogged: "記録あり",
+  dayByDayLegendOther: "ほかの症状の記録あり",
+  dayByDayLegendNoEntry: "記録なし",
+  dayByDayCoverage: (recorded, total) =>
+    `${total}日中${recorded}日に記録があります。記録なしは${total - recorded}日です。`,
   comparedWithPreviousHeading: "前回の期間との比較",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,

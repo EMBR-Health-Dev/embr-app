@@ -18,6 +18,7 @@ import { AppNav } from "../../components/app-nav";
 import { EmailVerificationRequired } from "../../components/email-verification-required";
 import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
 import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
+import { BriefDayByDay } from "../../components/brief-day-by-day";
 import { richText } from "../../lib/rich-text";
 import { SEVERITY_FILL } from "../../lib/symptom-history-format";
 
@@ -778,6 +779,12 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
           })}
         </ul>
       </div>
+
+      <BriefDayByDay
+        brief={brief}
+        headingClassName={BRIEF_SECTION_HEADING}
+        sectionClassName={BRIEF_SECTION}
+      />
 
       {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
         <div className={BRIEF_SECTION}>
