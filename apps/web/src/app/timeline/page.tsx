@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type {
   ContextLogDto,
+  SeverityLevel,
+  SymptomCategory,
   CycleEntryDto,
   NightSweatsRecall,
   WorkImpact,
@@ -15,7 +17,6 @@ import type {
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
-import { SectionLabel } from "../../components/section-label";
 import { toIsoDate } from "../../lib/date-format";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
 import { RecordSpanSummary } from "../../components/record-span-summary";
@@ -31,6 +32,8 @@ import {
   type RecordSpan,
 } from "../../lib/record-history";
 import { richText } from "../../lib/rich-text";
+import { SeverityMark } from "../../components/severity-mark";
+import { CapsuleIcon, DropletIcon } from "../../components/little-icons";
 import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 // The list endpoints cap a page at 100 items; a long record is read page
@@ -51,6 +54,33 @@ async function fetchAllPages<T>(
     }
   }
   return { items, truncated: true };
+}
+
+const SEVERITY_RANK: Record<SeverityLevel, number> = { MILD: 1, MODERATE: 2, SEVERE: 3 };
+
+/** One entry per symptom for the day, at the most severe level logged, in first logged order. */
+function daySymptoms(logs: SymptomLogDto[]) {
+  const byCategory = new Map<SymptomCategory, SeverityLevel>();
+  for (const log of [...logs].sort((a, b) => (a.occurredAt < b.occurredAt ? -1 : 1))) {
+    const current = byCategory.get(log.category);
+    if (!current || SEVERITY_RANK[log.severity] > SEVERITY_RANK[current]) {
+      byCategory.set(log.category, log.severity);
+    }
+  }
+  return [...byCategory.entries()].map(([category, severity]) => ({ category, severity }));
+}
+
+/** The day after `isoDate`, so a count "between" it and an older day includes `isoDate` itself. */
+function previousDayAfter(isoDate: string): string {
+  const d = new Date(`${isoDate}T12:00:00`);
+  d.setDate(d.getDate() + 1);
+  return toIsoDate(d);
+}
+
+function previousDay(isoDate: string): string {
+  const d = new Date(`${isoDate}T12:00:00`);
+  d.setDate(d.getDate() - 1);
+  return toIsoDate(d);
 }
 
 type FilterKey = "symptoms" | "cycle" | "treatments";
@@ -248,11 +278,24 @@ export default function TimelinePage() {
   });
 
   function renderDayEntries(group: DayGroup) {
-    const categories = [...new Set(group.symptoms.map((s) => tEnum(`category.${s.category}`)))];
+    const symptoms = daySymptoms(group.symptoms);
     return (
       <div className="flex flex-col gap-2">
-        {activeFilters.has("symptoms") && categories.length > 0 && (
-          <p className="text-sm text-foreground">{categories.join(" · ")}</p>
+        {activeFilters.has("symptoms") && symptoms.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5" aria-label={t("filter.symptoms")}>
+            {symptoms.map(({ category, severity }) => (
+              <li
+                key={category}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border-subtle bg-background px-1.5 py-0.5 text-[13px] text-foreground sm:px-2 sm:py-1 sm:text-sm"
+              >
+                <span className="text-lilac-700">
+                  <SeverityMark severity={severity} />
+                </span>
+                <span>{tEnum(`category.${category}`)}</span>
+                <span className="sr-only">, {tEnum(`severity.${severity}`)}</span>
+              </li>
+            ))}
+          </ul>
         )}
         {activeFilters.has("symptoms") && group.nightSweats && (
           <p className="text-sm text-foreground/70">
@@ -267,7 +310,8 @@ export default function TimelinePage() {
           </p>
         )}
         {activeFilters.has("cycle") && group.cycle && (
-          <p className="text-sm text-foreground/70">
+          <p className="flex items-center gap-1.5 text-sm text-foreground/70">
+            <DropletIcon className="h-3.5 w-3.5 shrink-0 text-lilac-700" aria-hidden="true" />
             {t("cycleLabel")}
             {": "}
             {[
@@ -281,7 +325,11 @@ export default function TimelinePage() {
         )}
         {activeFilters.has("treatments") &&
           group.treatmentEvents.map(({ treatment, kind }) => (
-            <p key={`${treatment.id}-${kind}`} className="text-sm text-foreground/70">
+            <p
+              key={`${treatment.id}-${kind}`}
+              className="flex items-center gap-1.5 text-sm text-foreground/70"
+            >
+              <CapsuleIcon className="h-3.5 w-3.5 shrink-0 text-lilac-700" aria-hidden="true" />
               {kind === "started"
                 ? t("treatmentStarted", { name: treatment.name })
                 : t("treatmentEnded", { name: treatment.name })}
@@ -314,6 +362,37 @@ export default function TimelinePage() {
       ...(d.getFullYear() !== currentYear ? { year: "numeric" } : {}),
     }).format(d);
   }
+  function formatWeekday(date: string): string {
+    return new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(`${date}T00:00:00`),
+    );
+  }
+  function formatDayNumber(date: string): string {
+    return new Intl.DateTimeFormat(locale, { day: "numeric" }).format(new Date(`${date}T00:00:00`));
+  }
+
+  // Calendar days between two shown days (or from today) with nothing at
+  // all recorded. Days hidden only by a filter are not counted: they
+  // have an entry, so they are not "no entry recorded".
+  const todayIso = toIsoDate(new Date());
+  function emptyDaysBetween(newerExclusive: string, olderExclusive: string): number {
+    let count = 0;
+    for (let d = previousDay(newerExclusive); d > olderExclusive; d = previousDay(d)) {
+      if (!groups.has(d)) count++;
+    }
+    return count;
+  }
+  function gapRow(key: string, days: number) {
+    return (
+      <li key={key} className="grid grid-cols-[3.25rem_1fr] gap-x-4 sm:grid-cols-[4.5rem_1fr]">
+        <span aria-hidden="true" />
+        <p className="border-l border-dashed border-graphite-300 pb-7 pl-6 text-xs italic text-foreground/50">
+          {t("noEntryGap", { count: days })}
+        </p>
+      </li>
+    );
+  }
+
   function formatMonthHeading(date: string): string {
     return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
       new Date(`${date}T00:00:00`),
@@ -329,72 +408,46 @@ export default function TimelinePage() {
         <p className="mt-3 text-sm text-foreground/60">{t("subtitle")}</p>
         {recordSpan && <RecordSpanSummary span={recordSpan} />}
 
-        {symptomHistory && symptomHistory.categories.length > 0 && (
-          <section className="mt-10" aria-labelledby="symptom-history-heading">
-            <h2
-              id="symptom-history-heading"
-              className="font-display text-heading-m text-foreground"
-            >
-              {tHistory("sectionTitle")}
-            </h2>
-            <p className="mt-2 text-sm text-foreground/60">
-              {tHistory.rich("sectionIntro", richText)}
-            </p>
-            <SymptomRankingBars
-              categories={symptomHistory.categories}
-              rangeFrom={formatHistoryDate(locale, symptomHistory.rangeFrom)}
-              rangeTo={formatHistoryDate(locale, symptomHistory.rangeTo)}
-            />
-            <ul className="mt-5 border-b border-border-subtle">
-              {symptomHistory.categories.map((category) => (
-                <SymptomEvidenceCard
-                  key={category.category}
-                  history={category}
-                  gapDays={symptomHistory.rules.notLoggedRecentlyGapDays}
-                />
-              ))}
-            </ul>
-          </section>
-        )}
-
         <HistoryRangeSwitch value={range} onChange={setRange} disabled={dataLoading} />
 
-        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t("filterGroupLabel")}>
-          {FILTER_KEYS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => toggleFilter(key)}
-              aria-pressed={activeFilters.has(key)}
-              className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeFilters.has(key)
-                  ? "border-lilac-700 bg-lilac-100 text-foreground"
-                  : "border-border text-foreground/50"
-              }`}
-            >
-              {t(`filter.${key}`)}
-            </button>
-          ))}
-        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("filterGroupLabel")}>
+            {FILTER_KEYS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleFilter(key)}
+                aria-pressed={activeFilters.has(key)}
+                className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  activeFilters.has(key)
+                    ? "border-lilac-700 bg-lilac-100 text-foreground"
+                    : "border-border text-foreground/50"
+                }`}
+              >
+                {t(`filter.${key}`)}
+              </button>
+            ))}
+          </div>
 
-        <div
-          className="mt-3 inline-flex rounded-sm border border-border p-0.5"
-          role="group"
-          aria-label={t("viewLabel")}
-        >
-          {(["list", "month"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              aria-pressed={view === v}
-              className={`rounded-sm px-3 py-1.5 text-sm font-medium ${
-                view === v ? "bg-foreground text-background" : "text-foreground/70"
-              }`}
-            >
-              {t(`view.${v}`)}
-            </button>
-          ))}
+          <div
+            className="inline-flex rounded-sm border border-border p-0.5"
+            role="group"
+            aria-label={t("viewLabel")}
+          >
+            {(["list", "month"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={`rounded-sm px-3 py-1.5 text-sm font-medium ${
+                  view === v ? "bg-foreground text-background" : "text-foreground/70"
+                }`}
+              >
+                {t(`view.${v}`)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {dataLoading ? (
@@ -427,28 +480,65 @@ export default function TimelinePage() {
             </p>
           </div>
         ) : (
-          <ul className="mt-10 flex flex-col gap-8">
-            {visibleDates.map((date, index) => {
+          <ol className="mt-10" aria-label={t("chronologyLabel")}>
+            {visibleDates.flatMap((date, index) => {
               const group = groups.get(date)!;
+              const newer = index === 0 ? null : visibleDates[index - 1]!;
+              const rows = [];
+              // Days with nothing recorded stay visible as a gap, so the
+              // record shows its own continuity rather than hiding it.
+              const gap =
+                newer === null
+                  ? date < todayIso && todayIso >= windowStart
+                    ? emptyDaysBetween(previousDayAfter(todayIso), date)
+                    : 0
+                  : emptyDaysBetween(newer, date);
+              if (gap > 0) rows.push(gapRow(`gap-${date}`, gap));
               // A month marker wherever the month changes, so a long
               // record reads as history rather than one undifferentiated list.
-              const newMonth =
-                index === 0 || visibleDates[index - 1]!.slice(0, 7) !== date.slice(0, 7);
-              return (
-                <li key={date}>
-                  {newMonth && (
-                    <h2 className="mb-4 font-display text-heading-m text-lilac-700">
+              if (newer === null || newer.slice(0, 7) !== date.slice(0, 7)) {
+                rows.push(
+                  <li
+                    key={`month-${date}`}
+                    className="sticky top-0 z-10 -mx-2 bg-background/95 px-2 py-2 backdrop-blur-sm"
+                  >
+                    <h2 className="font-display text-heading-m text-lilac-700">
                       {formatMonthHeading(date)}
                     </h2>
-                  )}
-                  <SectionLabel as="h3">{formatDateHeading(date)}</SectionLabel>
-                  <div className="mt-3 border-l border-border-subtle pl-4">
+                  </li>,
+                );
+              }
+              const isToday = date === todayIso;
+              rows.push(
+                <li
+                  key={date}
+                  className="grid grid-cols-[3.25rem_1fr] gap-x-4 sm:grid-cols-[4.5rem_1fr]"
+                >
+                  <h3 className="pt-0.5 text-right">
+                    <span className="block text-[11px] font-medium uppercase tracking-[0.12em] text-foreground/50">
+                      {isToday ? t("today") : formatWeekday(date)}
+                    </span>
+                    <span className="block font-display text-heading-m leading-tight text-foreground">
+                      {formatDayNumber(date)}
+                    </span>
+                    <span className="sr-only">{formatDateHeading(date)}</span>
+                  </h3>
+                  <div className="relative border-l border-lilac-300 pb-7 pl-6">
+                    <span
+                      aria-hidden="true"
+                      className={`absolute -left-[5px] top-2 h-[9px] w-[9px] rounded-full ring-4 ring-background ${
+                        group.cycle?.isPeriodStart && activeFilters.has("cycle")
+                          ? "bg-graphite-900"
+                          : "bg-lilac-500"
+                      }`}
+                    />
                     {renderDayEntries(group)}
                   </div>
-                </li>
+                </li>,
               );
+              return rows;
             })}
-          </ul>
+          </ol>
         )}
 
         {!dataLoading && truncated && (
@@ -457,6 +547,38 @@ export default function TimelinePage() {
               ? t("truncatedNoticeAll")
               : t("truncatedNotice", { days: daysSince(windowStart) - 1 })}
           </p>
+        )}
+
+        {/* The record in time comes first; per symptom summaries follow it. */}
+        {symptomHistory && symptomHistory.categories.length > 0 && (
+          <section
+            className="mt-14 border-t border-border-subtle pt-10"
+            aria-labelledby="symptom-history-heading"
+          >
+            <h2
+              id="symptom-history-heading"
+              className="font-display text-heading-m text-foreground"
+            >
+              {tHistory("sectionTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-foreground/60">
+              {tHistory.rich("sectionIntro", richText)}
+            </p>
+            <SymptomRankingBars
+              categories={symptomHistory.categories}
+              rangeFrom={formatHistoryDate(locale, symptomHistory.rangeFrom)}
+              rangeTo={formatHistoryDate(locale, symptomHistory.rangeTo)}
+            />
+            <ul className="mt-5 border-b border-border-subtle">
+              {symptomHistory.categories.map((category) => (
+                <SymptomEvidenceCard
+                  key={category.category}
+                  history={category}
+                  gapDays={symptomHistory.rules.notLoggedRecentlyGapDays}
+                />
+              ))}
+            </ul>
+          </section>
         )}
       </main>
     </div>
