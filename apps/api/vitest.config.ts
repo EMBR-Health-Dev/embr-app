@@ -4,8 +4,30 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: false,
-    include: ["test/**/*.test.ts"],
     setupFiles: ["./test/setup.ts"],
+    // Integration tests share one real Postgres. Some assert on global
+    // counts (admin-metrics compares totals before and after creating
+    // its own users), so two files creating users at once made them
+    // fail at random. Integration files run one at a time; unit tests,
+    // which mock the database, stay parallel.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["test/**/*.test.ts"],
+          exclude: ["test/integration/**"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["test/integration/**/*.test.ts"],
+          fileParallelism: false,
+        },
+      },
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary", "lcov"],
