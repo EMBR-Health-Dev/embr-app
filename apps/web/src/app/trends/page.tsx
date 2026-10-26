@@ -18,7 +18,7 @@ import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 import { ContextCoOccurrenceCard } from "../../components/context-co-occurrence-card";
 import { EvidenceStrengthBadge } from "../../components/evidence-strength-badge";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
-import { SymptomTrendList } from "../../components/symptom-trend-list";
+import { SignalsChart } from "../../components/signals-chart";
 import {
   daysAgoIsoDate,
   daysSince,
@@ -182,7 +182,8 @@ export default function TrendsPage() {
                       ? t("symptomsHeaderAll")
                       : t("symptomsHeader", { days: windowDays })}
                   </h2>
-                  <SymptomTrendList
+                  <SignalsChart
+                    key={rangeStart}
                     categories={history?.categories ?? []}
                     from={history?.rangeFrom ?? rangeStart}
                     to={history?.rangeTo ?? rangeStart}

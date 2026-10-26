@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { CycleLengthTrendDto } from "@embr/types";
 import messages from "../../../messages/en.json";
@@ -119,11 +120,11 @@ describe("Patterns page — empty states", () => {
       screen.getByText(
         (_content: string, el: Element | null) =>
           el?.textContent ===
-            "Days you recorded each symptom in this period, how severe it was at most, and when." &&
+            "Days you recorded each symptom in this period, on one timeline so you can see when." &&
           ![...(el?.children ?? [])].some(
             (c) =>
               c.textContent ===
-              "Days you recorded each symptom in this period, how severe it was at most, and when.",
+              "Days you recorded each symptom in this period, on one timeline so you can see when.",
           ),
       ),
     ).toBeInTheDocument();
@@ -209,6 +210,7 @@ describe("Patterns page — populated state (real data flow)", () => {
       lengths: [{ from: "2026-01-01", to: "2026-01-29", days: 28 }],
       averageDays: 28,
     });
+    const user = userEvent.setup();
 
     const { default: TrendsPage } = await import("./page");
     renderWithIntl(<TrendsPage />);
@@ -221,19 +223,30 @@ describe("Patterns page — populated state (real data flow)", () => {
       .filter((l) => l.getAttribute("href")?.startsWith("/timeline/"));
     expect(links.map((l) => l.textContent)).toEqual(["Hot Flash", "Fatigue"]);
     // Days, not entries: three days even though six entries were made.
-    const row = hotFlash.closest("li")!;
-    expect(row).toHaveTextContent("3 days");
-    expect(
-      within(row).getByRole("list", { name: "Days at each highest severity" }),
-    ).toHaveTextContent("1Mild1Moderate1Severe");
-    // The strip reads oldest to newest, a week per bar, and names an
-    // unrecorded week as no entry recorded rather than no symptoms.
-    const strip = within(row).getByRole("list", { name: "Hot Flash, week by week" });
-    const weeks = within(strip).getAllByRole("listitem");
+    const hotFlashStrip = screen.getByRole("list", { name: "Hot Flash, week by week" });
+    expect(hotFlashStrip.previousElementSibling).toHaveTextContent("3 days");
+    // One shared axis, oldest to newest, a week per column; an
+    // unrecorded week reads as no entry recorded, never no symptoms.
+    const weeks = within(hotFlashStrip).getAllByRole("listitem");
     expect(weeks.length).toBe(13);
     expect(weeks.at(-1)).toHaveTextContent("recorded on 2 of 7 days, highest Severe");
     expect(weeks.at(-2)).toHaveTextContent("no entry recorded");
     expect(document.body).not.toHaveTextContent(/no symptoms/i);
+    // The first row counts days with any symptom: 4 days across both.
+    const anyStrip = screen.getByRole("list", { name: "Any symptom, week by week" });
+    expect(anyStrip.previousElementSibling).toHaveTextContent("4 days");
+    expect(screen.getByText(/Symptoms recorded on/)).toHaveTextContent(/on 4 of \d+ days/);
+
+    // The newest week is selected: its symptoms, days and highest severity.
+    const period = screen.getByRole("region", { name: /Last 7 days/ });
+    expect(within(period).getByText("Hot Flash")).toBeInTheDocument();
+    expect(period).toHaveTextContent("2 of 7 daysSevere");
+    expect(within(period).getByText("Fatigue")).toBeInTheDocument();
+    expect(within(period).getByRole("button", { name: "Later week" })).toBeDisabled();
+    // One week earlier has no entry for any symptom.
+    await user.click(within(period).getByRole("button", { name: "Earlier week" }));
+    const earlier = screen.getByRole("region", { name: /Week of/ });
+    expect(earlier).toHaveTextContent("No entry recorded this week.");
     expect(symptomHistoryMock).toHaveBeenCalledWith(
       expect.objectContaining({ timeZone: expect.any(String) }),
     );
