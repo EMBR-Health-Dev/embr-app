@@ -9,6 +9,7 @@ import type {
   SymptomCategory,
   CycleEntryDto,
   NightSweatsRecall,
+  ExerciseLevel,
   WorkImpact,
   SymptomHistoryDto,
   SymptomLogDto,
@@ -94,6 +95,8 @@ interface DayGroup {
   nightSweats: NightSweatsRecall | null;
   // The day's own answer; shown in the person's Timeline, never counted as a symptom.
   workImpact: WorkImpact | null;
+  // How hard she exercised that day, her own answer.
+  exercise: ExerciseLevel | null;
   treatmentEvents: Array<{ treatment: TreatmentDto; kind: "started" | "ended" }>;
 }
 
@@ -230,6 +233,7 @@ export default function TimelinePage() {
         cycle: null,
         nightSweats: null,
         workImpact: null,
+        exercise: null,
         treatmentEvents: [],
       };
       groups.set(date, group);
@@ -246,6 +250,7 @@ export default function TimelinePage() {
   for (const log of contextLogs) {
     if (log.nightSweats) getGroup(log.date).nightSweats = log.nightSweats;
     if (log.workImpact) getGroup(log.date).workImpact = log.workImpact;
+    if (log.exercise) getGroup(log.date).exercise = log.exercise;
   }
   for (const treatment of treatments) {
     if (treatment.startDate >= windowStart) {
@@ -271,7 +276,7 @@ export default function TimelinePage() {
     const group = groups.get(date)!;
     return (
       (activeFilters.has("symptoms") &&
-        (group.symptoms.length > 0 || group.nightSweats || group.workImpact)) ||
+        (group.symptoms.length > 0 || group.nightSweats || group.workImpact || group.exercise)) ||
       (activeFilters.has("cycle") && group.cycle !== null) ||
       (activeFilters.has("treatments") && group.treatmentEvents.length > 0)
     );
@@ -307,6 +312,11 @@ export default function TimelinePage() {
         {activeFilters.has("symptoms") && group.workImpact && (
           <p className="text-sm text-foreground/70">
             {t("workImpactAnswered", { value: tEnum(`workImpact.${group.workImpact}`) })}
+          </p>
+        )}
+        {activeFilters.has("symptoms") && group.exercise && (
+          <p className="text-sm text-foreground/70">
+            {t("exerciseAnswered", { value: tEnum(`exercise.${group.exercise}`) })}
           </p>
         )}
         {activeFilters.has("cycle") && group.cycle && (
@@ -345,7 +355,10 @@ export default function TimelinePage() {
     const marks = {
       symptoms:
         activeFilters.has("symptoms") &&
-        (group.symptoms.length > 0 || group.nightSweats !== null || group.workImpact !== null),
+        (group.symptoms.length > 0 ||
+          group.nightSweats !== null ||
+          group.workImpact !== null ||
+          group.exercise !== null),
       cycle: activeFilters.has("cycle") && group.cycle !== null,
       treatments: activeFilters.has("treatments") && group.treatmentEvents.length > 0,
     };

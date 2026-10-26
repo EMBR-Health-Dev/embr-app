@@ -56,6 +56,7 @@ const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
 // open-ended list.
 const SLEEP_DURATIONS = ["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"] as const;
 const STRESS_LEVELS = ["LOW", "MODERATE", "HIGH"] as const;
+const EXERCISE_LEVELS = ["NONE", "LIGHT", "MODERATE", "VIGOROUS"] as const;
 const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
 const WORK_IMPACT = ["NONE", "DID_LESS", "MISSED_TIME"] as const;
 const LOGS_PAGE_SIZE = 5;
@@ -159,6 +160,7 @@ function DashboardContent() {
   const [caffeineAfternoon, setCaffeineAfternoon] = useState(false);
   const [alcohol, setAlcohol] = useState(false);
   const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
+  const [exercise, setExercise] = useState<(typeof EXERCISE_LEVELS)[number] | "">("");
   // Never prefilled: a blank answer means "not logged", never "none".
   const [nightSweats, setNightSweats] = useState<(typeof NIGHT_SWEATS)[number] | "">("");
   const [workImpact, setWorkImpact] = useState<(typeof WORK_IMPACT)[number] | "">("");
@@ -200,6 +202,7 @@ function DashboardContent() {
         setCaffeineAfternoon(entry?.caffeineAfternoon ?? false);
         setAlcohol(entry?.alcohol ?? false);
         setStressLevel(entry?.stressLevel ?? "");
+        setExercise(entry?.exercise ?? "");
         setNightSweats(entry?.nightSweats ?? "");
         setWorkImpact(entry?.workImpact ?? "");
         setContextLoad("ready");
@@ -491,6 +494,8 @@ function DashboardContent() {
         stressLevel: stressLevel || undefined,
         nightSweats: nightSweats || undefined,
         workImpact: workImpact || undefined,
+        // Sent as null when not logged, so clearing it is saved too.
+        exercise: exercise || null,
       });
       setContextSaved(true);
       setWeekRefreshKey((key) => key + 1);
@@ -962,6 +967,32 @@ function DashboardContent() {
                 ))}
               </select>
             </label>
+
+            <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <label htmlFor="exercise" className="font-medium text-foreground">
+                {t(contextKey("exerciseLabel"))}
+              </label>
+              <select
+                id="exercise"
+                value={exercise}
+                onChange={(e) => {
+                  setExercise(e.target.value as (typeof EXERCISE_LEVELS)[number] | "");
+                  setContextSaved(false);
+                }}
+                aria-describedby="exercise-help"
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("exerciseNone")}</option>
+                {EXERCISE_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {tEnum(`exercise.${level}`)}
+                  </option>
+                ))}
+              </select>
+              <span id="exercise-help" className="text-foreground/70">
+                {t("exerciseHelp")}
+              </span>
+            </div>
 
             <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
               <label htmlFor="work-impact" className="font-medium text-foreground">

@@ -162,6 +162,8 @@ export const api = {
       stressLevel?: string;
       nightSweats?: string;
       workImpact?: string;
+      /** Left out keeps what is recorded; null clears it. */
+      exercise?: string | null;
     }) => apiFetch<ContextLogDto>("/context-logs", { method: "POST", body: input }),
   },
 

@@ -26,6 +26,7 @@ interface ContextLogRecord {
   stressLevel: string | null;
   nightSweats: string | null;
   workImpact: string | null;
+  exercise: string | null;
 }
 
 interface TreatmentRecord {
@@ -149,6 +150,7 @@ export const exportService = {
         "stressLevel",
         "nightSweatsRecalled",
         "workImpact",
+        "exercise",
       ],
       logs.map((log: ContextLogRecord) => [
         log.date.toISOString().slice(0, 10),
@@ -158,6 +160,7 @@ export const exportService = {
         log.stressLevel,
         log.nightSweats,
         log.workImpact,
+        log.exercise,
       ]),
     );
   },

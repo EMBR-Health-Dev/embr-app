@@ -46,6 +46,7 @@ function entry(overrides: Partial<ContextLogDto> = {}): ContextLogDto {
     stressLevel: null,
     nightSweats: null,
     workImpact: null,
+    exercise: null,
     createdAt: "",
     updatedAt: "",
     ...overrides,
@@ -101,6 +102,8 @@ describe("WorkImpactCard", () => {
 
     await waitFor(() => expect(upsertMock).toHaveBeenCalledTimes(1));
     expect(upsertMock.mock.calls[0]![0]).toMatchObject({ date: today, workImpact: "MISSED_TIME" });
+    // Exercise is left out, which the API reads as "keep what is recorded".
+    expect(upsertMock.mock.calls[0]![0]).not.toHaveProperty("exercise");
     expect(await screen.findByText("Saved ✓")).toBeInTheDocument();
   });
 

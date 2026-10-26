@@ -286,6 +286,9 @@ export interface NightSweatsRecallSummaryDto {
  * organisation statistic. */
 export type WorkImpact = "NONE" | "DID_LESS" | "MISSED_TIME";
 
+/** How hard she exercised that day, as she judges it. */
+export type ExerciseLevel = "NONE" | "LIGHT" | "MODERATE" | "VIGOROUS";
+
 export interface WorkImpactSummaryDto {
   daysAnswered: number;
   breakdown: Record<WorkImpact, number> | null;
@@ -326,6 +329,7 @@ export interface ContextLogDto {
   stressLevel: StressLevel | null;
   nightSweats: NightSweatsRecall | null;
   workImpact: WorkImpact | null;
+  exercise: ExerciseLevel | null;
   createdAt: string;
   updatedAt: string;
 }

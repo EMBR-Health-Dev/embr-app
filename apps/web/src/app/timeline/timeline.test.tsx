@@ -617,3 +617,36 @@ describe("Timeline page — days symptoms affected work", () => {
     expect(screen.getAllByText(/Did symptoms affect work\?/)).toHaveLength(1);
   });
 });
+
+describe("Timeline page — exercise", () => {
+  it("shows how hard she exercised on its day, and nothing for a blank day", async () => {
+    const today = new Date();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const answered = iso(today);
+    const blank = iso(new Date(today.getTime() - 86_400_000));
+    const base = {
+      sleepDuration: null,
+      caffeineAfternoon: null,
+      alcohol: null,
+      stressLevel: null,
+      nightSweats: null,
+      workImpact: null,
+      createdAt: "",
+      updatedAt: "",
+    };
+    contextLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        { ...base, id: "e1", date: answered, exercise: "MODERATE" },
+        { ...base, id: "e2", date: blank, exercise: null },
+      ],
+      total: 2,
+    });
+
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    expect(await screen.findByText("Exercise: Moderate")).toBeInTheDocument();
+    expect(screen.getAllByText(/^Exercise:/)).toHaveLength(1);
+  });
+});

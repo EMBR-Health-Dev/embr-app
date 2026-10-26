@@ -336,6 +336,49 @@ describe("POST /context-logs", () => {
     }
   });
 
+  it("stores how hard she exercised, and leaves it null when not answered", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-exercise@embr.health");
+
+    const saved = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", exercise: "MODERATE" });
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.exercise).toBe("MODERATE");
+
+    const blank = await agent.post("/context-logs").send({ date: "2026-07-24", alcohol: true });
+    expect(blank.body.data.exercise).toBeNull();
+  });
+
+  it("keeps the exercise answer when a save leaves it out, and clears it only on null", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-exercise-keep@embr.health");
+
+    await agent.post("/context-logs").send({ date: "2026-07-23", exercise: "VIGOROUS" });
+    // An app version that predates exercise saves the day's other answers.
+    const older = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", workImpact: "DID_LESS" });
+    expect(older.body.data.exercise).toBe("VIGOROUS");
+    expect(older.body.data.workImpact).toBe("DID_LESS");
+
+    const cleared = await agent.post("/context-logs").send({ date: "2026-07-23", exercise: null });
+    expect(cleared.body.data.exercise).toBeNull();
+  });
+
+  it("rejects an exercise value outside the fixed scale", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-exercise-bad@embr.health");
+
+    for (const exercise of ["HARD", 30, "moderate", true]) {
+      const res = await agent.post("/context-logs").send({ date: "2026-07-23", exercise });
+      expect(res.status).toBe(400);
+    }
+  });
+
   it("logs CONTEXT_LOG_UPSERTED to the audit trail", async () => {
     const app = createApp();
     const agent = request.agent(app);
