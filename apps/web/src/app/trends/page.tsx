@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import type { CycleLengthEntryDto, EvidenceStrength, SymptomFrequencyDto } from "@embr/types";
+import { useLocale, useTranslations } from "next-intl";
+import type {
+  CycleLengthEntryDto,
+  EvidenceStrength,
+  SymptomFrequencyDto,
+  SymptomHistoryDto,
+} from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { AppNav } from "../../components/app-nav";
@@ -13,6 +18,7 @@ import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 import { ContextCoOccurrenceCard } from "../../components/context-co-occurrence-card";
 import { EvidenceStrengthBadge } from "../../components/evidence-strength-badge";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
+import { SignalsChart } from "../../components/signals-chart";
 import {
   daysAgoIsoDate,
   daysSince,
@@ -22,6 +28,9 @@ import {
 } from "../../lib/record-history";
 import { richText } from "../../lib/rich-text";
 import { isPostmenopause, useLifeStage } from "../../lib/life-stage";
+import { browserTimeZone } from "../../lib/symptom-evidence";
+import { toIsoDate } from "../../lib/date-format";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 // Cycle length needs several period starts to say anything, so the
 // default 90-day view reads cycles over a longer 180 days; the wider
@@ -34,13 +43,14 @@ function startOfDayIso(isoDate: string): string {
 
 export default function TrendsPage() {
   const t = useTranslations("Trends");
-  const tEnum = useTranslations("Enums");
   const tCommon = useTranslations("Common");
+  const locale = useLocale();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const postmenopause = isPostmenopause(useLifeStage(Boolean(user)));
 
   const [frequency, setFrequency] = useState<SymptomFrequencyDto[]>([]);
+  const [history, setHistory] = useState<SymptomHistoryDto | null>(null);
   const [lengths, setLengths] = useState<CycleLengthEntryDto[]>([]);
   const [averageCycleLength, setAverageCycleLength] = useState<number | null>(null);
   const [evidenceStrength, setEvidenceStrength] = useState<EvidenceStrength | null>(null);
@@ -101,9 +111,17 @@ export default function TrendsPage() {
       api.trends.symptomFrequency({ from: startOfDayIso(rangeStart) }),
       api.trends.cycleLength({ from: startOfDayIso(cycleStart) }),
       api.trends.evidenceStrength(),
+      // Days per symptom, in her own time zone, for the per-symptom
+      // rows; the entry counts above still feed the co-occurrence card.
+      api.trends.symptomHistory({
+        from: rangeStart,
+        to: toIsoDate(new Date()),
+        timeZone: browserTimeZone(),
+      }),
     ])
-      .then(([symptomFrequency, cycleLength, evidenceStrengthResult]) => {
+      .then(([symptomFrequency, cycleLength, evidenceStrengthResult, symptomHistory]) => {
         setFrequency(symptomFrequency);
+        setHistory(symptomHistory);
         setLengths(cycleLength.lengths);
         setAverageCycleLength(cycleLength.averageDays);
         setEvidenceStrength(evidenceStrengthResult.strength);
@@ -112,7 +130,7 @@ export default function TrendsPage() {
       .finally(() => setDataLoading(false));
   }, [user, rangeStart, cycleStart, awaitingRecordStart]);
 
-  const maxCount = frequency[0]?.count ?? 1;
+  const longestCycle = Math.max(1, ...lengths.map((l) => l.days));
 
   if (loading || !user) {
     return (
@@ -164,33 +182,12 @@ export default function TrendsPage() {
                       ? t("symptomsHeaderAll")
                       : t("symptomsHeader", { days: windowDays })}
                   </h2>
-                  {frequency.length === 0 ? (
-                    <>
-                      <p className="mt-3 text-body-s font-medium text-foreground">
-                        {t("noSymptomsYet")}
-                      </p>
-                      <p className="mt-1 text-body-s text-foreground/60">{t("noSymptomsBody")}</p>
-                    </>
-                  ) : (
-                    <ul className="mt-4 flex flex-col gap-3">
-                      {frequency.map(({ category, count }) => (
-                        <li key={category} className="flex items-center gap-3 text-body-s">
-                          <span className="w-36 shrink-0 text-foreground">
-                            {tEnum(`category.${category}`)}
-                          </span>
-                          <div className="h-2.5 flex-1 rounded-full bg-muted">
-                            <div
-                              className="h-2.5 rounded-full bg-primary"
-                              style={{ width: `${Math.max(6, (count / maxCount) * 100)}%` }}
-                            />
-                          </div>
-                          <span className="w-6 text-right font-mono text-foreground/50 tabular-nums">
-                            {count}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <SignalsChart
+                    key={rangeStart}
+                    categories={history?.categories ?? []}
+                    from={history?.rangeFrom ?? rangeStart}
+                    to={history?.rangeTo ?? rangeStart}
+                  />
                 </section>
 
                 <CoOccurrenceCard
@@ -239,17 +236,28 @@ export default function TrendsPage() {
                         )}
                         <ul className="mt-4 divide-y divide-border-subtle">
                           {lengths.map((l) => (
-                            <li
-                              key={l.to}
-                              className="flex items-center justify-between py-2.5 text-body-s"
-                            >
-                              <span className="text-foreground/60">
-                                {l.from} → {l.to}
-                              </span>
-                              <span className="font-medium text-foreground">
-                                <span className="font-mono tabular-nums">{l.days}</span>{" "}
-                                {t("daysUnit")}
-                              </span>
+                            <li key={l.to} className="py-3 text-body-s">
+                              <div className="flex items-baseline justify-between gap-4">
+                                <span className="text-foreground/70">
+                                  {t("cycleRange", {
+                                    from: formatHistoryDate(locale, l.from),
+                                    to: formatHistoryDate(locale, l.to),
+                                  })}
+                                </span>
+                                <span className="shrink-0 font-medium text-foreground">
+                                  <span className="font-mono tabular-nums">{l.days}</span>{" "}
+                                  {t("daysUnit")}
+                                </span>
+                              </div>
+                              <div
+                                aria-hidden="true"
+                                className="mt-1.5 h-1.5 rounded-full bg-muted"
+                              >
+                                <div
+                                  className="h-1.5 rounded-full bg-lilac-500"
+                                  style={{ width: `${(l.days / longestCycle) * 100}%` }}
+                                />
+                              </div>
                             </li>
                           ))}
                         </ul>
