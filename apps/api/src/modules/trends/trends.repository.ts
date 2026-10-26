@@ -1,5 +1,6 @@
 import type { TrendsQuery } from "@embr/validation";
 import { prisma } from "../../lib/prisma.js";
+import { calendarDateBounds } from "../../lib/local-day-label.js";
 
 /**
  * Cycle length can't be computed as a DB-side aggregate the way symptom
@@ -62,6 +63,7 @@ export const trendsRepository = {
 
   /** Period-start dates only, ordered ascending, for the cycle-length diff. */
   periodStartDates(userId: string, query: TrendsQuery): Promise<Array<{ date: Date }>> {
+    const days = calendarDateBounds(query);
     return prisma.cycleEntry.findMany({
       where: {
         userId,
@@ -69,8 +71,8 @@ export const trendsRepository = {
         ...(query.from || query.to
           ? {
               date: {
-                ...(query.from ? { gte: query.from } : {}),
-                ...(query.to ? { lte: query.to } : {}),
+                ...(days.from ? { gte: days.from } : {}),
+                ...(days.to ? { lte: days.to } : {}),
               },
             }
           : {}),
@@ -123,14 +125,15 @@ export const trendsRepository = {
       stressLevel: string | null;
     }>
   > {
+    const days = calendarDateBounds(query);
     return prisma.contextLog.findMany({
       where: {
         userId,
         ...(query.from || query.to
           ? {
               date: {
-                ...(query.from ? { gte: query.from } : {}),
-                ...(query.to ? { lte: query.to } : {}),
+                ...(days.from ? { gte: days.from } : {}),
+                ...(days.to ? { lte: days.to } : {}),
               },
             }
           : {}),

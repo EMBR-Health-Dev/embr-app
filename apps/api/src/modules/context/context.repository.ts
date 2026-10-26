@@ -1,5 +1,6 @@
 import type { ContextLogQuery, UpsertContextLogInput } from "@embr/validation";
 import { prisma } from "../../lib/prisma.js";
+import { calendarDateBounds } from "../../lib/local-day-label.js";
 import { toSkipTake } from "../../lib/pagination.js";
 
 /** Same ownership-scoping rule as cycleRepository/symptomRepository:
@@ -35,13 +36,14 @@ export const contextRepository = {
   },
 
   async list(userId: string, query: ContextLogQuery) {
+    const days = calendarDateBounds(query);
     const where = {
       userId,
-      ...(query.from || query.to
+      ...(days.from || days.to
         ? {
             date: {
-              ...(query.from ? { gte: query.from } : {}),
-              ...(query.to ? { lte: query.to } : {}),
+              ...(days.from ? { gte: days.from } : {}),
+              ...(days.to ? { lte: days.to } : {}),
             },
           }
         : {}),
