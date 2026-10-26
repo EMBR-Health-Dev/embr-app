@@ -365,7 +365,9 @@
     "stressLevelLabelYesterday": "昨日のストレス",
     "workImpactLabelYesterday": "昨日、症状が仕事に影響しましたか？",
     "saveTodaysEntryYesterday": "昨日の記録を保存",
-    "todaysEntryLoadErrorYesterday": "昨日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。"
+    "todaysEntryLoadErrorYesterday": "昨日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。",
+    "recentToday": "今日",
+    "recentYesterday": "昨日"
   },
   "Week": {
     "title": "今週の記録",
@@ -386,7 +388,9 @@
     "done": "完了",
     "notDone": "未完了",
     "allDone": "今日の記録は完了です。ほかにすることはありません。",
-    "encouragement": "1日1分の記録で、BRIEFのための記録がそろいます。"
+    "encouragement": "1日1分の記録で、BRIEFのための記録がそろいます。",
+    "legendSymptomsSeverity": "体調（その日の最も強い重症度）",
+    "daySymptomsWithSeverity": "体調（最も強い重症度：{severity}）"
   },
   "Nav": {
     "navigationLabel": "メインナビゲーション",

@@ -45,6 +45,24 @@ beforeEach(() => {
 });
 
 describe("WeekOnTrack", () => {
+  it("names each day's highest severity, so the week reads as a sequence of days", async () => {
+    const now = new Date();
+    symptomList.mockResolvedValue(
+      page([
+        { occurredAt: now.toISOString(), severity: "MILD" },
+        { occurredAt: now.toISOString(), severity: "SEVERE" },
+      ]),
+    );
+    renderWeek();
+    const today = new Intl.DateTimeFormat("en", { weekday: "long", day: "numeric" }).format(now);
+    expect(
+      await screen.findByRole("listitem", {
+        name: `${today}: recorded How you felt (highest: Severe)`,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("How you felt, by highest severity")).toBeInTheDocument();
+  });
+
   it("shows seven days, how many were recorded, and today's list", async () => {
     renderWeek();
 

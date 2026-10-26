@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import type { SeverityLevel } from "@embr/types";
 import { api } from "../lib/api";
+import { SeverityMark } from "./severity-mark";
 import {
   buildWeek,
   daysWithEntries,
+  highestSeverityByDay,
   lastSevenDates,
   todaySteps,
   WEEK_DAYS,
@@ -50,8 +53,10 @@ export function WeekOnTrack({
   latestBriefCreatedAt: string | null;
 }) {
   const t = useTranslations("Week");
+  const tEnum = useTranslations("Enums");
   const locale = useLocale();
   const [week, setWeek] = useState<DayRecord[] | null>(null);
+  const [severities, setSeverities] = useState<Map<string, SeverityLevel>>(new Map());
 
   useEffect(() => {
     const dates = lastSevenDates();
@@ -65,7 +70,8 @@ export function WeekOnTrack({
       api.contextLogs.list(query),
       api.cycleEntries.list(query),
     ])
-      .then(([symptoms, context, cycle]) =>
+      .then(([symptoms, context, cycle]) => {
+        setSeverities(highestSeverityByDay(symptoms.items));
         setWeek(
           buildWeek(
             dates,
@@ -73,8 +79,8 @@ export function WeekOnTrack({
             context.items.map((c) => c.date),
             cycle.items.map((c) => c.date),
           ),
-        ),
-      )
+        );
+      })
       .catch(() => setWeek(null));
   }, [refreshKey]);
 
@@ -105,8 +111,13 @@ export function WeekOnTrack({
         {week.map((day, i) => {
           const date = new Date(`${day.date}T00:00:00`);
           const isToday = i === week.length - 1;
+          const severity = severities.get(day.date);
           const recorded = [
-            day.symptoms ? t("legendSymptoms") : null,
+            day.symptoms
+              ? severity
+                ? t("daySymptomsWithSeverity", { severity: tEnum(`severity.${severity}`) })
+                : t("legendSymptoms")
+              : null,
             day.context ? t("legendContext") : null,
             day.cycle ? cycleLabel : null,
           ].filter((v): v is string => v !== null);
@@ -129,10 +140,18 @@ export function WeekOnTrack({
                 {date.getDate()}
               </span>
               <span className="flex flex-col items-center gap-1" aria-hidden="true">
-                <HeartPulseIcon
-                  size={16}
-                  className={day.symptoms ? "text-lilac-700" : "text-foreground/15"}
-                />
+                {/* The day's highest severity as rising bars, so the week reads
+                    as better and harder days, not just days with entries. */}
+                {day.symptoms && severity ? (
+                  <span className="flex h-4 items-end text-lilac-700">
+                    <SeverityMark severity={severity} />
+                  </span>
+                ) : (
+                  <HeartPulseIcon
+                    size={16}
+                    className={day.symptoms ? "text-lilac-700" : "text-foreground/15"}
+                  />
+                )}
                 <MoonIcon
                   size={16}
                   className={day.context ? "text-lilac-700" : "text-foreground/15"}
@@ -149,8 +168,10 @@ export function WeekOnTrack({
 
       <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground/60">
         <span className="inline-flex items-center gap-1">
-          <HeartPulseIcon size={14} className="text-lilac-700" />
-          {t("legendSymptoms")}
+          <span className="text-lilac-700">
+            <SeverityMark severity="MODERATE" />
+          </span>
+          {t("legendSymptomsSeverity")}
         </span>
         <span className="inline-flex items-center gap-1">
           <MoonIcon size={14} className="text-lilac-700" />

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildWeek, daysWithEntries, lastSevenDates, todaySteps } from "./week-on-track";
+import {
+  buildWeek,
+  daysWithEntries,
+  highestSeverityByDay,
+  lastSevenDates,
+  todaySteps,
+} from "./week-on-track";
 
 describe("lastSevenDates", () => {
   it("returns seven local dates ending today, oldest first", () => {
@@ -85,5 +91,19 @@ describe("todaySteps", () => {
       now,
     });
     expect(old.at(-1)?.done).toBe(false);
+  });
+});
+
+describe("highestSeverityByDay", () => {
+  it("keeps the most severe level logged on each local day", () => {
+    const byDay = highestSeverityByDay([
+      { occurredAt: "2026-10-20T08:00:00", severity: "MILD" },
+      { occurredAt: "2026-10-20T19:00:00", severity: "SEVERE" },
+      { occurredAt: "2026-10-20T21:00:00", severity: "MODERATE" },
+      { occurredAt: "2026-10-21T09:00:00", severity: "MILD" },
+    ]);
+    expect(byDay.get("2026-10-20")).toBe("SEVERE");
+    expect(byDay.get("2026-10-21")).toBe("MILD");
+    expect(byDay.has("2026-10-22")).toBe(false);
   });
 });

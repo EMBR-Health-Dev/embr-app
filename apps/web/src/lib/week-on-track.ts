@@ -1,3 +1,4 @@
+import type { SeverityLevel } from "@embr/types";
 import { toIsoDate } from "./date-format";
 
 /** What she recorded on one day, from her own entries only. */
@@ -50,6 +51,23 @@ export function buildWeek(
     context: contextDays.has(date),
     cycle: cycleDays.has(date),
   }));
+}
+
+const SEVERITY_RANK: Record<SeverityLevel, number> = { MILD: 1, MODERATE: 2, SEVERE: 3 };
+
+/** The most severe level she logged on each local date. */
+export function highestSeverityByDay(
+  logs: Array<{ occurredAt: string; severity: SeverityLevel }>,
+): Map<string, SeverityLevel> {
+  const byDay = new Map<string, SeverityLevel>();
+  for (const log of logs) {
+    const date = toIsoDate(new Date(log.occurredAt));
+    const current = byDay.get(date);
+    if (!current || SEVERITY_RANK[log.severity] > SEVERITY_RANK[current]) {
+      byDay.set(date, log.severity);
+    }
+  }
+  return byDay;
 }
 
 /** Days in the week with at least one entry of any kind. */
