@@ -10,6 +10,7 @@ import {
   formatHistoryDate,
   formatHistoryMonth,
 } from "../lib/symptom-history-format";
+import { SeverityMark } from "./severity-mark";
 
 const SEVERITIES: SeverityLevel[] = ["MILD", "MODERATE", "SEVERE"];
 // 1 January 2024 was a Monday: seven days from it give localized weekday initials.
@@ -17,9 +18,10 @@ const WEEKDAY_SAMPLE = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 +
 
 /**
  * One symptom's days, month by month. A logged day is filled by its
- * highest severity; a day without an entry stays blank (outlined, no
- * fill) and is described as "no entry recorded", never as a day
- * without the symptom.
+ * highest severity and carries the same rising bars as everywhere else,
+ * so severity reads by shape too, not by tint alone. A day without an
+ * entry stays blank (outlined, no fill) and is described as "no entry
+ * recorded", never as a day without the symptom.
  */
 export function SymptomCalendar({
   history,
@@ -59,9 +61,11 @@ export function SymptomCalendar({
         {SEVERITIES.map((severity) => (
           <li key={severity} className="flex items-center gap-1.5">
             <span
-              className={`h-3.5 w-3.5 rounded-sm ${SEVERITY_FILL[severity]}`}
+              className={`flex h-4 w-4 items-center justify-center rounded-sm ${SEVERITY_FILL[severity]} ${severity === "SEVERE" ? "text-pearl-50" : "text-foreground"}`}
               aria-hidden="true"
-            />
+            >
+              <SeverityMark severity={severity} size="sm" />
+            </span>
             {tEnum(`severity.${severity}`)}
           </li>
         ))}
@@ -123,13 +127,16 @@ export function SymptomCalendar({
                               : t("dayNoEntry", { date: label })
                           }
                           onClick={() => onSelectDate(cell.date)}
-                          className={`flex aspect-square items-center justify-center rounded-sm text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
+                          className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-sm text-xs leading-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
                             evidence.state === "logged"
                               ? `${SEVERITY_FILL[evidence.maxSeverity]} ${evidence.maxSeverity === "SEVERE" ? "text-pearl-50" : "text-foreground"}`
                               : `${NO_ENTRY_CELL} text-foreground/40`
                           } ${selected ? "ring-2 ring-foreground ring-offset-1" : ""}`}
                         >
                           {dayNumber}
+                          {evidence.state === "logged" && (
+                            <SeverityMark severity={evidence.maxSeverity} size="sm" />
+                          )}
                         </button>
                       );
                     })}

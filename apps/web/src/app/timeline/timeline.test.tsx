@@ -174,8 +174,13 @@ describe("Timeline page — populated state (real data flow)", () => {
     const { default: TimelinePage } = await import("./page");
     renderWithIntl(<TimelinePage />);
 
-    // Sep 20: two unique categories, deduped and joined.
-    expect(await screen.findByText("Hot Flash · Sleep Disturbance")).toBeInTheDocument();
+    // Sep 20 (newest day): two unique symptoms, each once, with its severity.
+    const [sep20] = await screen.findAllByRole("list", { name: "Symptoms" });
+    expect(
+      within(sep20!)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Hot Flash, Moderate", "Sleep Disturbance, Moderate"]);
     // Sep 19: cycle-only day.
     expect(screen.getByText(/Cycle:/)).toBeInTheDocument();
     // Sep 18: a symptom day that's also the treatment's start date.
@@ -246,6 +251,79 @@ describe("Timeline page — populated state (real data flow)", () => {
     // "タイムライン" appears twice (the nav link and the page's own h1) —
     // scoped to the heading specifically to disambiguate.
     expect(screen.getByRole("heading", { name: "タイムライン", level: 1 })).toBeInTheDocument();
+  });
+});
+
+describe("Timeline page — chronology", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-25T12:00:00"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function log(id: string, category: string, severity: string, occurredAt: string) {
+    return { id, category, severity, occurredAt, notes: null, createdAt: "", updatedAt: "" };
+  }
+
+  it("shows the most severe level per symptom and keeps days without entries visible as gaps", async () => {
+    symptomLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        log("a", "HOT_FLASH", "MILD", "2026-09-24T08:00:00"),
+        log("b", "HOT_FLASH", "SEVERE", "2026-09-24T15:00:00"),
+        log("c", "FATIGUE", "MILD", "2026-09-21T10:00:00"),
+      ],
+      total: 3,
+    });
+    cycleEntriesList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        {
+          id: "c1",
+          date: "2026-09-22",
+          flow: "LIGHT",
+          isPeriodStart: false,
+          isPeriodEnd: false,
+          notes: null,
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
+      total: 1,
+    });
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    const [sep24] = await screen.findAllByRole("list", { name: "Symptoms" });
+    expect(
+      within(sep24!)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Hot Flash, Severe"]);
+    // Today (Sep 25) has nothing yet, and Sep 23 has nothing: both shown, never as "no symptoms".
+    expect(screen.getAllByText("No entry recorded for 1 day")).toHaveLength(2);
+
+    // Hiding cycle hides Sep 22, but it has an entry, so it is not counted as a gap.
+    await user.click(screen.getByRole("button", { name: "Cycle" }));
+    expect(screen.queryByText(/Cycle:/)).not.toBeInTheDocument();
+    expect(screen.getAllByText("No entry recorded for 1 day")).toHaveLength(2);
+    expect(screen.queryByText("No entry recorded for 2 days")).not.toBeInTheDocument();
+  });
+
+  it("labels the current day as today in the chronology", async () => {
+    symptomLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [log("a", "BRAIN_FOG", "MODERATE", "2026-09-25T09:00:00")],
+      total: 1,
+    });
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+    const heading = await screen.findByRole("heading", { level: 3, name: /Today/ });
+    expect(heading).toHaveTextContent("25");
+    expect(screen.queryByText(/No entry recorded/)).not.toBeInTheDocument();
   });
 });
 
