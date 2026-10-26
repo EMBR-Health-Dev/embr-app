@@ -104,6 +104,10 @@ describe("Symptom history page", () => {
       name: `${formatHistoryDate("en", daysAgo(1))}: Moderate`,
     });
     expect(cell).toHaveAttribute("data-state", "logged");
+    // Severity reads by shape as well as tint: Moderate fills two of three bars.
+    const bars = [...cell.querySelectorAll('[aria-hidden="true"] > span')];
+    expect(bars).toHaveLength(3);
+    expect(bars.filter((bar) => !bar.className.includes("opacity-20"))).toHaveLength(2);
     expect(symptomHistory).toHaveBeenCalledWith(
       expect.objectContaining({ to: daysAgo(0), timeZone: expect.any(String) }),
     );
