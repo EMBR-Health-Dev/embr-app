@@ -486,6 +486,48 @@ describe("GET /trends/co-occurrence", () => {
     // so nothing here should qualify.
     expect(res.body.data).toBeNull();
   });
+
+  it("counts entries on her local day when the request names her time zone", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "cooccurrence-tokyo@embr.health");
+
+    // 07:30 and 20:00 in Tokyo on 2, 3 and 4 June. Each morning is
+    // 22:30 UTC the day before.
+    for (const day of [2, 3, 4]) {
+      await agent.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MODERATE",
+        occurredAt: new Date(Date.UTC(2026, 5, day - 1, 22, 30)).toISOString(),
+      });
+      await agent.post("/symptom-logs").send({
+        category: "FATIGUE",
+        severity: "MILD",
+        occurredAt: new Date(Date.UTC(2026, 5, day, 11)).toISOString(),
+      });
+    }
+
+    const tokyo = await agent.get("/trends/co-occurrence").query({ timeZone: "Asia/Tokyo" });
+    expect(tokyo.status).toBe(200);
+    expect(tokyo.body.data).toMatchObject({
+      days: 3,
+      dates: ["2026-06-02", "2026-06-03", "2026-06-04"],
+    });
+    // Without a zone, days stay UTC days, as before.
+    const utc = await agent.get("/trends/co-occurrence");
+    expect(utc.body.data).toBeNull();
+  });
+
+  it("refuses an unknown time zone with a 400", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "cooccurrence-badzone@embr.health");
+
+    for (const path of ["/trends/co-occurrence", "/trends/evidence-strength"]) {
+      const res = await agent.get(path).query({ timeZone: "Mars/Olympus_Mons" });
+      expect(res.status).toBe(400);
+    }
+  });
 });
 
 describe("GET /trends/context-co-occurrence", () => {

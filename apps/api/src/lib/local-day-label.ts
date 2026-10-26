@@ -1,3 +1,5 @@
+import { localDate } from "../modules/trends/symptom-history.js";
+
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 
 /*
@@ -37,12 +39,17 @@ export function localDayEndLabel(date: Date): string {
  * 1 November. Each returned bound is UTC midnight of the picked local
  * date; plain dates come back unchanged.
  */
-export function calendarDateBounds(range: { from?: Date; to?: Date }): {
+export function calendarDateBounds(range: { from?: Date; to?: Date; timeZone?: string }): {
   from?: Date;
   to?: Date;
 } {
+  // With her time zone the bounds are her exact local dates, which
+  // also covers offsets beyond +12 that the 12 hour rule cannot.
+  const zone = range.timeZone;
+  const startLabel = (d: Date) => (zone ? localDate(d, zone) : localDayStartLabel(d));
+  const endLabel = (d: Date) => (zone ? localDate(d, zone) : localDayEndLabel(d));
   return {
-    ...(range.from ? { from: new Date(`${localDayStartLabel(range.from)}T00:00:00.000Z`) } : {}),
-    ...(range.to ? { to: new Date(`${localDayEndLabel(range.to)}T00:00:00.000Z`) } : {}),
+    ...(range.from ? { from: new Date(`${startLabel(range.from)}T00:00:00.000Z`) } : {}),
+    ...(range.to ? { to: new Date(`${endLabel(range.to)}T00:00:00.000Z`) } : {}),
   };
 }

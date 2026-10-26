@@ -26,6 +26,7 @@ import {
   computeTreatmentImpactWindows,
 } from "../treatments/treatment-impact.js";
 import { detectSymptomCoOccurrence } from "../trends/co-occurrence.js";
+import { localDate, resolveTimeZone } from "../trends/symptom-history.js";
 import {
   aggregateBriefTrends,
   DEFAULT_TREND_BRIEF_LIMIT,
@@ -98,6 +99,7 @@ async function generateBriefContent(
   fromDate: Date,
   toDate: Date,
   locale: Locale,
+  timeZone: string,
 ): Promise<ClinicalBriefDto> {
   const query = {
     from: fromDate,
@@ -170,8 +172,9 @@ async function generateBriefContent(
   // new query, just the per-log dates that were always there,
   // attached onto each comparison entry (see groupLogDatesByCategory's
   // own doc comment).
-  const currentDatesByCategory = groupLogDatesByCategory(symptomLogs);
-  const previousDatesByCategory = groupLogDatesByCategory(previousSymptomLogs);
+  // Each entry on her local day (UTC when the client sent no zone).
+  const currentDatesByCategory = groupLogDatesByCategory(symptomLogs, timeZone);
+  const previousDatesByCategory = groupLogDatesByCategory(previousSymptomLogs, timeZone);
   const frequencyComparison = compareSymptomFrequency(symptomSummary, previousSymptomSummary).map(
     (entry) => ({
       ...entry,
@@ -197,6 +200,7 @@ async function generateBriefContent(
       category: log.category as SymptomCategory,
       occurredAt: log.occurredAt,
     })),
+    timeZone,
   );
 
   // One entry per treatment that *started* inside [fromDate, toDate]
@@ -252,11 +256,11 @@ async function generateBriefContent(
         name: treatment.name,
         category: treatment.category,
         beforeDates: beforeLogs.map((log) => ({
-          date: log.occurredAt.toISOString().slice(0, 10),
+          date: localDate(log.occurredAt, timeZone),
           category: log.category as SymptomCategory,
         })),
         afterDates: afterLogs.map((log) => ({
-          date: log.occurredAt.toISOString().slice(0, 10),
+          date: localDate(log.occurredAt, timeZone),
           category: log.category as SymptomCategory,
         })),
       };
@@ -387,10 +391,12 @@ export const briefService = {
     fromDate: Date,
     toDate: Date,
     locale: Locale = DEFAULT_LOCALE,
+    requestedTimeZone?: string,
   ): Promise<ClinicalBriefDto> {
     if (fromDate >= toDate) {
       throw AppError.validation("fromDate must be before toDate");
     }
+    const timeZone = resolveTimeZone(requestedTimeZone);
 
     // Generation performs a paid AI call before anything is persisted
     // (see generateBriefContent) — this lock exists specifically to
@@ -438,7 +444,7 @@ export const briefService = {
           "You already have a brief for exactly this date range. To create a new one for the same dates, delete the existing brief from your past briefs first.",
         );
       }
-      return await generateBriefContent(userId, fromDate, toDate, locale);
+      return await generateBriefContent(userId, fromDate, toDate, locale, timeZone);
     } finally {
       if (lock.status === "acquired") {
         await lock.release();

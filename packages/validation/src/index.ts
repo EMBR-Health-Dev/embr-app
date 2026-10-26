@@ -432,10 +432,20 @@ export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuerySchema>;
 // (COUNT ... GROUP BY) so it isn't subject to any row cap; cycle length
 // applies its own safety ceiling in trendsRepository, the same pattern
 // exportRepository established in Milestone 6.
+// The person's IANA time zone, so entries are counted on the local day
+// they were made. Optional: without it, days are UTC days, as before.
+// Checked in the service (Intl), since zod has no notion of zone names.
+const ianaTimeZone = z.string().min(1).max(64).optional();
+
 export const trendsQuerySchema = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+  timeZone: ianaTimeZone,
 });
+
+/** For endpoints that take nothing but the time zone (evidence strength). */
+export const timeZoneQuerySchema = z.object({ timeZone: ianaTimeZone });
+export type TimeZoneQuery = z.infer<typeof timeZoneQuerySchema>;
 export type TrendsQuery = z.infer<typeof trendsQuerySchema>;
 
 // Calendar days, not instants: a history is grouped by the person's own
@@ -483,6 +493,7 @@ export type SaveSymptomCheckInInput = z.infer<typeof saveSymptomCheckInSchema>;
 export const reflectionsQuerySchema = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+  timeZone: ianaTimeZone,
 });
 export type ReflectionsQuery = z.infer<typeof reflectionsQuerySchema>;
 
@@ -618,6 +629,7 @@ export const generateBriefSchema = z
   .object({
     fromDate: z.coerce.date(),
     toDate: z.coerce.date(),
+    timeZone: ianaTimeZone,
   })
   .refine((v) => v.fromDate < v.toDate, {
     message: "fromDate must be before toDate",

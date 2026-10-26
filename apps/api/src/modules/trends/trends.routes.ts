@@ -1,8 +1,10 @@
 import { Router, type Router as ExpressRouter } from "express";
 import {
   symptomHistoryQuerySchema,
+  timeZoneQuerySchema,
   trendsQuerySchema,
   type SymptomHistoryQuery,
+  type TimeZoneQuery,
   type TrendsQuery,
 } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
@@ -80,8 +82,12 @@ router.get(
 // trendsService.evidenceStrength's own doc comment).
 router.get(
   "/trends/evidence-strength",
+  validate(timeZoneQuerySchema, "query"),
   asyncHandler(async (req, res) => {
-    const data = await trendsService.evidenceStrength(req.user!.sub);
+    const data = await trendsService.evidenceStrength(
+      req.user!.sub,
+      (req.query as unknown as TimeZoneQuery).timeZone,
+    );
     res.status(200).json({ data, requestId: req.requestId });
   }),
 );

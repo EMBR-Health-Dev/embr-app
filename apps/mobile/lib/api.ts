@@ -21,6 +21,16 @@ import type {
 } from "@embr/types";
 import { apiFetch } from "./api-client";
 
+/** The device's IANA time zone, sent with requests that count entries
+ * by day so the API uses her local days rather than UTC ones. */
+function deviceTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export const api = {
   auth: {
     register: (input: { email: string; password: string }) =>
@@ -119,18 +129,26 @@ export const api = {
 
   trends: {
     symptomFrequency: (query?: { from?: string; to?: string }) =>
-      apiFetch<SymptomFrequencyDto[]>("/trends/symptom-frequency", { query }),
+      apiFetch<SymptomFrequencyDto[]>("/trends/symptom-frequency", {
+        query: { ...query, timeZone: deviceTimeZone() },
+      }),
 
     cycleLength: (query?: { from?: string; to?: string }) =>
-      apiFetch<CycleLengthTrendDto>("/trends/cycle-length", { query }),
+      apiFetch<CycleLengthTrendDto>("/trends/cycle-length", {
+        query: { ...query, timeZone: deviceTimeZone() },
+      }),
 
     coOccurrence: (query?: { from?: string; to?: string }) =>
-      apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", { query }),
+      apiFetch<SymptomCoOccurrenceDto | null>("/trends/co-occurrence", {
+        query: { ...query, timeZone: deviceTimeZone() },
+      }),
   },
 
   reflections: {
     list: (query?: { from?: string; to?: string }) =>
-      apiFetch<ReflectionDto[]>("/reflections", { query }),
+      apiFetch<ReflectionDto[]>("/reflections", {
+        query: { ...query, timeZone: deviceTimeZone() },
+      }),
 
     // 204 on success; the client just drops the dismissed reflection
     // from its own state (see reflection-card.tsx) rather than
@@ -179,7 +197,10 @@ export const api = {
 
   briefs: {
     generate: (input: { fromDate: string; toDate: string }) =>
-      apiFetch<ClinicalBriefDto>("/briefs", { method: "POST", body: input }),
+      apiFetch<ClinicalBriefDto>("/briefs", {
+        method: "POST",
+        body: { ...input, timeZone: deviceTimeZone() },
+      }),
 
     list: (query?: { page?: number; pageSize?: number }) =>
       apiFetch<PaginatedResponse<ClinicalBriefListItemDto>>("/briefs", { query }),

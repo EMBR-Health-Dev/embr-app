@@ -1,4 +1,5 @@
 import { addDays, daysBetween } from "../treatments/treatment-impact.js";
+import { localDate } from "../trends/symptom-history.js";
 
 /**
  * Stage 3 of EMBR's clinical logic pipeline (see the
@@ -85,11 +86,12 @@ export interface SymptomFrequencyComparisonEntry {
  */
 export function groupLogDatesByCategory(
   logs: Array<{ category: string; occurredAt: Date }>,
+  timeZone = "UTC",
 ): Map<string, string[]> {
   const byCategory = new Map<string, string[]>();
   for (const log of logs) {
     const dates = byCategory.get(log.category) ?? [];
-    dates.push(log.occurredAt.toISOString().slice(0, 10));
+    dates.push(localDate(log.occurredAt, timeZone));
     byCategory.set(log.category, dates);
   }
   for (const dates of byCategory.values()) dates.sort();
