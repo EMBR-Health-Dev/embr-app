@@ -7,32 +7,44 @@
 // story. Run with --dry-run to print the summary figures and compare them to
 // maya.html without touching any server.
 //
-// It drives the real API (register, consent, daily check ins, cycle entries)
-// so the consent gate and audit logging are exercised exactly as for a real
-// person. Re-running is safe: a daily check in replaces that date, and a cycle
-// entry is create-or-replace by date.
+// Register and consent go through the real API, so the consent gate and audit
+// logging are exercised exactly as for a real person. The history itself
+// cannot: the API only accepts a check in for today or yesterday, and that
+// rule must not be loosened for a demo. So the past days are written by
+// apps/api/src/scripts/seed-demo-history.ts, which uses the API's own
+// repository functions (same upsert, same unique keys, same encryption)
+// directly against the database. Re-running is safe: a daily check in
+// replaces that date, and a cycle entry is create-or-replace by date.
 //
 // SAFETY. This must never write synthetic data into the production database.
 // - DEMO_API_URL has no default and must be set explicitly.
 // - Any host other than localhost needs DEMO_CONFIRM_HOST set to that exact
 //   host name, typed by a person, as a second deliberate step.
 // - DEMO_PASSWORD has no default, so no credential is committed.
+// - The history writer refuses NODE_ENV=production and any database host other
+//   than localhost unless DEMO_CONFIRM_DB_HOST names it.
 //
 // Usage (local compose stack, mailhog catches the verification email):
 //   pnpm --filter "@embr/validation" build
 //   DEMO_API_URL=http://localhost:4000 DEMO_PASSWORD='Choose-A-Long-Pass-1' \
+//   DATABASE_URL=postgresql://embr:embr_dev_password@localhost:5432/embr_dev \
 //     node scripts/seed-demo.mjs
 //
 // Staging:
 //   DEMO_API_URL=https://staging-api.example DEMO_CONFIRM_HOST=staging-api.example \
-//   DEMO_EMAIL=maya.demo@your-inbox.example DEMO_PASSWORD='...' node scripts/seed-demo.mjs
+//   DEMO_EMAIL=maya.demo@your-inbox.example DEMO_PASSWORD='...' \
+//   DATABASE_URL=... DEMO_CONFIRM_DB_HOST=<staging db host> node scripts/seed-demo.mjs
 //
 // Flags:
 //   --dry-run   Print the record summary only. No network calls.
+//   --end-today Shift the 63 days so the last one is today (in DEMO_TIME_ZONE),
+//               so the dashboard week and recent views have data. The default
+//               keeps the fixed dates that match maya.html.
 //   --brief     After seeding, try to generate the EMBR BRIEF. This needs the
 //               demo email to be verified first (the API enforces it).
 
 import process from "node:process";
+import { spawnSync } from "node:child_process";
 
 // ---- Maya's record: identical logic to maya.html -------------------------------
 
@@ -108,6 +120,39 @@ export function summarise(days) {
   };
 }
 
+/** What seed-demo-history.ts writes: one entry per recorded day. */
+export function historyPlan(days, email, timeZone) {
+  return {
+    email,
+    timeZone,
+    days: days
+      .filter((d) => d.logged || d.period)
+      .map((d) => ({
+        date: d.date,
+        entries: SYMPTOMS.filter((s) => d.rec[s.id]).map((s) => ({
+          category: s.category,
+          severity: d.rec[s.id],
+        })),
+        periodStart: d.period,
+      })),
+  };
+}
+
+/** The same plan, moved so its last day is today in its time zone. */
+export function shiftToToday(plan, now = new Date()) {
+  if (plan.days.length === 0) return plan;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: plan.timeZone }).format(now);
+  const last = plan.days[plan.days.length - 1].date;
+  const shiftMs = Date.parse(today) - Date.parse(last);
+  return {
+    ...plan,
+    days: plan.days.map((d) => ({
+      ...d,
+      date: new Date(Date.parse(d.date) + shiftMs).toISOString().slice(0, 10),
+    })),
+  };
+}
+
 // ---- API driver ------------------------------------------------------------------
 
 function fail(message) {
@@ -137,6 +182,24 @@ async function main() {
     fail(
       `refusing to seed ${host}. This writes synthetic data. If this is a staging or demo ` +
         `environment you control, set DEMO_CONFIRM_HOST=${host} to confirm. Never run it against production.`,
+    );
+  }
+  // Same rule seed-demo-history.ts enforces, checked here first so a refused
+  // run writes nothing at all, not even the account.
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) fail("DATABASE_URL is required to write the demo history.");
+  if (process.env.NODE_ENV === "production") fail("refusing to seed with NODE_ENV=production.");
+  let dbHost;
+  try {
+    dbHost = new URL(databaseUrl).hostname;
+  } catch {
+    fail("DATABASE_URL is not a valid URL.");
+  }
+  const dbIsLocal = ["localhost", "127.0.0.1", "::1"].includes(dbHost);
+  if (!dbIsLocal && process.env.DEMO_CONFIRM_DB_HOST !== dbHost) {
+    fail(
+      `refusing to seed database host ${dbHost}. If this is a staging or demo database you ` +
+        `control, set DEMO_CONFIRM_DB_HOST=${dbHost}. Never run it against production.`,
     );
   }
   const password = process.env.DEMO_PASSWORD;
@@ -205,39 +268,23 @@ async function main() {
   if (grant.status !== 200) fail(`consent failed: ${grant.status} ${grant.text.slice(0, 300)}`);
   console.log("  consent current");
 
-  // 4. Daily check ins, one call per recorded day (replaces that date).
-  //    The write limiter allows 120 per hour; Maya needs one call per logged day.
+  // 4. History: daily check ins and period starts, written by the API's
+  //    own repository code (see the header for why not through the API).
   const timeZone = process.env.DEMO_TIME_ZONE ?? "Asia/Tokyo";
-  let saved = 0;
-  for (const d of days.filter((x) => x.logged)) {
-    const entries = SYMPTOMS.filter((s) => d.rec[s.id]).map((s) => ({
-      category: s.category,
-      severity: d.rec[s.id],
-    }));
-    const r = await call("PUT", `/symptom-logs/check-ins/${d.date}`, {
-      token,
-      body: { timeZone, entries },
-    });
-    if (r.status !== 200) fail(`check in ${d.date} failed: ${r.status} ${r.text.slice(0, 300)}`);
-    saved++;
-  }
-  console.log(`  ${saved} daily check ins saved`);
-
-  // 5. Period starts.
-  for (const d of days.filter((x) => x.period)) {
-    const r = await call("POST", "/cycle-entries", {
-      token,
-      body: { date: d.date, isPeriodStart: true },
-    });
-    if (r.status !== 200) fail(`cycle entry ${d.date} failed: ${r.status} ${r.text.slice(0, 300)}`);
-  }
-  console.log(`  ${PERIOD_STARTS.length} period starts saved`);
+  let plan = historyPlan(days, email, timeZone);
+  if (args.has("--end-today")) plan = shiftToToday(plan);
+  const writer = spawnSync(
+    "pnpm",
+    ["--filter", "@embr/api", "exec", "tsx", "src/scripts/seed-demo-history.ts"],
+    { input: JSON.stringify(plan), stdio: ["pipe", "inherit", "inherit"], env: process.env },
+  );
+  if (writer.status !== 0) fail("writing the demo history failed (see the message above).");
 
   // 6. Optional BRIEF. The API requires a verified email address.
   if (args.has("--brief")) {
     const r = await call("POST", "/briefs", {
       token,
-      body: { fromDate: days[0].date, toDate: days[days.length - 1].date },
+      body: { fromDate: plan.days[0].date, toDate: plan.days[plan.days.length - 1].date },
     });
     if (r.status === 201) console.log(`  BRIEF generated (id ${r.json?.data?.id ?? "unknown"})`);
     else
