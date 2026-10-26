@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import type {
   ClinicalBriefListItemDto,
+  ContextLogDto,
+  CycleEntryDto,
   OnboardingProfileDto,
   SymptomFrequencyDto,
   SymptomLogDto,
@@ -141,7 +143,11 @@ function DashboardContent() {
   const [periodStart, setPeriodStart] = useState(false);
   const [periodEnd, setPeriodEnd] = useState(false);
   const [cycleSaving, setCycleSaving] = useState(false);
+  // Not editable here, but kept so saving flow or period markers
+  // doesn't erase notes written for the same day elsewhere.
+  const [cycleNotes, setCycleNotes] = useState<string | undefined>(undefined);
   const [cycleSaved, setCycleSaved] = useState(false);
+  const [cycleError, setCycleError] = useState<string | null>(null);
 
   const [sleepDuration, setSleepDuration] = useState<(typeof SLEEP_DURATIONS)[number] | "">("");
   const [caffeineAfternoon, setCaffeineAfternoon] = useState(false);
@@ -152,6 +158,47 @@ function DashboardContent() {
   const [workImpact, setWorkImpact] = useState<(typeof WORK_IMPACT)[number] | "">("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextSaved, setContextSaved] = useState(false);
+  const [contextError, setContextError] = useState<string | null>(null);
+
+  // Both forms save by replacing the whole day's entry, so they open
+  // with what is already recorded for today. Starting them blank would
+  // let an evening save ("work: did less") wipe the morning's answers
+  // (sleep, night sweats) from the record. If today's entry can't be
+  // loaded, saving stays off rather than risking that; same rule as
+  // apps/mobile/components/work-impact-card.tsx.
+  const [contextLoad, setContextLoad] = useState<"loading" | "ready" | "failed">("loading");
+  const [cycleLoad, setCycleLoad] = useState<"loading" | "ready" | "failed">("loading");
+  useEffect(() => {
+    if (!user?.onboardingCompletedAt) return;
+    const today = toIsoDate(new Date());
+    const query = { from: today, to: today, pageSize: 1 };
+    api.contextLogs
+      .list(query)
+      .then((page) => {
+        setContextLoad("ready");
+        const entry = page.items.find((e: ContextLogDto) => e.date === today);
+        if (!entry) return;
+        setSleepDuration(entry.sleepDuration ?? "");
+        setCaffeineAfternoon(entry.caffeineAfternoon ?? false);
+        setAlcohol(entry.alcohol ?? false);
+        setStressLevel(entry.stressLevel ?? "");
+        setNightSweats(entry.nightSweats ?? "");
+        setWorkImpact(entry.workImpact ?? "");
+      })
+      .catch(() => setContextLoad("failed"));
+    api.cycleEntries
+      .list(query)
+      .then((page) => {
+        setCycleLoad("ready");
+        const entry = page.items.find((e: CycleEntryDto) => e.date === today);
+        if (!entry) return;
+        setFlow(entry.flow ?? "");
+        setPeriodStart(entry.isPeriodStart);
+        setPeriodEnd(entry.isPeriodEnd);
+        setCycleNotes(entry.notes ?? undefined);
+      })
+      .catch(() => setCycleLoad("failed"));
+  }, [user]);
 
   // How far back the record goes; refreshed whenever a new entry lands
   // (same signal the weekly reflection uses).
@@ -385,15 +432,19 @@ function DashboardContent() {
 
   async function saveCycleEntry() {
     setCycleSaving(true);
+    setCycleError(null);
     try {
       await api.cycleEntries.upsert({
         date: toIsoDate(new Date()),
         flow: flow || undefined,
         isPeriodStart: periodStart,
         isPeriodEnd: periodEnd,
+        notes: cycleNotes,
       });
       setCycleSaved(true);
       setWeekRefreshKey((key) => key + 1);
+    } catch (err) {
+      setCycleError(err instanceof ApiError ? err.message : t("logError"));
     } finally {
       setCycleSaving(false);
     }
@@ -401,6 +452,7 @@ function DashboardContent() {
 
   async function saveContextEntry() {
     setContextSaving(true);
+    setContextError(null);
     try {
       await api.contextLogs.upsert({
         date: toIsoDate(new Date()),
@@ -413,6 +465,8 @@ function DashboardContent() {
       });
       setContextSaved(true);
       setWeekRefreshKey((key) => key + 1);
+    } catch (err) {
+      setContextError(err instanceof ApiError ? err.message : t("logError"));
     } finally {
       setContextSaving(false);
     }
@@ -726,10 +780,18 @@ function DashboardContent() {
                 <p className="mt-2 text-xs text-foreground/45">{t("periodMiddleHint")}</p>
               </div>
             )}
+            {(cycleError || cycleLoad === "failed") && (
+              <p
+                role="alert"
+                className="mt-4 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4"
+              >
+                {cycleError ?? t("todaysEntryLoadError")}
+              </p>
+            )}
             <Button
               variant="ghost"
               onClick={saveCycleEntry}
-              disabled={cycleSaving}
+              disabled={cycleSaving || cycleLoad !== "ready"}
               className="mt-4"
             >
               {cycleSaving ? t("saving") : cycleSaved ? t("saved") : t("saveTodaysEntry")}
@@ -862,10 +924,18 @@ function DashboardContent() {
               </label>
             </div>
 
+            {(contextError || contextLoad === "failed") && (
+              <p
+                role="alert"
+                className="mt-4 text-sm font-medium text-foreground underline decoration-destructive underline-offset-4"
+              >
+                {contextError ?? t("todaysEntryLoadError")}
+              </p>
+            )}
             <Button
               variant="ghost"
               onClick={saveContextEntry}
-              disabled={contextSaving}
+              disabled={contextSaving || contextLoad !== "ready"}
               className="mt-4"
             >
               {contextSaving ? t("saving") : contextSaved ? t("saved") : t("saveTodaysEntry")}

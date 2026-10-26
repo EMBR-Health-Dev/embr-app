@@ -26,6 +26,17 @@ const STARTER_CATEGORIES: SymptomCategory[] = [
   "MOOD_CHANGE",
 ];
 const FAST_PATH_SIZE = 6;
+// The API accepts today and yesterday (CHECK_IN_EDITABLE_DAYS), so a
+// late night or a travel day can still be filled in the next day
+// instead of staying a gap in the record.
+const DAYS = ["today", "yesterday"] as const;
+type Day = (typeof DAYS)[number];
+
+function dayBefore(isoDate: string): string {
+  const d = new Date(`${isoDate}T12:00:00`);
+  d.setDate(d.getDate() - 1);
+  return toIsoDate(d);
+}
 
 /** Selected symptoms, in the order picked; null = picked, severity not chosen yet. */
 type Selection = Array<{ category: SymptomCategory; severity: SeverityLevel | null }>;
@@ -43,7 +54,11 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
 
   // Fixed when the check in is opened: finishing it after midnight
   // still saves it to the day it was started on.
-  const [date] = useState(() => toIsoDate(new Date()));
+  const [today] = useState(() => toIsoDate(new Date()));
+  const [day, setDay] = useState<Day>("today");
+  const date = day === "today" ? today : dayBefore(today);
+  // Copy that names the day ("today's check in") has a Yesterday twin.
+  const tDay = (key: string) => (day === "today" ? key : `${key}Yesterday`);
   const [saved, setSaved] = useState<SymptomCheckInEntryDto[] | null>(null);
   const [recent, setRecent] = useState<SymptomCategory[]>([]);
   const [editing, setEditing] = useState(false);
@@ -54,17 +69,27 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
   const [status, setStatus] = useState<ReactNode>(null);
 
   useEffect(() => {
+    // Switching days quickly must not let the other day's answer land here.
+    let cancelled = false;
     api.symptomLogs
       .getCheckIn(date)
       .then((checkIn) => {
+        if (cancelled) return;
         setSaved(checkIn.entries);
         setEditing(checkIn.entries.length === 0);
       })
       .catch(() => {
+        if (cancelled) return;
         setSaved([]);
         setEditing(true);
-        setError(t("loadError"));
+        setError(t(day === "today" ? "loadError" : "loadErrorYesterday"));
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [date, day, t]);
+
+  useEffect(() => {
     // Recently logged symptoms first: the fast path is what this person tracks.
     api.trends
       .symptomHistory({ timeZone: browserTimeZone() })
@@ -76,7 +101,16 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
         ),
       )
       .catch(() => setRecent([]));
-  }, [date, t]);
+  }, []);
+
+  function switchDay(next: Day) {
+    setDay(next);
+    setSaved(null);
+    setSelection([]);
+    setShowAll(false);
+    setStatus(null);
+    setError(null);
+  }
 
   function startEditing() {
     setSelection((saved ?? []).map((e) => ({ category: e.category, severity: e.severity })));
@@ -110,7 +144,9 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
       setSelection([]);
       setShowAll(false);
       setEditing(result.entries.length === 0);
-      setStatus(result.entries.length > 0 ? t.rich("saved", richText) : t("savedEmpty"));
+      setStatus(
+        result.entries.length > 0 ? t.rich(tDay("saved"), richText) : t(tDay("savedEmpty")),
+      );
       onSaved();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("saveError"));
@@ -119,12 +155,41 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
     }
   }
 
-  if (saved === null) return null;
+  const daySwitch = (
+    <fieldset className="mb-4">
+      <legend className="sr-only">{t("dayLabel")}</legend>
+      <div className="inline-flex rounded-sm border border-border p-0.5">
+        {DAYS.map((d) => (
+          <label key={d} className="cursor-pointer">
+            <input
+              type="radio"
+              name="check-in-day"
+              className="peer sr-only"
+              checked={day === d}
+              disabled={saving}
+              onChange={() => switchDay(d)}
+            />
+            <span className="inline-flex min-h-9 items-center rounded-sm px-3 text-sm text-foreground/70 transition-colors peer-checked:bg-lilac-100 peer-checked:font-medium peer-checked:text-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+              {t(d === "today" ? "dayToday" : "dayYesterday")}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+
+  if (saved === null) {
+    // Keep the switch on screen while the other day loads, so the card doesn't jump.
+    return day === "today" ? null : (
+      <div className="mt-6 rounded border border-border-subtle p-5">{daySwitch}</div>
+    );
+  }
 
   if (!editing) {
     return (
       <div className="mt-6 rounded border border-border-subtle p-5">
-        <h2 className="font-display text-heading-m text-foreground">{t("todayHeading")}</h2>
+        {daySwitch}
+        <h2 className="font-display text-heading-m text-foreground">{t(tDay("todayHeading"))}</h2>
         <ul className="mt-3 flex flex-col gap-1.5 text-sm text-foreground">
           {saved.map((entry) => (
             <li key={entry.id}>
@@ -144,7 +209,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
           onClick={startEditing}
           className="mt-4 text-sm font-medium text-lilac-700 underline underline-offset-4"
         >
-          {t("edit")}
+          {t(tDay("edit"))}
         </button>
       </div>
     );
@@ -174,11 +239,12 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
         if (canSave) void save();
       }}
     >
-      <h2 className="font-display text-heading-m text-foreground">{t("title")}</h2>
-      <p className="mt-1 text-sm text-foreground/60">{t.rich("intro", richText)}</p>
+      {daySwitch}
+      <h2 className="font-display text-heading-m text-foreground">{t(tDay("title"))}</h2>
+      <p className="mt-1 text-sm text-foreground/60">{t.rich(tDay("intro"), richText)}</p>
 
       <fieldset className="mt-4">
-        <legend className="sr-only">{t("symptomsLabel")}</legend>
+        <legend className="sr-only">{t(tDay("symptomsLabel"))}</legend>
         <div className="flex flex-wrap gap-2">
           {visible.map((category) => {
             const checked = selection.some((s) => s.category === category);
@@ -240,7 +306,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={!canSave} aria-describedby="check-in-hint">
-          {saving ? t("saving") : t("save")}
+          {saving ? t("saving") : t(tDay("save"))}
         </Button>
         {(saved?.length ?? 0) > 0 && (
           <Button

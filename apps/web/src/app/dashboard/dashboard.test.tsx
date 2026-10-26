@@ -54,6 +54,10 @@ const contextLogsUpsert = vi.fn().mockResolvedValue({
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-01T00:00:00Z",
 });
+const emptyPage = { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 };
+const contextLogsList = vi.fn().mockResolvedValue(emptyPage);
+const cycleEntriesList = vi.fn().mockResolvedValue(emptyPage);
+const cycleEntriesUpsert = vi.fn();
 
 // The "your record goes back to" summary makes its own list requests;
 // mocked here so these tests keep asserting the dashboard's own calls.
@@ -87,7 +91,8 @@ vi.mock("../../lib/api", () => ({
     trends: { symptomFrequency },
     reflections: { list: vi.fn().mockResolvedValue([]), dismiss: vi.fn() },
     briefs: { list: briefsList },
-    contextLogs: { upsert: contextLogsUpsert },
+    contextLogs: { upsert: contextLogsUpsert, list: contextLogsList },
+    cycleEntries: { upsert: cycleEntriesUpsert, list: cycleEntriesList },
   },
 }));
 
@@ -101,6 +106,9 @@ beforeEach(() => {
   symptomLogsDelete.mockReset().mockResolvedValue(undefined);
   briefsList.mockReset().mockResolvedValue({ items: [] });
   contextLogsUpsert.mockClear();
+  contextLogsList.mockReset().mockResolvedValue(emptyPage);
+  cycleEntriesList.mockReset().mockResolvedValue(emptyPage);
+  cycleEntriesUpsert.mockReset().mockResolvedValue({});
   onboardingGet.mockReset().mockResolvedValue({ jobToBeDone: null });
 });
 
@@ -554,6 +562,86 @@ describe("Dashboard — context quick-log", () => {
     expect(
       await within(contextSection).findByRole("button", { name: "Saved ✓" }),
     ).toBeInTheDocument();
+  });
+
+  it("opens with today's saved answers, so an evening save keeps the morning's", async () => {
+    const today = new Date();
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    contextLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        {
+          id: "ctx-1",
+          date: iso,
+          sleepDuration: "UNDER_6H",
+          caffeineAfternoon: null,
+          alcohol: null,
+          stressLevel: null,
+          nightSweats: "FOUR_PLUS",
+          workImpact: null,
+          createdAt: "2026-01-01T00:00:00Z",
+          updatedAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      total: 1,
+    });
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: /Today's context/ }));
+    await waitFor(() =>
+      expect((screen.getByLabelText("Sleep last night") as HTMLSelectElement).value).toBe(
+        "UNDER_6H",
+      ),
+    );
+    await user.selectOptions(
+      screen.getByLabelText("Did symptoms affect your work today?"),
+      "DID_LESS",
+    );
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(1));
+    const [input] = contextLogsUpsert.mock.calls[0] as [Record<string, unknown>];
+    expect(input).toMatchObject({
+      date: iso,
+      sleepDuration: "UNDER_6H",
+      nightSweats: "FOUR_PLUS",
+      workImpact: "DID_LESS",
+    });
+  });
+
+  it("pauses saving when today's entry could not be loaded, rather than risk erasing it", async () => {
+    contextLogsList.mockRejectedValue(new Error("offline"));
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: /Today's context/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Today's entry could not be loaded, so saving is paused",
+    );
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+    expect(
+      within(contextSection).getByRole("button", { name: "Save today's entry" }),
+    ).toBeDisabled();
+  });
+
+  it("says so when today's context could not be saved", async () => {
+    contextLogsUpsert.mockRejectedValueOnce(new Error("offline"));
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: /Today's context/ }));
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't save that. Check your connection and try again.",
+    );
+    expect(within(contextSection).queryByRole("button", { name: "Saved ✓" })).toBeNull();
   });
 });
 

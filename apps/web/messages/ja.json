@@ -353,7 +353,8 @@
     "todaysBleedingEntry": "今日の出血・少量の出血",
     "bleedingHint": "出血や少量の出血があれば、ここに記録してください。担当医のための記録として残ります。",
     "cycleCollapsedHint": "月経の開始・終了や出血があった日のみ",
-    "contextCollapsedHint": "睡眠、寝汗、ストレス、仕事への影響"
+    "contextCollapsedHint": "睡眠、寝汗、ストレス、仕事への影響",
+    "todaysEntryLoadError": "今日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。"
   },
   "Week": {
     "title": "今週の記録",
@@ -1195,14 +1196,26 @@
     "severityRequired": "選んだ症状ごとに、軽度・中等度・重度のいずれかを選んでください。",
     "save": "今日の記録を保存",
     "saving": "保存しています…",
-    "saved": "今日の記録を保存しました。<b>今日の終わりまで</b>編集できます。",
+    "saved": "今日の記録を保存しました。<b>明日まで</b>編集できます。",
     "savedEmpty": "今日の記録に含まれる症状はありません。",
     "todayHeading": "今日の症状",
     "edit": "今日の記録を編集",
     "cancel": "キャンセル",
     "saveError": "記録を保存できませんでした。もう一度お試しください。",
     "loadError": "今日の記録を読み込めませんでした。もう一度お試しください。",
-    "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。"
+    "severityGuide": "<b>軽度：</b>気になる程度。<b>中等度：</b>日常に支障がある。<b>重度：</b>一日を過ごすのがつらい。",
+    "dayLabel": "記録する日",
+    "dayToday": "今日",
+    "dayYesterday": "昨日",
+    "titleYesterday": "昨日の体調はいかがでしたか？",
+    "introYesterday": "記録できなかった日も大丈夫です。昨日あった症状を選び、それぞれの重症度を選んでください。選ばなかった症状は、昨日の記録には<b>含まれません</b>。",
+    "symptomsLabelYesterday": "昨日の症状",
+    "saveYesterday": "昨日の記録を保存",
+    "savedYesterday": "昨日の記録を保存しました。<b>今日の終わりまで</b>編集できます。",
+    "savedEmptyYesterday": "昨日の記録に含まれる症状はありません。",
+    "todayHeadingYesterday": "昨日の症状",
+    "editYesterday": "昨日の記録を編集",
+    "loadErrorYesterday": "昨日の記録を読み込めませんでした。もう一度お試しください。"
   },
   "Notes": {
     "title": "ノート",
