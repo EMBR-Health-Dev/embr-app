@@ -776,7 +776,14 @@
     "presetsLabel": "期間を選ぶ",
     "preset30": "過去30日間",
     "preset90": "過去90日間",
-    "presetAll": "最初の記録から"
+    "presetAll": "最初の記録から",
+    "dayByDayTitle": "日ごとの記録",
+    "dayByDayIntro": "1列が1日を表し、左が最も古い日です。各症状が記録された日を示し、重症度は示しません。",
+    "dayByDayLegendLogged": "記録あり",
+    "dayByDayLegendOther": "ほかの症状の記録あり",
+    "dayByDayLegendNoEntry": "記録なし",
+    "dayByDayRow": "{symptom}：{total}日中{count}日に記録",
+    "dayByDayCoverage": "{total}日中{recorded}日に記録があります。記録なしは{missing}日です。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

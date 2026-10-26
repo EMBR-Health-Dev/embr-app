@@ -715,6 +715,22 @@ describe("Brief page — deterministic evidence sections", () => {
     await user.click(screen.getByRole("button", { name: /generate/i }));
   }
 
+  it("shows the period day by day, with each symptom's recorded days and the days with no entry", async () => {
+    await generateWith(realisticBrief());
+    expect(await screen.findByRole("heading", { name: "Day by day" })).toBeInTheDocument();
+    // 2026-01-01 to 2026-02-01 is 32 days; Hot Flash was recorded on 2 of them.
+    expect(screen.getByText("Hot Flash: recorded on 2 of 32 days")).toBeInTheDocument();
+    expect(
+      screen.getByText("Entries on 2 of 32 days. No entry recorded on 30 days."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves day by day out for a BRIEF made before per day dates were kept", async () => {
+    await generateWith(brief({ frequencyComparison: null }));
+    await screen.findByText(/This summary and the questions are written by AI/);
+    expect(screen.queryByRole("heading", { name: "Day by day" })).not.toBeInTheDocument();
+  });
+
   it("states night sweats mornings answered, holding back the breakdown below 7", async () => {
     await generateWith(brief({ nightSweatsRecall: { morningsAnswered: 1, breakdown: null } }));
     expect(await screen.findByText("Night sweats recalled in the morning")).toBeInTheDocument();

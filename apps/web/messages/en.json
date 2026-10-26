@@ -776,7 +776,14 @@
     "presetsLabel": "Quick ranges",
     "preset30": "Last 30 days",
     "preset90": "Last 90 days",
-    "presetAll": "Since your first entry"
+    "presetAll": "Since your first entry",
+    "dayByDayTitle": "Day by day",
+    "dayByDayIntro": "Each column is one day of this BRIEF, oldest on the left. It shows which days each symptom was recorded, not how severe it was.",
+    "dayByDayLegendLogged": "Recorded",
+    "dayByDayLegendOther": "Other symptoms recorded",
+    "dayByDayLegendNoEntry": "No entry recorded",
+    "dayByDayRow": "{symptom}: recorded on {count} of {total} days",
+    "dayByDayCoverage": "Entries on {recorded} of {total} days. No entry recorded on {missing, plural, one {1 day} other {# days}}."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",
