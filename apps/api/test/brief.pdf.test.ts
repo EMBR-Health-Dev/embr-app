@@ -52,6 +52,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     persistentSymptoms: null,
     nightSweatsRecall: null,
     workImpact: null,
+    exercise: null,
     lastRecordedPeriod: null,
     interpretation: null,
     citedPatternIds: null,
@@ -393,6 +394,40 @@ describe("buildClinicalBriefPdf — days symptoms affected work", () => {
     const brief = baseBrief({ workImpact: { daysAnswered: 0, breakdown: null } });
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
     expect(text).not.toContain("employer");
+  });
+});
+
+describe("buildClinicalBriefPdf — exercise", () => {
+  it("states answered days, the breakdown from 7, and that the levels are her own judgement", async () => {
+    const few = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({ exercise: { daysAnswered: 3, breakdown: null } }),
+        "person@embr.health",
+      ),
+    );
+    expect(few).toMatch(/EXERCISE/i);
+    expect(few).toContain("Answered on 3 days in this period.");
+    expect(few).toContain("A breakdown is shown once 7 days have been answered.");
+
+    const many = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({
+          exercise: { daysAnswered: 8, breakdown: { NONE: 2, LIGHT: 3, MODERATE: 2, VIGOROUS: 1 } },
+        }),
+        "person@embr.health",
+      ),
+    );
+    expect(many).toContain("None on 2, light on 3, moderate on 2, vigorous on 1.");
+    expect(many).toContain("not measured");
+  });
+
+  it("leaves the section out for an older BRIEF or when no day was answered", async () => {
+    for (const exercise of [null, { daysAnswered: 0, breakdown: null }]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ exercise }), "person@embr.health"),
+      );
+      expect(text).not.toContain("how hard she exercised");
+    }
   });
 });
 

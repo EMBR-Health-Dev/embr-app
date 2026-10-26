@@ -90,6 +90,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    exercise: null,
     lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
@@ -769,6 +770,26 @@ describe("Brief page — deterministic evidence sections", () => {
     );
     expect(await screen.findByText("Reason for stopping: Side effects")).toBeInTheDocument();
     expect(screen.getAllByText(/Reason for stopping/)).toHaveLength(1);
+  });
+
+  it("states the days exercise was answered, and the breakdown from 7", async () => {
+    await generateWith(brief({ exercise: { daysAnswered: 3, breakdown: null } }));
+    expect(await screen.findByText("Exercise")).toBeInTheDocument();
+    expect(screen.getByText("Answered on 3 days in this period.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Your own judgement of how hard you exercised each day, not measured."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the exercise breakdown from 7 answered days", async () => {
+    await generateWith(
+      brief({
+        exercise: { daysAnswered: 8, breakdown: { NONE: 2, LIGHT: 3, MODERATE: 2, VIGOROUS: 1 } },
+      }),
+    );
+    expect(
+      await screen.findByText("None on 2, light on 3, moderate on 2, vigorous on 1."),
+    ).toBeInTheDocument();
   });
 
   it("shows the work impact breakdown from 7 answered days", async () => {

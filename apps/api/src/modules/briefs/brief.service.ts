@@ -36,6 +36,7 @@ import { buildLongitudinalInterpretation } from "./longitudinal-interpretation.j
 import { briefPeriodLabel } from "./brief-period-label.js";
 import { summarizeNightSweatsRecall } from "./night-sweats-recall.js";
 import { summarizeWorkImpact } from "./work-impact.js";
+import { summarizeExercise } from "./exercise.js";
 import { summarizeLastRecordedPeriod } from "./last-recorded-period.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
@@ -128,6 +129,7 @@ async function generateBriefContent(
     previousSymptomLogs,
     nightSweatsAnswers,
     workImpactAnswers,
+    exerciseAnswers,
     lastPeriodDay,
     reportedLastPeriod,
   ] = await Promise.all([
@@ -137,6 +139,7 @@ async function generateBriefContent(
     exportRepository.listSymptomLogsForExport(userId, previousQuery),
     briefRepository.listNightSweatsRecall(userId, firstDay, lastDay),
     briefRepository.listWorkImpact(userId, firstDay, lastDay),
+    briefRepository.listExercise(userId, firstDay, lastDay),
     // Cycle dates are calendar days too.
     briefRepository.findLastPeriodDay(userId, lastDay),
     briefRepository.findReportedLastPeriod(userId),
@@ -149,6 +152,9 @@ async function generateBriefContent(
   // person's BRIEF, never in the AI input and never in organisation
   // statistics. See work-impact.ts.
   const workImpact = summarizeWorkImpact(workImpactAnswers);
+  // Same rules: its own count, in this person's BRIEF only, never in
+  // the AI input. See exercise.ts.
+  const exercise = summarizeExercise(exerciseAnswers);
   // Same rules again: shown only in this person's BRIEF, never in the
   // AI input. See last-recorded-period.ts.
   const lastRecordedPeriod = summarizeLastRecordedPeriod(
@@ -346,6 +352,7 @@ async function generateBriefContent(
     persistentSymptoms: JSON.parse(JSON.stringify(persistentSymptoms)),
     nightSweatsRecall: JSON.parse(JSON.stringify(nightSweatsRecall)),
     workImpact: JSON.parse(JSON.stringify(workImpact)),
+    exercise: JSON.parse(JSON.stringify(exercise)),
     lastRecordedPeriod: JSON.parse(JSON.stringify(lastRecordedPeriod)),
     // The exact same canonical object computed once above — used to
     // build the AI-safe projection and to validate the AI's

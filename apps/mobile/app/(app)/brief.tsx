@@ -671,6 +671,28 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </>
       )}
 
+      {/* Same rules: her own daily answers, never sent to the AI.
+          Breakdown only from 7 answered days. */}
+      {brief.exercise && brief.exercise.daysAnswered > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.exerciseTitle")}</Text>
+          <Text style={styles.summaryLine}>
+            {t("brief.exerciseAnswered", { count: brief.exercise.daysAnswered })}
+          </Text>
+          <Text style={styles.summaryLine}>
+            {brief.exercise.breakdown
+              ? t("brief.exerciseBreakdown", {
+                  none: brief.exercise.breakdown.NONE,
+                  light: brief.exercise.breakdown.LIGHT,
+                  moderate: brief.exercise.breakdown.MODERATE,
+                  vigorous: brief.exercise.breakdown.VIGOROUS,
+                })
+              : t("brief.exerciseFewAnswers")}
+          </Text>
+          <Text style={styles.summaryLine}>{t("brief.exerciseScale")}</Text>
+        </>
+      )}
+
       {brief.coOccurrence && (
         <>
           <Text style={styles.contentSectionTitle}>{t("brief.patternsNoticedTitle")}</Text>

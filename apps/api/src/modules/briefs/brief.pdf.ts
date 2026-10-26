@@ -453,6 +453,20 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Exercise (its own count) ----
+  // Same rules again: a breakdown only from 7 answered days (see
+  // exercise.ts); skipped for a brief that predates the field or has
+  // no answered days.
+  if (brief.exercise && brief.exercise.daysAnswered > 0) {
+    const { daysAnswered, breakdown } = brief.exercise;
+    sectionHeading(doc, t.exerciseHeading);
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
+    doc.text(t.exerciseAnsweredLine(daysAnswered));
+    doc.text(breakdown ? t.exerciseBreakdownLine(breakdown) : t.exerciseFewAnswersNote);
+    doc.fillColor(INK_MUTED).text(t.exerciseScaleNote);
+    doc.moveDown(1);
+  }
+
   // ---- Observed patterns (symptom co-occurrence, descriptive only) ----
   // Only rendered when present — coOccurrence is null both for a
   // brief predating this field and for one where no pair reached the

@@ -289,6 +289,11 @@ export type WorkImpact = "NONE" | "DID_LESS" | "MISSED_TIME";
 /** How hard she exercised that day, as she judges it. */
 export type ExerciseLevel = "NONE" | "LIGHT" | "MODERATE" | "VIGOROUS";
 
+export interface ExerciseSummaryDto {
+  daysAnswered: number;
+  breakdown: Record<ExerciseLevel, number> | null;
+}
+
 export interface WorkImpactSummaryDto {
   daysAnswered: number;
   breakdown: Record<WorkImpact, number> | null;
@@ -868,6 +873,10 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * and never part of organisation statistics. Null for a brief
    * generated before this field existed. */
   workImpact: WorkImpactSummaryDto | null;
+  /** Days in range where exercise was answered, and a per-level count
+   * only when at least 7 were. Never sent to the AI. Null for a brief
+   * generated before this field existed. */
+  exercise: ExerciseSummaryDto | null;
   /** Last period day logged anywhere in the record up to the brief's
    * end. Never sent to the AI. Null for a brief generated before this
    * field existed. */

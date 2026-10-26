@@ -682,6 +682,11 @@ model ClinicalBrief {
   /// the AI and never part of organisation statistics. Null means
   /// "never computed for this brief".
   workImpact         Json?
+  /// { daysAnswered: number, breakdown: Record<ExerciseLevel, number> | null }
+  /// Counted from ContextLog.exercise over [fromDate, toDate]; see
+  /// exercise.ts. Breakdown only from 7 answered days. Never sent to the
+  /// AI. Null means "never computed for this brief".
+  exercise           Json?
   /// { date: "YYYY-MM-DD" | null, monthsBeforeBriefEnd: number | null }
   /// The last day with period flow logged anywhere in the record up to
   /// the brief's end. Nullable: earlier briefs read as "never

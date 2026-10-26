@@ -818,7 +818,12 @@
     "dayByDayLegendOther": "ほかの症状の記録あり",
     "dayByDayLegendNoEntry": "記録なし",
     "dayByDayRow": "{symptom}：{total}日中{count}日に記録",
-    "dayByDayCoverage": "{total}日中{recorded}日に記録があります。記録なしは{missing}日です。"
+    "dayByDayCoverage": "{total}日中{recorded}日に記録があります。記録なしは{missing}日です。",
+    "exerciseTitle": "運動",
+    "exerciseAnswered": "この期間に{count}日分の回答がありました。",
+    "exerciseBreakdown": "なし{none}日、軽い{light}日、中程度{moderate}日、激しい{vigorous}日。",
+    "exerciseFewAnswers": "回答が7日分以上になると、内訳を表示します。",
+    "exerciseScale": "毎日どのくらい運動したかについてのあなた自身の判断で、測定値ではありません。"
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

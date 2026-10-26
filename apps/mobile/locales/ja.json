@@ -380,7 +380,12 @@
     "trendsAcrossBriefs_other": "直近{{count}}件のBRIEFについて",
     "trendsCategoryLine": "{{category}}：{{totalPhrase}}中{{present}}件で記録（うち{{persistent}}件で継続している症状として記載）。",
     "longitudinalPatternsTitle": "BRIEF全体で継続している傾向",
-    "longitudinalPatternsLine": "{{category}}は直近{{totalPhrase}}すべてで記録されています。"
+    "longitudinalPatternsLine": "{{category}}は直近{{totalPhrase}}すべてで記録されています。",
+    "exerciseTitle": "運動",
+    "exerciseAnswered_other": "この期間に{{count}}日分の回答がありました。",
+    "exerciseBreakdown": "なし{{none}}日、軽い{{light}}日、中程度{{moderate}}日、激しい{{vigorous}}日。",
+    "exerciseFewAnswers": "回答が7日分以上になると、内訳を表示します。",
+    "exerciseScale": "毎日どのくらい運動したかについてのあなた自身の判断で、測定値ではありません。"
   },
   "settings": {
     "title": "設定",
