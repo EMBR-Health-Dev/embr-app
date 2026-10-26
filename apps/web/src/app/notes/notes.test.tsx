@@ -13,6 +13,7 @@ vi.mock("../../lib/auth-context", () => ({
   useAuth: () => ({
     user: { id: "u1", email: "person@example.test", emailVerified: true },
     loading: false,
+    logout: vi.fn(),
   }),
 }));
 
@@ -22,6 +23,7 @@ const update = vi.fn();
 const remove = vi.fn();
 vi.mock("../../lib/api", () => ({
   api: {
+    organizations: { mine: vi.fn().mockResolvedValue([]) },
     notes: {
       list: (...a: unknown[]) => list(...a),
       create: (...a: unknown[]) => create(...a),
@@ -31,15 +33,14 @@ vi.mock("../../lib/api", () => ({
   },
 }));
 
-function note(id: string, title: string, cover = "LILAC", body = "") {
-  return {
-    id,
-    title,
-    body,
-    cover,
-    createdAt: "2026-10-01T08:00:00Z",
-    updatedAt: "2026-10-02T08:00:00Z",
-  };
+function note(
+  id: string,
+  title: string,
+  cover = "LILAC",
+  body = "",
+  updatedAt = "2026-10-02T08:00:00Z",
+) {
+  return { id, title, body, cover, createdAt: "2026-10-01T08:00:00Z", updatedAt };
 }
 const page = (items: unknown[]) => ({
   items,
@@ -73,10 +74,10 @@ describe("Notes page", () => {
     expect(
       screen.getByText(/never reads them for the BRIEF or sends them to AI/),
     ).toBeInTheDocument();
-    expect(await screen.findByText(/No notebooks yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No notes yet/)).toBeInTheDocument();
   });
 
-  it("shows each notebook as a cover with its title", async () => {
+  it("lists each note with its title", async () => {
     list.mockResolvedValue(
       page([note("n1", "Questions for Dr Sato"), note("n2", "Sleep diary", "PLUM")]),
     );
@@ -93,7 +94,7 @@ describe("Notes page", () => {
     create.mockResolvedValue(note("n9", "Appointment", "ROSE", "Ask about sleep"));
     renderPage();
 
-    await user.click(await screen.findByRole("button", { name: "New notebook" }));
+    await user.click(await screen.findByRole("button", { name: "New note" }));
     await user.type(screen.getByLabelText("Title"), "Appointment");
     await user.click(screen.getByRole("radio", { name: "Rose" }));
     await user.type(screen.getByLabelText("Notes"), "Ask about sleep");
@@ -113,9 +114,9 @@ describe("Notes page", () => {
     const user = userEvent.setup();
     list.mockResolvedValue(page([]));
     renderPage();
-    await user.click(await screen.findByRole("button", { name: "New notebook" }));
+    await user.click(await screen.findByRole("button", { name: "New note" }));
     await user.click(screen.getByRole("button", { name: "Save" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Give this notebook a title.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Give this note a title.");
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -140,5 +141,91 @@ describe("Notes page", () => {
         cover: "LILAC",
       }),
     );
+  });
+
+  it("lists notes newest edit first, grouped by month, with the opening of each", async () => {
+    list.mockResolvedValue(
+      page([
+        note("n1", "September thoughts", "LILAC", "Hot flashes  at\nnight", "2026-09-20T08:00:00Z"),
+        note("n2", "Questions for Dr Sato", "PLUM", "Ask about patches", "2026-10-12T08:00:00Z"),
+        note("n3", "Empty page", "ICE", "", "2026-10-05T08:00:00Z"),
+      ]),
+    );
+    renderPage();
+
+    const october = await screen.findByRole("region", { name: "October 2026" });
+    const september = screen.getByRole("region", { name: "September 2026" });
+    expect(
+      within(october)
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Open Questions for Dr Sato", "Open Empty page"]);
+    expect(within(october).getByText("Ask about patches")).toBeInTheDocument();
+    expect(within(october).getByText("No text yet")).toBeInTheDocument();
+    // Whitespace and line breaks fold into one preview line.
+    expect(within(september).getByText("Hot flashes at night")).toBeInTheDocument();
+    expect(
+      october.compareDocumentPosition(september) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("filters by title or text once there are enough notes to search", async () => {
+    const user = userEvent.setup();
+    list.mockResolvedValue(
+      page([
+        note("n1", "Sleep diary", "LILAC", "woke twice"),
+        note("n2", "Questions", "PLUM", "Ask about patches"),
+        note("n3", "Work", "ICE", "meeting"),
+        note("n4", "Food", "ROSE", "coffee"),
+      ]),
+    );
+    renderPage();
+
+    await user.type(await screen.findByLabelText("Search your notes"), "patch");
+    expect(screen.getByRole("button", { name: "Open Questions" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open Sleep diary" })).not.toBeInTheDocument();
+    await user.clear(screen.getByLabelText("Search your notes"));
+    await user.type(screen.getByLabelText("Search your notes"), "zzz");
+    expect(screen.getByText("No notes match \u201czzz\u201d.")).toBeInTheDocument();
+  });
+
+  it("asks before leaving a page with unsaved changes, and keeps the text on Keep editing", async () => {
+    const user = userEvent.setup();
+    list.mockResolvedValue(page([note("n1", "Sleep diary", "LILAC", "Mon: woke twice")]));
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Open Sleep diary" }));
+    expect(screen.getByText(/Started .* · Last edited/)).toBeInTheDocument();
+    // Untouched: leaves straight away.
+    await user.click(screen.getByRole("button", { name: "Back to notes" }));
+    await user.click(await screen.findByRole("button", { name: "Open Sleep diary" }));
+
+    await user.type(screen.getByLabelText("Notes"), " and again");
+    await user.click(screen.getByRole("button", { name: "Back to notes" }));
+    const ask = screen.getByRole("group", { name: /Leave without saving\?/ });
+    await user.click(within(ask).getByRole("button", { name: "Keep editing" }));
+    expect(screen.getByLabelText("Notes")).toHaveValue("Mon: woke twice and again");
+
+    await user.click(screen.getByRole("button", { name: "Back to notes" }));
+    await user.click(screen.getByRole("button", { name: "Leave without saving" }));
+    expect(await screen.findByRole("button", { name: "Open Sleep diary" })).toBeInTheDocument();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("confirms on the page before deleting, and says so if the delete fails", async () => {
+    const user = userEvent.setup();
+    list.mockResolvedValue(page([note("n1", "Sleep diary")]));
+    remove.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(undefined);
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Open Sleep diary" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    const ask = screen.getByRole("group", { name: "Delete this note? This cannot be undone." });
+    await user.click(within(ask).getByRole("button", { name: "Delete" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("This could not be deleted.");
+
+    await user.click(within(ask).getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText(/No notes yet/)).toBeInTheDocument();
+    expect(remove).toHaveBeenCalledWith("n1");
   });
 });
