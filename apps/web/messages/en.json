@@ -818,7 +818,12 @@
     "dayByDayLegendOther": "Other symptoms recorded",
     "dayByDayLegendNoEntry": "No entry recorded",
     "dayByDayRow": "{symptom}: recorded on {count} of {total} days",
-    "dayByDayCoverage": "Entries on {recorded} of {total} days. No entry recorded on {missing, plural, one {1 day} other {# days}}."
+    "dayByDayCoverage": "Entries on {recorded} of {total} days. No entry recorded on {missing, plural, one {1 day} other {# days}}.",
+    "exerciseTitle": "Exercise",
+    "exerciseAnswered": "Answered on {count, plural, one {# day} other {# days}} in this period.",
+    "exerciseBreakdown": "None on {none}, light on {light}, moderate on {moderate}, vigorous on {vigorous}.",
+    "exerciseFewAnswers": "A breakdown is shown once 7 days have been answered.",
+    "exerciseScale": "Your own judgement of how hard you exercised each day, not measured."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",

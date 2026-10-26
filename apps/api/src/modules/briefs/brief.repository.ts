@@ -28,6 +28,16 @@ export const briefRepository = {
     return rows.map((row) => row.workImpact);
   },
 
+  /** The exercise answer for each answered day in [fromDate, toDate].
+   * Only the answer is selected; see exercise.ts. */
+  async listExercise(userId: string, fromDate: Date, toDate: Date) {
+    const rows = await prisma.contextLog.findMany({
+      where: { userId, date: { gte: fromDate, lte: toDate }, exercise: { not: null } },
+      select: { exercise: true },
+    });
+    return rows.map((row) => row.exercise);
+  },
+
   /** The most recent day with period flow logged on or before
    * `onOrBefore`, across the whole record, as YYYY-MM-DD. Only the date
    * is selected; see last-recorded-period.ts. */
@@ -75,6 +85,7 @@ export const briefRepository = {
     persistentSymptoms: Prisma.InputJsonValue;
     nightSweatsRecall: Prisma.InputJsonValue;
     workImpact: Prisma.InputJsonValue;
+    exercise: Prisma.InputJsonValue;
     lastRecordedPeriod: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;

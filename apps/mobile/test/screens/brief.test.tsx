@@ -138,6 +138,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    exercise: null,
     lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
@@ -970,6 +971,31 @@ describe("Brief screen — last period day logged", () => {
         "Last period day logged: 2026-01-20 (less than a month before the end of this BRIEF)",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Brief screen — exercise", () => {
+  it("states days answered and the breakdown from 7", async () => {
+    mockHistoryOf(
+      brief({
+        exercise: { daysAnswered: 8, breakdown: { NONE: 2, LIGHT: 3, MODERATE: 2, VIGOROUS: 1 } },
+      }),
+    );
+    await renderAndExpandBrief();
+
+    expect(await screen.findByText("Exercise")).toBeInTheDocument();
+    expect(screen.getByText("Answered on 8 days in this period.")).toBeInTheDocument();
+    expect(
+      screen.getByText("None on 2, light on 3, moderate on 2, vigorous on 1."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the section out when no day was answered", async () => {
+    mockHistoryOf(brief({ exercise: { daysAnswered: 0, breakdown: null } }));
+    await renderAndExpandBrief();
+
+    expect(await screen.findByText("A narrative.")).toBeInTheDocument();
+    expect(screen.queryByText("Exercise")).not.toBeInTheDocument();
   });
 });
 

@@ -126,6 +126,11 @@ interface PdfStrings {
   workImpactBreakdownLine: (b: Record<"NONE" | "DID_LESS" | "MISSED_TIME", number>) => string;
   workImpactFewAnswersNote: string;
   workImpactPrivacyNote: string;
+  exerciseHeading: string;
+  exerciseAnsweredLine: (days: number) => string;
+  exerciseBreakdownLine: (b: Record<"NONE" | "LIGHT" | "MODERATE" | "VIGOROUS", number>) => string;
+  exerciseFewAnswersNote: string;
+  exerciseScaleNote: string;
   patternsNoticedHeading: string;
   coOccurrenceLine: (categoryA: string, categoryB: string, days: number) => string;
   cycleSummaryHeading: string;
@@ -208,6 +213,12 @@ const EN: PdfStrings = {
     `No effect on ${b.NONE}, did less on ${b.DID_LESS}, missed time on ${b.MISSED_TIME}.`,
   workImpactFewAnswersNote: "A breakdown is shown once 7 days have been answered.",
   workImpactPrivacyNote: "Her own daily answers. Never shared with any employer.",
+  exerciseHeading: "Exercise",
+  exerciseAnsweredLine: (days) => `Answered on ${days} day${days === 1 ? "" : "s"} in this period.`,
+  exerciseBreakdownLine: (b) =>
+    `None on ${b.NONE}, light on ${b.LIGHT}, moderate on ${b.MODERATE}, vigorous on ${b.VIGOROUS}.`,
+  exerciseFewAnswersNote: "A breakdown is shown once 7 days have been answered.",
+  exerciseScaleNote: "Her own judgement of how hard she exercised each day, not measured.",
   patternsNoticedHeading: "Observed patterns",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA} and ${categoryB} were both reported on the same day on ${days}` +
@@ -321,6 +332,12 @@ const JA: PdfStrings = {
     `影響なし${b.NONE}日、仕事量が減った${b.DID_LESS}日、休んだ・早退した${b.MISSED_TIME}日。`,
   workImpactFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
   workImpactPrivacyNote: "本人による毎日の回答です。勤務先と共有されることはありません。",
+  exerciseHeading: "運動",
+  exerciseAnsweredLine: (days) => `この期間に${days}日分の回答がありました。`,
+  exerciseBreakdownLine: (b) =>
+    `なし${b.NONE}日、軽い${b.LIGHT}日、中程度${b.MODERATE}日、激しい${b.VIGOROUS}日。`,
+  exerciseFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
+  exerciseScaleNote: "毎日どのくらい運動したかについての本人の判断で、測定値ではありません。",
   patternsNoticedHeading: "記録に見られるパターン",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA}と${categoryB}が同じ日に記録された日は${days}日でした。`,

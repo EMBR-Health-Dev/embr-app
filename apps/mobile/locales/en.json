@@ -392,7 +392,13 @@
     "trendsAcrossBriefs_other": "Across your last {{count}} briefs",
     "trendsCategoryLine": "{{category}}: recorded in {{present}} of {{totalPhrase}}, listed as ongoing in {{persistent}}.",
     "longitudinalPatternsTitle": "Recurring across your briefs",
-    "longitudinalPatternsLine": "{{category}} has appeared in every one of your last {{totalPhrase}}."
+    "longitudinalPatternsLine": "{{category}} has appeared in every one of your last {{totalPhrase}}.",
+    "exerciseTitle": "Exercise",
+    "exerciseAnswered_one": "Answered on {{count}} day in this period.",
+    "exerciseAnswered_other": "Answered on {{count}} days in this period.",
+    "exerciseBreakdown": "None on {{none}}, light on {{light}}, moderate on {{moderate}}, vigorous on {{vigorous}}.",
+    "exerciseFewAnswers": "A breakdown is shown once 7 days have been answered.",
+    "exerciseScale": "Your own judgement of how hard you exercised each day, not measured."
   },
   "settings": {
     "title": "Settings",

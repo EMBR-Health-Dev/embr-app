@@ -34,6 +34,7 @@ const { state, nextId } = vi.hoisted(() => {
         date: Date;
         nightSweats: string | null;
         workImpact?: string | null;
+        exercise?: string | null;
       }>,
       // Her last period as reported in Settings, by userId.
       reportedLastPeriods: {} as Record<string, Date>,
@@ -354,7 +355,7 @@ vi.mock("../src/lib/prisma.js", () => ({
           where: { userId: string; date: { gte: Date; lte: Date } } & Record<string, unknown>;
           select: Record<string, true>;
         }) => {
-          const field = Object.keys(select)[0] as "nightSweats" | "workImpact";
+          const field = Object.keys(select)[0] as "nightSweats" | "workImpact" | "exercise";
           return Promise.resolve(
             state.contextLogs
               .filter(
@@ -827,6 +828,53 @@ describe("POST /briefs — night sweats recalled in the morning", () => {
       morningsAnswered: 7,
       breakdown: { NONE: 2, ONE: 3, TWO_TO_THREE: 1, FOUR_PLUS: 1 },
     });
+  });
+});
+
+describe("POST /briefs — exercise", () => {
+  function addExercise(userId: string, day: string, exercise: string | null) {
+    state.contextLogs.push({
+      userId,
+      date: new Date(`${day}T00:00:00.000Z`),
+      nightSweats: null,
+      exercise,
+    });
+  }
+
+  it("counts only answered days in range and keeps them out of the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "exercise-few@embr.health");
+    addExercise(userId, "2026-01-03", "VIGOROUS");
+    addExercise(userId, "2026-01-04", "NONE");
+    addExercise(userId, "2026-01-05", null); // not logged, never counted as none
+    addExercise(userId, "2026-03-01", "LIGHT"); // outside the range
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.exercise).toEqual({ daysAnswered: 2, breakdown: null });
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/exercise|VIGOROUS|daysAnswered/i);
+  });
+
+  it("adds a per level breakdown once 7 days are answered", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "exercise-seven@embr.health");
+    const answers = ["NONE", "LIGHT", "LIGHT", "MODERATE", "MODERATE", "MODERATE", "VIGOROUS"];
+    answers.forEach((a, i) => addExercise(userId, `2026-01-${String(10 + i)}`, a));
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.exercise).toEqual({
+      daysAnswered: 7,
+      breakdown: { NONE: 1, LIGHT: 2, MODERATE: 3, VIGOROUS: 1 },
+    });
+    // Work impact is counted from its own field only.
+    expect(res.body.data.workImpact).toEqual({ daysAnswered: 0, breakdown: null });
   });
 });
 
