@@ -354,7 +354,18 @@
     "bleedingHint": "Log any bleeding or spotting here. It stays in your record for your clinician.",
     "cycleCollapsedHint": "Only if your period started, ended or you had flow",
     "contextCollapsedHint": "Sleep, night sweats, stress and work",
-    "todaysEntryLoadError": "Today's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again."
+    "todaysEntryLoadError": "Today's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again.",
+    "contextDayLabel": "Day to record",
+    "contextDayToday": "Today",
+    "contextDayYesterday": "Yesterday",
+    "contextRecordingFor": "Recording for <b>{date}</b>",
+    "todaysContextEntryYesterday": "Yesterday's context",
+    "sleepDurationLabelYesterday": "Sleep the night before yesterday",
+    "nightSweatsLabelYesterday": "Night sweats the night before yesterday",
+    "stressLevelLabelYesterday": "Stress yesterday",
+    "workImpactLabelYesterday": "Did symptoms affect your work yesterday?",
+    "saveTodaysEntryYesterday": "Save yesterday's entry",
+    "todaysEntryLoadErrorYesterday": "Yesterday's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again."
   },
   "Week": {
     "title": "Your week",
