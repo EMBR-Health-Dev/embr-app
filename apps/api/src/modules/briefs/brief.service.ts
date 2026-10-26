@@ -109,6 +109,15 @@ async function generateBriefContent(
   // second, independent definition of "comparison period."
   const previousPeriod = computePreviousPeriod(fromDate, toDate);
   const previousQuery = { from: previousPeriod.from, to: previousPeriod.to };
+  // Cycle entries, treatment dates and context answers are stored
+  // against a calendar date (DATE columns), so they are selected by the
+  // calendar dates the person picked, not
+  // by the range's instants: Postgres would cast an instant to its UTC
+  // date, taking in the day before the range east of UTC and the day
+  // after it west of UTC.
+  const period = briefPeriodLabel(fromDate, toDate);
+  const firstDay = new Date(`${period.fromDate}T00:00:00.000Z`);
+  const lastDay = new Date(`${period.toDate}T00:00:00.000Z`);
 
   const [
     symptomLogs,
@@ -121,17 +130,13 @@ async function generateBriefContent(
     reportedLastPeriod,
   ] = await Promise.all([
     exportRepository.listSymptomLogsForExport(userId, query),
-    exportRepository.listCycleEntriesForExport(userId, query),
-    treatmentRepository.listOverlappingRange(userId, fromDate, toDate),
+    exportRepository.listCycleEntriesForExport(userId, { from: firstDay, to: lastDay }),
+    treatmentRepository.listOverlappingRange(userId, firstDay, lastDay),
     exportRepository.listSymptomLogsForExport(userId, previousQuery),
-    briefRepository.listNightSweatsRecall(userId, fromDate, toDate),
-    briefRepository.listWorkImpact(userId, fromDate, toDate),
-    // Cycle dates are calendar days, so compare against the brief's
-    // last calendar day as the person picked it.
-    briefRepository.findLastPeriodDay(
-      userId,
-      new Date(`${briefPeriodLabel(fromDate, toDate).toDate}T00:00:00.000Z`),
-    ),
+    briefRepository.listNightSweatsRecall(userId, firstDay, lastDay),
+    briefRepository.listWorkImpact(userId, firstDay, lastDay),
+    // Cycle dates are calendar days too.
+    briefRepository.findLastPeriodDay(userId, lastDay),
     briefRepository.findReportedLastPeriod(userId),
   ]);
 
@@ -207,7 +212,7 @@ async function generateBriefContent(
   // data can't be reused here the way it could for co-occurrence.
   const today = new Date(new Date().toISOString().slice(0, 10));
   const treatmentsStartedInPeriod = treatments.filter(
-    (t: Treatment) => t.startDate >= fromDate && t.startDate <= toDate,
+    (t: Treatment) => t.startDate >= firstDay && t.startDate <= lastDay,
   );
   const treatmentImpact = await Promise.all(
     treatmentsStartedInPeriod.map(async (treatment: Treatment) => {
