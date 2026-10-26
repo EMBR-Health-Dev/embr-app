@@ -365,7 +365,9 @@
     "stressLevelLabelYesterday": "Stress yesterday",
     "workImpactLabelYesterday": "Did symptoms affect your work yesterday?",
     "saveTodaysEntryYesterday": "Save yesterday's entry",
-    "todaysEntryLoadErrorYesterday": "Yesterday's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again."
+    "todaysEntryLoadErrorYesterday": "Yesterday's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again.",
+    "recentToday": "Today",
+    "recentYesterday": "Yesterday"
   },
   "Week": {
     "title": "Your week",
@@ -386,7 +388,9 @@
     "done": "done",
     "notDone": "not done yet",
     "allDone": "Today is recorded. Nothing else to do.",
-    "encouragement": "A minute a day keeps your record complete for your BRIEF."
+    "encouragement": "A minute a day keeps your record complete for your BRIEF.",
+    "legendSymptomsSeverity": "How you felt, by highest severity",
+    "daySymptomsWithSeverity": "How you felt (highest: {severity})"
   },
   "Nav": {
     "navigationLabel": "Main navigation",

@@ -301,6 +301,41 @@ describe("Dashboard — symptom log form error handling", () => {
 });
 
 describe("Dashboard — recent symptoms pagination", () => {
+  it("groups recent symptoms under their day, newest first, without clock times", async () => {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    symptomLogsList.mockResolvedValue({
+      items: [
+        { ...makeLog("t1", "HOT_FLASH"), occurredAt: now.toISOString() },
+        { ...makeLog("t2", "FATIGUE"), occurredAt: now.toISOString() },
+        { ...makeLog("y1", "BRAIN_FOG"), occurredAt: yesterday.toISOString() },
+        { ...makeLog("o1", "HEADACHE"), occurredAt: "2026-01-01T12:00:00" },
+      ],
+      page: 1,
+      pageSize: 5,
+      total: 4,
+      totalPages: 1,
+    });
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    const recent = await screen.findByRole("list", { name: "Recent symptoms" });
+    const days = within(recent).getAllByRole("heading", { level: 4 });
+    expect(days.map((d) => d.textContent)).toEqual([
+      "Today",
+      "Yesterday",
+      new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" }).format(
+        new Date("2026-01-01T00:00:00"),
+      ),
+    ]);
+    const today = days[0]!.closest("li")!;
+    expect(within(today).getByText("Hot Flash")).toBeInTheDocument();
+    expect(within(today).getByText("Fatigue")).toBeInTheDocument();
+    expect(within(today).getAllByRole("button", { name: "Delete" })).toHaveLength(2);
+    expect(within(recent).queryByText(/12:00/)).not.toBeInTheDocument();
+  });
+
   it("does not show Load more when everything already fits on one page", async () => {
     symptomLogsList.mockResolvedValue({
       items: [makeLog("1")],

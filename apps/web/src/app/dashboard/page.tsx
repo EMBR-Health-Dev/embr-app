@@ -526,6 +526,31 @@ function DashboardContent() {
     month: "long",
   }).format(new Date(`${contextDate}T12:00:00`));
 
+  function recentDays(items: SymptomLogDto[]) {
+    const days: Array<{ date: string; items: SymptomLogDto[] }> = [];
+    for (const log of items) {
+      const date = toIsoDate(new Date(log.occurredAt));
+      const last = days[days.length - 1];
+      if (last && last.date === date) last.items.push(log);
+      else days.push({ date, items: [log] });
+    }
+    return days;
+  }
+  const yesterdayIso = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return toIsoDate(d);
+  })();
+  function dayHeading(date: string): string {
+    if (date === todayIso) return t("recentToday");
+    if (date === yesterdayIso) return t("recentYesterday");
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(new Date(`${date}T00:00:00`));
+  }
+
   async function handleLogout() {
     await logout();
     router.replace("/login");
@@ -1020,39 +1045,48 @@ function DashboardContent() {
             ) : logs.length === 0 ? (
               <p className="mt-3 text-sm text-foreground/50">{t("noLogsYet")}</p>
             ) : (
-              <ul className="mt-3 divide-y divide-border-subtle">
-                {logs.map((log) => (
-                  <li key={log.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                    <div className="min-w-0 break-words">
-                      <span className="font-medium text-foreground">
-                        {tEnum(`category.${log.category}`)}
-                      </span>
-                      <span className="ml-2 text-foreground/50">
-                        {tEnum(`severity.${log.severity}`)}
-                      </span>
-                      {log.notes && <p className="mt-1 text-foreground/60">{log.notes}</p>}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
-                      <time className="text-foreground/40" dateTime={log.occurredAt}>
-                        {new Date(log.occurredAt).toLocaleString(locale, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </time>
-                      <button
-                        type="button"
-                        onClick={() => void deleteLog(log.id)}
-                        disabled={deletingLogId === log.id}
-                        className="text-xs font-medium text-foreground/50 underline underline-offset-2 disabled:opacity-50"
-                      >
-                        {t("deleteLog")}
-                      </button>
-                    </div>
+              <ol className="mt-3 flex flex-col gap-5" aria-label={t("recentSymptoms")}>
+                {/* Grouped by day, newest first, like the Timeline: the day is
+                    what matters in the record, not a clock time. */}
+                {recentDays(logs).map(({ date, items }) => (
+                  <li key={date}>
+                    <h4 className="text-[11px] font-medium uppercase tracking-[0.12em] text-foreground/50">
+                      {dayHeading(date)}
+                    </h4>
+                    <ul className="mt-1.5 divide-y divide-border-subtle border-l border-lilac-300 pl-4">
+                      {items.map((log) => (
+                        <li
+                          key={log.id}
+                          className="flex items-center justify-between gap-3 py-2.5 text-sm"
+                        >
+                          <div className="flex min-w-0 items-start gap-2 break-words">
+                            <span className="mt-1 shrink-0 text-lilac-700">
+                              <SeverityMark severity={log.severity} />
+                            </span>
+                            <div className="min-w-0">
+                              <span className="font-medium text-foreground">
+                                {tEnum(`category.${log.category}`)}
+                              </span>
+                              <span className="ml-2 text-foreground/50">
+                                {tEnum(`severity.${log.severity}`)}
+                              </span>
+                              {log.notes && <p className="mt-1 text-foreground/60">{log.notes}</p>}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void deleteLog(log.id)}
+                            disabled={deletingLogId === log.id}
+                            className="shrink-0 text-xs font-medium text-foreground/50 underline underline-offset-2 disabled:opacity-50"
+                          >
+                            {t("deleteLog")}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
-              </ul>
+              </ol>
             )}
             {deleteLogError && (
               <p role="alert" className="mt-2 text-sm font-medium text-foreground">
