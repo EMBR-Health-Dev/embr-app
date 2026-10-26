@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { TreatmentDto, TreatmentImpactDto, TreatmentStopReason } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -11,6 +10,10 @@ import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { toIsoDate } from "../../lib/date-format";
+import { AppNav } from "../../components/app-nav";
+import { TreatmentTimeline } from "../../components/treatment-timeline";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
+import { treatmentDuration } from "../../lib/treatment-span";
 
 const CATEGORIES = ["HRT", "SUPPLEMENT", "MEDICATION", "LIFESTYLE", "OTHER"] as const;
 // Her reason, from a fixed list, never a judgement. Optional.
@@ -27,13 +30,26 @@ export default function TreatmentsPage() {
   const t = useTranslations("Treatments");
   const tEnum = useTranslations("Enums");
   const tCommon = useTranslations("Common");
+  const locale = useLocale();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const today = toIsoDate(new Date());
+  const [managesOrg, setManagesOrg] = useState(false);
 
   const [treatments, setTreatments] = useState<TreatmentDto[]>([]);
   const [treatmentsLoading, setTreatmentsLoading] = useState(true);
+  // The treatment being marked as stopped, with the date and reason she picks.
+  const [stopping, setStopping] = useState<{
+    id: string;
+    endDate: string;
+    reason: TreatmentStopReason | "";
+    error: boolean;
+  } | null>(null);
   const [endingId, setEndingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // null follows the list: open when there is nothing recorded yet.
+  const [formOpen, setFormOpen] = useState<boolean | null>(null);
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("HRT");
@@ -54,6 +70,20 @@ export default function TreatmentsPage() {
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
+
+  // Same Organization-link reasoning as trends/page.tsx.
+  useEffect(() => {
+    if (!user) return;
+    api.organizations
+      .mine()
+      .then((rows) => setManagesOrg(rows.some((m) => m.role === "ORG_ADMIN")))
+      .catch(() => setManagesOrg(false));
+  }, [user]);
+
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
 
   async function loadTreatments() {
     setTreatmentsLoading(true);
@@ -111,6 +141,7 @@ export default function TreatmentsPage() {
       setEndDate("");
       setStopReason("");
       setNotes("");
+      setFormOpen(false);
       await loadTreatments();
     } catch (err) {
       // Prefer the specific field-level reason the API validated
@@ -127,11 +158,25 @@ export default function TreatmentsPage() {
     }
   }
 
-  async function handleEndToday(id: string) {
-    setEndingId(id);
+  // She picks the day she actually stopped (today by default), so a
+  // treatment stopped last week isn't recorded as running until today.
+  async function handleStop() {
+    if (!stopping) return;
+    const tr = treatments.find((x) => x.id === stopping.id);
+    if (!stopping.endDate || (tr && stopping.endDate < tr.startDate)) {
+      setStopping({ ...stopping, error: true });
+      return;
+    }
+    setEndingId(stopping.id);
     try {
-      await api.treatments.update(id, { endDate: toIsoDate(new Date()) });
+      await api.treatments.update(stopping.id, {
+        endDate: stopping.endDate,
+        ...(stopping.reason ? { stopReason: stopping.reason } : {}),
+      });
+      setStopping(null);
       await loadTreatments();
+    } catch {
+      setStopping({ ...stopping, error: true });
     } finally {
       setEndingId(null);
     }
@@ -150,6 +195,7 @@ export default function TreatmentsPage() {
   }
 
   async function handleDelete(id: string) {
+    setConfirmDeleteId(null);
     setDeletingId(id);
     setTreatments((prev) => prev.filter((tr) => tr.id !== id));
     try {
@@ -190,89 +236,55 @@ export default function TreatmentsPage() {
     );
   }
 
-  return (
-    <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
-      <header className="flex items-center justify-between">
-        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-foreground underline underline-offset-2"
-        >
-          {t("backToDashboard")}
-        </Link>
-      </header>
+  const current = treatments.filter((tr) => !tr.endDate);
+  const past = treatments
+    .filter((tr) => tr.endDate)
+    .sort((a, b) => b.endDate!.localeCompare(a.endDate!));
+  const showForm = formOpen ?? (!treatmentsLoading && treatments.length === 0);
 
-      <p className="mt-2 text-sm text-foreground/60">{t("hint")}</p>
+  function durationText(tr: TreatmentDto): string {
+    const { unit, count } = treatmentDuration(tr, today);
+    return t(`duration.${unit}`, { count });
+  }
 
-      <section className="mt-6 flex flex-col gap-4 rounded border border-border-subtle p-5">
-        <Field
-          label={t("namePlaceholder")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">{t("category")}</span>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
-            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {tEnum(`treatmentCategory.${c}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="flex flex-wrap items-end gap-4">
-          <Field
-            label={t("startDate")}
-            type="date"
-            value={startDate}
-            max={toIsoDate(new Date())}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={ongoing}
-              onChange={(e) => {
-                setOngoing(e.target.checked);
-                if (e.target.checked) {
-                  setEndDate("");
-                  setStopReason("");
-                }
-              }}
-            />
-            {t("ongoing")}
-          </label>
-
-          {!ongoing && (
-            <Field
-              label={t("endDate")}
-              type="date"
-              value={endDate}
-              min={startDate}
-              max={toIsoDate(new Date())}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          )}
+  function renderTreatment(tr: TreatmentDto) {
+    const isOngoing = !tr.endDate;
+    const impact = impactState[tr.id];
+    const expanded = expandedImpactId === tr.id;
+    const isStopping = stopping?.id === tr.id;
+    const confirmingDelete = confirmDeleteId === tr.id;
+    return (
+      <li key={tr.id} className="py-5 first:pt-0 last:pb-0">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <p className="font-medium text-foreground">{tr.name}</p>
+          <span className="rounded-sm border border-lilac-300 px-2 py-0.5 text-caption text-foreground/70">
+            {tEnum(`treatmentCategory.${tr.category}`)}
+          </span>
         </div>
+        <p className="mt-1 text-body-s text-foreground/70">
+          {isOngoing
+            ? t("since", { date: formatHistoryDate(locale, tr.startDate) })
+            : t("fromTo", {
+                from: formatHistoryDate(locale, tr.startDate),
+                to: formatHistoryDate(locale, tr.endDate!),
+              })}
+          <span className="text-foreground/50">
+            {" · "}
+            {durationText(tr)}
+          </span>
+        </p>
+        {tr.notes && <p className="mt-1 text-body-s text-foreground/60">{tr.notes}</p>}
 
-        {!ongoing && (
-          <div className="flex max-w-xs flex-col gap-1.5 text-sm">
-            <label htmlFor="stop-reason" className="font-medium text-foreground">
-              {t("stopReasonLabel")}
-            </label>
+        {!isOngoing && (
+          <label className="mt-3 flex flex-col gap-1 text-body-s text-foreground/70">
+            <span>{t("stopReasonRowLabel", { name: tr.name })}</span>
             <select
-              id="stop-reason"
-              value={stopReason}
-              onChange={(e) => setStopReason(e.target.value as TreatmentStopReason | "")}
-              aria-describedby="stop-reason-help"
-              className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              value={tr.stopReason ?? ""}
+              onChange={(e) =>
+                void handleStopReason(tr.id, e.target.value as TreatmentStopReason | "")
+              }
+              disabled={savingReasonId === tr.id}
+              className="min-h-11 w-full max-w-xs rounded-sm border border-border bg-background px-3 text-foreground disabled:opacity-50"
             >
               <option value="">{t("stopReasonNone")}</option>
               {STOP_REASONS.map((r) => (
@@ -281,137 +293,299 @@ export default function TreatmentsPage() {
                 </option>
               ))}
             </select>
-            <span id="stop-reason-help" className="text-foreground/70">
-              {t("stopReasonHelp")}
-            </span>
+          </label>
+        )}
+
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-body-s">
+          <button
+            type="button"
+            onClick={() => void toggleImpact(tr.id)}
+            aria-expanded={expanded}
+            className="min-h-11 font-medium text-foreground underline decoration-lilac-500 underline-offset-4"
+          >
+            {expanded ? t("hideImpact") : t("showImpact")}
+          </button>
+          {isOngoing && !isStopping && (
+            <button
+              type="button"
+              onClick={() => setStopping({ id: tr.id, endDate: today, reason: "", error: false })}
+              className="min-h-11 font-medium text-foreground underline decoration-lilac-500 underline-offset-4"
+            >
+              {t("markStopped")}
+            </button>
+          )}
+          {!confirmingDelete && (
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteId(tr.id)}
+              disabled={deletingId === tr.id}
+              className="min-h-11 text-foreground/70 underline decoration-destructive underline-offset-4 disabled:opacity-50"
+            >
+              {t("delete")}
+            </button>
+          )}
+        </div>
+
+        {confirmingDelete && (
+          <div
+            role="group"
+            aria-label={t("deleteConfirm", { name: tr.name })}
+            className="mt-2 rounded-md border border-border-subtle bg-background p-4 text-body-s"
+          >
+            <p className="text-foreground">{t("deleteConfirm", { name: tr.name })}</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Button onClick={() => void handleDelete(tr.id)}>{t("deleteConfirmAction")}</Button>
+              <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>
+                {t("cancel")}
+              </Button>
+            </div>
           </div>
         )}
 
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">{t("notesPlaceholder")}</span>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
-          />
-        </label>
-
-        {formError && (
-          <p role="alert" className="text-sm font-medium text-foreground">
-            {formError}
-          </p>
+        {isStopping && stopping && (
+          <div
+            role="group"
+            aria-label={t("markStoppedHeading", { name: tr.name })}
+            className="mt-2 flex flex-col gap-4 rounded-md border border-border-subtle bg-background p-4"
+          >
+            <p className="text-body-s font-medium text-foreground">
+              {t("markStoppedHeading", { name: tr.name })}
+            </p>
+            <Field
+              label={t("stoppedOn")}
+              type="date"
+              value={stopping.endDate}
+              min={tr.startDate}
+              max={today}
+              onChange={(e) => setStopping({ ...stopping, endDate: e.target.value, error: false })}
+            />
+            <label className="flex max-w-xs flex-col gap-1.5 text-sm">
+              <span className="font-medium text-foreground">{t("stopReasonLabel")}</span>
+              <select
+                value={stopping.reason}
+                onChange={(e) =>
+                  setStopping({ ...stopping, reason: e.target.value as TreatmentStopReason | "" })
+                }
+                className="min-h-11 rounded-sm border border-border bg-background px-3 text-foreground"
+              >
+                <option value="">{t("stopReasonNone")}</option>
+                {STOP_REASONS.map((r) => (
+                  <option key={r} value={r}>
+                    {tEnum(`treatmentStopReason.${r}`)}
+                  </option>
+                ))}
+              </select>
+              <span className="text-foreground/70">{t("stopReasonHelp")}</span>
+            </label>
+            {stopping.error && (
+              <p role="alert" className="text-sm font-medium text-foreground">
+                {t("stopError")}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => void handleStop()} disabled={endingId === tr.id}>
+                {endingId === tr.id ? t("saving") : t("saveStopped")}
+              </Button>
+              <Button variant="ghost" onClick={() => setStopping(null)}>
+                {t("cancel")}
+              </Button>
+            </div>
+          </div>
         )}
 
-        <Button onClick={handleSave} disabled={saving} className="self-start">
-          {saving ? t("saving") : t("addTreatment")}
-        </Button>
-      </section>
+        {expanded && (
+          <div className="mt-3 rounded-md border border-border-subtle bg-background p-4 text-body-s">
+            {!impact || impact.loading ? (
+              <p className="text-foreground/50">{tCommon("loading")}</p>
+            ) : impact.error ? (
+              <p className="font-medium text-foreground">{t("impactError")}</p>
+            ) : impact.data!.insufficientData ? (
+              <p className="text-foreground/60">{t("impactInsufficientData")}</p>
+            ) : (
+              <dl className="flex flex-col gap-2">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-foreground/70">{t("impactBeforeLabel")}</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {t("impactCount", {
+                      count: impact.data!.before.logCount,
+                      days: impact.data!.before.days,
+                    })}
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-foreground/70">{t("impactAfterLabel")}</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {t("impactCount", {
+                      count: impact.data!.after.logCount,
+                      days: impact.data!.after.days,
+                    })}
+                  </dd>
+                </div>
+                <p className="mt-1 text-caption text-foreground/60">{t("impactDisclaimer")}</p>
+              </dl>
+            )}
+          </div>
+        )}
+      </li>
+    );
+  }
 
-      <section className="mt-10">
-        <h2 className="font-display text-heading-m text-foreground">{t("currentAndPast")}</h2>
+  return (
+    <div className="min-h-screen">
+      <AppNav userEmail={user.email} managesOrg={managesOrg} onLogout={() => void handleLogout()} />
+
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <h1 className="font-display text-heading-xl text-foreground">{t("title")}</h1>
+        <p className="mt-3 max-w-prose text-body-s text-foreground/60">{t("hint")}</p>
+
         {treatmentsLoading ? (
-          <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
+          <p className="mt-8 text-body-s text-foreground/50">{tCommon("loading")}</p>
         ) : treatments.length === 0 ? (
-          <p className="mt-3 text-sm text-foreground/50">{t("noneYet")}</p>
+          <p className="mt-8 max-w-prose text-body-s text-foreground/70">{t("noneYet")}</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border-subtle">
-            {treatments.map((tr) => {
-              const isOngoing = !tr.endDate;
-              const impact = impactState[tr.id];
-              const expanded = expandedImpactId === tr.id;
-              return (
-                <li key={tr.id} className="py-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">{tr.name}</p>
-                      <p className="text-foreground/50">
-                        {tEnum(`treatmentCategory.${tr.category}`)} · {tr.startDate} –{" "}
-                        {isOngoing ? t("ongoing") : tr.endDate}
-                      </p>
-                      {tr.notes && <p className="mt-1 text-foreground/60">{tr.notes}</p>}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => void toggleImpact(tr.id)}
-                        className="text-primary underline underline-offset-2"
-                      >
-                        {expanded ? t("hideImpact") : t("showImpact")}
-                      </button>
-                      {isOngoing && (
-                        <button
-                          onClick={() => handleEndToday(tr.id)}
-                          disabled={endingId === tr.id}
-                          className="text-primary underline underline-offset-2 disabled:opacity-50"
-                        >
-                          {endingId === tr.id ? "…" : t("endToday")}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(tr.id)}
-                        disabled={deletingId === tr.id}
-                        className="text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
-                      >
-                        {deletingId === tr.id ? "…" : t("delete")}
-                      </button>
-                    </div>
-                  </div>
+          <>
+            <TreatmentTimeline treatments={treatments} today={today} />
 
-                  {!isOngoing && (
-                    <label className="mt-2 flex flex-col gap-1 text-foreground/70">
-                      <span>{t("stopReasonRowLabel", { name: tr.name })}</span>
-                      <select
-                        value={tr.stopReason ?? ""}
-                        onChange={(e) =>
-                          void handleStopReason(tr.id, e.target.value as TreatmentStopReason | "")
-                        }
-                        disabled={savingReasonId === tr.id}
-                        className="w-full max-w-xs rounded-sm border border-border bg-background px-2 py-1 text-foreground disabled:opacity-50"
-                      >
-                        <option value="">{t("stopReasonNone")}</option>
-                        {STOP_REASONS.map((r) => (
-                          <option key={r} value={r}>
-                            {tEnum(`treatmentStopReason.${r}`)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  {expanded && (
-                    <div className="mt-3 rounded border border-accent bg-accent p-3 text-sm">
-                      {!impact || impact.loading ? (
-                        <p className="text-foreground/50">{tCommon("loading")}</p>
-                      ) : impact.error ? (
-                        <p className="font-medium text-foreground">{t("impactError")}</p>
-                      ) : impact.data!.insufficientData ? (
-                        <p className="text-foreground/60">{t("impactInsufficientData")}</p>
-                      ) : (
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-foreground/70">{t("impactBeforeLabel")}</span>
-                            <span className="font-medium text-foreground">
-                              {impact.data!.before.logCount} ·{" "}
-                              {t("impactWindow", { count: impact.data!.before.days })}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-foreground/70">{t("impactAfterLabel")}</span>
-                            <span className="font-medium text-foreground">
-                              {impact.data!.after.logCount} ·{" "}
-                              {t("impactWindow", { count: impact.data!.after.days })}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-foreground/50">{t("impactDisclaimer")}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+            {current.length > 0 && (
+              <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-5 sm:p-6">
+                <h2 className="font-display text-heading-m text-foreground">
+                  {t("currentHeading")}
+                </h2>
+                <ul className="mt-4 divide-y divide-border-subtle">
+                  {current.map(renderTreatment)}
+                </ul>
+              </section>
+            )}
+
+            {past.length > 0 && (
+              <section className="mt-8 rounded-lg border border-border-subtle bg-surface p-5 sm:p-6">
+                <h2 className="font-display text-heading-m text-foreground">{t("pastHeading")}</h2>
+                <ul className="mt-4 divide-y divide-border-subtle">{past.map(renderTreatment)}</ul>
+              </section>
+            )}
+          </>
         )}
-      </section>
-    </main>
+
+        <section className="mt-8">
+          {!showForm ? (
+            <Button variant="ghost" onClick={() => setFormOpen(true)}>
+              {t("addTreatmentOpen")}
+            </Button>
+          ) : (
+            <div className="flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface p-5 sm:p-6">
+              <h2 className="font-display text-heading-m text-foreground">{t("addHeading")}</h2>
+              <Field
+                label={t("namePlaceholder")}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-foreground">{t("category")}</span>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
+                  className="min-h-11 rounded-sm border border-border bg-background px-3 text-foreground"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {tEnum(`treatmentCategory.${c}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex flex-wrap items-end gap-4">
+                <Field
+                  label={t("startDate")}
+                  type="date"
+                  value={startDate}
+                  max={today}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+
+                <label className="flex min-h-11 items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={ongoing}
+                    onChange={(e) => {
+                      setOngoing(e.target.checked);
+                      if (e.target.checked) {
+                        setEndDate("");
+                        setStopReason("");
+                      }
+                    }}
+                  />
+                  {t("ongoing")}
+                </label>
+
+                {!ongoing && (
+                  <Field
+                    label={t("endDate")}
+                    type="date"
+                    value={endDate}
+                    min={startDate}
+                    max={today}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                )}
+              </div>
+
+              {!ongoing && (
+                <div className="flex max-w-xs flex-col gap-1.5 text-sm">
+                  <label htmlFor="stop-reason" className="font-medium text-foreground">
+                    {t("stopReasonLabel")}
+                  </label>
+                  <select
+                    id="stop-reason"
+                    value={stopReason}
+                    onChange={(e) => setStopReason(e.target.value as TreatmentStopReason | "")}
+                    aria-describedby="stop-reason-help"
+                    className="min-h-11 rounded-sm border border-border bg-background px-3 text-foreground"
+                  >
+                    <option value="">{t("stopReasonNone")}</option>
+                    {STOP_REASONS.map((r) => (
+                      <option key={r} value={r}>
+                        {tEnum(`treatmentStopReason.${r}`)}
+                      </option>
+                    ))}
+                  </select>
+                  <span id="stop-reason-help" className="text-foreground/70">
+                    {t("stopReasonHelp")}
+                  </span>
+                </div>
+              )}
+
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-foreground">{t("notesPlaceholder")}</span>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+                />
+              </label>
+
+              {formError && (
+                <p role="alert" className="text-sm font-medium text-foreground">
+                  {formError}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? t("saving") : t("addTreatment")}
+                </Button>
+                {treatments.length > 0 && (
+                  <Button variant="ghost" onClick={() => setFormOpen(false)}>
+                    {t("cancel")}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }

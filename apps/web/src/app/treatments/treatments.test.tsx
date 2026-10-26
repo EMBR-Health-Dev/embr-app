@@ -1,18 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { TreatmentDto, TreatmentImpactDto } from "@embr/types";
 import { ApiError } from "../../lib/api-client";
 import messages from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/treatments",
 }));
 
 vi.mock("../../lib/auth-context", () => ({
-  useAuth: () => ({ user: mockUser, loading: false }),
+  useAuth: () => ({ user: mockUser, loading: false, logout: vi.fn() }),
 }));
 
 // A stable object reference (not a fresh literal per call) — the
@@ -49,15 +51,17 @@ const listMock = vi.fn().mockResolvedValue({
 const impactMock = vi.fn();
 const createMock = vi.fn().mockResolvedValue(treatment);
 const updateMock = vi.fn();
+const deleteMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("../../lib/api", () => ({
   api: {
+    organizations: { mine: vi.fn().mockResolvedValue([]) },
     treatments: {
       list: (...args: unknown[]) => listMock(...args),
       impact: (...args: unknown[]) => impactMock(...args),
       create: (...args: unknown[]) => createMock(...args),
       update: (...args: unknown[]) => updateMock(...args),
-      delete: vi.fn(),
+      delete: (...args: unknown[]) => deleteMock(...args),
     },
   },
 }));
@@ -81,7 +85,13 @@ function populatedImpact(overrides: Partial<TreatmentImpactDto> = {}): Treatment
   };
 }
 
+// The name shows on the timeline and in its list, so wait for either.
+async function loaded() {
+  await waitFor(() => expect(screen.getAllByText("Estradiol patch").length).toBeGreaterThan(0));
+}
+
 beforeEach(() => {
+  deleteMock.mockClear();
   listMock.mockClear();
   impactMock.mockReset();
   createMock.mockReset().mockResolvedValue(treatment);
@@ -100,8 +110,8 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    expect(screen.getByText("See impact")).toBeInTheDocument();
+    await loaded();
+    expect(screen.getByText("Symptom entries before and after")).toBeInTheDocument();
     expect(impactMock).not.toHaveBeenCalled();
   });
 
@@ -117,8 +127,8 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    await user.click(screen.getByText("See impact"));
+    await loaded();
+    await user.click(screen.getByText("Symptom entries before and after"));
 
     await waitFor(() => expect(screen.getByText("Loading…")).toBeInTheDocument());
 
@@ -138,15 +148,15 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    await user.click(screen.getByText("See impact"));
+    await loaded();
+    await user.click(screen.getByText("Symptom entries before and after"));
 
     await waitFor(() =>
       expect(screen.getByText("Symptom logs before treatment")).toBeInTheDocument(),
     );
     expect(screen.getByText("Symptom logs since treatment began")).toBeInTheDocument();
-    expect(screen.getByText("5 · 14 days")).toBeInTheDocument();
-    expect(screen.getByText("2 · 14 days")).toBeInTheDocument();
+    expect(screen.getByText("5 entries in 14 days")).toBeInTheDocument();
+    expect(screen.getByText("2 entries in 14 days")).toBeInTheDocument();
     expect(
       screen.getByText(
         "A count of how often you logged symptoms, not a measure of whether the treatment is working.",
@@ -154,7 +164,7 @@ describe("Treatments page — impact section", () => {
     ).toBeInTheDocument();
 
     // The toggle now hides it.
-    await user.click(screen.getByText("Hide impact"));
+    await user.click(screen.getByText("Hide before and after"));
     expect(screen.queryByText("Symptom logs before treatment")).not.toBeInTheDocument();
   });
 
@@ -165,13 +175,13 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    await user.click(screen.getByText("See impact"));
+    await loaded();
+    await user.click(screen.getByText("Symptom entries before and after"));
     await waitFor(() =>
       expect(screen.getByText("Symptom logs before treatment")).toBeInTheDocument(),
     );
-    await user.click(screen.getByText("Hide impact"));
-    await user.click(screen.getByText("See impact"));
+    await user.click(screen.getByText("Hide before and after"));
+    await user.click(screen.getByText("Symptom entries before and after"));
 
     await waitFor(() =>
       expect(screen.getByText("Symptom logs before treatment")).toBeInTheDocument(),
@@ -186,8 +196,8 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    await user.click(screen.getByText("See impact"));
+    await loaded();
+    await user.click(screen.getByText("Symptom entries before and after"));
 
     await waitFor(() =>
       expect(
@@ -204,8 +214,8 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    await user.click(screen.getByText("See impact"));
+    await loaded();
+    await user.click(screen.getByText("Symptom entries before and after"));
 
     await waitFor(() =>
       expect(screen.getByText("Couldn't load this. Try again in a moment.")).toBeInTheDocument(),
@@ -219,8 +229,8 @@ describe("Treatments page — impact section", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />, "ja");
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
-    await user.click(screen.getByText("変化を見る"));
+    await loaded();
+    await user.click(screen.getByText("開始前後の症状の記録"));
 
     await waitFor(() => expect(screen.getByText("治療開始前の症状記録")).toBeInTheDocument());
     expect(screen.getByText("治療開始後の症状記録")).toBeInTheDocument();
@@ -241,6 +251,7 @@ describe("Treatments page — add-treatment date validation", () => {
     user: ReturnType<typeof userEvent.setup>,
     { startDate, endDate }: { startDate: string; endDate: string },
   ) {
+    await user.click(screen.getByRole("button", { name: "Add a treatment" }));
     await user.type(screen.getByLabelText("Name (e.g. Estradiol patch)"), "Black cohosh");
     await user.click(screen.getByLabelText("Ongoing"));
     fireEvent.change(screen.getByLabelText("Start date"), { target: { value: startDate } });
@@ -253,7 +264,7 @@ describe("Treatments page — add-treatment date validation", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await loaded();
     await fillValidNameAndDates(user, { startDate: "2026-09-18", endDate: "2026-09-10" });
     await user.click(screen.getByRole("button", { name: "Add treatment" }));
 
@@ -266,7 +277,7 @@ describe("Treatments page — add-treatment date validation", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await loaded();
     await fillValidNameAndDates(user, { startDate: "2026-09-01", endDate: "2026-09-10" });
     await user.click(screen.getByRole("button", { name: "Add treatment" }));
 
@@ -289,7 +300,7 @@ describe("Treatments page — add-treatment date validation", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await loaded();
     await fillValidNameAndDates(user, { startDate: "2026-09-01", endDate: "2026-09-10" });
     await user.click(screen.getByRole("button", { name: "Add treatment" }));
 
@@ -304,7 +315,7 @@ describe("Treatments page — add-treatment date validation", () => {
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
 
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await loaded();
     await fillValidNameAndDates(user, { startDate: "2026-09-01", endDate: "2026-09-10" });
     await user.click(screen.getByRole("button", { name: "Add treatment" }));
 
@@ -319,10 +330,11 @@ describe("Treatments page — why did you stop", () => {
     const user = userEvent.setup();
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await loaded();
 
     expect(screen.queryByLabelText("Why did you stop? (optional)")).not.toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Add a treatment" }));
     await user.type(screen.getByLabelText("Name (e.g. Estradiol patch)"), "Black cohosh");
     await user.click(screen.getByLabelText("Ongoing"));
     fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-09-01" } });
@@ -348,8 +360,9 @@ describe("Treatments page — why did you stop", () => {
     const user = userEvent.setup();
     const { default: TreatmentsPage } = await import("./page");
     renderWithIntl(<TreatmentsPage />);
-    await waitFor(() => expect(screen.getByText("Estradiol patch")).toBeInTheDocument());
+    await loaded();
 
+    await user.click(screen.getByRole("button", { name: "Add a treatment" }));
     await user.type(screen.getByLabelText("Name (e.g. Estradiol patch)"), "Black cohosh");
     await user.click(screen.getByLabelText("Ongoing"));
     fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-09-01" } });
@@ -394,5 +407,126 @@ describe("Treatments page — why did you stop", () => {
     const rowSelect = await screen.findByLabelText("Why did you stop Estradiol patch?");
     await user.selectOptions(rowSelect, "");
     await waitFor(() => expect(updateMock).toHaveBeenCalledWith("t1", { stopReason: null }));
+  });
+});
+
+describe("Treatments page — over time", () => {
+  const ended: TreatmentDto = {
+    ...treatment,
+    id: "t2",
+    name: "Magnesium",
+    category: "SUPPLEMENT",
+    startDate: "2026-03-01",
+    endDate: "2026-05-15",
+    stopReason: null,
+  };
+
+  beforeEach(() => {
+    listMock.mockResolvedValue({
+      items: [treatment, ended],
+      page: 1,
+      pageSize: 50,
+      total: 2,
+      totalPages: 1,
+    });
+  });
+
+  it("puts every treatment on one timeline, earliest first, then splits current from past", async () => {
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    const timeline = await screen.findByRole("region", { name: "Over time" });
+    const rows = within(timeline).getAllByRole("listitem");
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringContaining("Magnesium"),
+      expect.stringContaining("Estradiol patch"),
+    ]);
+    expect(rows[0]).toHaveTextContent(
+      `${formatHistoryDate("en", "2026-03-01")} to ${formatHistoryDate("en", "2026-05-15")}`,
+    );
+    expect(rows[1]).toHaveTextContent(`Since ${formatHistoryDate("en", "2026-06-01")}`);
+
+    const current = screen.getByRole("heading", { name: "Current" }).closest("section")!;
+    expect(within(current).getByText("Estradiol patch")).toBeInTheDocument();
+    expect(within(current).queryByText("Magnesium")).not.toBeInTheDocument();
+    const past = screen.getByRole("heading", { name: "Past" }).closest("section")!;
+    // 1 Mar to 15 May counts both days: 76 days, two whole months.
+    expect(within(past).getByText(/2 months/)).toBeInTheDocument();
+    // No raw ISO dates or dashes in the copy.
+    expect(document.body).not.toHaveTextContent("2026-03-01");
+    expect(document.body).not.toHaveTextContent("–");
+  });
+
+  it("records the day she actually stopped, with an optional reason, not today", async () => {
+    updateMock.mockResolvedValue({ ...treatment, endDate: "2026-09-20" });
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+    await loaded();
+
+    await user.click(screen.getByRole("button", { name: "Mark as stopped" }));
+    const panel = screen.getByRole("group", { name: "When did you stop Estradiol patch?" });
+    fireEvent.change(within(panel).getByLabelText("Stopped on"), {
+      target: { value: "2026-09-20" },
+    });
+    await user.selectOptions(
+      within(panel).getByLabelText(/Why did you stop\? \(optional\)/),
+      "SIDE_EFFECTS",
+    );
+    await user.click(within(panel).getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith("t1", {
+        endDate: "2026-09-20",
+        stopReason: "SIDE_EFFECTS",
+      }),
+    );
+  });
+
+  it("refuses a stop date before the start date without calling the API", async () => {
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+    await loaded();
+
+    await user.click(screen.getByRole("button", { name: "Mark as stopped" }));
+    fireEvent.change(screen.getByLabelText("Stopped on"), { target: { value: "2026-05-01" } });
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      await screen.findByText("Pick a date on or after the start date, then try again."),
+    ).toBeInTheDocument();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("asks before deleting, and Cancel keeps the treatment", async () => {
+    const user = userEvent.setup();
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+    await loaded();
+
+    const current = screen.getByRole("heading", { name: "Current" }).closest("section")!;
+    await user.click(within(current).getByRole("button", { name: "Delete" }));
+    expect(deleteMock).not.toHaveBeenCalled();
+    const confirm = screen.getByRole("group", { name: /Delete Estradiol patch\?/ });
+    await user.click(within(confirm).getByRole("button", { name: "Cancel" }));
+    expect(deleteMock).not.toHaveBeenCalled();
+
+    await user.click(within(current).getByRole("button", { name: "Delete" }));
+    await user.click(
+      within(screen.getByRole("group", { name: /Delete Estradiol patch\?/ })).getByRole("button", {
+        name: "Delete",
+      }),
+    );
+    await waitFor(() => expect(deleteMock).toHaveBeenCalledWith("t1"));
+  });
+
+  it("opens the add form straight away when nothing is recorded yet", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 50, total: 0, totalPages: 0 });
+    const { default: TreatmentsPage } = await import("./page");
+    renderWithIntl(<TreatmentsPage />);
+
+    expect(await screen.findByLabelText("Name (e.g. Estradiol patch)")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Over time" })).not.toBeInTheDocument();
   });
 });
