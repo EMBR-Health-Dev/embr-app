@@ -455,7 +455,7 @@
     "title": "Signals",
     "subtitle": "See what your record is beginning to show over time.",
     "reportedDataLabel": "Your record",
-    "reportedDataDescription": "<b>Entries</b> you recorded for each symptom in this period.",
+    "reportedDataDescription": "<b>Days</b> you recorded each symptom in this period, how severe it was at most, and when.",
     "symptomsHeader": "Symptoms, last {days} days",
     "noSymptomsYet": "No symptom entries yet",
     "noSymptomsBody": "Your record becomes more useful as you log consistently. After several entries, this view shows how often each symptom was recorded.",
@@ -471,7 +471,18 @@
     "cycleLengthHeaderAll": "Cycle length, full record",
     "emptyRecordTitle": "Nothing recorded yet.",
     "emptyRecordBody": "Your record becomes more useful as you log consistently. After several entries, Signals shows how often each symptom was recorded, which symptoms you recorded on the same days, and your cycle lengths.",
-    "emptyRecordAction": "Log today's symptoms"
+    "emptyRecordAction": "Log today's symptoms",
+    "daysLogged": "<n>{count}</n> {count, plural, one {day} other {days}}",
+    "severityDaysLabel": "Days at each highest severity",
+    "stripLegend": "Bars run oldest to newest. A taller bar means more days recorded in that week. No bar means no entry recorded.",
+    "stripLegendMonthly": "Bars run oldest to newest. A taller bar means more days recorded in that month. No bar means no entry recorded.",
+    "weekByWeek": "{category}, week by week",
+    "monthByMonth": "{category}, month by month",
+    "bucketWeek": "Week of {date}",
+    "bucketLogged": "{period}: recorded on {count} of {length} days, highest {severity}",
+    "bucketNoEntry": "{period}: no entry recorded",
+    "stripEndWeek": "Last 7 days",
+    "cycleRange": "{from} to {to}"
   },
   "CoOccurrence": {
     "cardLabel": "Signal",

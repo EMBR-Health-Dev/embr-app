@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { CycleLengthTrendDto } from "@embr/types";
 import messages from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
@@ -24,6 +25,10 @@ const mockUser = {
 };
 
 const symptomFrequencyMock = vi.fn();
+// Per-symptom days, as the API returns them; empty unless a test says otherwise.
+const symptomHistoryMock = vi
+  .fn()
+  .mockImplementation((query: { from: string; to: string }) => Promise.resolve(history(query, [])));
 const cycleLengthMock = vi.fn();
 const onboardingGetMock = vi.fn().mockResolvedValue({ lifeStage: null });
 const coOccurrenceMock = vi.fn().mockResolvedValue(null);
@@ -44,6 +49,7 @@ vi.mock("../../lib/api", () => ({
       coOccurrence: (...args: unknown[]) => coOccurrenceMock(...args),
       contextCoOccurrence: (...args: unknown[]) => contextCoOccurrenceMock(...args),
       evidenceStrength: (...args: unknown[]) => evidenceStrengthMock(...args),
+      symptomHistory: (...args: unknown[]) => symptomHistoryMock(...args),
     },
   },
 }));
@@ -57,6 +63,44 @@ function renderWithIntl(ui: React.ReactElement, locale: "en" | "ja" = "en") {
 }
 
 const emptyCycle: CycleLengthTrendDto = { lengths: [], averageDays: null };
+
+function history(query: { from: string; to: string }, categories: unknown[]) {
+  return {
+    timeZone: "UTC",
+    rangeFrom: query.from,
+    rangeTo: query.to,
+    today: query.to,
+    rules: { notLoggedRecentlyGapDays: 21, notLoggedRecentlyMinDays: 3 },
+    categories,
+  };
+}
+
+function isoDaysBefore(isoDate: string, days: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function symptom(category: string, days: { ago: number; severity: string }[], to: string) {
+  const counts = { MILD: 0, MODERATE: 0, SEVERE: 0 } as Record<string, number>;
+  for (const d of days) counts[d.severity]! += 1;
+  return {
+    category,
+    firstLoggedOn: isoDaysBefore(to, 80),
+    lastLoggedOn: to,
+    totalEntries: days.length + 3,
+    totalDaysLogged: days.length,
+    daysLoggedLast7: 0,
+    daysLoggedLast42: 0,
+    rangeEntries: days.length + 3,
+    rangeDaysLogged: days.length,
+    rangeSeverityDays: counts,
+    notLoggedRecently: false,
+    days: days
+      .map((d) => ({ date: isoDaysBefore(to, d.ago), maxSeverity: d.severity, entries: 1 }))
+      .sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}
 
 describe("Patterns page — empty states", () => {
   it("shows the new evidence-infrastructure hierarchy: title, subtitle, and every section's eyebrow plus description", async () => {
@@ -74,9 +118,12 @@ describe("Patterns page — empty states", () => {
     expect(
       screen.getByText(
         (_content: string, el: Element | null) =>
-          el?.textContent === "Entries you recorded for each symptom in this period." &&
+          el?.textContent ===
+            "Days you recorded each symptom in this period, how severe it was at most, and when." &&
           ![...(el?.children ?? [])].some(
-            (c) => c.textContent === "Entries you recorded for each symptom in this period.",
+            (c) =>
+              c.textContent ===
+              "Days you recorded each symptom in this period, how severe it was at most, and when.",
           ),
       ),
     ).toBeInTheDocument();
@@ -142,6 +189,22 @@ describe("Patterns page — populated state (real data flow)", () => {
       { category: "HOT_FLASH", count: 6 },
       { category: "FATIGUE", count: 2 },
     ]);
+    symptomHistoryMock.mockImplementationOnce((query: { from: string; to: string }) =>
+      Promise.resolve(
+        history(query, [
+          symptom("FATIGUE", [{ ago: 2, severity: "MILD" }], query.to),
+          symptom(
+            "HOT_FLASH",
+            [
+              { ago: 0, severity: "SEVERE" },
+              { ago: 1, severity: "MODERATE" },
+              { ago: 30, severity: "MILD" },
+            ],
+            query.to,
+          ),
+        ]),
+      ),
+    );
     cycleLengthMock.mockResolvedValue({
       lengths: [{ from: "2026-01-01", to: "2026-01-29", days: 28 }],
       averageDays: 28,
@@ -150,10 +213,35 @@ describe("Patterns page — populated state (real data flow)", () => {
     const { default: TrendsPage } = await import("./page");
     renderWithIntl(<TrendsPage />);
 
-    expect(await screen.findByText("Hot Flash")).toBeInTheDocument();
-    expect(screen.getByText("Fatigue")).toBeInTheDocument();
-    expect(screen.getByText("6")).toBeInTheDocument();
-    expect(screen.getByText("2026-01-01 → 2026-01-29")).toBeInTheDocument();
+    // Most recorded days first, each linking to that symptom's history.
+    const hotFlash = await screen.findByRole("link", { name: "Hot Flash" });
+    expect(hotFlash).toHaveAttribute("href", "/timeline/HOT_FLASH");
+    const links = screen
+      .getAllByRole("link")
+      .filter((l) => l.getAttribute("href")?.startsWith("/timeline/"));
+    expect(links.map((l) => l.textContent)).toEqual(["Hot Flash", "Fatigue"]);
+    // Days, not entries: three days even though six entries were made.
+    const row = hotFlash.closest("li")!;
+    expect(row).toHaveTextContent("3 days");
+    expect(
+      within(row).getByRole("list", { name: "Days at each highest severity" }),
+    ).toHaveTextContent("1Mild1Moderate1Severe");
+    // The strip reads oldest to newest, a week per bar, and names an
+    // unrecorded week as no entry recorded rather than no symptoms.
+    const strip = within(row).getByRole("list", { name: "Hot Flash, week by week" });
+    const weeks = within(strip).getAllByRole("listitem");
+    expect(weeks.length).toBe(13);
+    expect(weeks.at(-1)).toHaveTextContent("recorded on 2 of 7 days, highest Severe");
+    expect(weeks.at(-2)).toHaveTextContent("no entry recorded");
+    expect(document.body).not.toHaveTextContent(/no symptoms/i);
+    expect(symptomHistoryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ timeZone: expect.any(String) }),
+    );
+    expect(
+      screen.getByText(
+        `${formatHistoryDate("en", "2026-01-01")} to ${formatHistoryDate("en", "2026-01-29")}`,
+      ),
+    ).toBeInTheDocument();
     // "28 days" legitimately appears twice with this fixture — once in
     // the averaging summary, once as the single cycle entry's own
     // value — so this checks presence, not uniqueness.
@@ -249,8 +337,12 @@ describe("Patterns page — after menopause", () => {
     const { default: TrendsPage } = await import("./page");
     renderWithIntl(<TrendsPage />);
 
-    expect(await screen.findByText("Hot Flash")).toBeInTheDocument();
+    expect(await screen.findByText("Your record")).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText("Cycle history")).not.toBeInTheDocument());
-    expect(screen.queryByText("2026-01-01 → 2026-01-29")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        `${formatHistoryDate("en", "2026-01-01")} to ${formatHistoryDate("en", "2026-01-29")}`,
+      ),
+    ).not.toBeInTheDocument();
   });
 });

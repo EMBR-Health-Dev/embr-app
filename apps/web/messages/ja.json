@@ -455,7 +455,7 @@
     "title": "シグナル",
     "subtitle": "あなたの記録から、時間とともに見えてくるものを確認できます。",
     "reportedDataLabel": "あなたの記録",
-    "reportedDataDescription": "この期間に各症状を記録した<b>件数</b>です。",
+    "reportedDataDescription": "この期間に各症状を記録した<b>日数</b>、その最も高い重症度、そして記録した時期です。",
     "symptomsHeader": "過去{days}日間の症状",
     "noSymptomsYet": "症状の記録はまだありません",
     "noSymptomsBody": "記録を続けるほど、あなたの記録は役立つものになります。いくつか記録すると、各症状が記録された頻度がここに表示されます。",
@@ -471,7 +471,18 @@
     "cycleLengthHeaderAll": "すべての記録の周期の長さ",
     "emptyRecordTitle": "まだ記録がありません。",
     "emptyRecordBody": "記録を続けるほど、あなたの記録は役立つものになります。いくつか記録すると、シグナルには各症状が記録された頻度、同じ日に記録された症状、周期の長さが表示されます。",
-    "emptyRecordAction": "今日の症状を記録する"
+    "emptyRecordAction": "今日の症状を記録する",
+    "daysLogged": "<n>{count}</n>日",
+    "severityDaysLabel": "最も高い重症度ごとの日数",
+    "stripLegend": "棒は古い順に左から並んでいます。棒が高いほど、その週に記録した日が多いことを示します。棒がない週は記録がありません。",
+    "stripLegendMonthly": "棒は古い順に左から並んでいます。棒が高いほど、その月に記録した日が多いことを示します。棒がない月は記録がありません。",
+    "weekByWeek": "{category}、週ごと",
+    "monthByMonth": "{category}、月ごと",
+    "bucketWeek": "{date}からの週",
+    "bucketLogged": "{period}：{length}日のうち{count}日記録、最も高い重症度は{severity}",
+    "bucketNoEntry": "{period}：記録なし",
+    "stripEndWeek": "直近7日間",
+    "cycleRange": "{from}から{to}"
   },
   "CoOccurrence": {
     "cardLabel": "シグナル",
