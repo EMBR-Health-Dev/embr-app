@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 // metrics after.
 const { computeAdminMetrics } = await import("../../src/modules/admin/admin.metrics.js");
 const { prisma } = await import("../../src/lib/prisma.js");
+const { authRepository } = await import("../../src/modules/auth/auth.repository.js");
 
 function isPostgresReachable(url: string | undefined, timeoutMs = 750): Promise<boolean> {
   return new Promise((resolve) => {
@@ -218,6 +219,38 @@ describe.skipIf(!reachable)("computeAdminMetrics against Postgres", () => {
           });
         }),
       ).toEqual({ cohort: 1, retained: 0 });
+    });
+
+    it("keeps people who deleted their account in the cohort, retained or not", async () => {
+      const retainedUser = await signedUp(40);
+      await symptomOn(retainedUser.id, 40, 23);
+      const lapsedUser = await signedUp(40);
+      await symptomOn(lapsedUser.id, 40, 5);
+      const before = await computeAdminMetrics(now);
+
+      // Both delete their accounts; an admin deleting theirs leaves no row.
+      const admin = await person({ role: "ADMIN" });
+      const rowsBefore = await prisma.deletedAccount.count();
+      for (const id of [retainedUser.id, lapsedUser.id, admin.id]) {
+        expect(await authRepository.deleteUserAccount(id)).toBe("DELETED");
+      }
+      expect(await prisma.deletedAccount.count()).toBe(rowsBefore + 2);
+
+      const after = await computeAdminMetrics(now);
+      expect(after.retentionWeek4.cohort).toBe(before.retentionWeek4.cohort);
+      expect(after.retentionWeek4.retained).toBe(before.retentionWeek4.retained);
+
+      // Only dates and the flag are stored: no id, email or content.
+      const columns = await prisma.$queryRawUnsafe<Array<{ column_name: string }>>(
+        `SELECT column_name FROM information_schema.columns
+          WHERE table_name = 'deleted_accounts' ORDER BY column_name`,
+      );
+      expect(columns.map((c) => c.column_name)).toEqual([
+        "activeWeek4",
+        "deletedDate",
+        "id",
+        "signupDate",
+      ]);
     });
 
     it("puts only whole weeks in the cohort: signed up 28 to 55 days ago", async () => {

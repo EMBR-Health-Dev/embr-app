@@ -1,5 +1,5 @@
 import type { AdminMetricsDto } from "@embr/types";
-import { prisma } from "../../lib/prisma.js";
+import { prisma, type TransactionClient } from "../../lib/prisma.js";
 
 /**
  * Aggregate product metrics for the admin app. Every query returns
@@ -64,8 +64,18 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
     now,
   );
 
+  // People who deleted their account stay in the cohort they signed up
+  // in, through the anonymous deleted_accounts rows (see
+  // recordDeletedAccount below); otherwise leaving and deleting would
+  // flatter the rate.
   const [retention] = await prisma.$queryRawUnsafe<Row[]>(
-    `${ACTIVITY}
+    `${ACTIVITY},
+     deleted AS (
+       SELECT count(*) AS cohort, count(*) FILTER (WHERE "activeWeek4") AS retained
+       FROM deleted_accounts
+       WHERE "signupDate" BETWEEN ($1::timestamp)::date - 55 AND ($1::timestamp)::date - 28
+     ),
+     current AS (
      SELECT
        count(*) AS cohort,
        count(*) FILTER (WHERE EXISTS (
@@ -79,7 +89,11 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
      -- her week 4 is over; four whole signup weeks, by date, not by
      -- time of day.
      WHERE (p."createdAt")::date BETWEEN ($1::timestamp)::date - 55
-                                     AND ($1::timestamp)::date - 28`,
+                                     AND ($1::timestamp)::date - 28
+     )
+     SELECT current.cohort + deleted.cohort AS cohort,
+            current.retained + deleted.retained AS retained
+     FROM current, deleted`,
     now,
   );
 
@@ -156,4 +170,45 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
       briefsGenerated: n(row.briefs),
     })),
   };
+}
+
+/**
+ * Writes the anonymous row that keeps a deleted account in week 4
+ * retention: her signup date, today's date, and whether she made or
+ * changed an entry on days 21 to 27 (the same activity rule as ACTIVITY
+ * above, for one person). Called inside the deletion's transaction,
+ * before her rows are removed. Nothing that identifies her is kept, and
+ * admin accounts are skipped, as they are in every metric.
+ */
+export async function recordDeletedAccount(
+  tx: TransactionClient,
+  userId: string,
+  now = new Date(),
+): Promise<void> {
+  const [row] = await tx.$queryRawUnsafe<Row[]>(
+    `SELECT
+       (u."createdAt")::date AS signup_date,
+       EXISTS (
+         SELECT 1 FROM (
+           SELECT "createdAt" AS at FROM symptom_logs WHERE "userId" = u.id
+           UNION ALL SELECT "updatedAt" FROM symptom_logs WHERE "userId" = u.id
+           UNION ALL SELECT "createdAt" FROM cycle_entries WHERE "userId" = u.id
+           UNION ALL SELECT "updatedAt" FROM cycle_entries WHERE "userId" = u.id
+           UNION ALL SELECT "createdAt" FROM context_logs WHERE "userId" = u.id
+           UNION ALL SELECT "updatedAt" FROM context_logs WHERE "userId" = u.id
+         ) a
+         WHERE (a.at)::date BETWEEN (u."createdAt")::date + 21 AND (u."createdAt")::date + 27
+       ) AS active_week4
+     FROM users u
+     WHERE u.id = $1 AND u.role <> 'ADMIN'`,
+    userId,
+  );
+  if (!row) return;
+  await tx.deletedAccount.create({
+    data: {
+      signupDate: row.signup_date as Date,
+      deletedDate: new Date(`${now.toISOString().slice(0, 10)}T00:00:00.000Z`),
+      activeWeek4: Boolean(row.active_week4),
+    },
+  });
 }

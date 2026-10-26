@@ -1,4 +1,5 @@
 import type { TransactionClient } from "../../lib/prisma.js";
+import { recordDeletedAccount } from "../admin/admin.metrics.js";
 import type { Prisma } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { env } from "../../config/env.js";
@@ -237,6 +238,8 @@ export const authRepository = {
       await tx.auditLog.create({
         data: { userId, action: "ACCOUNT_DELETED" },
       });
+      // Anonymous, so retention still counts her (see admin.metrics.ts).
+      await recordDeletedAccount(tx, userId);
       await tx.user.delete({ where: { id: userId } });
       return "DELETED";
     });

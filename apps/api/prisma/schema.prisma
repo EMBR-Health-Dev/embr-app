@@ -169,6 +169,23 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+/// One row per deleted account, so week 4 retention still counts people
+/// who left and deleted their account. Anonymous on purpose: no id,
+/// email, or link to any other row, and no health content; only two
+/// calendar dates (UTC) and whether she made or changed an entry on
+/// days 21 to 27 after signing up, worked out before her data is
+/// deleted. See docs/METRICS.md.
+model DeletedAccount {
+  id          String   @id @default(uuid())
+  signupDate  DateTime @db.Date
+  deletedDate DateTime @db.Date
+  /// True when she was active on days 21 to 27 (signup day is day 0).
+  activeWeek4 Boolean
+
+  @@index([signupDate])
+  @@map("deleted_accounts")
+}
+
 // ---- Core domain (Milestone 3) ----
 
 enum SymptomCategory {
