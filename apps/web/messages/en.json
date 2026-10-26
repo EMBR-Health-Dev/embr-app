@@ -431,7 +431,10 @@
     "monthMarkCycle": "Cycle",
     "monthMarkTreatments": "Treatment change",
     "monthDayNoEntry": "{date}: no entry recorded",
-    "monthNoEntryDetail": "No entry recorded for this day."
+    "monthNoEntryDetail": "No entry recorded for this day.",
+    "chronologyLabel": "Your record, newest first",
+    "today": "Today",
+    "noEntryGap": "{count, plural, one {No entry recorded for 1 day} other {No entry recorded for # days}}"
   },
   "Trends": {
     "title": "Signals",

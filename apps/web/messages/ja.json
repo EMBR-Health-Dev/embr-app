@@ -431,7 +431,10 @@
     "monthMarkCycle": "周期",
     "monthMarkTreatments": "治療の変更",
     "monthDayNoEntry": "{date}：記録なし",
-    "monthNoEntryDetail": "この日の記録はありません。"
+    "monthNoEntryDetail": "この日の記録はありません。",
+    "chronologyLabel": "あなたの記録（新しい順）",
+    "today": "今日",
+    "noEntryGap": "{count}日間、記録なし"
   },
   "Trends": {
     "title": "シグナル",
