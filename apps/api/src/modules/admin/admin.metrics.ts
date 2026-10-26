@@ -11,8 +11,12 @@ import { prisma } from "../../lib/prisma.js";
  * The SQL is static; the only parameter is the reference date, passed
  * as a bound value ($1), so $queryRawUnsafe here takes no user input.
  *
- * "Activity" is the union of the days a person logged a symptom, a
- * cycle or bleeding entry, or daily context.
+ * "Activity" is the days a person made or changed a symptom, cycle or
+ * bleeding, or daily context entry: the rows' createdAt and updatedAt
+ * dates, not the date an entry describes. Entries can be filled in for
+ * past days, so the described date would credit someone with using
+ * EMBR on days she did not. Days are UTC dates. The full definitions,
+ * week 4 retention included, are in docs/METRICS.md.
  */
 
 const ACTIVITY = `
@@ -21,9 +25,12 @@ const ACTIVITY = `
   ),
   activity AS (
     SELECT DISTINCT a."userId", a.day FROM (
-      SELECT "userId", ("occurredAt")::date AS day FROM symptom_logs
-      UNION ALL SELECT "userId", date::date FROM cycle_entries
-      UNION ALL SELECT "userId", date::date FROM context_logs
+      SELECT "userId", ("createdAt")::date AS day FROM symptom_logs
+      UNION ALL SELECT "userId", ("updatedAt")::date FROM symptom_logs
+      UNION ALL SELECT "userId", ("createdAt")::date FROM cycle_entries
+      UNION ALL SELECT "userId", ("updatedAt")::date FROM cycle_entries
+      UNION ALL SELECT "userId", ("createdAt")::date FROM context_logs
+      UNION ALL SELECT "userId", ("updatedAt")::date FROM context_logs
     ) a
     JOIN people p ON p.id = a."userId"
   )`;
@@ -67,8 +74,12 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
            AND a.day BETWEEN (p."createdAt")::date + 21 AND (p."createdAt")::date + 27
        )) AS retained
      FROM people p
-     WHERE p."createdAt" >  $1::timestamp - interval '56 days'
-       AND p."createdAt" <= $1::timestamp - interval '28 days'`,
+     -- Signup day is day 0. Everyone who signed up 28 to 55 days ago has
+     -- had all of days 21 to 27, so no one enters the denominator before
+     -- her week 4 is over; four whole signup weeks, by date, not by
+     -- time of day.
+     WHERE (p."createdAt")::date BETWEEN ($1::timestamp)::date - 55
+                                     AND ($1::timestamp)::date - 28`,
     now,
   );
 

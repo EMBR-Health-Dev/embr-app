@@ -97,6 +97,8 @@ describe.skipIf(!reachable)("computeAdminMetrics against Postgres", () => {
       data: {
         userId: retained.id,
         date: new Date(new Date(Date.now() - 12 * DAY).toISOString().slice(0, 10)),
+        createdAt: new Date(Date.now() - 12 * DAY),
+        updatedAt: new Date(Date.now() - 12 * DAY),
       },
     });
     await person({ daysAgo: 40 });
@@ -125,6 +127,148 @@ describe.skipIf(!reachable)("computeAdminMetrics against Postgres", () => {
       m.weekly.reduce((total, w) => total + w[key], 0);
     expect(sum(after, "newAccounts") - sum(before, "newAccounts")).toBe(3);
     expect(sum(after, "briefsGenerated") - sum(before, "briefsGenerated")).toBe(1);
+  });
+
+  // Week 4 retention, by its written definition (docs/METRICS.md):
+  // signup day is day 0; retained means she made or updated an entry on
+  // any of days 21 to 27; the cohort is everyone whose day 27 has fully
+  // passed, signed up 28 to 55 days ago, so no one is counted before
+  // they had the whole week. A fixed reference time (06:00 UTC today)
+  // keeps the edges independent of when the suite runs.
+  describe("week 4 retention", () => {
+    const now = new Date();
+    now.setUTCHours(6, 0, 0, 0);
+    const todayUtc = now.getTime() - 6 * 3600_000;
+    // Noon UTC on day `day` for someone who signed up `ago` days before today.
+    const at = (ago: number, day = 0) => new Date(todayUtc - ago * DAY + day * DAY + 12 * 3600_000);
+    const dateOnly = (d: Date) => new Date(d.toISOString().slice(0, 10));
+
+    async function signedUp(ago: number) {
+      const user = await person();
+      await prisma.user.update({ where: { id: user.id }, data: { createdAt: at(ago) } });
+      return user;
+    }
+    async function symptomOn(userId: string, ago: number, day: number) {
+      await prisma.symptomLog.create({
+        data: {
+          userId,
+          category: "HOT_FLASH",
+          severity: "MILD",
+          occurredAt: at(ago, day),
+          createdAt: at(ago, day),
+          updatedAt: at(ago, day),
+        },
+      });
+    }
+    async function change(setup: () => Promise<void>) {
+      const before = await computeAdminMetrics(now);
+      await setup();
+      const after = await computeAdminMetrics(now);
+      return {
+        cohort: after.retentionWeek4.cohort - before.retentionWeek4.cohort,
+        retained: after.retentionWeek4.retained - before.retentionWeek4.retained,
+      };
+    }
+
+    it("retains an entry made on day 21 or day 27, and not on day 20 or day 28", async () => {
+      expect(
+        await change(async () => {
+          await symptomOn((await signedUp(40)).id, 40, 21);
+          await symptomOn((await signedUp(40)).id, 40, 27);
+        }),
+      ).toEqual({ cohort: 2, retained: 2 });
+      expect(
+        await change(async () => {
+          const user = await signedUp(40);
+          await symptomOn(user.id, 40, 20);
+          await symptomOn(user.id, 40, 28);
+        }),
+      ).toEqual({ cohort: 1, retained: 0 });
+    });
+
+    it("retains her for updating an answer in week 4 that she first gave earlier", async () => {
+      expect(
+        await change(async () => {
+          const user = await signedUp(40);
+          await prisma.contextLog.create({
+            data: {
+              userId: user.id,
+              date: dateOnly(at(40, 10)),
+              alcohol: true,
+              createdAt: at(40, 10),
+              updatedAt: at(40, 24),
+            },
+          });
+        }),
+      ).toEqual({ cohort: 1, retained: 1 });
+    });
+
+    it("does not retain her for an entry about week 4 that she filled in later", async () => {
+      // On day 35 she added a cycle entry dated day 23.
+      expect(
+        await change(async () => {
+          const user = await signedUp(40);
+          await prisma.cycleEntry.create({
+            data: {
+              userId: user.id,
+              date: dateOnly(at(40, 23)),
+              createdAt: at(40, 35),
+              updatedAt: at(40, 35),
+            },
+          });
+        }),
+      ).toEqual({ cohort: 1, retained: 0 });
+    });
+
+    it("puts only whole weeks in the cohort: signed up 28 to 55 days ago", async () => {
+      // Signed up at noon, after the 06:00 reference time of day.
+      expect(await change(async () => void (await signedUp(28)))).toEqual({
+        cohort: 1,
+        retained: 0,
+      });
+      expect(await change(async () => void (await signedUp(55)))).toEqual({
+        cohort: 1,
+        retained: 0,
+      });
+      expect(await change(async () => void (await signedUp(27)))).toEqual({
+        cohort: 0,
+        retained: 0,
+      });
+      expect(await change(async () => void (await signedUp(56)))).toEqual({
+        cohort: 0,
+        retained: 0,
+      });
+    });
+  });
+
+  it("counts a person active on the day she made an entry, whatever date it describes", async () => {
+    const now = new Date();
+    const before = await computeAdminMetrics(now);
+
+    // Long-standing account; today she fills in a period start from two months ago.
+    const user = await person({ daysAgo: 200 });
+    await prisma.cycleEntry.create({
+      data: {
+        userId: user.id,
+        date: new Date(new Date(Date.now() - 60 * DAY).toISOString().slice(0, 10)),
+      },
+    });
+    // Another made her entries 10 days ago, for days that read as recent.
+    const lapsed = await person({ daysAgo: 200 });
+    await prisma.symptomLog.create({
+      data: {
+        userId: lapsed.id,
+        category: "HOT_FLASH",
+        severity: "MILD",
+        occurredAt: new Date(Date.now() - 3 * DAY),
+        createdAt: new Date(Date.now() - 10 * DAY),
+        updatedAt: new Date(Date.now() - 10 * DAY),
+      },
+    });
+
+    const after = await computeAdminMetrics(now);
+    expect(after.activity.active7d - before.activity.active7d).toBe(1);
+    expect(after.activity.active30d - before.activity.active30d).toBe(2);
   });
 
   it("never returns anything but numbers and dates", async () => {
