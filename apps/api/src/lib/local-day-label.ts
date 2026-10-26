@@ -27,3 +27,22 @@ export function localDayEndLabel(date: Date): string {
   const instant = isEndOfDayMarker ? new Date(date.getTime() - TWELVE_HOURS_MS) : date;
   return instant.toISOString().slice(0, 10);
 }
+
+/**
+ * A range of instants as the calendar dates it covers, for filtering
+ * DATE columns (cycle entries, daily context, treatment start and end).
+ * Comparing those columns with the instants directly reads each bound's
+ * UTC date, so a Tokyo or London range picked as 1 to 31 October also
+ * took in 30 September, and a New York or Pago Pago one took in
+ * 1 November. Each returned bound is UTC midnight of the picked local
+ * date; plain dates come back unchanged.
+ */
+export function calendarDateBounds(range: { from?: Date; to?: Date }): {
+  from?: Date;
+  to?: Date;
+} {
+  return {
+    ...(range.from ? { from: new Date(`${localDayStartLabel(range.from)}T00:00:00.000Z`) } : {}),
+    ...(range.to ? { to: new Date(`${localDayEndLabel(range.to)}T00:00:00.000Z`) } : {}),
+  };
+}

@@ -1,5 +1,6 @@
 import type { ExportQuery } from "@embr/validation";
 import { prisma } from "../../lib/prisma.js";
+import { calendarDateBounds } from "../../lib/local-day-label.js";
 import { consentRepository } from "../consent/consent.repository.js";
 
 /**
@@ -33,14 +34,15 @@ export const exportRepository = {
   },
 
   listCycleEntriesForExport(userId: string, query: ExportQuery) {
+    const days = calendarDateBounds(query);
     return prisma.cycleEntry.findMany({
       where: {
         userId,
         ...(query.from || query.to
           ? {
               date: {
-                ...(query.from ? { gte: query.from } : {}),
-                ...(query.to ? { lte: query.to } : {}),
+                ...(days.from ? { gte: days.from } : {}),
+                ...(days.to ? { lte: days.to } : {}),
               },
             }
           : {}),
@@ -71,14 +73,15 @@ export const exportRepository = {
   },
 
   listContextLogsForExport(userId: string, query: ExportQuery) {
+    const days = calendarDateBounds(query);
     return prisma.contextLog.findMany({
       where: {
         userId,
         ...(query.from || query.to
           ? {
               date: {
-                ...(query.from ? { gte: query.from } : {}),
-                ...(query.to ? { lte: query.to } : {}),
+                ...(days.from ? { gte: days.from } : {}),
+                ...(days.to ? { lte: days.to } : {}),
               },
             }
           : {}),
@@ -101,11 +104,12 @@ export const exportRepository = {
    * of the overlap check is simply omitted, not synthesized from a
    * sentinel date. */
   listTreatmentsForExport(userId: string, query: ExportQuery) {
+    const days = calendarDateBounds(query);
     return prisma.treatment.findMany({
       where: {
         userId,
-        ...(query.to ? { startDate: { lte: query.to } } : {}),
-        ...(query.from ? { OR: [{ endDate: null }, { endDate: { gte: query.from } }] } : {}),
+        ...(days.to ? { startDate: { lte: days.to } } : {}),
+        ...(days.from ? { OR: [{ endDate: null }, { endDate: { gte: days.from } }] } : {}),
       },
       orderBy: { startDate: "asc" },
       take: EXPORT_ROW_CAP,

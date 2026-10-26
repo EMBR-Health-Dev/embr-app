@@ -1,5 +1,6 @@
 import type { ReflectionType, TreatmentCategory } from "@embr/types";
 import { prisma } from "../../lib/prisma.js";
+import { calendarDateBounds } from "../../lib/local-day-label.js";
 
 /** Same reasoning as trendsRepository's SYMPTOM_LOG_ROW_CAP — a
  * generous safety ceiling for a set of computations that has to happen
@@ -50,11 +51,12 @@ export const reflectionRepository = {
     from: Date,
     to: Date,
   ): Promise<TreatmentOverlappingPeriod[]> {
+    const days = calendarDateBounds({ from, to });
     return prisma.treatment.findMany({
       where: {
         userId,
-        startDate: { lte: to },
-        OR: [{ endDate: null }, { endDate: { gte: from } }],
+        startDate: { lte: days.to },
+        OR: [{ endDate: null }, { endDate: { gte: days.from } }],
       },
       select: { id: true, name: true, category: true, startDate: true, endDate: true },
       orderBy: { startDate: "desc" },
