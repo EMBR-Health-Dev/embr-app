@@ -1254,6 +1254,36 @@ describe("POST /briefs — frequency comparison (deterministic, no AI involvemen
     expect(res.body.data.frequencyComparison).toHaveLength(2); // not 3 — ANXIETY is in neither period
   });
 
+  it("dates each entry on her local day when the request names her time zone", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "freqcomp-tokyo@embr.health");
+
+    // 07:30 in Tokyo on 6 and 21 January: 22:30 UTC the day before.
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-05T22:30:00Z") });
+    addSymptomLog(userId, { category: "HOT_FLASH", occurredAt: new Date("2026-01-20T22:30:00Z") });
+
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+    const res = await agent.post("/briefs").send({ ...RANGE, timeZone: "Asia/Tokyo" });
+
+    expect(res.status).toBe(201);
+    const hotFlash = res.body.data.frequencyComparison.find(
+      (e: { category: string }) => e.category === "HOT_FLASH",
+    );
+    expect(hotFlash.currentDates).toEqual(["2026-01-06", "2026-01-21"]);
+  });
+
+  it("refuses to generate with an unknown time zone, before any AI call", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "freqcomp-badzone@embr.health");
+    const aiCallsBefore = vi.mocked(briefAi.generate).mock.calls.length;
+
+    const res = await agent.post("/briefs").send({ ...RANGE, timeZone: "Mars/Olympus_Mons" });
+    expect(res.status).toBe(400);
+    expect(vi.mocked(briefAi.generate).mock.calls.length).toBe(aiCallsBefore);
+  });
+
   it("does not fabricate a percentage change when the previous period has no observations for a category", async () => {
     const app = createApp();
     const agent = request.agent(app);

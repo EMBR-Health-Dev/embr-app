@@ -6,6 +6,7 @@ import type {
   SymptomContextCoOccurrenceDto,
 } from "@embr/types";
 import { MIN_CO_OCCURRENCE_DAYS } from "./co-occurrence.js";
+import { localDate } from "./symptom-history.js";
 
 export interface ContextLogRow {
   date: Date;
@@ -46,10 +47,13 @@ export interface ContextLogRow {
 export function detectSymptomContextCoOccurrence(
   symptomLogs: Array<{ category: SymptomCategory; occurredAt: Date }>,
   contextLogs: ContextLogRow[],
+  timeZone = "UTC",
 ): SymptomContextCoOccurrenceDto | null {
+  // Symptom entries are instants, counted on her local day so they line
+  // up with context answers, which are stored against that local date.
   const datesByCategory = new Map<SymptomCategory, Set<string>>();
   for (const log of symptomLogs) {
-    const dateKey = log.occurredAt.toISOString().slice(0, 10);
+    const dateKey = localDate(log.occurredAt, timeZone);
     let dates = datesByCategory.get(log.category);
     if (!dates) {
       dates = new Set();

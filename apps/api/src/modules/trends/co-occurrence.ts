@@ -1,4 +1,5 @@
 import type { SymptomCategory, SymptomCoOccurrenceDto } from "@embr/types";
+import { localDate } from "./symptom-history.js";
 
 /** Below this, two categories sharing a handful of days is noise, not
  * a pattern worth surfacing — the exact number the-loop's own
@@ -21,17 +22,17 @@ export const MIN_CO_OCCURRENCE_DAYS = 3;
  */
 export function detectSymptomCoOccurrence(
   logs: Array<{ category: SymptomCategory; occurredAt: Date }>,
+  timeZone = "UTC",
 ): SymptomCoOccurrenceDto | null {
   // Calendar dates, not timestamps — two logs for the same category on
   // the same day must count as one occurrence of that day, not two,
   // and two logs of different categories at different times on the
-  // same day must still count as "both happened that day." UTC-based
-  // (date.toISOString().slice(0, 10)), matching this exact module's
-  // own established convention in cycleLength's toIsoDate — not a new
-  // timezone policy introduced for this feature specifically.
+  // same day must still count as "both happened that day." Days are
+  // the person's own local days: a 08:00 entry in Tokyo is that day,
+  // not the previous UTC day. UTC when no zone is given.
   const datesByCategory = new Map<SymptomCategory, Set<string>>();
   for (const log of logs) {
-    const dateKey = log.occurredAt.toISOString().slice(0, 10);
+    const dateKey = localDate(log.occurredAt, timeZone);
     let dates = datesByCategory.get(log.category);
     if (!dates) {
       dates = new Set();

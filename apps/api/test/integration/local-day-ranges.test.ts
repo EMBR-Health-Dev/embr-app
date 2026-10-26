@@ -151,6 +151,23 @@ describe.skipIf(!reachable)("calendar-date ranges in exports and trends", () => 
     });
   }
 
+  it("uses her exact local dates when the request names her time zone, even at UTC+13", async () => {
+    // 1 to 31 October in Auckland daylight time, as its browser sends them.
+    const query = {
+      from: new Date("2026-09-30T11:00:00.000Z"),
+      to: new Date("2026-10-31T10:59:59.999Z"),
+      timeZone: "Pacific/Auckland",
+    };
+    expect(dates(await trendsRepository.periodStartDates(userId, query))).toEqual([
+      "2026-10-01",
+      "2026-10-31",
+    ]);
+    expect(dates(await exportRepository.listCycleEntriesForExport(userId, query))).toEqual([
+      "2026-10-01",
+      "2026-10-31",
+    ]);
+  });
+
   it("still treats plain UTC midnight dates, as API callers send them, as those dates", async () => {
     const query = { from: day("2026-10-01"), to: day("2026-10-31") };
     expect(dates(await exportRepository.listCycleEntriesForExport(userId, query))).toEqual([

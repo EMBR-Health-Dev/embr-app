@@ -50,8 +50,9 @@ export const reflectionRepository = {
     userId: string,
     from: Date,
     to: Date,
+    timeZone?: string,
   ): Promise<TreatmentOverlappingPeriod[]> {
-    const days = calendarDateBounds({ from, to });
+    const days = calendarDateBounds({ from, to, timeZone });
     return prisma.treatment.findMany({
       where: {
         userId,

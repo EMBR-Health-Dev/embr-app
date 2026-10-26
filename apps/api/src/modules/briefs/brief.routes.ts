@@ -27,7 +27,7 @@ router.post(
   requireCsrfToken(),
   validate(generateBriefSchema),
   asyncHandler(async (req, res) => {
-    const { fromDate, toDate } = req.body as GenerateBriefInput;
+    const { fromDate, toDate, timeZone } = req.body as GenerateBriefInput;
     // Resolved once, here, and persisted on the brief itself (see
     // ClinicalBrief.locale's own doc comment) — never re-resolved from
     // whatever locale a later request happens to be in. GET .../pdf
@@ -36,7 +36,7 @@ router.post(
     // itself via briefService.get(), not the downloading session's
     // current language.
     const locale = resolveLocaleFromAcceptLanguage(req.headers["accept-language"]);
-    const brief = await briefService.generate(req.user!.sub, fromDate, toDate, locale);
+    const brief = await briefService.generate(req.user!.sub, fromDate, toDate, locale, timeZone);
     await writeAuditLog(req, "CLINICAL_BRIEF_GENERATED", req.user!.sub, {
       briefId: brief.id,
       fromDate: brief.fromDate,

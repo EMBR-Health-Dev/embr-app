@@ -1,5 +1,6 @@
 import type { SymptomCategory, TreatmentCategory } from "@embr/types";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
+import { localDate } from "../trends/symptom-history.js";
 
 /** Below this, "you logged something" isn't yet a pattern worth
  * acknowledging — same role as trends' MIN_CO_OCCURRENCE_DAYS, chosen
@@ -22,10 +23,12 @@ export interface LoggingActivityFacts {
  */
 export function computeLoggingActivity(
   logs: Array<{ occurredAt: Date }>,
+  timeZone = "UTC",
 ): LoggingActivityFacts | null {
   if (logs.length < MIN_REFLECTION_LOGS) return null;
 
-  const days = new Set(logs.map((log) => log.occurredAt.toISOString().slice(0, 10)));
+  // Her local days, UTC when no zone is given.
+  const days = new Set(logs.map((log) => localDate(log.occurredAt, timeZone)));
 
   return { logCount: logs.length, daysLogged: days.size };
 }

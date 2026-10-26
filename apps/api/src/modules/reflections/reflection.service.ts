@@ -1,6 +1,7 @@
 import type { ReflectionsQuery } from "@embr/validation";
 import type { ReflectionDto, ReflectionType, SymptomCategory } from "@embr/types";
 import { detectSymptomCoOccurrence } from "../trends/co-occurrence.js";
+import { resolveTimeZone } from "../trends/symptom-history.js";
 import {
   computeLoggingActivity,
   computeTopSymptomFrequency,
@@ -86,18 +87,19 @@ export const reflectionService = {
    */
   async list(userId: string, query: ReflectionsQuery): Promise<ReflectionDto[]> {
     const { from, to } = resolvePeriod(query);
+    const timeZone = resolveTimeZone(query.timeZone);
     const periodStart = toIsoDate(from);
     const periodEnd = toIsoDate(to);
     const periodKey = toIsoWeek(to);
 
     const [logs, treatments] = await Promise.all([
       reflectionRepository.symptomLogsForPeriod(userId, from, to),
-      reflectionRepository.treatmentsOverlappingPeriod(userId, from, to),
+      reflectionRepository.treatmentsOverlappingPeriod(userId, from, to, query.timeZone),
     ]);
 
     const results: ReflectionDto[] = [];
 
-    const activity = computeLoggingActivity(logs);
+    const activity = computeLoggingActivity(logs, timeZone);
     if (activity) {
       const candidate = {
         type: "LOGGING_ACTIVITY" as const,
@@ -130,6 +132,7 @@ export const reflectionService = {
         category: log.category as SymptomCategory,
         occurredAt: log.occurredAt,
       })),
+      timeZone,
     );
     if (coOccurrence) {
       const candidate = {

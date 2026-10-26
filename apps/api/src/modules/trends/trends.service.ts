@@ -11,8 +11,7 @@ import type {
   SymptomFrequencyDto,
   SymptomHistoryDto,
 } from "@embr/types";
-import { AppError } from "@embr/shared";
-import { computeSymptomHistory, isValidTimeZone } from "./symptom-history.js";
+import { computeSymptomHistory, localDate, resolveTimeZone } from "./symptom-history.js";
 import { averageCycleLengthDays, computeCycleLengths } from "../../lib/cycle-length.js";
 import { trendsRepository } from "./trends.repository.js";
 import { detectSymptomCoOccurrence } from "./co-occurrence.js";
@@ -32,10 +31,7 @@ export const trendsService = {
     query: SymptomHistoryQuery,
     now: Date = new Date(),
   ): Promise<SymptomHistoryDto> {
-    const timeZone = query.timeZone ?? "UTC";
-    if (!isValidTimeZone(timeZone)) {
-      throw AppError.validation(`Unknown time zone: ${timeZone}`);
-    }
+    const timeZone = resolveTimeZone(query.timeZone);
     const logs = await trendsRepository.symptomLogsForHistory(userId);
     return computeSymptomHistory({
       logs: logs.map((log) => ({
@@ -51,6 +47,7 @@ export const trendsService = {
   },
 
   async symptomFrequency(userId: string, query: TrendsQuery): Promise<SymptomFrequencyDto[]> {
+    resolveTimeZone(query.timeZone);
     const rows = await trendsRepository.symptomFrequency(userId, query);
     return rows
       .map((row) => ({ category: row.category as SymptomCategory, count: row.count }))
@@ -58,6 +55,7 @@ export const trendsService = {
   },
 
   async cycleLength(userId: string, query: TrendsQuery): Promise<CycleLengthTrendDto> {
+    resolveTimeZone(query.timeZone);
     const starts = await trendsRepository.periodStartDates(userId, query);
     const intervals = computeCycleLengths(starts.map((s) => s.date));
 
@@ -75,12 +73,14 @@ export const trendsService = {
    * the function owns the (fully unit-testable, DB-independent)
    * detection logic. */
   async coOccurrence(userId: string, query: TrendsQuery): Promise<SymptomCoOccurrenceDto | null> {
+    const timeZone = resolveTimeZone(query.timeZone);
     const logs = await trendsRepository.symptomLogsForCoOccurrence(userId, query);
     return detectSymptomCoOccurrence(
       logs.map((log) => ({
         category: log.category as SymptomCategory,
         occurredAt: log.occurredAt,
       })),
+      timeZone,
     );
   },
 
@@ -90,6 +90,7 @@ export const trendsService = {
     userId: string,
     query: TrendsQuery,
   ): Promise<SymptomContextCoOccurrenceDto | null> {
+    const timeZone = resolveTimeZone(query.timeZone);
     const [symptomLogs, contextLogs] = await Promise.all([
       trendsRepository.symptomLogsForCoOccurrence(userId, query),
       trendsRepository.contextLogsForCoOccurrence(userId, query),
@@ -106,15 +107,18 @@ export const trendsService = {
         alcohol: log.alcohol,
         stressLevel: log.stressLevel as StressLevel | null,
       })),
+      timeZone,
     );
   },
 
   /** Full history, not windowed — see trendsRepository.loggedDates and
    * evidence-strength.ts's own doc comments for why. */
-  async evidenceStrength(userId: string): Promise<EvidenceStrengthDto> {
+  async evidenceStrength(userId: string, requestedTimeZone?: string): Promise<EvidenceStrengthDto> {
+    const timeZone = resolveTimeZone(requestedTimeZone);
     const { symptomDates, cycleDates } = await trendsRepository.loggedDates(userId);
     const distinctDays = new Set<string>();
-    for (const date of symptomDates) distinctDays.add(date.toISOString().slice(0, 10));
+    // Symptom entries on her local day; cycle entries already are one.
+    for (const date of symptomDates) distinctDays.add(localDate(date, timeZone));
     for (const date of cycleDates) distinctDays.add(date.toISOString().slice(0, 10));
     const distinctDaysLogged = distinctDays.size;
     return { strength: computeEvidenceStrength(distinctDaysLogged), distinctDaysLogged };

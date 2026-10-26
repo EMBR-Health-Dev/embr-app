@@ -1,3 +1,4 @@
+import { AppError } from "@embr/shared";
 import type {
   SeverityLevel,
   SymptomCategory,
@@ -59,6 +60,14 @@ export function isValidTimeZone(timeZone: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** A request's time zone, checked; UTC when none was sent, which is how
+ * days were counted before clients sent one. */
+export function resolveTimeZone(timeZone: string | undefined): string {
+  const zone = timeZone ?? "UTC";
+  if (!isValidTimeZone(zone)) throw AppError.validation(`Unknown time zone: ${zone}`);
+  return zone;
 }
 
 /** YYYY-MM-DD shifted by whole days (calendar arithmetic, no timezone). */
