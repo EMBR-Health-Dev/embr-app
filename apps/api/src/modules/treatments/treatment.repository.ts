@@ -137,7 +137,9 @@ export const treatmentRepository = {
         startDate: { lte: toDate },
         OR: [{ endDate: null }, { endDate: { gte: fromDate } }],
       },
-      orderBy: { startDate: "desc" },
+      // Then by name and id, so treatments started on the same day are
+      // listed the same way every time.
+      orderBy: [{ startDate: "desc" }, { name: "asc" }, { id: "asc" }],
     });
   },
 

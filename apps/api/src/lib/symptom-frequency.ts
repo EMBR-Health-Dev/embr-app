@@ -47,15 +47,23 @@ export function computeSymptomFrequency(
     byCategory.set(log.category, entry);
   }
 
-  return [...byCategory.entries()]
-    .map(([category, { count, severityBreakdown }]) => {
-      const ordered: Record<string, number> = {};
-      for (const severity of SEVERITY_ORDER) {
-        if (severityBreakdown[severity] !== undefined) {
-          ordered[severity] = severityBreakdown[severity];
+  return (
+    [...byCategory.entries()]
+      .map(([category, { count, severityBreakdown }]) => {
+        const ordered: Record<string, number> = {};
+        for (const severity of SEVERITY_ORDER) {
+          if (severityBreakdown[severity] !== undefined) {
+            ordered[severity] = severityBreakdown[severity];
+          }
         }
-      }
-      return { category, count, severityBreakdown: ordered };
-    })
-    .sort((a, b) => b.count - a.count);
+        return { category, count, severityBreakdown: ordered };
+      })
+      // Most frequent first; equal counts by category, so identical
+      // records always list in the same order. Entries saved together
+      // share one instant, so the database order alone is not stable.
+      .sort(
+        (a, b) =>
+          b.count - a.count || (a.category < b.category ? -1 : a.category > b.category ? 1 : 0),
+      )
+  );
 }

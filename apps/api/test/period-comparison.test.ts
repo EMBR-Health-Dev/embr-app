@@ -218,3 +218,19 @@ describe("groupLogDatesByCategory", () => {
     expect(result.has("FATIGUE")).toBe(false);
   });
 });
+
+describe("computePreviousPeriod with the web's local day boundaries", () => {
+  // The web sends local 00:00 and local 23:59:59.999. A 1 to 28
+  // February range must compare with 4 to 31 January: same 28 days,
+  // ending the day before, not 3 to 30 January.
+  it.each([
+    ["UTC", "2026-02-01T00:00:00.000Z", "2026-02-28T23:59:59.999Z"],
+    ["Tokyo (UTC+9)", "2026-01-31T15:00:00.000Z", "2026-02-28T14:59:59.999Z"],
+    ["New York (UTC-5)", "2026-02-01T05:00:00.000Z", "2026-03-01T04:59:59.999Z"],
+  ])("ends on the last instant before the range in %s", (_zone, from, to) => {
+    const fromDate = new Date(from);
+    const previous = computePreviousPeriod(fromDate, new Date(to));
+    expect(previous.to.getTime()).toBe(fromDate.getTime() - 1);
+    expect(fromDate.getTime() - previous.from.getTime()).toBe(28 * 24 * 60 * 60 * 1000);
+  });
+});
