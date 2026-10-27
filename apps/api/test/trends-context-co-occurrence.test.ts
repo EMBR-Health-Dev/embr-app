@@ -184,6 +184,55 @@ describe("detectSymptomContextCoOccurrence", () => {
     expect(detectSymptomContextCoOccurrence(symptomLogs, contextLogs)?.factor).toBe("ALCOHOL");
   });
 
+  describe("adding VIGOROUS_EXERCISE does not change which pattern wins a tie", () => {
+    const symptomLogs = [
+      symptomLog("HOT_FLASH", "2026-01-01"),
+      symptomLog("HOT_FLASH", "2026-01-02"),
+      symptomLog("HOT_FLASH", "2026-01-03"),
+    ];
+
+    // VIGOROUS_EXERCISE sorts after every earlier factor, so on equal
+    // days the factor a person saw before this one existed still wins.
+    it.each([
+      ["SHORT_SLEEP", { sleepDuration: "UNDER_6H" as const }],
+      ["CAFFEINE_AFTERNOON", { caffeineAfternoon: true }],
+      ["ALCOHOL", { alcohol: true }],
+      ["HIGH_STRESS", { stressLevel: "HIGH" as const }],
+    ])("%s keeps the pattern on equal days", (factor, fields) => {
+      const contextLogs = ["2026-01-01", "2026-01-02", "2026-01-03"].map((date) =>
+        contextLog(date, { ...fields, exercise: "VIGOROUS" }),
+      );
+      expect(detectSymptomContextCoOccurrence(symptomLogs, contextLogs)?.factor).toBe(factor);
+    });
+
+    it("gives the same answer whatever order the rows arrive in", () => {
+      const contextLogs = ["2026-01-01", "2026-01-02", "2026-01-03"].map((date) =>
+        contextLog(date, { stressLevel: "HIGH", exercise: "VIGOROUS" }),
+      );
+      const forward = detectSymptomContextCoOccurrence(symptomLogs, contextLogs);
+      const reversed = detectSymptomContextCoOccurrence(
+        [...symptomLogs].reverse(),
+        [...contextLogs].reverse(),
+      );
+      expect(reversed).toEqual(forward);
+      expect(forward?.factor).toBe("HIGH_STRESS");
+    });
+
+    it("VIGOROUS_EXERCISE wins only with strictly more shared days", () => {
+      const fourDays = [...symptomLogs, symptomLog("HOT_FLASH", "2026-01-04")];
+      const contextLogs = [
+        contextLog("2026-01-01", { stressLevel: "HIGH", exercise: "VIGOROUS" }),
+        contextLog("2026-01-02", { stressLevel: "HIGH", exercise: "VIGOROUS" }),
+        contextLog("2026-01-03", { stressLevel: "HIGH", exercise: "VIGOROUS" }),
+        contextLog("2026-01-04", { exercise: "VIGOROUS" }),
+      ];
+      expect(detectSymptomContextCoOccurrence(fourDays, contextLogs)).toMatchObject({
+        factor: "VIGOROUS_EXERCISE",
+        days: 4,
+      });
+    });
+  });
+
   it("selects the strongest-overlap pair when multiple symptom/factor pairs qualify", () => {
     const symptomLogs = [
       symptomLog("HOT_FLASH", "2026-01-01"),
