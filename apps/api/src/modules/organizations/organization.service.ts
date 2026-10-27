@@ -33,6 +33,7 @@ import {
   toPercentage,
 } from "./organization.activation.js";
 import { generateOpaqueToken, hashToken } from "../auth/tokens.js";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
 import { sendOrganizationInviteEmail } from "../auth/mailer.js";
 
 export const organizationService = {
@@ -75,6 +76,9 @@ export const organizationService = {
     organizationId: string,
     invitedByUserId: string,
     input: InviteMemberInput,
+    // The inviting admin's language: the invitee has no account (or no
+    // stored language) to read one from.
+    locale: Locale = DEFAULT_LOCALE,
   ): Promise<OrganizationInviteDto> {
     const org = await organizationRepository.findOrganizationById(organizationId);
     if (!org) throw AppError.notFound("Organization");
@@ -110,7 +114,7 @@ export const organizationService = {
       expiresAt: new Date(Date.now() + env.ORG_INVITE_TTL_SECONDS * 1000),
     });
 
-    await sendOrganizationInviteEmail(input.email, org.name, token);
+    await sendOrganizationInviteEmail(input.email, org.name, token, locale);
     return toOrganizationInviteDto(invite);
   },
 

@@ -177,7 +177,7 @@ describe("sendLoginLinkEmail", () => {
 });
 
 describe("sendWeeklyReminderEmail", () => {
-  it("links to the timeline and Settings, in English and Japanese, with nothing from her record", async () => {
+  it("links to the timeline and Settings, in English, Japanese and French, with nothing from her record", async () => {
     mockEnv();
     mockSend.mockResolvedValue({ data: { id: "email_weekly" }, error: null });
     const { sendWeeklyReminderEmail } = await import("../src/modules/auth/mailer.js");
@@ -187,11 +187,13 @@ describe("sendWeeklyReminderEmail", () => {
     const sent = mockSend.mock.calls[0]![0];
     expect(sent).toMatchObject({
       to: "user@example.com",
-      subject: "Your week in EMBR / EMBRの1週間",
+      subject: "Your week in EMBR / EMBRの1週間 / Votre semaine dans EMBR",
     });
     expect(sent.html).toContain("http://localhost:3000/timeline");
     expect(sent.html).toContain("http://localhost:3000/settings");
     expect(sent.text).toContain("EMBRから週に一度のお知らせです");
+    expect(sent.text).toContain("Un petit rappel hebdomadaire d’EMBR");
+    expect(sent.html).toContain("Paramètres");
     // Fixed copy only: the function takes an address and nothing else.
     expect(sendWeeklyReminderEmail.length).toBe(1);
   });
@@ -213,5 +215,65 @@ describe("sendOrganizationInviteEmail", () => {
         html: expect.stringContaining("invite-token"),
       }),
     );
+  });
+});
+
+describe("French transactional emails", () => {
+  const cases = [
+    {
+      name: "verification",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendVerificationEmail("user@example.com", "tok", "fr"),
+      subject: "Vérifiez votre compte EMBR",
+      body: "Ce lien expire dans 24\u00a0heures.",
+    },
+    {
+      name: "password reset",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendPasswordResetEmail("user@example.com", "tok", "fr"),
+      subject: "Réinitialisez votre mot de passe EMBR",
+      body: "Ce lien expire dans 60\u00a0minutes.",
+    },
+    {
+      name: "sign in link",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendLoginLinkEmail("user@example.com", "tok", "fr"),
+      subject: "Votre lien de connexion EMBR",
+      body: "expire dans 15\u00a0minutes",
+    },
+    {
+      name: "organization invite",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendOrganizationInviteEmail("user@example.com", "Acme Santé", "tok", "fr"),
+      subject: "Invitation à rejoindre Acme Santé sur EMBR",
+      body: "Ce lien expire dans 7\u00a0jours.",
+    },
+  ];
+
+  for (const c of cases) {
+    it(`sends the ${c.name} email in French, keeping the link`, async () => {
+      mockEnv();
+      mockSend.mockResolvedValue({ data: { id: "email_fr" }, error: null });
+      const mailer = await import("../src/modules/auth/mailer.js");
+
+      await c.send(mailer);
+
+      const sent = mockSend.mock.calls[0]![0];
+      expect(sent.subject).toBe(c.subject);
+      expect(sent.html).toContain(c.body);
+      expect(sent.html).toContain("tok");
+      expect(sent.text).toContain("tok");
+      expect(`${sent.subject} ${sent.html} ${sent.text}`).not.toMatch(/[\u2013\u2014]/);
+    });
+  }
+
+  it("keeps Japanese on the English copy until Japanese email copy exists", async () => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_ja" }, error: null });
+    const { sendPasswordResetEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendPasswordResetEmail("user@example.com", "tok", "ja");
+
+    expect(mockSend.mock.calls[0]![0].subject).toBe("Reset your EMBR password");
   });
 });

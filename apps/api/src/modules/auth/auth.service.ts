@@ -11,6 +11,7 @@ import { toUserDto } from "./auth.mappers.js";
 import { onboardingRepository } from "../onboarding/onboarding.repository.js";
 import { consentService } from "../consent/consent.service.js";
 import type { RegisterInput } from "@embr/validation";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
 
 interface IssuedSession {
   user: UserDto;
@@ -77,7 +78,7 @@ export const authService = {
 
     const verificationToken = generateOpaqueToken();
     await authRepository.createEmailVerificationToken(user.id, hashToken(verificationToken));
-    await sendVerificationEmail(user.email, verificationToken);
+    await sendVerificationEmail(user.email, verificationToken, input.locale);
 
     await writeAuditLog(req, "USER_REGISTERED", user.id);
     return toUserDto(user, null, await consentService.statesFor(user.id));
@@ -93,7 +94,7 @@ export const authService = {
     await writeAuditLog(req, "EMAIL_VERIFIED", record.userId);
   },
 
-  async resendVerification(email: string): Promise<void> {
+  async resendVerification(email: string, locale: Locale = DEFAULT_LOCALE): Promise<void> {
     const user = await authRepository.findUserByEmail(email);
     // Deliberately silent on "no such account" / "already verified" —
     // responding differently would let an attacker enumerate registered
@@ -102,7 +103,7 @@ export const authService = {
 
     const token = generateOpaqueToken();
     await authRepository.createEmailVerificationToken(user.id, hashToken(token));
-    await sendVerificationEmail(user.email, token);
+    await sendVerificationEmail(user.email, token, locale);
   },
 
   async login(req: Request, input: { email: string; password: string }): Promise<IssuedSession> {
@@ -132,14 +133,18 @@ export const authService = {
     };
   },
 
-  async requestLoginLink(req: Request, email: string): Promise<void> {
+  async requestLoginLink(
+    req: Request,
+    email: string,
+    locale: Locale = DEFAULT_LOCALE,
+  ): Promise<void> {
     const user = await authRepository.findUserByEmail(email);
     // Silent on non-existent accounts, see resendVerification.
     if (!user) return;
 
     const token = generateOpaqueToken();
     await authRepository.createLoginLinkToken(user.id, hashToken(token));
-    await sendLoginLinkEmail(user.email, token);
+    await sendLoginLinkEmail(user.email, token, locale);
     await writeAuditLog(req, "LOGIN_LINK_REQUESTED", user.id);
   },
 
@@ -236,14 +241,14 @@ export const authService = {
     await writeAuditLog(req, "LOGOUT_ALL", userId);
   },
 
-  async forgotPassword(email: string): Promise<void> {
+  async forgotPassword(email: string, locale: Locale = DEFAULT_LOCALE): Promise<void> {
     const user = await authRepository.findUserByEmail(email);
     // Silent on non-existent accounts — see resendVerification rationale.
     if (!user) return;
 
     const token = generateOpaqueToken();
     await authRepository.createPasswordResetToken(user.id, hashToken(token));
-    await sendPasswordResetEmail(user.email, token);
+    await sendPasswordResetEmail(user.email, token, locale);
   },
 
   async resetPassword(req: Request, token: string, newPassword: string): Promise<void> {
