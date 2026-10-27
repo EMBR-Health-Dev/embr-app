@@ -57,6 +57,16 @@ const FLOWS = ["SPOTTING", "LIGHT", "MEDIUM", "HEAVY"] as const;
 // open-ended list.
 const SLEEP_DURATIONS = ["UNDER_6H", "SIX_TO_SEVEN_H", "SEVEN_PLUS_H"] as const;
 const STRESS_LEVELS = ["LOW", "MODERATE", "HIGH"] as const;
+
+/** A yes or no question that can also be left unanswered. "" is "not
+ * logged", which is saved as absent, never as "no". */
+type YesNo = "" | "yes" | "no";
+function toYesNo(value: boolean | null | undefined): YesNo {
+  return value === true ? "yes" : value === false ? "no" : "";
+}
+function fromYesNo(value: YesNo): boolean | undefined {
+  return value === "" ? undefined : value === "yes";
+}
 const EXERCISE_LEVELS = ["NONE", "LIGHT", "MODERATE", "VIGOROUS"] as const;
 const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
 const WORK_IMPACT = ["NONE", "DID_LESS", "MISSED_TIME"] as const;
@@ -158,8 +168,8 @@ function DashboardContent() {
   const [cycleError, setCycleError] = useState<string | null>(null);
 
   const [sleepDuration, setSleepDuration] = useState<(typeof SLEEP_DURATIONS)[number] | "">("");
-  const [caffeineAfternoon, setCaffeineAfternoon] = useState(false);
-  const [alcohol, setAlcohol] = useState(false);
+  const [caffeineAfternoon, setCaffeineAfternoon] = useState<YesNo>("");
+  const [alcohol, setAlcohol] = useState<YesNo>("");
   const [stressLevel, setStressLevel] = useState<(typeof STRESS_LEVELS)[number] | "">("");
   const [exercise, setExercise] = useState<(typeof EXERCISE_LEVELS)[number] | "">("");
   // Never prefilled: a blank answer means "not logged", never "none".
@@ -200,8 +210,8 @@ function DashboardContent() {
         if (cancelled) return;
         const entry = page.items.find((e: ContextLogDto) => e.date === contextDate);
         setSleepDuration(entry?.sleepDuration ?? "");
-        setCaffeineAfternoon(entry?.caffeineAfternoon ?? false);
-        setAlcohol(entry?.alcohol ?? false);
+        setCaffeineAfternoon(toYesNo(entry?.caffeineAfternoon));
+        setAlcohol(toYesNo(entry?.alcohol));
         setStressLevel(entry?.stressLevel ?? "");
         setExercise(entry?.exercise ?? "");
         setNightSweats(entry?.nightSweats ?? "");
@@ -490,8 +500,9 @@ function DashboardContent() {
       await api.contextLogs.upsert({
         date: contextDate,
         sleepDuration: sleepDuration || undefined,
-        caffeineAfternoon,
-        alcohol,
+        // Left as "Not logged", sent as absent: never saved as "no".
+        caffeineAfternoon: fromYesNo(caffeineAfternoon),
+        alcohol: fromYesNo(alcohol),
         stressLevel: stressLevel || undefined,
         nightSweats: nightSweats || undefined,
         workImpact: workImpact || undefined,
@@ -1024,29 +1035,34 @@ function DashboardContent() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-4 border-t border-border-subtle pt-4">
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={caffeineAfternoon}
-                  onChange={(e) => {
-                    setCaffeineAfternoon(e.target.checked);
-                    setContextSaved(false);
-                  }}
-                />
-                {t("caffeineAfternoonLabel")}
-              </label>
-
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={alcohol}
-                  onChange={(e) => {
-                    setAlcohol(e.target.checked);
-                    setContextSaved(false);
-                  }}
-                />
-                {t("alcoholLabel")}
-              </label>
+              {(
+                [
+                  [
+                    "caffeine-afternoon",
+                    "caffeineAfternoonLabel",
+                    caffeineAfternoon,
+                    setCaffeineAfternoon,
+                  ],
+                  ["alcohol", "alcoholLabel", alcohol, setAlcohol],
+                ] as const
+              ).map(([id, labelKey, value, setValue]) => (
+                <label key={id} className="flex w-40 flex-col gap-1.5 text-sm">
+                  <span className="font-medium text-foreground">{t(labelKey)}</span>
+                  <select
+                    id={id}
+                    value={value}
+                    onChange={(e) => {
+                      setValue(e.target.value as YesNo);
+                      setContextSaved(false);
+                    }}
+                    className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+                  >
+                    <option value="">{t("yesNoNotLogged")}</option>
+                    <option value="yes">{t("answerYes")}</option>
+                    <option value="no">{t("answerNo")}</option>
+                  </select>
+                </label>
+              ))}
             </div>
 
             {(contextError || contextLoad === "failed") && (
