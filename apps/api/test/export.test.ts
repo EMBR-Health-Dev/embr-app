@@ -334,6 +334,7 @@ vi.mock("../src/lib/prisma.js", () => ({
         Promise.resolve(state.notes.filter((n) => n.userId === where.userId)),
       ),
     },
+    mrsCheckIn: { findMany: vi.fn().mockResolvedValue([]) },
     treatment: {
       create: vi.fn(
         ({

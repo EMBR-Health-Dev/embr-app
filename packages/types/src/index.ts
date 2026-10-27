@@ -325,6 +325,47 @@ export interface NoteDto {
   updatedAt: string;
 }
 
+/** One of the 11 Menopause Rating Scale items, in the instrument's order. */
+export type MrsItem =
+  | "hotFlushes"
+  | "heartDiscomfort"
+  | "sleepProblems"
+  | "depressiveMood"
+  | "irritability"
+  | "anxiety"
+  | "exhaustion"
+  | "sexualProblems"
+  | "bladderProblems"
+  | "vaginalDryness"
+  | "jointMuscular";
+
+/** Sums of her answers: the total (0 to 44) and the three published
+ * subscales. No severity label: on her own screens EMBR shows the
+ * numbers and how they change, not a verdict. */
+export interface MrsScoresDto {
+  total: number;
+  /** Hot flushes, heart discomfort, sleep problems, joint and muscular discomfort (0 to 16). */
+  somatic: number;
+  /** Depressive mood, irritability, anxiety, exhaustion (0 to 16). */
+  psychological: number;
+  /** Sexual problems, bladder problems, vaginal dryness (0 to 12). */
+  urogenital: number;
+}
+
+/** A completed Menopause Rating Scale check-in. */
+export interface MrsCheckInDto {
+  id: string;
+  /** Her local date, YYYY-MM-DD. */
+  completedOn: string;
+  locale: "en" | "ja";
+  instrumentVersion: string;
+  /** Each 0 (none) to 4 (very severe). */
+  answers: Record<MrsItem, number>;
+  scores: MrsScoresDto;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ContextLogDto {
   id: string;
   date: string;

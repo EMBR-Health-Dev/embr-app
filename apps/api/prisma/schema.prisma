@@ -68,6 +68,7 @@ model User {
   cycleEntries            CycleEntry[]
   contextLogs             ContextLog[]
   notes                   Note[]
+  mrsCheckIns             MrsCheckIn[]
   treatments              Treatment[]
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
@@ -954,6 +955,47 @@ model Note {
 
   @@index([userId, updatedAt])
   @@map("notes")
+}
+
+// ---- Menopause Rating Scale check-in ----
+//
+// The MRS (Heinemann and Schneider; copyright Prof. L. A. J.
+// Heinemann): 11 symptoms she rates herself, each 0 (none) to 4 (very
+// severe), "at this time". One row per completed check-in, at most one
+// per local day. Every answer is required: the published scale has no
+// total with a missing item, and its own instruction is to mark "none"
+// for a symptom that does not apply. Scores are computed from the
+// answers (mrs-scoring.ts), never stored, so they cannot disagree.
+// Each answer column is limited to 0 to 4 by a CHECK constraint in the
+// migration.
+
+model MrsCheckIn {
+  id                String      @id @default(uuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Her local calendar date when she completed it.
+  completedOn       DateTime    @db.Date
+  /// Language the questions were shown in.
+  locale            BriefLocale
+  /// Which wording was shown, e.g. "MRS-EN-2003", so a later change of
+  /// wording or language version is traceable.
+  instrumentVersion String
+  hotFlushes        Int         @db.SmallInt
+  heartDiscomfort   Int         @db.SmallInt
+  sleepProblems     Int         @db.SmallInt
+  depressiveMood    Int         @db.SmallInt
+  irritability      Int         @db.SmallInt
+  anxiety           Int         @db.SmallInt
+  exhaustion        Int         @db.SmallInt
+  sexualProblems    Int         @db.SmallInt
+  bladderProblems   Int         @db.SmallInt
+  vaginalDryness    Int         @db.SmallInt
+  jointMuscular     Int         @db.SmallInt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([userId, completedOn])
+  @@map("mrs_check_ins")
 }
 
 // ---- Consent (Terms, Privacy, health information) ----

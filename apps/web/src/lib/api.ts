@@ -10,6 +10,8 @@ import type {
   CycleLengthTrendDto,
   DeviceSessionDto,
   EvidenceStrengthDto,
+  MrsCheckInDto,
+  MrsItem,
   MyOrganizationMembershipDto,
   NoteCover,
   NoteDto,
@@ -206,6 +208,17 @@ export const api = {
     update: (id: string, input: Partial<{ title: string; body: string; cover: NoteCover }>) =>
       apiFetch<NoteDto>(`/notes/${id}`, { method: "PATCH", body: input }),
     delete: (id: string) => apiFetch<void>(`/notes/${id}`, { method: "DELETE" }),
+  },
+
+  mrsCheckIns: {
+    list: (query?: { from?: string; to?: string }) =>
+      apiFetch<MrsCheckInDto[]>("/mrs-check-ins", { query }),
+    save: (date: string, answers: Record<MrsItem, number>) =>
+      apiFetch<MrsCheckInDto>(`/mrs-check-ins/${date}`, {
+        method: "PUT",
+        body: { locale: "en", answers },
+      }),
+    delete: (date: string) => apiFetch<void>(`/mrs-check-ins/${date}`, { method: "DELETE" }),
   },
 
   treatments: {

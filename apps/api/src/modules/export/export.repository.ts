@@ -137,6 +137,7 @@ export const exportRepository = {
       contextLogs,
       treatments,
       notes,
+      mrsCheckIns,
       briefs,
       reflectionDismissals,
       memberships,
@@ -152,6 +153,7 @@ export const exportRepository = {
       prisma.contextLog.findMany({ ...byUser, orderBy: { date: "asc" } }),
       prisma.treatment.findMany({ ...byUser, orderBy: { startDate: "asc" } }),
       prisma.note.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
+      prisma.mrsCheckIn.findMany({ ...byUser, orderBy: { completedOn: "asc" } }),
       prisma.clinicalBrief.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
       prisma.reflectionDismissal.findMany({ ...byUser, orderBy: { dismissedAt: "asc" } }),
       prisma.organizationMembership.findMany({
@@ -169,6 +171,7 @@ export const exportRepository = {
       contextLogs,
       treatments,
       notes,
+      mrsCheckIns,
       briefs,
       reflectionDismissals,
       memberships,

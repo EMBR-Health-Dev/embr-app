@@ -23,6 +23,7 @@ import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { isPostmenopause } from "../../lib/life-stage";
 import { WeekOnTrack } from "../../components/week-on-track";
+import { MrsDueCard } from "../../components/mrs-due-card";
 import { CollapsibleCard } from "../../components/collapsible-card";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
@@ -683,6 +684,8 @@ function DashboardContent() {
           <div id="check-in" className="scroll-mt-6">
             <DailyCheckIn onSaved={() => void refreshAfterCheckIn()} />
           </div>
+
+          <MrsDueCard />
         </section>
 
         {/* ---- YOUR RECORD ---- */}

@@ -421,7 +421,8 @@
     "feedbackSubject": "EMBR feedback",
     "feedbackIntro": "What happened, or what would make EMBR better for you?",
     "feedbackPage": "Page",
-    "feedbackBrowser": "Browser"
+    "feedbackBrowser": "Browser",
+    "monthlyRating": "Monthly rating"
   },
   "Timeline": {
     "title": "Timeline",
@@ -1469,5 +1470,97 @@
       "iphone": "On iPhone, TestFlight also lets you send a screenshot with a comment straight to us."
     },
     "closing": "Ready when you are."
+  },
+  "MrsCheckIn": {
+    "title": "Monthly symptom rating",
+    "intro": "Eleven questions from the Menopause Rating Scale (MRS), a questionnaire used in menopause research and clinics. It takes about two minutes, and once a month is enough.",
+    "question": "Which of the following symptoms apply to you at this time?",
+    "instruction": "Choose one answer for each symptom. For a symptom that does not apply, choose None.",
+    "answer": {
+      "0": "None",
+      "1": "Mild",
+      "2": "Moderate",
+      "3": "Severe",
+      "4": "Extremely severe"
+    },
+    "item": {
+      "hotFlushes": {
+        "label": "Hot flashes, sweating",
+        "detail": "episodes of sweating"
+      },
+      "heartDiscomfort": {
+        "label": "Heart discomfort",
+        "detail": "unusual awareness of heart beat, heart skipping, heart racing, tightness"
+      },
+      "sleepProblems": {
+        "label": "Sleep problems",
+        "detail": "difficulty in falling asleep, difficulty in sleeping through the night, waking up early"
+      },
+      "depressiveMood": {
+        "label": "Depressive mood",
+        "detail": "feeling down, sad, on the verge of tears, lack of drive, mood swings"
+      },
+      "irritability": {
+        "label": "Irritability",
+        "detail": "feeling nervous, inner tension, feeling aggressive"
+      },
+      "anxiety": {
+        "label": "Anxiety",
+        "detail": "inner restlessness, feeling panicky"
+      },
+      "exhaustion": {
+        "label": "Physical and mental exhaustion",
+        "detail": "general decrease in performance, impaired memory, decrease in concentration, forgetfulness"
+      },
+      "sexualProblems": {
+        "label": "Sexual problems",
+        "detail": "change in sexual desire, in sexual activity and satisfaction"
+      },
+      "bladderProblems": {
+        "label": "Bladder problems",
+        "detail": "difficulty in urinating, increased need to urinate, bladder incontinence"
+      },
+      "vaginalDryness": {
+        "label": "Dryness of vagina",
+        "detail": "sensation of dryness or burning in the vagina, difficulty with sexual intercourse"
+      },
+      "jointMuscular": {
+        "label": "Joint and muscular discomfort",
+        "detail": "pain in the joints, rheumatoid complaints"
+      }
+    },
+    "progress": "{answered} of 11 answered",
+    "save": "Save my answers",
+    "saving": "Saving",
+    "saveFailed": "Your answers could not be saved. They are still here; please try again.",
+    "loadError": "Your ratings could not be loaded. Please try again later.",
+    "dueHeading": "Your rating for this month",
+    "notDue": "Your next rating is due on {date}.",
+    "answerAgain": "Change today's answers",
+    "startEarly": "Answer now anyway",
+    "scoresHeading": "Your scores",
+    "latestOn": "Rated on {date}",
+    "total": "Total",
+    "outOf": "{score} of {max}",
+    "subscale": {
+      "somatic": "Body and sleep",
+      "psychological": "Mood and energy",
+      "urogenital": "Bladder and sexual health"
+    },
+    "scoresHint": "Each answer counts from 0 (none) to 4 (extremely severe), so a lower number means fewer or milder symptoms. These are your own answers added up, not a diagnosis.",
+    "changeHigher": "{diff} higher than on {date}",
+    "changeLower": "{diff} lower than on {date}",
+    "changeSame": "The same as on {date}",
+    "historyHeading": "All your ratings",
+    "delete": "Delete",
+    "deleteFor": "Delete the rating from {date}",
+    "confirmDelete": "Delete the rating from {date}? This cannot be undone.",
+    "confirmDeleteYes": "Delete it",
+    "cancel": "Cancel",
+    "deleteFailed": "This rating could not be deleted. Please try again.",
+    "copyright": "Menopause Rating Scale (MRS) © Prof. Lothar A. J. Heinemann. EMBR records your answers and adds them up; it does not diagnose.",
+    "dashboardTitle": "Monthly symptom rating",
+    "dashboardBody": "Eleven questions, about two minutes. Your scores are kept in your record so you can see how they change over the months.",
+    "dashboardCta": "Start the rating"
   }
 }
