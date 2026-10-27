@@ -1183,12 +1183,26 @@ describe("POST /briefs — locale", () => {
   it("falls back to English for an unsupported Accept-Language", async () => {
     const app = createApp();
     const agent = request.agent(app);
+    await registerAndLogin(agent, "locale-de@embr.health");
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").set("Accept-Language", "de").send(RANGE);
+
+    expect(res.body.data.locale).toBe("en");
+  });
+
+  it("resolves fr from a full browser-style Accept-Language header", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
     await registerAndLogin(agent, "locale-fr@embr.health");
     aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
 
-    const res = await agent.post("/briefs").set("Accept-Language", "fr").send(RANGE);
+    const res = await agent
+      .post("/briefs")
+      .set("Accept-Language", "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7")
+      .send(RANGE);
 
-    expect(res.body.data.locale).toBe("en");
+    expect(res.body.data.locale).toBe("fr");
   });
 
   it("passes the resolved locale through to briefAi.generate", async () => {

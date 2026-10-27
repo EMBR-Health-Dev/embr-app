@@ -373,7 +373,9 @@ export function buildClinicalBriefPdf(
         .map(([severity, n]) =>
           locale === "ja"
             ? `${severityLabel(severity, locale)}${n}件`
-            : `${n} ${severityLabel(severity, locale)}`,
+            : locale === "fr"
+              ? `${severityLabel(severity, locale)}\u00a0: ${n}`
+              : `${n} ${severityLabel(severity, locale)}`,
         )
         .join(locale === "ja" ? "、" : ", ");
       doc

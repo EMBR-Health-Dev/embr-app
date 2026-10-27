@@ -99,7 +99,7 @@ export const STILL_ACCEPTED_VERSIONS: Record<ConsentTypeValue, readonly string[]
 // unpublished (docs/legal/drafts). Add them back, with the final document
 // versions above, in the release that publishes the counsel approved pages.
 
-export const consentLocaleSchema = z.enum(["en", "ja"]);
+export const consentLocaleSchema = z.enum(["en", "ja", "fr"]);
 
 export const consentAcceptanceSchema = z.object({
   type: consentTypeSchema,

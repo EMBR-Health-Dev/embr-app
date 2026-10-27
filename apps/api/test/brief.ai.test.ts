@@ -580,6 +580,101 @@ describe("brief.ai", () => {
     });
   });
 
+  describe("output content safety — French locale", () => {
+    it("uses the French system prompt when locale is fr", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({ narrative: "n", discussionTopics: [dt("Question ?")], patterns: [] }),
+        ),
+      );
+
+      await briefAi.generate(VALID_INPUT, "fr");
+
+      const call = mockCreate.mock.calls[0][0];
+      expect(call.system).toContain("français clair et professionnel");
+      expect(call.system).toContain("Ne posez jamais de diagnostic");
+    });
+
+    it("accepts a French discussion topic ending in a spaced question mark", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Les bouffées de chaleur ont été notées 3 fois sur cette période.",
+            discussionTopics: [dt("Ce changement de fréquence est-il courant à ce stade\u00a0?")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "fr")).resolves.toBeDefined();
+    });
+
+    it("rejects French output containing diagnostic", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Cette tendance pourrait orienter vers un diagnostic.",
+            discussionTopics: [dt("Question ?")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "fr")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects French output directing an action (vous devriez prendre)", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Vous devriez prendre du magnésium le soir.",
+            discussionTopics: [dt("Question ?")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "fr")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects French output containing je recommande", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Je recommande de consulter un spécialiste.",
+            discussionTopics: [dt("Question ?")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "fr")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("rejects French output containing a tablet count", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative: "Elle prend 2 comprimés par jour.",
+            discussionTopics: [dt("Question ?")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "fr")).rejects.toThrow("prohibited pattern");
+    });
+
+    it("does not false-positive on ordinary French output using fois and reprises", async () => {
+      mockCreate.mockResolvedValue(
+        textResponse(
+          JSON.stringify({
+            narrative:
+              "Les bouffées de chaleur ont été notées 3 fois sur cette période, contre 1 sur la période précédente, et le même jour que le brouillard mental à 2 reprises.",
+            discussionTopics: [dt("Ce changement est-il fréquent pendant la périménopause ?")],
+            patterns: [],
+          }),
+        ),
+      );
+      await expect(briefAi.generate(VALID_INPUT, "fr")).resolves.toBeDefined();
+    });
+  });
+
   // Structural validation only — this establishes that a well-formed
   // Stage 4 pattern can pass through the response contract at all.
   // Whether a given pattern actually corresponds to real supplied

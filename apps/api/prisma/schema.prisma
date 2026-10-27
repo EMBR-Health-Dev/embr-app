@@ -789,6 +789,7 @@ model ClinicalBrief {
 enum BriefLocale {
   en
   ja
+  fr
 }
 
 // ---- Onboarding (Milestone 18) ----

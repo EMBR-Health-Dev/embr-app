@@ -1,13 +1,13 @@
 // The API's own view of "which language" — deliberately the exact same
 // values and default as apps/web/src/i18n/locale.ts and
-// apps/mobile/lib/i18n/locale.ts (LOCALES = ["en", "ja"], DEFAULT_LOCALE
+// apps/mobile/lib/i18n/locale.ts (LOCALES = ["en", "ja", "fr"], DEFAULT_LOCALE
 // "en"), not a second, independently-invented locale system. Neither
 // client's locale reaches the API automatically today (web's EMBR_LOCALE
 // cookie is scoped to the web app's own origin; mobile has no cookies at
 // all), so both clients send it explicitly via the standard
 // Accept-Language header — see apps/web/src/lib/api-client.ts and
 // apps/mobile/lib/api-client.ts.
-export const SUPPORTED_LOCALES = ["en", "ja"] as const;
+export const SUPPORTED_LOCALES = ["en", "ja", "fr"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
