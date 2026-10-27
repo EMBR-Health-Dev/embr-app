@@ -245,8 +245,14 @@ async function generateBriefContent(
       // ("sorted ascending by date"), so it holds regardless of
       // whatever order the database (or, in tests, the in-memory
       // fixture) happens to return rows in.
-      const byOccurredAt = (a: { occurredAt: Date }, b: { occurredAt: Date }) =>
-        a.occurredAt.getTime() - b.occurredAt.getTime();
+      // Then by category: a check in saves its symptoms at one shared
+      // instant, so time alone leaves their order to the database.
+      const byOccurredAt = (
+        a: { occurredAt: Date; category: string },
+        b: { occurredAt: Date; category: string },
+      ) =>
+        a.occurredAt.getTime() - b.occurredAt.getTime() ||
+        (a.category < b.category ? -1 : a.category > b.category ? 1 : 0);
       beforeLogs.sort(byOccurredAt);
       afterLogs.sort(byOccurredAt);
       const impact = buildTreatmentImpact({

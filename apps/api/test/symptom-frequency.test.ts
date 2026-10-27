@@ -45,12 +45,15 @@ describe("computeSymptomFrequency", () => {
     expect(result[1]!.count).toBe(1);
   });
 
-  it("preserves first-appearance order for tied counts (stable sort)", () => {
+  it("lists tied counts by category, whatever order the entries arrived in", () => {
+    // Entries saved in one check in share an instant, so the order the
+    // database returns them in is not stable; the result must not
+    // depend on it.
     const result = computeSymptomFrequency([
       { category: "BRAIN_FOG", severity: "MILD" },
       { category: "ANXIETY", severity: "MILD" },
     ]);
-    expect(result.map((r) => r.category)).toEqual(["BRAIN_FOG", "ANXIETY"]);
+    expect(result.map((r) => r.category)).toEqual(["ANXIETY", "BRAIN_FOG"]);
 
     const reversed = computeSymptomFrequency([
       { category: "ANXIETY", severity: "MILD" },

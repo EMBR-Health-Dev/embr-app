@@ -1,5 +1,6 @@
 import { addDays, daysBetween } from "../treatments/treatment-impact.js";
 import { localDate } from "../trends/symptom-history.js";
+import { briefPeriodLabel } from "./brief-period-label.js";
 
 /**
  * Stage 3 of EMBR's clinical logic pipeline (see the
@@ -30,10 +31,18 @@ export interface PeriodWindow {
  * definition of a comparison window.
  */
 export function computePreviousPeriod(fromDate: Date, toDate: Date): PeriodWindow {
-  const spanDays = daysBetween(fromDate, toDate);
-  const to = addDays(fromDate, -1);
-  const from = addDays(to, -spanDays);
-  return { from, to };
+  // Counted in calendar days, then both ends moved back by that many
+  // days, so the window keeps the requested range's own time of day.
+  // The web sends local 00:00 and 23:59:59.999; shifting only the start
+  // (as this once did) measured that range as one day longer and ended
+  // the comparison at 00:00 of the day before, dropping that whole day
+  // and taking in an extra one at the far end. Plain dates still work:
+  // their labels are their own dates.
+  const period = briefPeriodLabel(fromDate, toDate);
+  const calendarDays =
+    daysBetween(new Date(`${period.fromDate}T00:00:00Z`), new Date(`${period.toDate}T00:00:00Z`)) +
+    1;
+  return { from: addDays(fromDate, -calendarDays), to: addDays(toDate, -calendarDays) };
 }
 
 export type FrequencyChangeDirection = "increased" | "decreased" | "unchanged";
