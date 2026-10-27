@@ -91,6 +91,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     nightSweatsRecall: null,
     workImpact: null,
     exercise: null,
+    mrs: null,
     lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
@@ -790,6 +791,52 @@ describe("Brief page — deterministic evidence sections", () => {
     expect(
       await screen.findByText("None on 2, light on 3, moderate on 2, vigorous on 1."),
     ).toBeInTheDocument();
+  });
+
+  it("shows the first and latest MRS rating with the published bands in brackets", async () => {
+    await generateWith(
+      brief({
+        mrs: {
+          checkInsInPeriod: 3,
+          first: {
+            completedOn: "2026-01-05",
+            scores: { total: 19, somatic: 10, psychological: 6, urogenital: 3 },
+            bands: {
+              total: "SEVERE",
+              somatic: "SEVERE",
+              psychological: "MODERATE",
+              urogenital: "MODERATE",
+            },
+          },
+          latest: {
+            completedOn: "2026-01-30",
+            scores: { total: 7, somatic: 4, psychological: 2, urogenital: 1 },
+            bands: { total: "MILD", somatic: "MILD", psychological: "MILD", urogenital: "MILD" },
+          },
+        },
+      }),
+    );
+    expect(await screen.findByText("Menopause Rating Scale (MRS)")).toBeInTheDocument();
+    expect(
+      screen.getByText("3 monthly ratings in this period; the first and latest are shown."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("19 of 44")).toBeInTheDocument();
+    expect(screen.getByText("7 of 44")).toBeInTheDocument();
+    expect(screen.getAllByText("(severe)")).toHaveLength(2);
+    expect(screen.getByText(/published MRS reference categories/)).toBeInTheDocument();
+  });
+
+  it("has no MRS section without a rating in the period", async () => {
+    await generateWith(
+      brief({
+        mrs: { checkInsInPeriod: 0, first: null, latest: null },
+        exercise: { daysAnswered: 3, breakdown: null },
+      }),
+    );
+    // The BRIEF has rendered (its exercise section is there) ...
+    expect(await screen.findByText("Exercise")).toBeInTheDocument();
+    // ... with no MRS section.
+    expect(screen.queryByText("Menopause Rating Scale (MRS)")).not.toBeInTheDocument();
   });
 
   it("shows the work impact breakdown from 7 answered days", async () => {

@@ -37,6 +37,8 @@ import { briefPeriodLabel } from "./brief-period-label.js";
 import { summarizeNightSweatsRecall } from "./night-sweats-recall.js";
 import { summarizeWorkImpact } from "./work-impact.js";
 import { summarizeExercise } from "./exercise.js";
+import { summarizeMrs } from "./mrs-summary.js";
+import { env } from "../../config/env.js";
 import { summarizeLastRecordedPeriod } from "./last-recorded-period.js";
 import { briefRepository } from "./brief.repository.js";
 import { briefAi, type BriefInput } from "./brief.ai.js";
@@ -130,6 +132,7 @@ async function generateBriefContent(
     nightSweatsAnswers,
     workImpactAnswers,
     exerciseAnswers,
+    mrsCheckIns,
     lastPeriodDay,
     reportedLastPeriod,
   ] = await Promise.all([
@@ -140,6 +143,11 @@ async function generateBriefContent(
     briefRepository.listNightSweatsRecall(userId, firstDay, lastDay),
     briefRepository.listWorkImpact(userId, firstDay, lastDay),
     briefRepository.listExercise(userId, firstDay, lastDay),
+    // Read only while the MRS check-in is switched on (licence); off,
+    // the BRIEF has no MRS section at all.
+    env.MRS_CHECK_IN_ENABLED
+      ? briefRepository.listMrsCheckIns(userId, firstDay, lastDay)
+      : Promise.resolve(null),
     // Cycle dates are calendar days too.
     briefRepository.findLastPeriodDay(userId, lastDay),
     briefRepository.findReportedLastPeriod(userId),
@@ -155,6 +163,10 @@ async function generateBriefContent(
   // Same rules: its own count, in this person's BRIEF only, never in
   // the AI input. See exercise.ts.
   const exercise = summarizeExercise(exerciseAnswers);
+  // Her monthly MRS check-ins in the period: first and latest scores
+  // with the published reference bands. Never in the AI input. See
+  // mrs-summary.ts.
+  const mrs = mrsCheckIns ? summarizeMrs(mrsCheckIns) : null;
   // Same rules again: shown only in this person's BRIEF, never in the
   // AI input. See last-recorded-period.ts.
   const lastRecordedPeriod = summarizeLastRecordedPeriod(
@@ -359,6 +371,7 @@ async function generateBriefContent(
     nightSweatsRecall: JSON.parse(JSON.stringify(nightSweatsRecall)),
     workImpact: JSON.parse(JSON.stringify(workImpact)),
     exercise: JSON.parse(JSON.stringify(exercise)),
+    mrs: mrs === null ? null : JSON.parse(JSON.stringify(mrs)),
     lastRecordedPeriod: JSON.parse(JSON.stringify(lastRecordedPeriod)),
     // The exact same canonical object computed once above — used to
     // build the AI-safe projection and to validate the AI's

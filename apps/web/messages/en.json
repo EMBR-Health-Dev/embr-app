@@ -828,7 +828,23 @@
     "exerciseAnswered": "Answered on {count, plural, one {# day} other {# days}} in this period.",
     "exerciseBreakdown": "None on {none}, light on {light}, moderate on {moderate}, vigorous on {vigorous}.",
     "exerciseFewAnswers": "A breakdown is shown once 7 days have been answered.",
-    "exerciseScale": "Your own judgement of how hard you exercised each day, not measured."
+    "exerciseScale": "Your own judgement of how hard you exercised each day, not measured.",
+    "mrsTitle": "Menopause Rating Scale (MRS)",
+    "mrsCount": "{count, plural, one {1 monthly rating in this period.} other {# monthly ratings in this period; the first and latest are shown.}}",
+    "mrsTotal": "Total",
+    "mrsSomatic": "Somatic",
+    "mrsPsychological": "Psychological",
+    "mrsUrogenital": "Urogenital",
+    "mrsScore": "{score} of {max}",
+    "mrsBand": {
+      "NONE_OR_LITTLE": "none or little",
+      "MILD": "mild",
+      "MODERATE": "moderate",
+      "SEVERE": "severe"
+    },
+    "mrsScale": "Your own ratings of 11 symptoms, each from 0 (none) to 4 (extremely severe), for how you felt at the time.",
+    "mrsBands": "Bands in brackets are the published MRS reference categories (Heinemann et al. 2004), from a German population sample; scores tend to run lower in Asian samples. They are for your clinician and describe a score, not a diagnosis.",
+    "mrsCopyright": "Menopause Rating Scale © Prof. Lothar A. J. Heinemann."
   },
   "AcceptInvite": {
     "couldntAccept": "Couldn't accept that invite",

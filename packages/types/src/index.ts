@@ -352,6 +352,27 @@ export interface MrsScoresDto {
   urogenital: number;
 }
 
+/** The published MRS reference bands (Heinemann et al., Health Qual Life
+ * Outcomes 2004;2:45, German standardisation sample). Shown in the BRIEF
+ * for the clinician, never on her own screens. */
+export type MrsBand = "NONE_OR_LITTLE" | "MILD" | "MODERATE" | "SEVERE";
+
+export interface BriefMrsPointDto {
+  /** Her local date, YYYY-MM-DD. */
+  completedOn: string;
+  scores: MrsScoresDto;
+  bands: Record<keyof MrsScoresDto, MrsBand>;
+}
+
+/** The Menopause Rating Scale in a BRIEF: how many check-ins fall in the
+ * period, and the first and latest of them. `latest` is null when there
+ * was only one. Never sent to the AI. */
+export interface BriefMrsSummaryDto {
+  checkInsInPeriod: number;
+  first: BriefMrsPointDto | null;
+  latest: BriefMrsPointDto | null;
+}
+
 /** A completed Menopause Rating Scale check-in. */
 export interface MrsCheckInDto {
   id: string;
@@ -919,6 +940,10 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * only when at least 7 were. Never sent to the AI. Null for a brief
    * generated before this field existed. */
   exercise: ExerciseSummaryDto | null;
+  /** The monthly Menopause Rating Scale check-ins in the period. Null
+   * when the brief predates the field or the check-in was switched off
+   * when it was made. Never sent to the AI. */
+  mrs: BriefMrsSummaryDto | null;
   /** Last period day logged anywhere in the record up to the brief's
    * end. Never sent to the AI. Null for a brief generated before this
    * field existed. */

@@ -340,6 +340,8 @@ describe.skipIf(!reachable)("BRIEF records with hand-checked figures", () => {
       daysAnswered: 7,
       breakdown: { NONE: 2, LIGHT: 3, MODERATE: 1, VIGOROUS: 1 },
     });
+    // The MRS check-in is switched off here: no section at all.
+    expect(brief.mrs).toBeNull();
   });
 
   it.each(ZONES)(

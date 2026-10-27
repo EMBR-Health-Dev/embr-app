@@ -131,6 +131,17 @@ interface PdfStrings {
   exerciseBreakdownLine: (b: Record<"NONE" | "LIGHT" | "MODERATE" | "VIGOROUS", number>) => string;
   exerciseFewAnswersNote: string;
   exerciseScaleNote: string;
+  mrsHeading: string;
+  mrsCountLine: (count: number) => string;
+  mrsPointLine: (
+    date: string,
+    scores: { total: number; somatic: number; psychological: number; urogenital: number },
+    bands: { total: string; somatic: string; psychological: string; urogenital: string },
+  ) => string;
+  mrsBand: Record<"NONE_OR_LITTLE" | "MILD" | "MODERATE" | "SEVERE", string>;
+  mrsScaleNote: string;
+  mrsBandsNote: string;
+  mrsCopyright: string;
   patternsNoticedHeading: string;
   coOccurrenceLine: (categoryA: string, categoryB: string, days: number) => string;
   cycleSummaryHeading: string;
@@ -219,6 +230,25 @@ const EN: PdfStrings = {
     `None on ${b.NONE}, light on ${b.LIGHT}, moderate on ${b.MODERATE}, vigorous on ${b.VIGOROUS}.`,
   exerciseFewAnswersNote: "A breakdown is shown once 7 days have been answered.",
   exerciseScaleNote: "Her own judgement of how hard she exercised each day, not measured.",
+  mrsHeading: "Menopause Rating Scale (MRS)",
+  mrsCountLine: (count) =>
+    count === 1
+      ? "1 monthly rating in this period."
+      : `${count} monthly ratings in this period; the first and latest are shown.`,
+  mrsPointLine: (date, s, b) =>
+    `${date}: total ${s.total} of 44 (${b.total}); somatic ${s.somatic} of 16 (${b.somatic}), ` +
+    `psychological ${s.psychological} of 16 (${b.psychological}), urogenital ${s.urogenital} of 12 (${b.urogenital}).`,
+  mrsBand: {
+    NONE_OR_LITTLE: "none or little",
+    MILD: "mild",
+    MODERATE: "moderate",
+    SEVERE: "severe",
+  },
+  mrsScaleNote:
+    "Her own ratings of 11 symptoms, each from 0 (none) to 4 (extremely severe), for how she felt at the time.",
+  mrsBandsNote:
+    "Bands in brackets are the published MRS reference categories (Heinemann et al. 2004), from a German population sample; scores tend to run lower in Asian samples. They describe a score, not a diagnosis.",
+  mrsCopyright: "Menopause Rating Scale © Prof. Lothar A. J. Heinemann.",
   patternsNoticedHeading: "Observed patterns",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA} and ${categoryB} were both reported on the same day on ${days}` +
@@ -338,6 +368,20 @@ const JA: PdfStrings = {
     `なし${b.NONE}日、軽い${b.LIGHT}日、中程度${b.MODERATE}日、激しい${b.VIGOROUS}日。`,
   exerciseFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
   exerciseScaleNote: "毎日どのくらい運動したかについての本人の判断で、測定値ではありません。",
+  mrsHeading: "Menopause Rating Scale（MRS）",
+  mrsCountLine: (count) =>
+    count === 1
+      ? "この期間の月1回の評価：1回。"
+      : `この期間の月1回の評価：${count}回。最初と最新を表示しています。`,
+  mrsPointLine: (date, s, b) =>
+    `${date}：合計 ${s.total}／44（${b.total}）、身体 ${s.somatic}／16（${b.somatic}）、` +
+    `心理 ${s.psychological}／16（${b.psychological}）、泌尿生殖器 ${s.urogenital}／12（${b.urogenital}）。`,
+  mrsBand: { NONE_OR_LITTLE: "なし・軽微", MILD: "軽度", MODERATE: "中等度", SEVERE: "重度" },
+  mrsScaleNote:
+    "11の症状について、その時点の状態を0（なし）から4（非常に重い）で本人が評価したものです。",
+  mrsBandsNote:
+    "括弧内は公表されているMRSの参照区分（Heinemann他、2004年、ドイツの一般集団の標本）です。アジアの標本では点数が低めになる傾向があります。点数の位置づけを示すもので、診断ではありません。",
+  mrsCopyright: "Menopause Rating Scale © Prof. Lothar A. J. Heinemann.",
   patternsNoticedHeading: "記録に見られるパターン",
   coOccurrenceLine: (categoryA, categoryB, days) =>
     `${categoryA}と${categoryB}が同じ日に記録された日は${days}日でした。`,

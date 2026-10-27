@@ -467,6 +467,31 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Menopause Rating Scale (her own monthly ratings) ----
+  // Skipped for a brief that predates the field, one made while the
+  // check-in was switched off, or one with no rating in the period.
+  // Published reference bands appear here, for the clinician; her own
+  // screens show only the numbers.
+  if (brief.mrs && brief.mrs.checkInsInPeriod > 0 && brief.mrs.first) {
+    const { checkInsInPeriod, first, latest } = brief.mrs;
+    sectionHeading(doc, t.mrsHeading);
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
+    doc.text(t.mrsCountLine(checkInsInPeriod));
+    for (const point of latest ? [first, latest] : [first]) {
+      const bands = {
+        total: t.mrsBand[point.bands.total],
+        somatic: t.mrsBand[point.bands.somatic],
+        psychological: t.mrsBand[point.bands.psychological],
+        urogenital: t.mrsBand[point.bands.urogenital],
+      };
+      doc.text(t.mrsPointLine(point.completedOn, point.scores, bands));
+    }
+    doc.fillColor(INK_MUTED).text(t.mrsScaleNote);
+    doc.text(t.mrsBandsNote);
+    doc.text(t.mrsCopyright);
+    doc.moveDown(1);
+  }
+
   // ---- Observed patterns (symptom co-occurrence, descriptive only) ----
   // Only rendered when present — coOccurrence is null both for a
   // brief predating this field and for one where no pair reached the
