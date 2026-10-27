@@ -378,7 +378,10 @@
     "exerciseLabel": "Exercise today",
     "exerciseLabelYesterday": "Exercise yesterday",
     "exerciseNone": "Not logged",
-    "exerciseHelp": "Any sport, workout or movement that raised your breathing. Light: a walk or stretching. Moderate: brisk walking, cycling or a class. Vigorous: running, a match or hard training."
+    "exerciseHelp": "Any sport, workout or movement that raised your breathing. Light: a walk or stretching. Moderate: brisk walking, cycling or a class. Vigorous: running, a match or hard training.",
+    "yesNoNotLogged": "Not logged",
+    "answerYes": "Yes",
+    "answerNo": "No"
   },
   "Week": {
     "title": "Your week",
