@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { ConsentType } from "@embr/types";
 import { LEGAL_DOCUMENT_VERSIONS } from "@embr/validation";
 import { api } from "../../lib/api";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "../../i18n/locale";
 import { ApiError } from "../../lib/api-client";
 import { useAuth } from "../../lib/auth-context";
 import { pendingConsentTypes } from "../../lib/consent";
@@ -24,7 +25,8 @@ import { ConsentItems } from "../../components/consent-items";
  */
 function ConsentForm() {
   const t = useTranslations("Consent");
-  const locale = useLocale() === "ja" ? "ja" : "en";
+  const rawLocale = useLocale();
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = safeRedirect(searchParams.get("redirect")) ?? "/dashboard";

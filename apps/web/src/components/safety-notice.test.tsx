@@ -3,11 +3,13 @@ import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "../../messages/en.json";
 import ja from "../../messages/ja.json";
+import fr from "../../messages/fr.json";
 import { SafetyNotice } from "./safety-notice";
 
-function renderWithIntl(locale: "en" | "ja") {
+function renderWithIntl(locale: "en" | "ja" | "fr") {
+  const byLocale = { en: messages, ja, fr };
   return render(
-    <NextIntlClientProvider locale={locale} messages={locale === "en" ? messages : ja}>
+    <NextIntlClientProvider locale={locale} messages={byLocale[locale]}>
       <SafetyNotice />
     </NextIntlClientProvider>,
   );
@@ -20,6 +22,13 @@ describe("SafetyNotice", () => {
     expect(screen.getByText(/112/)).toBeTruthy();
     expect(screen.getByText(/999/)).toBeTruthy();
     expect(screen.getByText(/119/)).toBeTruthy();
+  });
+
+  it("shows the notice in French with the French emergency and crisis numbers", () => {
+    renderWithIntl("fr");
+    expect(screen.getByRole("heading", { name: /aide urgente/i })).toBeTruthy();
+    expect(screen.getByText(/le 15 ou le 112 en France/)).toBeTruthy();
+    expect(screen.getByText(/3114/)).toBeTruthy();
   });
 
   it("shows the notice in Japanese with the same emergency numbers", () => {
