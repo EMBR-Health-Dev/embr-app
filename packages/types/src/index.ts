@@ -378,7 +378,7 @@ export interface MrsCheckInDto {
   id: string;
   /** Her local date, YYYY-MM-DD. */
   completedOn: string;
-  locale: "en" | "ja";
+  locale: "en" | "ja" | "fr";
   instrumentVersion: string;
   /** Each 0 (none) to 4 (very severe). */
   answers: Record<MrsItem, number>;
@@ -982,7 +982,7 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * static labels in too, so a re-download later always matches the
    * language the content was actually written in, regardless of the
    * downloading session's current locale. */
-  locale: "en" | "ja";
+  locale: "en" | "ja" | "fr";
 }
 
 /** Cross-brief evidence aggregation, not a new clinical inference —

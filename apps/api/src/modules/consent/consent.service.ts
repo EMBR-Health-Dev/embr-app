@@ -11,7 +11,7 @@ import { env } from "../../config/env.js";
 import { consentRepository, type NewConsentRecord } from "./consent.repository.js";
 
 type ConsentStates = Record<ConsentType, ConsentState>;
-type Locale = "en" | "ja";
+type Locale = "en" | "ja" | "fr";
 type Source = NewConsentRecord["source"];
 
 function stateFor(type: ConsentType, latest: ConsentRecord | undefined): ConsentState {

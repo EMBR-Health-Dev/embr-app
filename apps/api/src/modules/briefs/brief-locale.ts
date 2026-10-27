@@ -53,8 +53,27 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
+// Mirrors apps/web/messages/fr.json's Enums.category exactly.
+const CATEGORY_LABELS_FR: Record<string, string> = {
+  HOT_FLASH: "Bouffée de chaleur",
+  NIGHT_SWEATS: "Sueurs nocturnes",
+  MOOD_CHANGE: "Changement d’humeur",
+  SLEEP_DISTURBANCE: "Troubles du sommeil",
+  BRAIN_FOG: "Brouillard mental",
+  JOINT_PAIN: "Douleurs articulaires",
+  FATIGUE: "Fatigue",
+  ANXIETY: "Anxiété",
+  IRREGULAR_HEARTBEAT: "Palpitations",
+  VAGINAL_DRYNESS: "Sécheresse vaginale",
+  LIBIDO_CHANGE: "Changement de libido",
+  WEIGHT_CHANGE: "Variation de poids",
+  HEADACHE: "Maux de tête",
+  OTHER: "Autre",
+};
+
 export function categoryLabel(category: string, locale: Locale): string {
   if (locale === "ja") return CATEGORY_LABELS_JA[category] ?? category;
+  if (locale === "fr") return CATEGORY_LABELS_FR[category] ?? category;
   return titleCase(category);
 }
 
@@ -67,8 +86,18 @@ const TREATMENT_CATEGORY_LABELS_JA: Record<string, string> = {
   OTHER: "その他",
 };
 
+// Mirrors apps/web/messages/fr.json's Enums.treatmentCategory exactly.
+const TREATMENT_CATEGORY_LABELS_FR: Record<string, string> = {
+  HRT: "THM (traitement hormonal de la ménopause)",
+  SUPPLEMENT: "Complément alimentaire",
+  MEDICATION: "Médicament",
+  LIFESTYLE: "Mode de vie",
+  OTHER: "Autre",
+};
+
 export function treatmentCategoryLabel(category: string, locale: Locale): string {
   if (locale === "ja") return TREATMENT_CATEGORY_LABELS_JA[category] ?? category;
+  if (locale === "fr") return TREATMENT_CATEGORY_LABELS_FR[category] ?? category;
   // HRT is a real acronym, not a word to title-case ("Hrt") — same fix,
   // same reasoning, as export/pdf.ts's own local override.
   if (category === "HRT") return "HRT";
@@ -82,8 +111,17 @@ const SEVERITY_LABELS_JA: Record<string, string> = {
   SEVERE: "重度",
 };
 
+// Mirrors apps/web/messages/fr.json's Enums.severity, in lower case as
+// the English labels are.
+const SEVERITY_LABELS_FR: Record<string, string> = {
+  MILD: "légère",
+  MODERATE: "modérée",
+  SEVERE: "sévère",
+};
+
 export function severityLabel(severity: string, locale: Locale): string {
   if (locale === "ja") return SEVERITY_LABELS_JA[severity] ?? severity;
+  if (locale === "fr") return SEVERITY_LABELS_FR[severity] ?? severity;
   return severity.toLowerCase();
 }
 
@@ -433,6 +471,140 @@ const JA: PdfStrings = {
     "これらは臨床的な解釈や診断ではありません。その判断は、この記録を一緒に確認する臨床医に委ねられます。",
 };
 
+/** French plural rule: 0 and 1 take the singular. */
+const frPlural = (n: number, one: string, many: string) => (n <= 1 ? one : many);
+
+/**
+ * French, written for France (médecin, professionnel de santé), with a
+ * non breaking space before ? ! : ; as French typography requires.
+ * Wording mirrors apps/web/messages/fr.json's "Brief" and "Enums"
+ * namespaces where the same text appears there. Needs native review
+ * before a French launch.
+ */
+const FR: PdfStrings = {
+  documentTitle: "EMBR BRIEF",
+  observationPeriodLabel: "PÉRIODE D’OBSERVATION",
+  preparedFor: (email) => `Préparé pour ${email}`,
+  generatedAt: (utcTimestamp) => `Généré le ${utcTimestamp} UTC`,
+  topDisclaimer:
+    "Ceci est une synthèse structurée de données saisies par la personne elle-même, préparée pour" +
+    " faciliter un échange avec un professionnel de santé. Ce n’est ni un diagnostic ni un avis médical.",
+  summaryHeading: "Synthèse",
+  aiAuthorshipNote:
+    "Cette synthèse et les questions sont rédigées par une IA à partir des totaux et des tendances de ce BRIEF. Vos notes ne sont pas utilisées.",
+  groundedInHeading: "Fondé sur vos données",
+  questionsHeading: "Questions à poser à votre professionnel de santé",
+  symptomSignalsHeading: "Signaux des symptômes",
+  noSymptomsText: "Aucun symptôme noté sur cette période.",
+  occurrenceLine: (count, severityBreakdown) =>
+    `${count} ${frPlural(count, "occurrence", "occurrences")} (${severityBreakdown})`,
+  dayByDayHeading: "Jour par jour",
+  dayByDayIntro:
+    "Chaque colonne correspond à un jour de ce BRIEF, du plus ancien à gauche. Elle montre les jours où chaque symptôme a été noté, pas son intensité.",
+  dayByDayLegendLogged: "Noté",
+  dayByDayLegendOther: "Autres symptômes notés",
+  dayByDayLegendNoEntry: "Aucune saisie",
+  dayByDayCoverage: (recorded, total) => {
+    const missing = total - recorded;
+    return `Saisies sur ${recorded} des ${total} jours. Aucune saisie sur ${missing} ${frPlural(missing, "jour", "jours")}.`;
+  },
+  comparedWithPreviousHeading: "Comparaison avec la période précédente",
+  frequencyComparisonLine: (currentCount, previousCount) =>
+    `Noté ${currentCount} ${frPlural(currentCount, "fois", "fois")}, contre ${previousCount} sur la période précédente.`,
+  ongoingSymptomsHeading: "Symptômes persistants",
+  persistentSymptomLine: (category) => `${category} est resté présent sur les deux périodes.`,
+  nightSweatsRecallHeading: "Sueurs nocturnes rappelées le matin",
+  nightSweatsAnsweredLine: (mornings) =>
+    `Réponse donnée ${mornings} ${frPlural(mornings, "matin", "matins")} sur cette période.`,
+  nightSweatsBreakdownLine: (b) =>
+    `Aucune\u00a0: ${b.NONE}, 1\u00a0: ${b.ONE}, 2 à 3\u00a0: ${b.TWO_TO_THREE}, 4 ou plus\u00a0: ${b.FOUR_PLUS}.`,
+  nightSweatsFewAnswersNote: "Une répartition s’affiche à partir de 7 matins de réponses.",
+  nightSweatsSeparateNote:
+    "Il s’agit d’estimations du matin, comptées séparément des symptômes notés.",
+  workImpactHeading: "Jours où les symptômes ont affecté le travail",
+  workImpactAnsweredLine: (days) =>
+    `Réponse donnée ${days} ${frPlural(days, "jour", "jours")} sur cette période.`,
+  workImpactBreakdownLine: (b) =>
+    `Sans effet\u00a0: ${b.NONE}, moins de travail\u00a0: ${b.DID_LESS}, temps de travail perdu\u00a0: ${b.MISSED_TIME}.`,
+  workImpactFewAnswersNote: "Une répartition s’affiche à partir de 7 jours de réponses.",
+  workImpactPrivacyNote: "Ses propres réponses quotidiennes. Jamais partagées avec un employeur.",
+  exerciseHeading: "Activité physique",
+  exerciseAnsweredLine: (days) =>
+    `Réponse donnée ${days} ${frPlural(days, "jour", "jours")} sur cette période.`,
+  exerciseBreakdownLine: (b) =>
+    `Aucune\u00a0: ${b.NONE}, légère\u00a0: ${b.LIGHT}, modérée\u00a0: ${b.MODERATE}, intense\u00a0: ${b.VIGOROUS}.`,
+  exerciseFewAnswersNote: "Une répartition s’affiche à partir de 7 jours de réponses.",
+  exerciseScaleNote:
+    "Sa propre appréciation de l’intensité de son activité chaque jour, non mesurée.",
+  mrsHeading: "Menopause Rating Scale (MRS)",
+  mrsCountLine: (count) =>
+    count === 1
+      ? "1 évaluation mensuelle sur cette période."
+      : `${count} évaluations mensuelles sur cette période\u00a0; la première et la plus récente sont affichées.`,
+  mrsPointLine: (date, s, b) =>
+    `${date}\u00a0: total ${s.total} sur 44 (${b.total})\u00a0; somatique ${s.somatic} sur 16 (${b.somatic}), ` +
+    `psychologique ${s.psychological} sur 16 (${b.psychological}), urogénital ${s.urogenital} sur 12 (${b.urogenital}).`,
+  mrsBand: {
+    NONE_OR_LITTLE: "nul ou faible",
+    MILD: "léger",
+    MODERATE: "modéré",
+    SEVERE: "sévère",
+  },
+  mrsScaleNote:
+    "Ses propres évaluations de 11 symptômes, chacun de 0 (aucun) à 4 (extrêmement sévère), selon son ressenti du moment.",
+  mrsBandsNote:
+    "Les catégories entre parenthèses sont les catégories de référence publiées de la MRS (Heinemann et al. 2004), issues d’un échantillon de population allemande\u00a0; les scores tendent à être plus bas dans les échantillons asiatiques. Elles situent un score et ne constituent pas un diagnostic.",
+  mrsCopyright: "Menopause Rating Scale © Prof. Lothar A. J. Heinemann.",
+  patternsNoticedHeading: "Tendances observées",
+  coOccurrenceLine: (categoryA, categoryB, days) =>
+    `${categoryA} et ${categoryB} ont été notés le même jour à ${days} ${frPlural(days, "reprise", "reprises")}.`,
+  cycleSummaryHeading: "Synthèse du cycle",
+  notEnoughCycleDataText:
+    "Pas assez de débuts de règles notés sur cette période pour calculer la durée du cycle.",
+  averageCycleLengthLine: (days, cycleCount) =>
+    `Durée moyenne du cycle\u00a0: ${days} jours (${cycleCount} ${frPlural(cycleCount, "cycle noté", "cycles notés")})`,
+  periodDaysLoggedLine: (days) =>
+    `${days} ${frPlural(days, "jour de règles noté", "jours de règles notés")}`,
+  lastPeriodDayLine: (date, months) =>
+    `Dernier jour de règles noté\u00a0: ${date} (${
+      months === 0 ? "moins d’un mois" : `${months} mois`
+    } avant la fin de ce BRIEF)`,
+  noPeriodDayLoggedText: "Aucun jour de règles noté dans EMBR jusqu’à la fin de ce BRIEF.",
+  lastPeriodDayNote:
+    "Ne compte que les jours de règles notés dans EMBR, sur l’ensemble du dossier.",
+  reportedLastPeriodLine: (date, months) =>
+    `Dernières règles, selon ce qu’elle a indiqué dans les Paramètres\u00a0: ${date} (${
+      months === 0 ? "moins d’un mois" : `${months} mois`
+    } avant la fin de ce BRIEF)`,
+  reportedLastPeriodNote:
+    "Sa propre réponse dans les Paramètres, et non un jour de règles noté dans EMBR. Elle peut être approximative.",
+  treatmentsHeading: "Traitements notés pendant cette période",
+  noTreatmentsText: "Aucun traitement noté sur cette période.",
+  ongoingLabel: "En cours",
+  stopReasonLine: (reason) =>
+    `Raison de l’arrêt\u00a0: ${
+      {
+        SIDE_EFFECTS: "effets indésirables",
+        LONG_TERM_CONCERN: "inquiétude quant aux effets à long terme",
+        NO_LONGER_NEEDED: "plus nécessaire",
+        COST: "coût",
+        OTHER: "autre raison",
+      }[reason]
+    }`,
+  treatmentSafetyNote:
+    "Ceci reflète ce que vous avez noté. Cela n’évalue pas l’efficacité d’un traitement et ne" +
+    " constitue pas une recommandation de traitement.",
+  treatmentImpactHeading: "Évolutions observées après le début d’un traitement",
+  treatmentImpactInsufficientText: "Pas encore assez de recul depuis le début pour comparer.",
+  treatmentImpactLine: (beforeCount, beforeDays, afterCount, afterDays) =>
+    `${beforeCount} ${frPlural(beforeCount, "saisie de symptôme", "saisies de symptômes")} dans les ${beforeDays} jours précédant le début,` +
+    ` contre ${afterCount} dans les ${afterDays} jours suivants.`,
+  closingDisclaimer:
+    "Tout ce qui précède reflète ce qui a été déclaré et, lorsque c’est indiqué, des tendances observées" +
+    " dans ces données déclarées. Rien de tout cela n’est une interprétation clinique ni un diagnostic." +
+    " Ce jugement revient au médecin qui lit ce document avec vous.",
+};
+
 export function pdfStrings(locale: Locale): PdfStrings {
-  return locale === "ja" ? JA : EN;
+  return locale === "ja" ? JA : locale === "fr" ? FR : EN;
 }

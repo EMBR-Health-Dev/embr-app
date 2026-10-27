@@ -4,7 +4,7 @@ export interface NewConsentRecord {
   userId: string;
   type: "TERMS" | "PRIVACY" | "HEALTH_PROCESSING";
   version: string;
-  locale: "en" | "ja";
+  locale: "en" | "ja" | "fr";
   action: "GRANTED" | "WITHDRAWN";
   source: "REGISTRATION" | "CONSENT_SCREEN" | "SETTINGS";
   client?: string | null;

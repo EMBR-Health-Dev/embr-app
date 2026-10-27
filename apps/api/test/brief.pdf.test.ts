@@ -177,6 +177,29 @@ describe("buildClinicalBriefPdf — Unicode rendering", () => {
   });
 });
 
+describe("buildClinicalBriefPdf — French locale", () => {
+  it("renders static labels in French, accents intact, with no English heading left over", async () => {
+    const brief = baseBrief({
+      locale: "fr",
+      aiNarrative: "Aucune tendance marquée sur cette période.",
+      aiDiscussionTopics: ["Y a-t-il de nouveaux symptômes depuis la dernière consultation ?"],
+    });
+
+    const text = (await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"))).replace(
+      /\s+/g,
+      " ",
+    );
+
+    expect(text).toContain("EMBR BRIEF");
+    expect(text).toContain("PÉRIODE D’OBSERVATION");
+    expect(text).toContain("QUESTIONS À POSER À VOTRE PROFESSIONNEL DE SANTÉ");
+    expect(text).toContain("SIGNAUX DES SYMPTÔMES");
+    expect(text).toContain("Aucun symptôme noté sur cette période.");
+    expect(text).not.toContain("Clinical Brief");
+    expect(text).not.toMatch(/QUESTIONS FOR|SYMPTOM SIGNALS/);
+  });
+});
+
 describe("buildClinicalBriefPdf — Japanese locale", () => {
   it("renders every static label in Japanese for a sparse, empty-data brief — no English label leaks in", async () => {
     const brief = baseBrief({

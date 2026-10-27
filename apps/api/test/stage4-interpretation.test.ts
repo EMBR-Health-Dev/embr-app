@@ -512,6 +512,55 @@ describe("buildStage4Interpretation — MAX_BRIEF_PATTERNS cap", () => {
   });
 });
 
+describe("buildStage4Interpretation — French locale", () => {
+  it("produces French text with a localized category label, not the raw enum value", () => {
+    const comparison = compareSymptomFrequency(
+      [{ category: "HOT_FLASH", count: 6 }],
+      [{ category: "HOT_FLASH", count: 4 }],
+    );
+    const result = buildStage4Interpretation(emptyInput({ frequencyComparison: comparison }), "fr");
+
+    const pattern = result.patterns[0]!;
+    expect(pattern.observation).toContain("Bouffée de chaleur");
+    expect(pattern.observation).not.toContain("HOT_FLASH");
+    expect(pattern.interpretation).toContain("une hausse");
+    expect(pattern.id).toBe("frequency_increased:HOT_FLASH");
+  });
+
+  it("French interpretation and caveat text never assert causality — exact contract per pattern type", () => {
+    const comparison = compareSymptomFrequency(
+      [{ category: "HOT_FLASH", count: 6 }],
+      [{ category: "HOT_FLASH", count: 4 }],
+    );
+    const result = buildStage4Interpretation(
+      emptyInput({
+        frequencyComparison: comparison,
+        coOccurrence: { categoryA: "BRAIN_FOG", categoryB: "HOT_FLASH", days: 4 },
+        treatmentImpact: [treatmentImpact()],
+      }),
+      "fr",
+    );
+
+    const byType = Object.fromEntries(result.patterns.map((p) => [p.type, p]));
+    expect(byType.co_occurrence_detected!.caveat).toBe(
+      "Il s’agit uniquement d’une association dans le temps, pas d’une relation de cause à effet.",
+    );
+    expect(byType.co_occurrence_detected!.interpretation).toContain(
+      "Cela n’établit pas que l’un cause l’autre",
+    );
+    expect(byType.treatment_window_changed!.caveat).toBe(
+      "Il s’agit d’une évolution observée dans le temps, pas d’une preuve que le traitement en est la cause.",
+    );
+    expect(byType.co_occurrence_detected!.observation).toContain("Brouillard mental");
+    expect(byType.co_occurrence_detected!.observation).toContain("Bouffée de chaleur");
+    // The output safety check also runs on pattern text, so no French
+    // template may contain the diagnosis stem it rejects.
+    for (const p of result.patterns) {
+      expect(`${p.observation} ${p.interpretation} ${p.caveat}`).not.toMatch(/diagnosti/i);
+    }
+  });
+});
+
 describe("buildStage4Interpretation — Japanese locale", () => {
   it("produces Japanese observation/interpretation text with a localized category label, not the raw English enum value", () => {
     const comparison = compareSymptomFrequency(

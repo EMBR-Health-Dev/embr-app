@@ -106,16 +106,19 @@ export interface Stage4Input {
 const FREQUENCY_CAVEAT: Record<Locale, string> = {
   en: "This reflects self-reported logging frequency only. It does not indicate severity, cause, or clinical significance.",
   ja: "これは自己申告による記録頻度のみを反映しています。重症度、原因、臨床的な意義を示すものではありません。",
+  fr: "Ceci reflète uniquement la fréquence des saisies déclarées. Cela n’indique ni l’intensité, ni la cause, ni la portée clinique.",
 };
 
 const CO_OCCURRENCE_CAVEAT: Record<Locale, string> = {
   en: "This is a temporal association only, not a causal relationship.",
   ja: "これは時間的な関連性を示すものにすぎず、因果関係を示すものではありません。",
+  fr: "Il s’agit uniquement d’une association dans le temps, pas d’une relation de cause à effet.",
 };
 
 const TREATMENT_WINDOW_CAVEAT: Record<Locale, string> = {
   en: "This is an observed change over time, not evidence that the treatment caused it.",
   ja: "これは時間経過による観察された変化であり、その治療が原因であることを示す根拠ではありません。",
+  fr: "Il s’agit d’une évolution observée dans le temps, pas d’une preuve que le traitement en est la cause.",
 };
 
 /**
@@ -151,11 +154,14 @@ function buildFrequencyPattern(
     locale === "ja"
       ? `${category}は今回の期間に${entry.currentCount}回記録され、前回の期間は` +
         `${entry.previousCount}回でした。`
-      : // Counts are logged occurrences (computeSymptomSummary), not
-        // distinct days: two logs on one day are 2, so "times", not "days".
-        `${category} was logged ${entry.currentCount} time` +
-        `${entry.currentCount === 1 ? "" : "s"} during the current period, compared with` +
-        ` ${entry.previousCount} during the previous period.`;
+      : locale === "fr"
+        ? `${category}\u00a0: noté ${entry.currentCount} fois sur la période actuelle, contre` +
+          ` ${entry.previousCount} sur la période précédente.`
+        : // Counts are logged occurrences (computeSymptomSummary), not
+          // distinct days: two logs on one day are 2, so "times", not "days".
+          `${category} was logged ${entry.currentCount} time` +
+          `${entry.currentCount === 1 ? "" : "s"} during the current period, compared with` +
+          ` ${entry.previousCount} during the previous period.`;
 
   const type: Stage4PatternType =
     entry.direction === "increased" ? "frequency_increased" : "frequency_decreased";
@@ -166,9 +172,11 @@ function buildFrequencyPattern(
     locale === "ja"
       ? `これは、前回の期間と比較して${category}の記録頻度が${increased ? "増加" : "減少"}している` +
         `ことを示しています。`
-      : increased
-        ? `This represents an increase in how often ${category} was reported, relative to the previous period.`
-        : `This represents a decrease in how often ${category} was reported, relative to the previous period.`;
+      : locale === "fr"
+        ? `Cela représente ${increased ? "une hausse" : "une baisse"} de la fréquence à laquelle ${category} a été déclaré, par rapport à la période précédente.`
+        : increased
+          ? `This represents an increase in how often ${category} was reported, relative to the previous period.`
+          : `This represents a decrease in how often ${category} was reported, relative to the previous period.`;
 
   return {
     id: buildPatternId(type, evidenceRef),
@@ -197,16 +205,22 @@ function buildCoOccurrencePattern(
     observation:
       locale === "ja"
         ? `${labelA}と${labelB}は、この期間中にどちらも記録されました。`
-        : `${labelA} and ${labelB} were both reported during this period.`,
+        : locale === "fr"
+          ? `${labelA} et ${labelB} ont tous deux été déclarés pendant cette période.`
+          : `${labelA} and ${labelB} were both reported during this period.`,
     association:
       locale === "ja"
         ? `同じ日に記録されたのは${days}日です。`
-        : `They were both reported on the same day on ${days} occasion${days === 1 ? "" : "s"}.`,
+        : locale === "fr"
+          ? `Ils ont été déclarés le même jour à ${days} ${days <= 1 ? "reprise" : "reprises"}.`
+          : `They were both reported on the same day on ${days} occasion${days === 1 ? "" : "s"}.`,
     interpretation:
       locale === "ja"
         ? "これは、2つの症状が同じ日に起こる傾向があることを示しています。一方が他方の原因であること" +
           "を示すものではありません。"
-        : "This indicates the two symptoms tend to occur on the same days. It does not establish that one causes the other.",
+        : locale === "fr"
+          ? "Cela indique que les deux symptômes tendent à apparaître les mêmes jours. Cela n’établit pas que l’un cause l’autre."
+          : "This indicates the two symptoms tend to occur on the same days. It does not establish that one causes the other.",
     caveat: CO_OCCURRENCE_CAVEAT[locale],
     confidence: "descriptive",
     evidenceRef,
@@ -230,15 +244,18 @@ function buildTreatmentWindowPattern(
     locale === "ja"
       ? `${entry.name}：開始前${before.days}日間で${before.logCount}件の症状記録があり、開始後` +
         `${after.days}日間で${after.logCount}件でした。`
-      : // Colon, not the em dash this template used before — see this
-        // file's own doc comment on why this one English string is the
-        // sole content edit in this pass: it's user-facing text (PDF
-        // and, once cited, the AI narrative) that predates and
-        // violates EMBR's standing no-em-dash copy rule, not a
-        // rewording of wording this task otherwise leaves untouched.
-        `${entry.name}: ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} were` +
-        ` reported in the ${before.days} days before starting, compared with ${after.logCount}` +
-        ` in the ${after.days} days after starting.`;
+      : locale === "fr"
+        ? `${entry.name}\u00a0: ${before.logCount} ${before.logCount <= 1 ? "saisie de symptôme" : "saisies de symptômes"} dans les` +
+          ` ${before.days} jours précédant le début, contre ${after.logCount} dans les ${after.days} jours suivant le début.`
+        : // Colon, not the em dash this template used before — see this
+          // file's own doc comment on why this one English string is the
+          // sole content edit in this pass: it's user-facing text (PDF
+          // and, once cited, the AI narrative) that predates and
+          // violates EMBR's standing no-em-dash copy rule, not a
+          // rewording of wording this task otherwise leaves untouched.
+          `${entry.name}: ${before.logCount} symptom log${before.logCount === 1 ? "" : "s"} were` +
+          ` reported in the ${before.days} days before starting, compared with ${after.logCount}` +
+          ` in the ${after.days} days after starting.`;
 
   const type: Stage4PatternType = "treatment_window_changed";
   const evidenceRef: Stage4EvidenceRef = { treatmentId: entry.treatmentId };
@@ -251,7 +268,9 @@ function buildTreatmentWindowPattern(
       locale === "ja"
         ? "これは、この治療を開始する前後に記録された症状ログの件数を示しています。治療が変化の原因で" +
           "あるかどうかを示すものではありません。"
-        : "This reflects the number of symptom logs recorded before and after this treatment began. It does not establish whether the treatment caused any change.",
+        : locale === "fr"
+          ? "Cela reflète le nombre de saisies de symptômes avant et après le début de ce traitement. Cela n’établit pas que le traitement a causé une évolution."
+          : "This reflects the number of symptom logs recorded before and after this treatment began. It does not establish whether the treatment caused any change.",
     caveat: TREATMENT_WINDOW_CAVEAT[locale],
     confidence: "descriptive",
     evidenceRef,

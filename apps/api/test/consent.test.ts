@@ -314,6 +314,22 @@ describe("POST /auth/register — consent", () => {
   });
 });
 
+describe("consent locale — French", () => {
+  it("records fr as the locale the consents were shown in", async () => {
+    const agent = request.agent(createApp());
+    await register(agent, "record-fr@embr.health", CURRENT_CONSENTS, {
+      locale: "fr",
+      client: "web",
+    });
+    await login(agent, "record-fr@embr.health");
+
+    const res = await agent.get("/consents");
+    const history = res.body.data.history as Array<Record<string, string>>;
+    expect(history).toHaveLength(3);
+    for (const entry of history) expect(entry.locale).toBe("fr");
+  });
+});
+
 describe("requireCurrentConsent — server-side gate on health routes", () => {
   it("blocks health routes with 403 CONSENT_REQUIRED until every item is current", async () => {
     const agent = request.agent(createApp());
