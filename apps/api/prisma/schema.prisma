@@ -688,6 +688,12 @@ model ClinicalBrief {
   /// exercise.ts. Breakdown only from 7 answered days. Never sent to the
   /// AI. Null means "never computed for this brief".
   exercise           Json?
+  /// { checkInsInPeriod: number, first: BriefMrsPoint | null, latest: BriefMrsPoint | null }
+  /// The monthly Menopause Rating Scale check-ins dated in the period,
+  /// with each point's scores and published reference bands; see
+  /// mrs-summary.ts. Never sent to the AI. Null means the brief predates
+  /// the field or the MRS check-in was switched off when it was made.
+  mrs                Json?
   /// { date: "YYYY-MM-DD" | null, monthsBeforeBriefEnd: number | null }
   /// The last day with period flow logged anywhere in the record up to
   /// the brief's end. Nullable: earlier briefs read as "never

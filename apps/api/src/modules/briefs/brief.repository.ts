@@ -1,6 +1,7 @@
 import { prisma, Prisma } from "../../lib/prisma.js";
 
 import { toSkipTake } from "../../lib/pagination.js";
+import { mrsAnswers } from "../mrs/mrs.mappers.js";
 
 import type { PaginationQuery } from "@embr/validation";
 import type { Locale } from "../../lib/locale.js";
@@ -36,6 +37,19 @@ export const briefRepository = {
       select: { exercise: true },
     });
     return rows.map((row) => row.exercise);
+  },
+
+  /** Her MRS check-ins dated in [fromDate, toDate], with only the
+   * date and the 11 answers; see mrs-summary.ts. */
+  async listMrsCheckIns(userId: string, fromDate: Date, toDate: Date) {
+    const rows = await prisma.mrsCheckIn.findMany({
+      where: { userId, completedOn: { gte: fromDate, lte: toDate } },
+      orderBy: { completedOn: "asc" },
+    });
+    return rows.map((row) => ({
+      completedOn: row.completedOn.toISOString().slice(0, 10),
+      answers: mrsAnswers(row),
+    }));
   },
 
   /** The most recent day with period flow logged on or before
@@ -86,6 +100,7 @@ export const briefRepository = {
     nightSweatsRecall: Prisma.InputJsonValue;
     workImpact: Prisma.InputJsonValue;
     exercise: Prisma.InputJsonValue;
+    mrs: Prisma.InputJsonValue | null;
     lastRecordedPeriod: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;
@@ -114,6 +129,8 @@ export const briefRepository = {
           // already-mocked path every test already relies on for
           // `prisma` itself — see brief.test.ts's Prisma.JsonNull mock.
           coOccurrence: data.coOccurrence ?? Prisma.JsonNull,
+          // Same: null when the MRS check-in is switched off.
+          mrs: data.mrs ?? Prisma.JsonNull,
         },
       });
     } catch (err) {

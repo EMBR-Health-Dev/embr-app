@@ -827,7 +827,23 @@
     "exerciseAnswered": "この期間に{count}日分の回答がありました。",
     "exerciseBreakdown": "なし{none}日、軽い{light}日、中程度{moderate}日、激しい{vigorous}日。",
     "exerciseFewAnswers": "回答が7日分以上になると、内訳を表示します。",
-    "exerciseScale": "毎日どのくらい運動したかについてのあなた自身の判断で、測定値ではありません。"
+    "exerciseScale": "毎日どのくらい運動したかについてのあなた自身の判断で、測定値ではありません。",
+    "mrsTitle": "Menopause Rating Scale（MRS）",
+    "mrsCount": "{count, plural, one {この期間の月1回の評価：1回。} other {この期間の月1回の評価：#回。最初と最新を表示しています。}}",
+    "mrsTotal": "合計",
+    "mrsSomatic": "身体",
+    "mrsPsychological": "心理",
+    "mrsUrogenital": "泌尿生殖器",
+    "mrsScore": "{score}／{max}",
+    "mrsBand": {
+      "NONE_OR_LITTLE": "なし・軽微",
+      "MILD": "軽度",
+      "MODERATE": "中等度",
+      "SEVERE": "重度"
+    },
+    "mrsScale": "11の症状について、その時点の状態を0（なし）から4（非常に重い）でご自身が評価したものです。",
+    "mrsBands": "括弧内は公表されているMRSの参照区分（Heinemann他、2004年、ドイツの一般集団の標本）です。アジアの標本では点数が低めになる傾向があります。医師のための情報で、点数の位置づけを示すものであり、診断ではありません。",
+    "mrsCopyright": "Menopause Rating Scale © Prof. Lothar A. J. Heinemann."
   },
   "AcceptInvite": {
     "couldntAccept": "招待を承認できませんでした",

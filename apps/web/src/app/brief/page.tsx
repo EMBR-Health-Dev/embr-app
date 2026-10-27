@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type {
+  BriefMrsSummaryDto,
   BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
@@ -20,7 +21,7 @@ import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format
 import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
 import { BriefDayByDay } from "../../components/brief-day-by-day";
 import { richText } from "../../lib/rich-text";
-import { SEVERITY_FILL } from "../../lib/symptom-history-format";
+import { SEVERITY_FILL, formatHistoryDate } from "../../lib/symptom-history-format";
 
 const SEVERITY_ORDER = ["MILD", "MODERATE", "SEVERE"] as const;
 
@@ -875,6 +876,10 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
+      {brief.mrs && brief.mrs.checkInsInPeriod > 0 && brief.mrs.first && (
+        <MrsSection mrs={brief.mrs} />
+      )}
+
       {brief.coOccurrence && (
         <div className={BRIEF_SECTION}>
           <h3 className={BRIEF_SECTION_HEADING}>{t("patternsNoticedTitle")}</h3>
@@ -971,6 +976,51 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
           <p className="mt-1 text-xs text-foreground/50">{t("treatmentSafetyNote")}</p>
         </div>
       )}
+    </div>
+  );
+}
+
+const MRS_KEYS = [
+  ["total", "mrsTotal", 44],
+  ["somatic", "mrsSomatic", 16],
+  ["psychological", "mrsPsychological", 16],
+  ["urogenital", "mrsUrogenital", 12],
+] as const;
+
+/** Her monthly MRS ratings in the period: the first and latest, each
+ * score with its published reference band in brackets, for the
+ * clinician. Her own monthly rating page shows only the numbers. */
+function MrsSection({ mrs }: { mrs: BriefMrsSummaryDto }) {
+  const t = useTranslations("Brief");
+  const locale = useLocale();
+  const points = mrs.latest ? [mrs.first!, mrs.latest] : [mrs.first!];
+  return (
+    <div className={BRIEF_SECTION}>
+      <h3 className={BRIEF_SECTION_HEADING}>{t("mrsTitle")}</h3>
+      <p className="mt-1 text-foreground/70">{t("mrsCount", { count: mrs.checkInsInPeriod })}</p>
+      {points.map((point) => (
+        <div key={point.completedOn} className="mt-2">
+          <p className="text-sm font-medium text-foreground">
+            {formatHistoryDate(locale, point.completedOn)}
+          </p>
+          <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
+            {MRS_KEYS.map(([key, label, max]) => (
+              <div key={key}>
+                <dt className="text-foreground/60">{t(label)}</dt>
+                <dd className="text-foreground">
+                  <span className="font-mono tabular-nums">
+                    {t("mrsScore", { score: point.scores[key], max })}
+                  </span>{" "}
+                  <span className="text-foreground/60">({t(`mrsBand.${point.bands[key]}`)})</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+      <p className="mt-2 text-xs text-foreground/50">{t("mrsScale")}</p>
+      <p className="text-xs text-foreground/50">{t("mrsBands")}</p>
+      <p className="text-xs text-foreground/50">{t("mrsCopyright")}</p>
     </div>
   );
 }

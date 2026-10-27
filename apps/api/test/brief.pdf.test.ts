@@ -53,6 +53,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     nightSweatsRecall: null,
     workImpact: null,
     exercise: null,
+    mrs: null,
     lastRecordedPeriod: null,
     interpretation: null,
     citedPatternIds: null,
@@ -427,6 +428,67 @@ describe("buildClinicalBriefPdf — exercise", () => {
         buildClinicalBriefPdf(baseBrief({ exercise }), "person@embr.health"),
       );
       expect(text).not.toContain("how hard she exercised");
+    }
+  });
+});
+
+describe("buildClinicalBriefPdf — Menopause Rating Scale", () => {
+  const mrs = {
+    checkInsInPeriod: 3,
+    first: {
+      completedOn: "2026-01-05",
+      scores: { total: 19, somatic: 10, psychological: 6, urogenital: 3 },
+      bands: {
+        total: "SEVERE" as const,
+        somatic: "SEVERE" as const,
+        psychological: "MODERATE" as const,
+        urogenital: "MODERATE" as const,
+      },
+    },
+    latest: {
+      completedOn: "2026-01-30",
+      scores: { total: 7, somatic: 4, psychological: 2, urogenital: 1 },
+      bands: {
+        total: "MILD" as const,
+        somatic: "MILD" as const,
+        psychological: "MILD" as const,
+        urogenital: "MILD" as const,
+      },
+    },
+  };
+
+  it("prints the first and latest rating with the published bands and their source", async () => {
+    const text = (
+      await extractPdfText(buildClinicalBriefPdf(baseBrief({ mrs }), "person@embr.health"))
+    ).replace(/\s+/g, " ");
+    expect(text).toMatch(/MENOPAUSE RATING SCALE/i);
+    expect(text).toContain("3 monthly ratings in this period; the first and latest are shown.");
+    expect(text).toContain("2026-01-05: total 19 of 44 (severe); somatic 10 of 16 (severe)");
+    expect(text).toContain("2026-01-30: total 7 of 44 (mild)");
+    expect(text).toContain("Heinemann et al. 2004");
+    expect(text).toContain("not a diagnosis");
+    expect(text).toContain("© Prof. Lothar A. J. Heinemann");
+  });
+
+  it("prints one rating alone when there is only one", async () => {
+    const text = (
+      await extractPdfText(
+        buildClinicalBriefPdf(
+          baseBrief({ mrs: { ...mrs, checkInsInPeriod: 1, latest: null } }),
+          "person@embr.health",
+        ),
+      )
+    ).replace(/\s+/g, " ");
+    expect(text).toContain("1 monthly rating in this period.");
+    expect(text).not.toContain("2026-01-30");
+  });
+
+  it("leaves the section out for an older BRIEF, the switch off, or no rating", async () => {
+    for (const value of [null, { checkInsInPeriod: 0, first: null, latest: null }]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ mrs: value }), "person@embr.health"),
+      );
+      expect(text).not.toMatch(/Menopause Rating Scale/i);
     }
   });
 });

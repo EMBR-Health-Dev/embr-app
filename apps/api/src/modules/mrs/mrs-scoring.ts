@@ -1,4 +1,4 @@
-import type { MrsItem, MrsScoresDto } from "@embr/types";
+import type { MrsBand, MrsItem, MrsScoresDto } from "@embr/types";
 
 /**
  * The three published Menopause Rating Scale subscales (Heinemann et
@@ -26,3 +26,34 @@ export function scoreMrs(answers: Record<MrsItem, number>): MrsScoresDto {
 /** The wording shown, per language. Recorded with every check-in so a
  * later change of wording is traceable. */
 export const MRS_INSTRUMENT_VERSION = { en: "MRS-EN-2003" } as const;
+
+/**
+ * The published reference bands for each score (Heinemann et al. 2004,
+ * table 6): the highest score in each band, in order. They come from a
+ * German population sample, and the authors note scores run lower in
+ * Asian samples, so they describe a score against that reference; they
+ * do not grade her. Used only in the BRIEF, for the clinician.
+ */
+const BAND_UPPER_BOUNDS: Record<keyof MrsScoresDto, [number, number, number]> = {
+  total: [4, 8, 16],
+  somatic: [2, 4, 8],
+  psychological: [1, 3, 6],
+  urogenital: [0, 1, 3],
+};
+
+export function mrsBand(key: keyof MrsScoresDto, score: number): MrsBand {
+  const [little, mild, moderate] = BAND_UPPER_BOUNDS[key];
+  if (score <= little) return "NONE_OR_LITTLE";
+  if (score <= mild) return "MILD";
+  if (score <= moderate) return "MODERATE";
+  return "SEVERE";
+}
+
+export function mrsBands(scores: MrsScoresDto): Record<keyof MrsScoresDto, MrsBand> {
+  return {
+    total: mrsBand("total", scores.total),
+    somatic: mrsBand("somatic", scores.somatic),
+    psychological: mrsBand("psychological", scores.psychological),
+    urogenital: mrsBand("urogenital", scores.urogenital),
+  };
+}
