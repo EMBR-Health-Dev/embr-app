@@ -491,6 +491,56 @@ export const saveSymptomCheckInSchema = z.object({
 });
 export type SaveSymptomCheckInInput = z.infer<typeof saveSymptomCheckInSchema>;
 
+// ---- Menopause Rating Scale check-in ----
+//
+// The 11 MRS items in the instrument's own order. Each answer is 0
+// (none) to 4 (very severe), and all 11 are required: the published
+// scale has no total with a missing item.
+export const mrsItemSchema = z.enum([
+  "hotFlushes",
+  "heartDiscomfort",
+  "sleepProblems",
+  "depressiveMood",
+  "irritability",
+  "anxiety",
+  "exhaustion",
+  "sexualProblems",
+  "bladderProblems",
+  "vaginalDryness",
+  "jointMuscular",
+]);
+export const MRS_ITEMS = mrsItemSchema.options;
+
+const mrsAnswer = z.number().int().min(0).max(4);
+
+export const mrsCheckInParamsSchema = z.object({ date: isoCalendarDate });
+
+/**
+ * Saving replaces that date's check-in. Only the English wording is
+ * offered until the validated Japanese version is licensed, so the API
+ * accepts only "en".
+ */
+export const saveMrsCheckInSchema = z.object({
+  locale: z.literal("en"),
+  answers: z
+    .object(
+      Object.fromEntries(MRS_ITEMS.map((item) => [item, mrsAnswer])) as Record<
+        z.infer<typeof mrsItemSchema>,
+        typeof mrsAnswer
+      >,
+    )
+    .strict(),
+});
+export type SaveMrsCheckInInput = z.infer<typeof saveMrsCheckInSchema>;
+
+export const mrsCheckInQuerySchema = z
+  .object({ from: isoCalendarDate.optional(), to: isoCalendarDate.optional() })
+  .refine((q) => !q.from || !q.to || q.from <= q.to, {
+    message: "from must not be after to",
+    path: ["from"],
+  });
+export type MrsCheckInQuery = z.infer<typeof mrsCheckInQuerySchema>;
+
 // ---- Reflections (Milestone 19) ----
 //
 // Same unpaginated from/to shape as trendsQuerySchema and for the same

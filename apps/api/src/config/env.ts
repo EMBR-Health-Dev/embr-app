@@ -150,6 +150,13 @@ const apiEnvSchema = z.object({
   // always required at registration.
   CONSENT_HEALTH_REQUIRED_AT_REGISTRATION: booleanEnvVar().default(false),
 
+  // Whether the monthly Menopause Rating Scale check-in exists. Off
+  // until the MRS copyright holder confirms commercial use (the
+  // published permission covers research). While off, /mrs-check-ins
+  // answers 404. The web app has its own switch for what it shows
+  // (NEXT_PUBLIC_MRS_CHECK_IN_ENABLED).
+  MRS_CHECK_IN_ENABLED: booleanEnvVar().default(false),
+
   // ---- Observability (Milestone 11) ----
   // Optional by design: Sentry stays fully disabled (no-op init) when this
   // is unset, so local dev and CI never need a real DSN configured.

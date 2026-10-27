@@ -100,6 +100,7 @@ export const exportService = {
       dailyContext: withoutUserId(data.contextLogs),
       treatments: withoutUserId(data.treatments),
       notes: withoutUserId(data.notes),
+      menopauseRatingScale: withoutUserId(data.mrsCheckIns),
       briefs: withoutUserId(data.briefs),
       dismissedReflections: withoutUserId(data.reflectionDismissals),
       organizations: data.memberships.map((m) => ({

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BrandWordmark } from "./brand-wordmark";
 import { feedbackHref } from "../lib/feedback";
+import { mrsAvailable } from "../lib/mrs";
 
 interface NavLink {
   href: string;
@@ -46,6 +47,7 @@ export function AppNav({
   onLogout: () => void;
 }) {
   const t = useTranslations("Nav");
+  const locale = useLocale();
   const pathname = usePathname();
 
   const primaryLinks: NavLink[] = [
@@ -58,6 +60,7 @@ export function AppNav({
   const secondaryLinks: NavLink[] = [
     { href: "/treatments", label: t("treatments") },
     { href: "/notes", label: t("notes") },
+    ...(mrsAvailable(locale) ? [{ href: "/monthly-rating", label: t("monthlyRating") }] : []),
     { href: "/export", label: t("export") },
     ...(managesOrg ? [{ href: "/organization", label: t("organization") }] : []),
     { href: "/settings", label: t("settings") },

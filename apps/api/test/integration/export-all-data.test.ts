@@ -91,6 +91,26 @@ describe.skipIf(!reachable)("exportService.allDataJson against Postgres", () => 
           ],
         },
         notes: { create: [{ title: "Appointment", body: "Ask about sleep" }] },
+        mrsCheckIns: {
+          create: [
+            {
+              completedOn: new Date("2026-06-01T00:00:00Z"),
+              locale: "en",
+              instrumentVersion: "MRS-EN-2003",
+              hotFlushes: 3,
+              heartDiscomfort: 0,
+              sleepProblems: 2,
+              depressiveMood: 1,
+              irritability: 1,
+              anxiety: 0,
+              exhaustion: 2,
+              sexualProblems: 0,
+              bladderProblems: 0,
+              vaginalDryness: 1,
+              jointMuscular: 2,
+            },
+          ],
+        },
         sessions: {
           create: [
             { refreshTokenHash: `hash-${randomUUID()}`, expiresAt: new Date(Date.now() + 1e7) },
@@ -113,6 +133,9 @@ describe.skipIf(!reachable)("exportService.allDataJson against Postgres", () => 
     expect(data.dailyContext[0]).toMatchObject({ workImpact: "DID_LESS" });
     expect(data.treatments[0]).toMatchObject({ stopReason: "LONG_TERM_CONCERN" });
     expect(data.notes[0]).toMatchObject({ title: "Appointment", body: "Ask about sleep" });
+    expect(data.menopauseRatingScale).toHaveLength(1);
+    expect(data.menopauseRatingScale[0]).toMatchObject({ hotFlushes: 3, sleepProblems: 2 });
+    expect(data.menopauseRatingScale[0]).not.toHaveProperty("userId");
     expect(data.organizations).toEqual([
       { organizationName: "Acme", role: "ORG_MEMBER", joinedAt: expect.any(Date) },
     ]);
