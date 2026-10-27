@@ -16,6 +16,7 @@ function contextLog(isoDate: string, fields: Partial<Omit<ContextLogRow, "date">
     caffeineAfternoon: fields.caffeineAfternoon ?? null,
     alcohol: fields.alcohol ?? null,
     stressLevel: fields.stressLevel ?? null,
+    exercise: fields.exercise ?? null,
   };
 }
 
@@ -129,6 +130,38 @@ describe("detectSymptomContextCoOccurrence", () => {
         contextLog("2026-01-03", { stressLevel: "LOW" }),
       ];
       expect(detectSymptomContextCoOccurrence(symptomLogs, nonQualifying)).toBeNull();
+    });
+
+    it("VIGOROUS_EXERCISE requires exercise === VIGOROUS, not NONE, LIGHT or MODERATE", () => {
+      const nonQualifying = [
+        contextLog("2026-01-01", { exercise: "NONE" }),
+        contextLog("2026-01-02", { exercise: "LIGHT" }),
+        contextLog("2026-01-03", { exercise: "MODERATE" }),
+      ];
+      expect(detectSymptomContextCoOccurrence(symptomLogs, nonQualifying)).toBeNull();
+    });
+
+    it("VIGOROUS_EXERCISE qualifies on days answered VIGOROUS", () => {
+      const qualifying = [
+        contextLog("2026-01-01", { exercise: "VIGOROUS" }),
+        contextLog("2026-01-02", { exercise: "VIGOROUS" }),
+        contextLog("2026-01-03", { exercise: "VIGOROUS" }),
+      ];
+      expect(detectSymptomContextCoOccurrence(symptomLogs, qualifying)).toEqual({
+        category: "HOT_FLASH",
+        factor: "VIGOROUS_EXERCISE",
+        days: 3,
+        dates: ["2026-01-01", "2026-01-02", "2026-01-03"],
+      });
+    });
+
+    it("an unanswered exercise question is not a day without exercise", () => {
+      const unanswered = [
+        contextLog("2026-01-01", { exercise: null }),
+        contextLog("2026-01-02", { exercise: null }),
+        contextLog("2026-01-03", { exercise: null }),
+      ];
+      expect(detectSymptomContextCoOccurrence(symptomLogs, unanswered)).toBeNull();
     });
   });
 

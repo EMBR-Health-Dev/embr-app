@@ -1,5 +1,6 @@
 import type {
   ContextFactor,
+  ExerciseLevel,
   SleepDurationBucket,
   StressLevel,
   SymptomCategory,
@@ -14,6 +15,7 @@ export interface ContextLogRow {
   caffeineAfternoon: boolean | null;
   alcohol: boolean | null;
   stressLevel: StressLevel | null;
+  exercise: ExerciseLevel | null;
 }
 
 /**
@@ -29,6 +31,9 @@ export interface ContextLogRow {
  * - CAFFEINE_AFTERNOON: caffeineAfternoon === true
  * - ALCOHOL: alcohol === true
  * - HIGH_STRESS: stressLevel === "HIGH"
+ * - VIGOROUS_EXERCISE: exercise === "VIGOROUS". Only the hardest
+ *   level counts: lighter exercise is on most days for many people,
+ *   so it would line up with almost any symptom and say nothing.
  *
  * Like its symptom-symptom counterpart, this function knows nothing
  * about what a co-occurrence *means* — it only counts calendar days on
@@ -70,6 +75,7 @@ export function detectSymptomContextCoOccurrence(
     if (log.caffeineAfternoon === true) qualifyingFactors.push("CAFFEINE_AFTERNOON");
     if (log.alcohol === true) qualifyingFactors.push("ALCOHOL");
     if (log.stressLevel === "HIGH") qualifyingFactors.push("HIGH_STRESS");
+    if (log.exercise === "VIGOROUS") qualifyingFactors.push("VIGOROUS_EXERCISE");
 
     for (const factor of qualifyingFactors) {
       let dates = datesByFactor.get(factor);

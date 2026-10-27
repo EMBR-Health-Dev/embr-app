@@ -342,7 +342,8 @@ export interface ContextLogDto {
 /** The small, fixed set of context factors detectSymptomContextCoOccurrence
  * can report on — one deterministic rule per factor (see that function's
  * doc comment), never free text or an open-ended list. */
-export type ContextFactor = "SHORT_SLEEP" | "CAFFEINE_AFTERNOON" | "ALCOHOL" | "HIGH_STRESS";
+export type ContextFactor =
+  "SHORT_SLEEP" | "CAFFEINE_AFTERNOON" | "ALCOHOL" | "HIGH_STRESS" | "VIGOROUS_EXERCISE";
 
 /** Same shape and same "recorded together"/"appeared alongside"
  * evidence language as SymptomCoOccurrenceDto — a symptom category and

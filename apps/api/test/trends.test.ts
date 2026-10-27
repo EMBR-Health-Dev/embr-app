@@ -251,20 +251,31 @@ vi.mock("../src/lib/prisma.js", () => ({
       ),
       // Raw rows for the symptom-context co-occurrence pattern engine —
       // same "not a GROUP BY" reasoning as symptomLog.findMany above.
-      findMany: vi.fn(({ where }: { where: { userId: string; date?: OccurredAtRange } }) => {
-        const matching = state.contexts.filter(
-          (e) => e.userId === where.userId && inRange(e.date, where.date),
-        );
-        return Promise.resolve(
-          matching.map((e) => ({
-            date: e.date,
-            sleepDuration: e.sleepDuration,
-            caffeineAfternoon: e.caffeineAfternoon,
-            alcohol: e.alcohol,
-            stressLevel: e.stressLevel,
-          })),
-        );
-      }),
+      // Returns only the selected columns, so a column the repository
+      // forgets to select is missing here too.
+      findMany: vi.fn(
+        ({
+          where,
+          select,
+        }: {
+          where: { userId: string; date?: OccurredAtRange };
+          select: Record<string, boolean>;
+        }) => {
+          const matching = state.contexts.filter(
+            (e) => e.userId === where.userId && inRange(e.date, where.date),
+          );
+          return Promise.resolve(
+            matching.map((e) =>
+              Object.fromEntries(
+                Object.keys(select).map((key) => [
+                  key,
+                  (e as Record<string, unknown>)[key] ?? null,
+                ]),
+              ),
+            ),
+          );
+        },
+      ),
     },
   },
 }));
@@ -577,6 +588,30 @@ describe("GET /trends/context-co-occurrence", () => {
     expect(res.body.data).toEqual({
       category: "HOT_FLASH",
       factor: "CAFFEINE_AFTERNOON",
+      days: 3,
+      dates: ["2026-06-01", "2026-06-02", "2026-06-03"],
+    });
+  });
+
+  it("counts days answered vigorous exercise as VIGOROUS_EXERCISE", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "contextcooccurrence-exercise@embr.health");
+
+    for (const day of [1, 2, 3]) {
+      await agent.post("/symptom-logs").send({
+        category: "HOT_FLASH",
+        severity: "MILD",
+        occurredAt: `2026-06-0${day}T08:00:00.000Z`,
+      });
+      await agent.post("/context-logs").send({ date: `2026-06-0${day}`, exercise: "VIGOROUS" });
+    }
+
+    const res = await agent.get("/trends/context-co-occurrence");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      category: "HOT_FLASH",
+      factor: "VIGOROUS_EXERCISE",
       days: 3,
       dates: ["2026-06-01", "2026-06-02", "2026-06-03"],
     });
