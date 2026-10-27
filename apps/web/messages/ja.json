@@ -241,7 +241,8 @@
       "SHORT_SLEEP": "睡眠6時間未満",
       "CAFFEINE_AFTERNOON": "午後のカフェイン摂取",
       "ALCOHOL": "飲酒",
-      "HIGH_STRESS": "強いストレス"
+      "HIGH_STRESS": "強いストレス",
+      "VIGOROUS_EXERCISE": "激しい運動"
     },
     "treatmentCategory": {
       "HRT": "HRT（ホルモン補充療法）",

@@ -123,6 +123,7 @@ export const trendsRepository = {
       caffeineAfternoon: boolean | null;
       alcohol: boolean | null;
       stressLevel: string | null;
+      exercise: string | null;
     }>
   > {
     const days = calendarDateBounds(query);
@@ -144,6 +145,7 @@ export const trendsRepository = {
         caffeineAfternoon: true,
         alcohol: true,
         stressLevel: true,
+        exercise: true,
       },
       take: CONTEXT_LOG_ROW_CAP,
     });

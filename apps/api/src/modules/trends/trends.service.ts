@@ -4,6 +4,7 @@ import type {
   EvidenceStrengthDto,
   SleepDurationBucket,
   StressLevel,
+  ExerciseLevel,
   SymptomCategory,
   SymptomCoOccurrenceDto,
   SymptomContextCoOccurrenceDto,
@@ -106,6 +107,7 @@ export const trendsService = {
         caffeineAfternoon: log.caffeineAfternoon,
         alcohol: log.alcohol,
         stressLevel: log.stressLevel as StressLevel | null,
+        exercise: log.exercise as ExerciseLevel | null,
       })),
       timeZone,
     );

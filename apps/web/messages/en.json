@@ -241,7 +241,8 @@
       "SHORT_SLEEP": "sleep under 6 hours",
       "CAFFEINE_AFTERNOON": "caffeine in the afternoon",
       "ALCOHOL": "alcohol",
-      "HIGH_STRESS": "high stress"
+      "HIGH_STRESS": "high stress",
+      "VIGOROUS_EXERCISE": "vigorous exercise"
     },
     "treatmentCategory": {
       "HRT": "HRT",
