@@ -22,13 +22,14 @@ beforeEach(() => {
 });
 
 describe("isLocale", () => {
-  it("accepts en and ja", () => {
+  it("accepts en, ja and fr", () => {
     expect(isLocale("en")).toBe(true);
     expect(isLocale("ja")).toBe(true);
+    expect(isLocale("fr")).toBe(true);
   });
 
   it("rejects unsupported languages, null, and undefined", () => {
-    expect(isLocale("fr")).toBe(false);
+    expect(isLocale("de")).toBe(false);
     expect(isLocale(null)).toBe(false);
     expect(isLocale(undefined)).toBe(false);
   });
@@ -65,8 +66,13 @@ describe("deviceLocale", () => {
   });
 
   it("falls back to the default when the device's language isn't supported", () => {
-    mockGetLocales.mockReturnValue([{ languageCode: "fr" }]);
+    mockGetLocales.mockReturnValue([{ languageCode: "de" }]);
     expect(deviceLocale()).toBe("en");
+  });
+
+  it("uses French when the device prefers it", () => {
+    mockGetLocales.mockReturnValue([{ languageCode: "fr" }, { languageCode: "en" }]);
+    expect(deviceLocale()).toBe("fr");
   });
 
   it("falls back to the default when languageCode is missing entirely", () => {

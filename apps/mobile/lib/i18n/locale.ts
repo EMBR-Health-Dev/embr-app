@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-export const LOCALES = ["en", "ja"] as const;
+export const LOCALES = ["en", "ja", "fr"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 

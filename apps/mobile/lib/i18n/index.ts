@@ -3,11 +3,13 @@ import { initReactI18next } from "react-i18next";
 import { getLocales } from "expo-localization";
 import en from "../../locales/en.json";
 import ja from "../../locales/ja.json";
+import fr from "../../locales/fr.json";
 import { DEFAULT_LOCALE, LOCALES, getStoredLocale, isLocale, type Locale } from "./locale";
 
 const resources = {
   en: { translation: en },
   ja: { translation: ja },
+  fr: { translation: fr },
 };
 
 /** Device language if it's one this app actually supports, otherwise
