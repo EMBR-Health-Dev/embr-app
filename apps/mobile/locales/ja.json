@@ -19,7 +19,8 @@
   "languageSwitcher": {
     "label": "言語",
     "en": "English",
-    "ja": "日本語"
+    "ja": "日本語",
+    "fr": "Français"
   },
   "register": {
     "checkEmailTitle": "メールをご確認ください",
