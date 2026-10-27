@@ -22,12 +22,20 @@ const COPY = {
     retry: "再試行",
     home: "ダッシュボードへ",
   },
+  fr: {
+    title: "Un problème est survenu",
+    body: "Cette page a rencontré une erreur inattendue. Vos données sont en sécurité\u00a0: rien n’a été enregistré ni perdu à cause de cette erreur.",
+    retry: "Réessayer",
+    home: "Aller au tableau de bord",
+  },
 };
 
-function readLocaleCookie(): "en" | "ja" {
+type ErrorLocale = keyof typeof COPY;
+
+function readLocaleCookie(): ErrorLocale {
   if (typeof document === "undefined") return "en";
-  const match = document.cookie.match(/(?:^|; )EMBR_LOCALE=(en|ja)/);
-  return match?.[1] === "ja" ? "ja" : "en";
+  const match = document.cookie.match(/(?:^|; )EMBR_LOCALE=(en|ja|fr)/);
+  return (match?.[1] as ErrorLocale | undefined) ?? "en";
 }
 
 export default function Error({
@@ -37,7 +45,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const [locale, setLocale] = useState<"en" | "ja">("en");
+  const [locale, setLocale] = useState<ErrorLocale>("en");
 
   useEffect(() => {
     // document.cookie isn't available during server rendering — this

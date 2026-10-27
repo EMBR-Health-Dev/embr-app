@@ -1,0 +1,1494 @@
+{
+  "Login": {
+    "title": "Bon retour parmi nous",
+    "subtitle": "Votre suivi vous attend là où vous l’avez laissé.",
+    "passwordChanged": "Mot de passe modifié. Connectez-vous avec votre nouveau mot de passe.",
+    "ssoError": {
+      "sso_not_configured": "Aucune connexion SSO n’est configurée pour le domaine de cet e-mail.",
+      "sso_start_failed": "Impossible de lancer la connexion SSO. Réessayez dans un instant.",
+      "sso_callback_failed": "La connexion SSO n’a pas abouti. Réessayez, ou connectez-vous avec votre mot de passe ci-dessous.",
+      "default": "La connexion SSO n’a pas fonctionné. Réessayez."
+    },
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "enterEmailForSso": "Saisissez votre e-mail ci-dessus, puis continuez avec le SSO.",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "or": "ou",
+    "continueWithSso": "Continuer avec le SSO",
+    "newToEmbr": "Nouvelle sur EMBR ?",
+    "createAccount": "Créer un compte",
+    "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
+    "accountDeleted": "Votre compte et tout son contenu ont été supprimés.",
+    "requestEarlyAccess": "Demander un accès anticipé",
+    "emailHint": "Utilisez l’e-mail avec lequel vous vous êtes inscrite.",
+    "failedHelp": "Vérifiez qu’il s’agit bien de l’e-mail utilisé à l’inscription, ou",
+    "resetPassword": "réinitialisez votre mot de passe"
+  },
+  "LanguageSwitcher": {
+    "label": "Langue",
+    "en": "English",
+    "ja": "日本語",
+    "fr": "Français"
+  },
+  "Common": {
+    "loading": "Chargement…"
+  },
+  "Register": {
+    "checkEmailTitle": "Consultez vos e-mails",
+    "checkEmailBody": "Nous avons envoyé un lien de vérification à <strong>{email}</strong>. Une fois l’adresse confirmée, revenez vous connecter.",
+    "goToLogin": "Aller à la connexion",
+    "title": "Créer votre compte",
+    "subtitle": "Constituez un suivi de ce que vous vivez. Privé par défaut, selon vos conditions.",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "passwordHint": "Au moins 12 caractères, avec une majuscule, une minuscule et un chiffre.",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "submit": "Créer le compte",
+    "submitting": "Création du compte…",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "logIn": "Se connecter",
+    "earlyAccessTitle": "EMBR est en accès anticipé privé",
+    "earlyAccessBody": "Les inscriptions ne sont pas encore ouvertes. Nous préparons EMBR pour un usage public, y compris les documents juridiques et de confidentialité qui s’appliqueront à l’ouverture. Demandez un accès anticipé et nous vous recontacterons.",
+    "earlyAccessAction": "Demander un accès anticipé",
+    "reassuranceTitle": "Votre suivi vous appartient.",
+    "reassuranceBody": "Exportez-le, partagez-le ou supprimez-le quand vous le souhaitez."
+  },
+  "ForgotPassword": {
+    "title": "Réinitialiser votre mot de passe",
+    "subtitle": "Saisissez votre e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "emailLabel": "E-mail",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "submit": "Envoyer le lien",
+    "submitting": "Envoi…",
+    "checkEmailTitle": "Consultez vos e-mails",
+    "checkEmailBody": "Si un compte existe pour cet e-mail, un lien de réinitialisation est en route.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "LoginLink": {
+    "fromLogin": "Recevoir un lien de connexion par e-mail",
+    "title": "Se connecter avec un lien par e-mail",
+    "subtitle": "Saisissez l’e-mail utilisé à l’inscription. Nous vous enverrons un lien de connexion, sans mot de passe.",
+    "emailLabel": "E-mail",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "submit": "Envoyer le lien de connexion",
+    "submitting": "Envoi…",
+    "checkEmailTitle": "Consultez vos e-mails",
+    "checkEmailBody": "Si un compte existe pour cet e-mail, un lien de connexion est en route. Il ne fonctionne qu’une fois et expire au bout de 15 minutes.",
+    "backToLogin": "Retour à la connexion",
+    "useTitle": "Se connecter à EMBR",
+    "useSubtitle": "Continuez pour vous connecter avec le lien reçu par e-mail.",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "expired": "Ce lien a expiré ou a déjà été utilisé.",
+    "sendNew": "M’envoyer un nouveau lien"
+  },
+  "ResetPassword": {
+    "title": "Choisir un nouveau mot de passe",
+    "subtitle": "Saisissez un nouveau mot de passe pour votre compte.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "passwordHint": "Au moins 12 caractères, avec une majuscule, une minuscule et un chiffre.",
+    "confirmPasswordLabel": "Confirmer le nouveau mot de passe",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas.",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "submit": "Réinitialiser le mot de passe",
+    "submitting": "Réinitialisation…",
+    "successTitle": "Mot de passe réinitialisé",
+    "successBody": "Votre mot de passe a été modifié. Connectez-vous avec votre nouveau mot de passe.",
+    "goToLogin": "Aller à la connexion",
+    "invalidLinkTitle": "Lien invalide ou expiré",
+    "invalidLinkBody": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau pour continuer.",
+    "requestNewLink": "Demander un nouveau lien"
+  },
+  "VerifyEmail": {
+    "verifying": "Vérification de votre e-mail…",
+    "successTitle": "E-mail vérifié",
+    "successBody": "Votre adresse e-mail est confirmée. Vous pouvez maintenant vous connecter.",
+    "goToLogin": "Aller à la connexion",
+    "invalidLinkTitle": "Lien invalide ou expiré",
+    "invalidLinkBody": "Ce lien de vérification est invalide ou a expiré.",
+    "backToLogin": "Retour à la connexion",
+    "resendPrompt": "Saisissez votre e-mail pour recevoir un nouveau lien de vérification.",
+    "emailLabel": "E-mail",
+    "resendButton": "Renvoyer l’e-mail de vérification",
+    "resendSubmitting": "Envoi…",
+    "resendCheckEmail": "Si ce compte existe et n’est pas encore vérifié, un nouveau lien de vérification est en route.",
+    "genericError": "Un problème est survenu. Réessayez dans un instant."
+  },
+  "Onboarding": {
+    "skipToDashboard": "Passer au tableau de bord",
+    "welcome": {
+      "headline": "Rendez visible ce qui vous arrive vraiment.",
+      "body": "EMBR vous aide à transformer ce que vous vivez en un suivi que vous pouvez relire, comprendre et, le moment venu, apporter lors d’un échange avec votre médecin. EMBR ne pose pas de diagnostic et ne remplace pas votre médecin. Il vous aide à organiser votre propre suivi, selon vos conditions.",
+      "getStarted": "Commencer"
+    },
+    "jobToBeDone": {
+      "headline": "Pour quoi souhaitez-vous qu’EMBR vous aide ?",
+      "hint": "Cela oriente simplement ce que nous vous montrons en premier. Vous pourrez toujours changer d’avis.",
+      "understandExperience": "Comprendre ce que je vis",
+      "understandPatterns": "Comprendre les tendances dans le temps",
+      "prepareForAppointment": "Préparer un échange avec un professionnel de santé",
+      "keepRecord": "Tenir un meilleur suivi, sur la durée",
+      "notSure": "Je ne sais pas encore"
+    },
+    "whatsGoingOn": {
+      "headline": "Qu’avez-vous remarqué ces derniers temps ?",
+      "hint": "Choisissez tout ce qui vous semble différent récemment. Ce n’est qu’un point de départ. Votre premier check in partira de ce que vous indiquez ici.",
+      "continue": "Continuer",
+      "sleep": "Sommeil",
+      "sleepExamples": "Difficultés d’endormissement · Réveils nocturnes · Sueurs nocturnes · Réveil fatiguée",
+      "energy": "Énergie",
+      "energyExamples": "Moins d’énergie · Fatigue soudaine · Besoin de plus de repos · Variations d’énergie",
+      "mood": "Humeur",
+      "moodExamples": "Irritabilité · Émotivité · Anxiété · Moral en baisse · Sautes d’humeur",
+      "body": "Corps",
+      "bodyExamples": "Bouffées de chaleur · Maux de tête · Douleurs · Ballonnements · Peau · Cheveux · Température",
+      "focus": "Concentration",
+      "focusExamples": "Brouillard mental · Concentration · Oublis · Mots qui manquent · Fatigue mentale",
+      "cycle": "Cycle",
+      "cycleExamples": "Régularité · Flux · Spotting · Changements prémenstruels",
+      "somethingElse": "Autre chose",
+      "somethingElseExamples": "Digestion · Libido · Changements vaginaux ou urinaires · Stress · Activité physique · Traitements"
+    },
+    "appointmentStatus": {
+      "headline": "Avez-vous bientôt un rendez-vous médical ?",
+      "hint": "Pas besoin de la date exacte pour l’instant. Cela nous aide simplement à savoir s’il faut garder un EMBR BRIEF à portée de main.",
+      "withinMonth": "Dans le mois qui vient",
+      "withinThreeMonthsOrLonger": "Dans les 3 prochains mois ou plus tard",
+      "waitingToSchedule": "En attente de prise de rendez-vous",
+      "notNow": "Pas pour l’instant"
+    },
+    "theLoop": {
+      "headline": "Voici comment fonctionne EMBR.",
+      "trackFallback": "Sommeil · Énergie · Humeur",
+      "trackTreatmentsHint": "Vous pouvez aussi suivre les traitements que vous essayez, y compris le THM, les compléments alimentaires, les médicaments ou tout ce que vous souhaitez garder en mémoire.",
+      "patternsLabel": "Signaux",
+      "patternsTitle": "Après quelques semaines de saisie, EMBR peut vous aider à revoir ce qui se produisait en même temps.",
+      "patternsExampleLabel": "Par exemple :",
+      "patternsExample": "« Sur 6 jours, une baisse d’énergie a été notée en même temps qu’un sommeil perturbé. »",
+      "patternsCaveat": "Ce sont des tendances dans vos saisies, pas des diagnostics. EMBR ne vous dit pas ce qui cause vos symptômes.",
+      "trackLabel": "Suivre",
+      "briefLabel": "Brief",
+      "briefTitle": "Suivi · Signaux · Questions",
+      "briefBody": "Quand vous le souhaitez, EMBR transforme vos saisies en une synthèse simple à apporter à un rendez-vous médical.",
+      "briefControlNote": "Vous décidez quand la créer. Rien n’est généré automatiquement.",
+      "conversationLabel": "Échange avec un professionnel de santé",
+      "conversationTitle": "Votre Brief peut vous aider à expliquer ce que vous vivez, ce que vous avez remarqué au fil du temps et ce que vous souhaitez demander.",
+      "conversationBody": "Vous pouvez aussi simplement continuer à utiliser EMBR pour vous-même.",
+      "logFirstEntry": "Faire votre première saisie",
+      "goToDashboard": "Aller plutôt au tableau de bord"
+    },
+    "lifeStage": {
+      "headline": "Où en êtes-vous en ce moment ?",
+      "hint": "Choisissez ce qui vous correspond le mieux. Vous pourrez le modifier à tout moment dans les Paramètres.",
+      "perimenopause": "Mes règles changent ou sont irrégulières (périménopause)",
+      "postmenopause": "Pas de règles depuis 12 mois ou plus (postménopause)",
+      "notSure": "Je ne sais pas",
+      "preferNotToSay": "Je préfère ne pas répondre"
+    }
+  },
+  "Enums": {
+    "category": {
+      "HOT_FLASH": "Bouffée de chaleur",
+      "NIGHT_SWEATS": "Sueurs nocturnes",
+      "MOOD_CHANGE": "Changement d’humeur",
+      "SLEEP_DISTURBANCE": "Troubles du sommeil",
+      "BRAIN_FOG": "Brouillard mental",
+      "JOINT_PAIN": "Douleurs articulaires",
+      "FATIGUE": "Fatigue",
+      "ANXIETY": "Anxiété",
+      "IRREGULAR_HEARTBEAT": "Palpitations",
+      "VAGINAL_DRYNESS": "Sécheresse vaginale",
+      "LIBIDO_CHANGE": "Changement de libido",
+      "WEIGHT_CHANGE": "Variation de poids",
+      "HEADACHE": "Maux de tête",
+      "OTHER": "Autre"
+    },
+    "severity": {
+      "MILD": "Légère",
+      "MODERATE": "Modérée",
+      "SEVERE": "Sévère"
+    },
+    "flow": {
+      "SPOTTING": "Spotting",
+      "LIGHT": "Léger",
+      "MEDIUM": "Moyen",
+      "HEAVY": "Abondant"
+    },
+    "sleepDuration": {
+      "UNDER_6H": "Moins de 6 heures",
+      "SIX_TO_SEVEN_H": "6 à 7 heures",
+      "SEVEN_PLUS_H": "7 heures ou plus"
+    },
+    "nightSweats": {
+      "NONE": "Aucune",
+      "ONE": "1",
+      "TWO_TO_THREE": "2 à 3",
+      "FOUR_PLUS": "4 ou plus"
+    },
+    "workImpact": {
+      "NONE": "Non",
+      "DID_LESS": "Oui, j’en ai fait moins",
+      "MISSED_TIME": "Oui, j’ai dû m’absenter"
+    },
+    "stressLevel": {
+      "LOW": "Faible",
+      "MODERATE": "Modéré",
+      "HIGH": "Élevé"
+    },
+    "contextFactor": {
+      "SHORT_SLEEP": "sommeil de moins de 6 heures",
+      "CAFFEINE_AFTERNOON": "caféine l’après-midi",
+      "ALCOHOL": "alcool",
+      "HIGH_STRESS": "stress élevé",
+      "VIGOROUS_EXERCISE": "activité physique intense"
+    },
+    "treatmentCategory": {
+      "HRT": "THM (traitement hormonal de la ménopause)",
+      "SUPPLEMENT": "Complément alimentaire",
+      "MEDICATION": "Médicament",
+      "LIFESTYLE": "Mode de vie",
+      "OTHER": "Autre"
+    },
+    "treatmentStopReason": {
+      "SIDE_EFFECTS": "Effets indésirables",
+      "LONG_TERM_CONCERN": "Inquiétude sur les effets à long terme",
+      "NO_LONGER_NEEDED": "Plus nécessaire",
+      "COST": "Coût",
+      "OTHER": "Autre raison",
+      "PREFER_NOT_TO_SAY": "Je préfère ne pas répondre"
+    },
+    "subscriptionStatus": {
+      "INCOMPLETE": "Incomplet",
+      "INCOMPLETE_EXPIRED": "Incomplet (expiré)",
+      "TRIALING": "Période d’essai",
+      "ACTIVE": "Actif",
+      "PAST_DUE": "Paiement en retard",
+      "CANCELED": "Annulé",
+      "UNPAID": "Impayé",
+      "PAUSED": "En pause"
+    },
+    "exercise": {
+      "NONE": "Aucune",
+      "LIGHT": "Légère",
+      "MODERATE": "Modérée",
+      "VIGOROUS": "Intense"
+    }
+  },
+  "Dashboard": {
+    "trends": "Tendances",
+    "treatments": "Traitements",
+    "brief": "BRIEF",
+    "export": "Exporter",
+    "organization": "Organisation",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "hotFlashAriaLabel": "Noter une bouffée de chaleur en cours",
+    "hotFlashPrompt": "Une bouffée de chaleur en ce moment ?",
+    "hotFlashHint": "Touchez le bouton. C’est toute la saisie.",
+    "hotFlashConfirmation": "Noté. Ajustez l’intensité ci-dessous si elle n’était pas modérée.",
+    "hotFlashError": "Impossible de l’enregistrer. Réessayez.",
+    "adjustSeverity": "Ajuster l’intensité",
+    "severitySaving": "Enregistrement…",
+    "severityUpdated": "Mis à jour ✓",
+    "severityUpdateError": "Impossible de mettre à jour l’intensité. Réessayez.",
+    "loggedAgainHint": "Noté une nouvelle fois. Touchez Supprimer ci-dessous sur l’une des saisies s’il s’agissait d’un doublon.",
+    "logDifferentSymptom": "Noter un autre symptôme",
+    "close": "Fermer",
+    "symptomLabel": "Symptôme",
+    "severityLabel": "Intensité",
+    "notesLabel": "Notes (facultatif)",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "logConfirmation": "Noté.",
+    "logError": "Impossible d’enregistrer. Vérifiez votre connexion et réessayez.",
+    "todaysCycleEntry": "Cycle du jour",
+    "flowLabel": "Flux",
+    "flowNone": "Aucun",
+    "periodStartedToday": "Mes règles ont commencé aujourd’hui",
+    "periodEndedToday": "Mes règles se sont terminées aujourd’hui",
+    "periodMiddleHint": "Pour un jour ordinaire pendant vos règles, indiquez simplement le flux ci-dessus et laissez les deux cases ci-dessous décochées.",
+    "todaysContextEntry": "Contexte du jour",
+    "sleepDurationLabel": "Sommeil la nuit dernière",
+    "sleepDurationNone": "Non renseigné",
+    "nightSweatsLabel": "Sueurs nocturnes la nuit dernière",
+    "nightSweatsNone": "Non renseigné",
+    "nightSweatsHelp": "Une estimation suffit.",
+    "workImpactLabel": "Vos symptômes ont-ils affecté votre travail aujourd’hui ?",
+    "workImpactNone": "Non renseigné",
+    "workImpactHelp": "Pris en compte uniquement dans votre propre BRIEF. Jamais partagé avec un employeur.",
+    "stressLevelLabel": "Stress aujourd’hui",
+    "stressLevelNone": "Non renseigné",
+    "caffeineAfternoonLabel": "Caféine après 14 h",
+    "alcoholLabel": "Alcool",
+    "saveTodaysEntry": "Enregistrer la saisie du jour",
+    "saved": "Enregistré ✓",
+    "recentSymptoms": "Symptômes récents",
+    "noLogsYet": "Aucune saisie pour l’instant. Utilisez le bouton ci-dessus dès que quelque chose se produit.",
+    "loadMore": "Afficher plus",
+    "loadMoreError": "Impossible de charger plus de saisies. Réessayez.",
+    "deleteLog": "Supprimer",
+    "deleteLogError": "Impossible de supprimer cette saisie. Réessayez.",
+    "thisWeek": "{count, plural, one {# saisie cette semaine} other {# saisies cette semaine}}",
+    "mostCommon": "Le plus fréquent : {category}",
+    "startingPoint": {
+      "understandExperience": "Commençons à constituer votre suivi.",
+      "understandPatterns": "Vous êtes là pour comprendre les tendances. Les tendances observées apparaissent dans Signaux à mesure que votre suivi s’étoffe.",
+      "prepareForAppointment": "Vous préparez un échange avec un professionnel de santé. Aidons-vous à construire quelque chose de concret.",
+      "keepRecord": "Commençons à constituer votre suivi dans la durée.",
+      "notSure": "Voyons ce que votre suivi commence à montrer."
+    },
+    "homeIntro": "Tout au même endroit : ce que vous avez noté, ce qui évolue et ce qu’il faut apporter à votre professionnel de santé.",
+    "todayLabel": "Aujourd’hui",
+    "todayDescription": "Notez ce que vous remarquez.",
+    "todayLoggedSummary": "{count, plural, one {# saisie aujourd’hui} other {# saisies aujourd’hui}}",
+    "todayEmptyTitle": "Aucune saisie aujourd’hui pour l’instant.",
+    "todayEmptyHint": "Notez une bouffée de chaleur dès qu’elle survient, ou tout autre élément ci-dessous.",
+    "yourRecordLabel": "Votre suivi",
+    "recordDescription": "Tout ce que vous notez fait partie de ce suivi.",
+    "periodLabel": "Règles",
+    "patternsLabel": "Signaux",
+    "patternsBody": "Une vue hebdomadaire de ce qui évolue. À mesure que votre suivi s’étoffe, une image plus complète se dessine dans Signaux.",
+    "viewPatterns": "Aller à Signaux",
+    "evidenceLabel": "Votre EMBR BRIEF",
+    "evidenceBody": "Votre EMBR BRIEF transforme votre historique en un document à apporter à votre professionnel de santé.",
+    "evidenceLatestMeta": "{from} → {to} · généré le {date}",
+    "viewClinicalBrief": "Voir l’EMBR BRIEF",
+    "generateFirstBrief": "Générer votre premier EMBR BRIEF",
+    "severityGuide": "<b>Légère :</b> perceptible. <b>Modérée :</b> gêne votre journée. <b>Sévère :</b> rend la journée difficile à passer.",
+    "todaysBleedingEntry": "Saignements ou spotting aujourd’hui",
+    "bleedingHint": "Notez ici tout saignement ou spotting. Cela reste dans votre suivi pour votre médecin.",
+    "cycleCollapsedHint": "Seulement si vos règles ont commencé, se sont terminées ou si vous avez eu un flux",
+    "contextCollapsedHint": "Sommeil, sueurs nocturnes, stress et travail",
+    "todaysEntryLoadError": "La saisie du jour n’a pas pu être chargée : l’enregistrement est suspendu pour préserver ce qui est déjà noté. Rechargez la page pour réessayer.",
+    "contextDayLabel": "Jour à renseigner",
+    "contextDayToday": "Aujourd’hui",
+    "contextDayYesterday": "Hier",
+    "contextRecordingFor": "Saisie pour le <b>{date}</b>",
+    "todaysContextEntryYesterday": "Contexte d’hier",
+    "sleepDurationLabelYesterday": "Sommeil la nuit d’avant-hier",
+    "nightSweatsLabelYesterday": "Sueurs nocturnes la nuit d’avant-hier",
+    "stressLevelLabelYesterday": "Stress hier",
+    "workImpactLabelYesterday": "Vos symptômes ont-ils affecté votre travail hier ?",
+    "saveTodaysEntryYesterday": "Enregistrer la saisie d’hier",
+    "todaysEntryLoadErrorYesterday": "La saisie d’hier n’a pas pu être chargée : l’enregistrement est suspendu pour préserver ce qui est déjà noté. Rechargez la page pour réessayer.",
+    "recentToday": "Aujourd’hui",
+    "recentYesterday": "Hier",
+    "exerciseLabel": "Activité physique aujourd’hui",
+    "exerciseLabelYesterday": "Activité physique hier",
+    "exerciseNone": "Non renseigné",
+    "exerciseHelp": "Tout sport, séance ou mouvement qui vous a essoufflée. Légère : marche ou étirements. Modérée : marche rapide, vélo ou cours collectif. Intense : course, match ou entraînement soutenu.",
+    "yesNoNotLogged": "Non renseigné",
+    "answerYes": "Oui",
+    "answerNo": "Non"
+  },
+  "Week": {
+    "title": "Votre semaine",
+    "summary": "{count} sur {total} jours renseignés",
+    "legendSymptoms": "Votre ressenti",
+    "legendContext": "Contexte du jour",
+    "legendCycle": "Cycle",
+    "legendBleeding": "Saignements",
+    "dayRecorded": "noté : {items}",
+    "dayNothing": "aucune saisie",
+    "todayTitle": "Aujourd’hui",
+    "stepSymptoms": "Check in : comment vous sentez-vous ?",
+    "stepContext": "Ajouter le contexte du jour : sommeil, stress, sueurs nocturnes",
+    "stepCycle": "Cycle, si vos règles ont commencé, se sont terminées ou si vous avez eu un flux",
+    "stepBleeding": "Saignements ou spotting, seulement s’il y en a eu",
+    "stepBrief": "Créer votre BRIEF avant votre rendez-vous",
+    "optional": "Seulement si cela s’applique",
+    "done": "fait",
+    "notDone": "pas encore fait",
+    "allDone": "La journée est renseignée. Rien d’autre à faire.",
+    "encouragement": "Une minute par jour garde votre suivi complet pour votre BRIEF.",
+    "legendSymptomsSeverity": "Votre ressenti, selon l’intensité la plus forte",
+    "daySymptomsWithSeverity": "Votre ressenti (la plus forte : {severity})"
+  },
+  "Nav": {
+    "navigationLabel": "Navigation principale",
+    "home": "Accueil",
+    "timeline": "Chronologie",
+    "signals": "Signaux",
+    "clinicalBrief": "EMBR BRIEF",
+    "settings": "Paramètres",
+    "more": "Plus",
+    "menu": "Menu",
+    "treatments": "Traitements",
+    "notes": "Carnet",
+    "export": "Exporter",
+    "organization": "Organisation",
+    "logout": "Se déconnecter",
+    "feedback": "Envoyer un avis",
+    "feedbackSubject": "Avis sur EMBR",
+    "feedbackIntro": "Que s’est-il passé, ou qu’est-ce qui rendrait EMBR plus utile pour vous ?",
+    "feedbackPage": "Page",
+    "feedbackBrowser": "Navigateur",
+    "monthlyRating": "Bilan mensuel"
+  },
+  "Timeline": {
+    "title": "Chronologie",
+    "subtitle": "Toutes les saisies de votre suivi, dans l’ordre.",
+    "filterGroupLabel": "Filtrer la chronologie",
+    "filter": {
+      "symptoms": "Symptômes",
+      "cycle": "Cycle",
+      "treatments": "Traitements"
+    },
+    "nightSweatsRecalled": "Sueurs nocturnes la nuit dernière : {value} (indiqué le matin)",
+    "workImpactAnswered": "Les symptômes ont-ils affecté le travail ? {value}",
+    "cycleLabel": "Cycle",
+    "periodStarted": "Début des règles",
+    "periodEnded": "Fin des règles",
+    "treatmentStarted": "Début : {name}",
+    "treatmentEnded": "Arrêt : {name}",
+    "emptyTitle": "Aucune saisie pour l’instant.",
+    "emptyBody": "À mesure que vous notez vos symptômes, vos jours de cycle et vos traitements, ils apparaîtront ici dans l’ordre, jour après jour.",
+    "filteredEmptyTitle": "Rien ne correspond à ce filtre.",
+    "filteredEmptyBody": "Essayez d’activer une autre catégorie ci-dessus.",
+    "truncatedNotice": "Affichage de votre activité la plus récente sur les {days} derniers jours.",
+    "truncatedNoticeAll": "Affichage de votre activité la plus récente sur l’ensemble de votre suivi.",
+    "viewLabel": "Affichage",
+    "view": {
+      "list": "Liste",
+      "month": "Mois"
+    },
+    "monthPrevious": "Mois précédent",
+    "monthNext": "Mois suivant",
+    "monthLegend": "Légende",
+    "monthMarkSymptoms": "Symptômes",
+    "monthMarkCycle": "Cycle",
+    "monthMarkTreatments": "Changement de traitement",
+    "monthDayNoEntry": "{date} : aucune saisie",
+    "monthNoEntryDetail": "Aucune saisie pour ce jour.",
+    "chronologyLabel": "Votre suivi, du plus récent au plus ancien",
+    "today": "Aujourd’hui",
+    "noEntryGap": "{count, plural, one {Aucune saisie pendant 1 jour} other {Aucune saisie pendant # jours}}",
+    "exerciseAnswered": "Activité physique : {value}"
+  },
+  "Trends": {
+    "title": "Signaux",
+    "subtitle": "Voyez ce que votre suivi commence à montrer au fil du temps.",
+    "reportedDataLabel": "Votre suivi",
+    "reportedDataDescription": "Les <b>jours</b> où vous avez noté chaque symptôme sur cette période, sur une même frise pour voir quand.",
+    "symptomsHeader": "Symptômes, {days} derniers jours",
+    "noSymptomsYet": "Aucun symptôme noté pour l’instant",
+    "noSymptomsBody": "Votre suivi devient plus utile si vous notez régulièrement. Après plusieurs saisies, cette vue montre à quelle fréquence chaque symptôme a été noté.",
+    "cycleHistoryLabel": "Historique du cycle",
+    "cycleHistoryDescription": "Informations de cycle enregistrées.",
+    "cycleLengthHeader": "Durée du cycle, {days} derniers jours",
+    "noCycleDataYet": "Ajoutez au moins deux dates de début de règles pour voir ici la durée de vos cycles.",
+    "noCycleDataCaveat": "Les cycles irréguliers ou absents sont fréquents pendant la périménopause. Il s’agit d’un suivi pour vous et votre professionnel de santé, pas d’un diagnostic.",
+    "averagingDays": "En moyenne <strong>{days} jours</strong> entre deux débuts de règles sur cette période.",
+    "daysUnit": "jours",
+    "irregularityNote": "Les irrégularités du cycle sont attendues pendant la périménopause. Cette vue vous aide à repérer votre propre rythme, pas à le signaler comme un problème.",
+    "symptomsHeaderAll": "Symptômes, tout le suivi",
+    "cycleLengthHeaderAll": "Durée du cycle, tout le suivi",
+    "emptyRecordTitle": "Aucune saisie pour l’instant.",
+    "emptyRecordBody": "Votre suivi devient plus utile si vous notez régulièrement. Après plusieurs saisies, Signaux montre à quelle fréquence chaque symptôme a été noté, quels symptômes l’ont été les mêmes jours, et la durée de vos cycles.",
+    "emptyRecordAction": "Noter les symptômes du jour",
+    "daysLogged": "<n>{count}</n> {count, plural, one {jour} other {jours}}",
+    "weekByWeek": "{category}, semaine par semaine",
+    "monthByMonth": "{category}, mois par mois",
+    "bucketWeek": "Semaine du {date}",
+    "bucketLogged": "{period} : noté sur {count} des {length} jours, intensité la plus forte {severity}",
+    "bucketNoEntry": "{period} : aucune saisie",
+    "stripEndWeek": "7 derniers jours",
+    "cycleRange": "Du {from} au {to}",
+    "anyEntryRow": "Tout symptôme",
+    "chartLegend": "Le plus ancien à gauche, une semaine par colonne. Une barre plus haute signifie plus de jours notés cette semaine. Pas de barre signifie aucune saisie. Choisissez une semaine pour voir ce que vous avez noté.",
+    "chartLegendMonthly": "Le plus ancien à gauche, un mois par colonne. Une barre plus haute signifie plus de jours notés ce mois. Pas de barre signifie aucune saisie. Choisissez un mois pour voir ce que vous avez noté.",
+    "coverage": "Symptômes notés sur <n>{days}</n> des <n>{total}</n> jours.",
+    "earlierWeek": "Semaine précédente",
+    "laterWeek": "Semaine suivante",
+    "earlierMonth": "Mois précédent",
+    "laterMonth": "Mois suivant",
+    "periodSpan": "Du {from} au {to}",
+    "weekNoEntry": "Aucune saisie cette semaine.",
+    "monthNoEntry": "Aucune saisie ce mois.",
+    "periodDays": "{count} sur {length} jours"
+  },
+  "CoOccurrence": {
+    "cardLabel": "Signal",
+    "cardDescription": "Symptômes notés les mêmes jours.",
+    "findingHeading": "{categoryA} et {categoryB} sont apparus ensemble",
+    "evidenceLabel": "Jours notés",
+    "sharedDaysCount": "{days, plural, one {# jour en commun} other {# jours en commun}}",
+    "observedLabel": "Observé",
+    "observedText": "{categoryA} : noté {countA, plural, one {# fois} other {# fois}} sur les {days} derniers jours. {categoryB} : noté {countB, plural, one {# fois} other {# fois}}.",
+    "caveat": "Une description de ce que vous avez noté : pas un diagnostic, ni une affirmation sur une cause.",
+    "whyReasoning": "Ce signal apparaît lorsque deux symptômes ont été notés le même jour sur au moins 3 jours distincts. {categoryA} et {categoryB} ont actuellement {days, plural, one {# jour} other {# jours}} en commun.",
+    "questionLabel": "À aborder avec votre professionnel de santé",
+    "questionText": "Est-il fréquent que {categoryA} et {categoryB} surviennent ensemble à ce stade ?",
+    "questionCaveat": "Une question suggérée, pas un avis médical.",
+    "briefCta": "Voir cette période dans votre EMBR BRIEF",
+    "emptyTitle": "Votre suivi est encore en train de se constituer.",
+    "emptyBody": "Quand votre suivi comptera plus de saisies, les symptômes notés les mêmes jours apparaîtront ici."
+  },
+  "ContextCoOccurrence": {
+    "cardLabel": "Signal",
+    "findingHeading": "{category} a été noté en même temps que : {factor}",
+    "evidenceLabel": "Jours notés",
+    "sharedDaysCount": "{days, plural, one {# jour en commun} other {# jours en commun}}",
+    "caveat": "Une description de ce que vous avez noté : pas un diagnostic, ni une affirmation que l’un a causé l’autre.",
+    "whyReasoning": "Ce signal apparaît lorsqu’un symptôme et un facteur de contexte ont été notés le même jour sur au moins 3 jours distincts. {category} et {factor} ont actuellement {days, plural, one {# jour} other {# jours}} en commun.",
+    "briefCta": "Voir cette période dans votre EMBR BRIEF"
+  },
+  "EvidenceStrength": {
+    "groupLabel": "Ampleur actuelle de votre suivi",
+    "label": {
+      "EARLY": "Suivi en construction",
+      "EMERGING": "Suivi en développement",
+      "ESTABLISHED": "Suivi bien établi"
+    },
+    "caption": {
+      "EARLY": "Votre suivi devient plus utile si vous notez régulièrement.",
+      "EMERGING": "Votre suivi commence à prendre forme. Continuez à noter pour obtenir une image plus complète.",
+      "ESTABLISHED": "Vous disposez d’un suivi solide sur lequel vous appuyer."
+    }
+  },
+  "WhyAmISeeingThis": {
+    "toggle": "Pourquoi je vois ceci ?"
+  },
+  "HotFlashReferenceLibrary": {
+    "toggle": "Ce que dit la science sur les bouffées de chaleur",
+    "intro": "Des repères généraux sur ce que dit la recherche actuelle sur les bouffées de chaleur. Ils ne concernent pas votre propre suivi et ne constituent pas un avis médical.",
+    "sections": {
+      "hormonal_signaling": {
+        "heading": "Signalisation hormonale",
+        "body": "Pendant la transition ménopausique, la production d’œstrogènes diminue et leur signal vers les centres cérébraux de régulation de la température se modifie. La plupart des travaux actuels voient dans ce changement le point de départ des bouffées de chaleur à cette période de la vie, même si l’enchaînement complet, du changement hormonal à la bouffée de chaleur, comporte plusieurs autres étapes décrites ci-dessous."
+      },
+      "kndy_nk3_pathway": {
+        "heading": "La voie KNDy, neurokinine et NK3",
+        "body": "Lorsque le signal œstrogénique change, un groupe de neurones de l’hypothalamus appelés neurones KNDy (d’après les molécules de signalisation kisspeptine, neurokinine B et dynorphine) devient plus actif. Leur signal de neurokinine B active les récepteurs NK3 du centre thermorégulateur du cerveau, ce qui semble réduire la tolérance du corps aux petites variations de température interne. Une variation qui passerait normalement inaperçue est alors interprétée comme une surchauffe, et le corps réagit par la transpiration et la vasodilatation d’une bouffée de chaleur. Cette voie fait partie des modèles mécanistiques les plus précis identifiés par la recherche actuelle, et elle est à la base de traitements non hormonaux plus récents décrits dans la section sur les approches thérapeutiques ci-dessous."
+      },
+      "neurotransmitter_pathways": {
+        "heading": "Sérotonine, noradrénaline et autres voies non hormonales",
+        "body": "Indépendamment de la voie NK3, des médicaments agissant sur la sérotonine, la noradrénaline ou le GABA, des systèmes de neurotransmetteurs plus souvent associés à l’humeur et à la douleur, ont aussi été étudiés pour les bouffées de chaleur. Ces systèmes interagissent avec les mêmes circuits thermorégulateurs, ce qui expliquerait pourquoi certains médicaments développés à l’origine pour d’autres affections peuvent aussi influer sur la fréquence ou l’intensité des bouffées de chaleur chez certaines personnes."
+      },
+      "behavioral_psychological": {
+        "heading": "Facteurs comportementaux et psychologiques",
+        "body": "Une bouffée de chaleur est un phénomène physiologique, mais la gêne qu’elle provoque dépend en partie d’autres facteurs : le stress, le sommeil et la façon dont la sensation est interprétée sur le moment. Des approches comportementales comme la thérapie cognitivo-comportementale et l’hypnose clinique ont été étudiées pour leur effet sur cette seconde dimension. Certains travaux suggèrent qu’elles peuvent réduire l’impact des bouffées de chaleur sur le sommeil, la concentration ou la vie quotidienne, et peut-être aussi leur fréquence ou leur intensité, par des mécanismes centraux et psychologiques plutôt que par un effet direct sur les vaisseaux sanguins périphériques."
+      },
+      "context_lifestyle": {
+        "heading": "Contexte et mode de vie",
+        "body": "La caféine, l’alcool, l’alimentation, la température ambiante et d’autres facteurs du quotidien sont souvent cités comme « déclencheurs » de bouffées de chaleur, mais les données actuelles sur un lien direct et constant sont limitées et contrastées. C’est précisément pourquoi EMBR enregistre ce type de contexte comme une observation (ce qui a été noté en même temps que quoi) et non comme une cause. Une tendance qui apparaît sur plusieurs jours mérite d’être remarquée ; ce n’est pas la preuve que l’un a causé l’autre."
+      },
+      "treatment_pathways": {
+        "heading": "Les approches thérapeutiques envisagées par les médecins",
+        "body": "Plusieurs catégories de traitements agissent à différents niveaux des mécanismes ci-dessus. Le traitement hormonal agit sur la signalisation hormonale sous-jacente. Les antagonistes des récepteurs NK3 (comme le fézolinétant) bloquent spécifiquement la voie KNDy décrite ci-dessus et ont été autorisés sur la base de ce mécanisme. Certains médicaments non hormonaux agissent sur la sérotonine, la noradrénaline ou le GABA. Les approches comportementales agissent sur la dimension psychologique et fonctionnelle. Chacune repose sur des données différentes, convient à des personnes différentes et comporte des risques différents. Par exemple, les antagonistes des récepteurs NK3 nécessitent une surveillance en raison de rares effets sur le foie, et l’adéquation du traitement hormonal dépend fortement des antécédents de santé de chaque personne.",
+        "caveat": "Ceci décrit des catégories de traitements utilisées en pratique clinique, pas une recommandation pour vous. Savoir si l’un d’eux vous convient dépend de vos propres antécédents de santé, et c’est une discussion à avoir avec votre médecin. EMBR ne choisit ni ne recommande de traitement."
+      }
+    },
+    "sourceLabel": "Source",
+    "caveat": "Cette section résume la littérature scientifique et clinique générale sur les bouffées de chaleur. Ce n’est ni un diagnostic, ni une explication de la cause de vos propres symptômes, ni un avis médical."
+  },
+  "Organization": {
+    "title": "Organisation",
+    "backToDashboard": "← Tableau de bord",
+    "notAMember": "Vous ne faites partie d’aucune organisation sur EMBR. Cette page s’adresse à la personne qui administre un compte employeur, assureur ou établissement de santé.",
+    "notAnAdmin": "Vous appartenez à une organisation, mais seul son ORG_ADMIN peut gérer la liste des membres et consulter les tendances agrégées. Si cela doit être vous, demandez à l’administrateur de votre organisation de modifier votre rôle.",
+    "managingLabel": "Gestion de",
+    "memberCount": "{count, plural, one {# membre} other {# membres}}",
+    "ofSeats": " sur {count} places",
+    "inviteSomeone": "Inviter quelqu’un",
+    "emailLabel": "E-mail",
+    "roleLabel": "Rôle",
+    "roleAdmin": "Administrateur",
+    "roleMember": "Membre",
+    "inviteSuccess": "Invitation envoyée à {email}.",
+    "inviteError": "Impossible d’envoyer cette invitation. Réessayez.",
+    "sendInvite": "Envoyer l’invitation",
+    "sending": "Envoi…",
+    "members": "Membres",
+    "noMembersYet": "Aucun membre pour l’instant. Envoyez une invitation ci-dessus.",
+    "you": "Vous",
+    "joined": "inscrit le",
+    "revoking": "Révocation…",
+    "revoke": "Révoquer",
+    "sso": "Authentification unique",
+    "ssoDescription": "Permettez aux membres de votre domaine e-mail de se connecter via votre fournisseur d’identité plutôt qu’avec un mot de passe. La connexion par mot de passe continue de fonctionner dans tous les cas. Elle n’est pas remplacée.",
+    "issuerUrlLabel": "URL de l’émetteur",
+    "clientIdLabel": "ID client",
+    "clientSecretLabel": "Secret client",
+    "clientSecretPlaceholder": "Saisissez-le à nouveau pour le modifier",
+    "allowedDomainLabel": "Domaine e-mail autorisé",
+    "enabledLabel": "Activé",
+    "ssoSaveSuccess": "Connexion SSO enregistrée.",
+    "ssoSaveError": "Impossible d’enregistrer. Réessayez.",
+    "saving": "Enregistrement…",
+    "updateConnection": "Mettre à jour la connexion",
+    "saveConnection": "Enregistrer la connexion",
+    "symptomTrendsHeader": "Tendances des symptômes, {days} derniers jours",
+    "trendsAnonymizedNote": "Données anonymisées à l’échelle de votre organisation : jamais le suivi individuel d’un membre.",
+    "trendsSuppressed": "Trop peu de personnes ont noté des symptômes sur cette période pour afficher une tendance sans risquer d’identifier quelqu’un. Ce n’est pas une question de taille globale de votre organisation, mais du nombre de membres ayant réellement noté quelque chose récemment.",
+    "trendsEmpty": "Aucune saisie dans l’organisation sur cette période pour l’instant.",
+    "basedOnCohort": "{count, plural, one {Basé sur # membre ayant} other {Basé sur # membres ayant}} noté quelque chose sur cette période.",
+    "billing": {
+      "title": "Facturation",
+      "loadError": "Impossible de charger les informations de facturation.",
+      "notConfigured": "La facturation n’est pas encore configurée sur ce déploiement.",
+      "statusLabel": "Statut",
+      "seatsLabel": "Places",
+      "renewsLabel": "Renouvellement",
+      "noSubscription": "Aucun abonnement pour l’instant",
+      "pastDueWarning": "Votre dernier paiement a échoué. Mettez à jour votre moyen de paiement pour ne pas perdre l’accès.",
+      "startDescription": "Choisissez le nombre de places à acheter, puis finalisez le paiement avec Stripe.",
+      "seatsInputLabel": "Places",
+      "startSubscription": "Démarrer l’abonnement",
+      "startingCheckout": "Redirection vers Stripe…",
+      "manageDescription": "Modifiez le nombre de places, mettez à jour votre moyen de paiement ou consultez vos factures.",
+      "manageBilling": "Gérer la facturation",
+      "opening": "Ouverture…",
+      "genericError": "Un problème est survenu. Réessayez."
+    },
+    "cancel": "Annuler",
+    "leaveOrganization": "Quitter l’organisation",
+    "leaveConfirmPrompt": "Vous êtes sûre ?",
+    "leaveConfirmYes": "Oui, quitter",
+    "leaving": "Départ…",
+    "leaveError": "Impossible de quitter l’organisation. Réessayez."
+  },
+  "EmailVerification": {
+    "title": "Vérifiez votre e-mail pour continuer",
+    "body": "Cette action nécessite une adresse e-mail confirmée.",
+    "resend": "Renvoyer l’e-mail de vérification",
+    "resendSubmitting": "Envoi…",
+    "resendSuccess": "Consultez votre boîte de réception. Un nouveau lien de vérification est en route.",
+    "genericError": "Un problème est survenu. Réessayez."
+  },
+  "Settings": {
+    "title": "Paramètres",
+    "accountTitle": "Compte",
+    "emailVerified": "Votre e-mail est vérifié.",
+    "emailNotVerified": "Votre adresse e-mail n’est pas encore vérifiée.",
+    "resendVerification": "Renvoyer l’e-mail de vérification",
+    "resendVerificationSubmitting": "Envoi…",
+    "resendVerificationSuccess": "Si votre e-mail n’est pas encore vérifié, un nouveau lien de vérification est en route.",
+    "changePasswordTitle": "Changer de mot de passe",
+    "changePasswordDescription": "Changer votre mot de passe vous déconnecte partout, y compris sur cet appareil. Vous devrez vous reconnecter.",
+    "currentPasswordLabel": "Mot de passe actuel",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "genericError": "Un problème est survenu. Réessayez.",
+    "changePassword": "Changer de mot de passe",
+    "changing": "Modification…",
+    "displayTitle": "Affichage",
+    "textSizeLabel": "Taille du texte",
+    "textSizeHelp": "S’applique sur cet appareil.",
+    "textSize": {
+      "standard": "Standard",
+      "large": "Grande",
+      "larger": "Très grande"
+    },
+    "themeLabel": "Thème de couleur",
+    "themeHelp": "Le thème sombre fatigue moins les yeux la nuit. Système suit votre téléphone ou votre ordinateur.",
+    "theme": {
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "devices": "Appareils",
+    "logoutEverywhere": "Se déconnecter partout",
+    "confirmLogoutAllMessage": "Tous les appareils, y compris celui-ci, seront déconnectés.",
+    "loggingOut": "Déconnexion…",
+    "noActiveSessions": "Aucune session active.",
+    "unknownDevice": "Appareil inconnu",
+    "thisDevice": "Cet appareil",
+    "unknownIp": "IP inconnue",
+    "signedIn": "connecté le",
+    "revoking": "Révocation…",
+    "revoke": "Révoquer",
+    "deleteAccountTitle": "Supprimer le compte",
+    "deleteAccountDescription": "Cela supprime définitivement votre compte et tout son contenu : symptômes notés, saisies de cycle, contexte quotidien, traitements, briefs et paramètres. <b>Cette action est irréversible.</b>",
+    "deleteMyAccount": "Supprimer mon compte",
+    "confirmPasswordLabel": "Confirmez votre mot de passe",
+    "forgotPasswordHint": "Vous ne connaissez pas votre mot de passe ?",
+    "forgotPasswordLink": "Le réinitialiser",
+    "enterPasswordToConfirm": "Saisissez votre mot de passe pour confirmer.",
+    "permanentlyDelete": "Supprimer définitivement mon compte",
+    "deleting": "Suppression…",
+    "cancel": "Annuler",
+    "lifeStageTitle": "Étape de vie",
+    "lifeStageHelp": "Votre propre réponse. EMBR ne la devine jamais à partir de vos saisies, et elle n’est jamais envoyée à l’IA.",
+    "lifeStageSaved": "Enregistré",
+    "lifeStageError": "Impossible d’enregistrer. Veuillez réessayer.",
+    "lastPeriodTitle": "Vos dernières règles",
+    "lastPeriodHelp": "Si vos règles se sont arrêtées, ou si les dernières remontent à avant votre utilisation d’EMBR, ajoutez la date. Votre BRIEF l’affiche pour que votre médecin sache depuis combien de temps. Une estimation suffit. Si vous ne vous en souvenez pas, laissez vide. EMBR ne la devine jamais, et elle n’est jamais envoyée à l’IA.",
+    "lastPeriodLabel": "Date de vos dernières règles",
+    "lastPeriodSave": "Enregistrer",
+    "lastPeriodSaving": "Enregistrement…",
+    "lastPeriodRemove": "Retirer",
+    "lastPeriodSaved": "Enregistré",
+    "lastPeriodRemoved": "Retiré",
+    "lastPeriodError": "Impossible d’enregistrer. Veuillez réessayer.",
+    "weeklyEmailTitle": "E-mail hebdomadaire",
+    "weeklyEmailHelp": "Un court rappel une fois par semaine, le dimanche, pour revoir votre semaine dans EMBR. Il ne contient jamais rien de votre suivi. Désactivé sauf si vous l’activez.",
+    "weeklyEmailToggle": "M’envoyer un e-mail hebdomadaire",
+    "weeklyEmailOn": "Activé. Le prochain arrive dimanche.",
+    "weeklyEmailError": "Impossible d’enregistrer. Veuillez réessayer.",
+    "lifeStage": {
+      "perimenopause": "Mes règles changent ou sont irrégulières (périménopause)",
+      "postmenopause": "Pas de règles depuis 12 mois ou plus (postménopause)",
+      "notSure": "Je ne sais pas",
+      "preferNotToSay": "Je préfère ne pas répondre"
+    }
+  },
+  "Brief": {
+    "title": "EMBR BRIEF",
+    "description": "Une synthèse structurée de votre suivi, avec des questions à apporter à votre professionnel de santé. C’est une synthèse de données pour faciliter l’échange, <b>pas un diagnostic, ni un avis médical</b>.",
+    "noMinimumEntries": "Chaque EMBR BRIEF couvre <b>la période que vous choisissez</b> : la fréquence de chaque symptôme noté, les tendances observées, la durée des cycles et les traitements notés, ainsi que des <b>questions à poser</b>. Il n’y a pas de minimum. S’il y a très peu de saisies, il l’indique <b>plutôt que de deviner</b>.",
+    "fromLabel": "Du",
+    "toLabel": "Au",
+    "generate": "Générer l’EMBR BRIEF",
+    "generating": "Génération…",
+    "pickDates": "Choisissez une date de début et une date de fin.",
+    "generateError": "Impossible de générer le brief. Réessayez.",
+    "generateErrorReassurance": "Votre suivi n’a pas changé et rien n’a été perdu. Vous pouvez réessayer, et vos briefs existants restent disponibles ci-dessous.",
+    "briefReady": "Votre brief est prêt",
+    "aiAuthorshipNote": "Cette synthèse et les questions sont rédigées par une IA à partir des totaux et des tendances de ce brief. <b>Vos notes ne sont pas utilisées.</b>",
+    "downloadPdf": "Télécharger le PDF",
+    "downloadSummary": "Télécharger la synthèse pour le médecin",
+    "downloadingSummary": "Préparation…",
+    "downloadSummaryError": "Impossible de préparer la synthèse. Réessayez.",
+    "pastBriefs": "Briefs précédents",
+    "periodRange": "Du {from} au {to}",
+    "noBriefsYet": "Aucun brief pour l’instant. Votre premier EMBR BRIEF résumera la période choisie ci-dessus.",
+    "generatedOn": "généré le {date}",
+    "pdf": "PDF",
+    "delete": "Supprimer",
+    "briefDetailError": "Impossible de charger ce brief. Réessayez.",
+    "deleteError": "Impossible de supprimer ce brief. Réessayez.",
+    "questionsForGp": "Questions à poser à votre professionnel de santé",
+    "symptomFrequency": "Fréquence des symptômes",
+    "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",
+    "cycleSummary": "Synthèse du cycle",
+    "notEnoughCycleData": "Pas assez de débuts de règles notés sur cette période pour calculer la durée du cycle.",
+    "averageCycleLength": "Durée moyenne du cycle : {days} jours ({count, plural, one {# cycle noté} other {# cycles notés}})",
+    "lastPeriodDay": "Dernier jour de règles noté : {date} ({months, plural, =0 {moins d’un mois} one {# mois} other {# mois}} avant la fin de ce BRIEF)",
+    "noPeriodDayLogged": "Aucun jour de règles noté dans EMBR jusqu’à la fin de ce BRIEF.",
+    "lastPeriodDayNote": "Ne compte que les jours de règles notés dans EMBR, sur l’ensemble du suivi.",
+    "reportedLastPeriod": "Dernières règles, selon ce que vous avez indiqué dans les Paramètres : {date} ({months, plural, =0 {moins d’un mois} one {# mois} other {# mois}} avant la fin de ce BRIEF)",
+    "reportedLastPeriodNote": "Votre propre réponse dans les Paramètres, pas un jour de règles noté dans EMBR. Elle peut être approximative.",
+    "treatmentsLoggedDuringPeriod": "Traitements notés pendant cette période",
+    "noTreatmentsInRange": "Aucun traitement noté sur cette période.",
+    "noSymptomsInRange": "Aucun symptôme noté sur cette période.",
+    "ongoing": "En cours",
+    "stopReasonEntry": "Motif de l’arrêt : {reason}",
+    "treatmentSafetyNote": "Ceci reflète ce que vous avez noté. Cela n’évalue pas l’efficacité d’un traitement et ne constitue pas une recommandation de traitement.",
+    "frequencyComparisonTitle": "Comparaison avec la période précédente",
+    "frequencyComparisonEntry": "Noté {currentCount, plural, one {# fois} other {# fois}}, contre {previousCount, plural, one {# fois} other {# fois}} sur la période précédente.",
+    "patternsNoticedTitle": "Tendances observées",
+    "coOccurrenceEntry": "{categoryA} et {categoryB} ont tous deux été déclarés sur {days, plural, one {# jour} other {# jours}}.",
+    "treatmentImpactTitle": "Évolutions observées après le début d’un traitement",
+    "treatmentImpactEntry": "{beforeCount, plural, one {# symptôme noté} other {# symptômes notés}} dans les {beforeDays} jours précédant le début, contre {afterCount, plural, one {# symptôme noté} other {# symptômes notés}} dans les {afterDays} jours suivants.",
+    "treatmentImpactInsufficientData": "Pas encore assez de recul depuis le début pour comparer.",
+    "persistentSymptomsTitle": "Symptômes persistants",
+    "persistentSymptomsEntry": "{category} est resté présent sur les deux périodes.",
+    "nightSweatsRecallTitle": "Sueurs nocturnes rappelées le matin",
+    "nightSweatsAnswered": "Réponse donnée {count, plural, one {# matin} other {# matins}} sur cette période.",
+    "nightSweatsBreakdown": "Aucune : {none}, 1 : {one}, 2 à 3 : {twoToThree}, 4 ou plus : {fourPlus}.",
+    "nightSweatsFewAnswers": "Une répartition s’affiche à partir de 7 matins de réponses.",
+    "nightSweatsSeparate": "Il s’agit d’estimations du matin, comptées séparément des symptômes notés.",
+    "workImpactTitle": "Jours où les symptômes ont affecté le travail",
+    "workImpactAnswered": "Réponse donnée {count, plural, one {# jour} other {# jours}} sur cette période.",
+    "workImpactBreakdown": "Aucun effet : {none}, en a fait moins : {didLess}, s’est absentée : {missedTime}.",
+    "workImpactFewAnswers": "Une répartition s’affiche à partir de 7 jours de réponses.",
+    "workImpactPrivate": "Vos propres réponses quotidiennes. Jamais partagées avec un employeur.",
+    "groundedInTitle": "Fondé sur vos données",
+    "viewEvidence": "Voir les jours notés",
+    "hideEvidence": "Masquer les jours notés",
+    "evidenceSourceLabel": "Source",
+    "evidenceSourceSelfReported": "Symptômes notés par vous-même",
+    "evidenceConfidenceLabel": "Niveau d’interprétation",
+    "evidenceConfidenceDescriptive": "Descriptif : une simple description de vos données, pas un score de confiance clinique ou statistique",
+    "evidenceDatesCurrentLabel": "Noté le (cette période)",
+    "evidenceDatesPreviousLabel": "Noté le (période précédente)",
+    "evidenceDatesLabel": "Noté le",
+    "evidenceDatesBeforeLabel": "Noté avant le début",
+    "evidenceDatesAfterLabel": "Noté après le début",
+    "evidenceDatesInterpretation": "Ceci décrit une tendance dans vos données notées. Cela n’établit pas de cause médicale.",
+    "trendsTitle": "Vos tendances récentes",
+    "trendsAcrossBriefs": "Sur vos {count, plural, one {# dernier brief} other {# derniers briefs}}",
+    "trendsCategoryLine": "{category} : noté dans {present} {total, plural, one {brief sur #} other {briefs sur #}}, indiqué comme persistant dans {persistent}.",
+    "longitudinalPatternsTitle": "Récurrent dans vos briefs",
+    "longitudinalPatternsLine": "{category} apparaît dans chacun de vos {total, plural, one {# dernier brief} other {# derniers briefs}}.",
+    "presetsLabel": "Périodes rapides",
+    "preset30": "30 derniers jours",
+    "preset90": "90 derniers jours",
+    "presetAll": "Depuis votre première saisie",
+    "dayByDayTitle": "Jour par jour",
+    "dayByDayIntro": "Chaque colonne correspond à un jour de ce BRIEF, du plus ancien à gauche. Elle montre les jours où chaque symptôme a été noté, pas son intensité.",
+    "dayByDayLegendLogged": "Noté",
+    "dayByDayLegendOther": "Autres symptômes notés",
+    "dayByDayLegendNoEntry": "Aucune saisie",
+    "dayByDayRow": "{symptom} : noté sur {count} des {total} jours",
+    "dayByDayCoverage": "Saisies sur {recorded} des {total} jours. Aucune saisie sur {missing, plural, one {1 jour} other {# jours}}.",
+    "exerciseTitle": "Activité physique",
+    "exerciseAnswered": "Réponse donnée {count, plural, one {# jour} other {# jours}} sur cette période.",
+    "exerciseBreakdown": "Aucune : {none}, légère : {light}, modérée : {moderate}, intense : {vigorous}.",
+    "exerciseFewAnswers": "Une répartition s’affiche à partir de 7 jours de réponses.",
+    "exerciseScale": "Votre propre appréciation de l’intensité de votre activité chaque jour, non mesurée.",
+    "mrsTitle": "Menopause Rating Scale (MRS)",
+    "mrsCount": "{count, plural, one {1 bilan mensuel sur cette période.} other {# bilans mensuels sur cette période ; le premier et le plus récent sont affichés.}}",
+    "mrsTotal": "Total",
+    "mrsSomatic": "Somatique",
+    "mrsPsychological": "Psychologique",
+    "mrsUrogenital": "Urogénital",
+    "mrsScore": "{score} sur {max}",
+    "mrsBand": {
+      "NONE_OR_LITTLE": "nul ou faible",
+      "MILD": "léger",
+      "MODERATE": "modéré",
+      "SEVERE": "sévère"
+    },
+    "mrsScale": "Vos propres évaluations de 11 symptômes, chacune de 0 (aucun) à 4 (extrêmement sévère), selon votre ressenti au moment de la saisie.",
+    "mrsBands": "Les catégories entre parenthèses sont les catégories de référence publiées de la MRS (Heinemann et al. 2004), issues d’un échantillon de population allemande ; les scores ont tendance à être plus bas dans les échantillons asiatiques. Elles s’adressent à votre médecin et décrivent un score, pas un diagnostic.",
+    "mrsCopyright": "Menopause Rating Scale © Prof. Lothar A. J. Heinemann."
+  },
+  "AcceptInvite": {
+    "couldntAccept": "Impossible d’accepter cette invitation",
+    "missingToken": "Il manque le jeton de ce lien d’invitation. Vérifiez que vous avez copié le lien complet depuis l’e-mail.",
+    "goToDashboard": "Aller au tableau de bord",
+    "youveBeenInvited": "Vous avez été invitée",
+    "loginPrompt": "Connectez-vous ou créez un compte EMBR avec l’e-mail auquel cette invitation a été envoyée, et vous reviendrez directement ici pour rejoindre l’organisation.",
+    "logIn": "Se connecter",
+    "createAccount": "Créer un compte",
+    "loginPromptClosed": "Connectez-vous avec le compte auquel cette invitation a été envoyée, et vous reviendrez directement ici pour rejoindre l’organisation. EMBR accueille actuellement un groupe restreint de premières utilisatrices : les nouveaux comptes sont ouverts sur demande.",
+    "requestAccess": "Demander un accès anticipé",
+    "youreIn": "C’est fait",
+    "joinedNamed": "Vous avez rejoint <strong>{orgName}</strong>.",
+    "joinedUnnamed": "Vous avez rejoint l’organisation.",
+    "goToOrganization": "Aller à l’organisation",
+    "alreadyMember": "Déjà membre",
+    "alreadyMemberBody": "Vous faites déjà partie de cette organisation. Il n’y a rien d’autre à faire ici.",
+    "wrongAccount": "Mauvais compte",
+    "wrongAccountBody": "Cette invitation a été envoyée à une autre adresse que <strong>{email}</strong>, le compte avec lequel vous êtes connectée. Déconnectez-vous et reconnectez-vous avec l’e-mail auquel l’invitation a été envoyée.",
+    "logOutAndRetry": "Se déconnecter et réessayer",
+    "loggingOut": "Déconnexion…",
+    "stayAndGoToDashboard": "Rester connectée et aller au tableau de bord",
+    "genericError": "Un problème est survenu lors de l’acceptation de l’invitation. Réessayez dans un instant.",
+    "privacyNote": "Vos données de santé individuelles restent privées. Votre employeur ne peut pas voir vos symptômes individuels. Les informations de l’organisation ne sont présentées que sous forme de tendances agrégées et anonymisées, lorsqu’il y a assez de données pour protéger la vie privée de chacune."
+  },
+  "Export": {
+    "title": "Exporter vos données",
+    "backToDashboard": "← Tableau de bord",
+    "description": "Tout ce que vous exportez reste sur votre appareil. Rien n’est envoyé ailleurs. Laissez les dates vides pour tout exporter.",
+    "fromLabel": "Du",
+    "toLabel": "Au",
+    "clinicianSummaryLabel": "Synthèse pour le médecin (PDF)",
+    "clinicianSummaryDescription": "Une courte synthèse mise en forme pour une consultation : fréquence des symptômes, durée du cycle, historique des traitements et le détail des saisies.",
+    "symptomLogsLabel": "Symptômes notés (CSV)",
+    "symptomLogsDescription": "Chaque symptôme noté sur la période, une ligne par saisie, pour vos propres archives ou un autre outil.",
+    "cycleEntriesLabel": "Saisies de cycle (CSV)",
+    "cycleEntriesDescription": "Chaque saisie de cycle sur la période, une ligne par saisie.",
+    "contextLogsLabel": "Contexte quotidien (CSV)",
+    "contextLogsDescription": "Chaque saisie de contexte quotidien sur la période, une ligne par saisie : sommeil, caféine l’après-midi, alcool, stress et sueurs nocturnes rappelées le matin. Une cellule vide signifie non renseigné.",
+    "notesLabel": "Notes (CSV)",
+    "notesDescription": "Chaque note commencée sur la période, une ligne par note, avec son titre et son texte.",
+    "treatmentsLabel": "Traitements (CSV)",
+    "treatmentsDescription": "Chaque traitement noté sur la période, une ligne par traitement.",
+    "allDataHeading": "Tout dans un seul fichier",
+    "allDataLabel": "Toutes mes données (JSON)",
+    "allDataDescription": "L’intégralité de votre suivi dans un seul fichier lisible par machine : informations du compte, réponses d’accueil, historique des consentements, et chaque saisie, note et BRIEF. Les dates ci-dessus ne s’y appliquent pas."
+  },
+  "Treatments": {
+    "stopReasonLabel": "Pourquoi avez-vous arrêté ? (facultatif)",
+    "stopReasonRowLabel": "Pourquoi avez-vous arrêté {name} ?",
+    "stopReasonNone": "Sans réponse",
+    "stopReasonHelp": "Votre BRIEF affiche le motif choisi, pour votre professionnel de santé. « Je préfère ne pas répondre » n’est jamais affiché.",
+    "title": "Traitements",
+    "hint": "Ce que vous faites pour y remédier : THM, compléments alimentaires, médicaments ou autre chose. Votre propre suivi, pas un diagnostic ni une recommandation de traitement.",
+    "namePlaceholder": "Nom (par ex. patch d’estradiol)",
+    "category": "Catégorie",
+    "startDate": "Date de début",
+    "ongoing": "En cours",
+    "endDate": "Date de fin",
+    "notesPlaceholder": "Notes (facultatif)",
+    "fillRequiredFields": "Ajoutez d’abord un nom et une date de début.",
+    "pickEndDate": "Choisissez une date de fin, ou laissez-le marqué comme en cours.",
+    "invalidEndDate": "La date de fin ne peut pas précéder la date de début.",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "saving": "Enregistrement…",
+    "addTreatment": "Ajouter le traitement",
+    "delete": "Supprimer",
+    "noneYet": "Aucun traitement noté pour l’instant. En ajouter un permet à votre suivi de montrer ce que vous avez noté avant et après son début.",
+    "showImpact": "Symptômes notés avant et après",
+    "hideImpact": "Masquer l’avant et l’après",
+    "impactError": "Impossible de charger ces données. Réessayez dans un instant.",
+    "impactInsufficientData": "Pas encore assez de recul depuis le début pour afficher une comparaison.",
+    "impactBeforeLabel": "Symptômes notés avant le traitement",
+    "impactAfterLabel": "Symptômes notés depuis le début du traitement",
+    "impactDisclaimer": "Un décompte de la fréquence de vos saisies de symptômes, pas une mesure de l’efficacité du traitement.",
+    "timelineHeading": "Dans le temps",
+    "timelineHint": "Chaque traitement depuis son début, le plus ancien en haut. Une barre pleine est en cours ; une barre en contour est arrêtée.",
+    "timelineOngoing": "Depuis le {from}",
+    "timelineEnded": "Du {from} au {to}",
+    "timelineToday": "Aujourd’hui",
+    "currentHeading": "En cours",
+    "pastHeading": "Passés",
+    "since": "Depuis le {date}",
+    "fromTo": "Du {from} au {to}",
+    "duration": {
+      "days": "{count, plural, one {# jour} other {# jours}}",
+      "months": "{count, plural, one {# mois} other {# mois}}",
+      "years": "{count, plural, one {# an} other {# ans}}"
+    },
+    "markStopped": "Marquer comme arrêté",
+    "markStoppedHeading": "Quand avez-vous arrêté {name} ?",
+    "stoppedOn": "Arrêté le",
+    "saveStopped": "Enregistrer",
+    "stopError": "Choisissez une date égale ou postérieure à la date de début, puis réessayez.",
+    "cancel": "Annuler",
+    "deleteConfirm": "Supprimer {name} ? Il sera retiré de votre suivi, et cette action est irréversible.",
+    "deleteConfirmAction": "Supprimer",
+    "addTreatmentOpen": "Ajouter un traitement",
+    "addHeading": "Ajouter un traitement",
+    "impactCount": "{count, plural, one {# saisie} other {# saisies}} en {days, plural, one {# jour} other {# jours}}"
+  },
+  "Reflections": {
+    "heading": "Votre semaine",
+    "dismiss": "Masquer",
+    "loggingActivity": {
+      "heading": "Votre semaine jusqu’ici",
+      "daysPhrase": "{count, plural, one {# jour} other {# jours}}",
+      "message": "Vous avez fait {count, plural, one {# saisie} other {# saisies}}, sur {daysPhrase}."
+    },
+    "symptomFrequency": {
+      "heading": "Ce qui ressort cette semaine",
+      "message": "{category} est le symptôme que vous avez le plus souvent noté, sur {count, plural, one {# jour} other {# jours}}."
+    },
+    "coOccurrence": {
+      "heading": "Un point que vous pourriez remarquer",
+      "message": "Vous avez noté {categoryA} et {categoryB} les mêmes jours, sur {count, plural, one {# jour} other {# jours}}.",
+      "caveat": "Il s’agit d’un relevé de ce que vous avez noté, pas d’une conclusion médicale."
+    },
+    "treatmentContext": {
+      "heading": "Depuis le début de {name}",
+      "message": "Vous avez noté {count, plural, one {# symptôme} other {# symptômes}} pendant cette période.",
+      "caveat": "Un décompte de ce que vous avez noté pendant ce traitement, pas une mesure de son efficacité."
+    }
+  },
+  "Landing": {
+    "earlyAccess": {
+      "label": "Demander un accès anticipé",
+      "note": "EMBR accueille actuellement un groupe restreint de premières utilisatrices."
+    },
+    "meta": {
+      "title": "EMBR | L’infrastructure de données pour la ménopause",
+      "description": "EMBR vous aide à suivre vos symptômes, à voir les tendances dans le temps et à transformer votre vécu en éléments concrets pour vos échanges avec les professionnels de santé."
+    },
+    "skipToContent": "Aller au contenu",
+    "mockupCaption": "Exemple illustratif avec des données fictives",
+    "nav": {
+      "label": "Site",
+      "sections": "Aller à une section",
+      "home": "Accueil EMBR",
+      "product": "Produit",
+      "howItWorks": "Fonctionnement",
+      "brief": "EMBR BRIEF",
+      "privacy": "Vos données",
+      "logIn": "Se connecter",
+      "start": "Commencer avec EMBR",
+      "dashboard": "Ouvrir votre tableau de bord"
+    },
+    "hero": {
+      "eyebrow": "L’infrastructure de données pour la ménopause",
+      "headline": "Votre santé mérite une vue d’ensemble.",
+      "lead": "Les symptômes évoluent. Les tendances mettent du temps à apparaître. Et il est difficile de tout se rappeler une fois assise face à votre médecin.",
+      "body": "EMBR vous aide à noter ce que vous vivez au fil du temps et à le transformer en une synthèse de santé claire et structurée, que vous choisissez de partager ou non.",
+      "primaryCta": "Commencer avec EMBR",
+      "secondaryCta": "Voir le fonctionnement",
+      "trust": "Pas un diagnostic. Pas un avis médical. Un suivi plus clair pour vous et vos échanges avec les professionnels de santé.",
+      "loopLabel": "Le fonctionnement d’EMBR, en trois étapes",
+      "loop": {
+        "record": "Noter",
+        "patterns": "Voir les tendances",
+        "prepare": "Préparer"
+      },
+      "illustration": {
+        "title": "Votre semaine",
+        "count": "6 jours sur 7",
+        "weekdays": "L,M,M,J,V,S,D",
+        "stepCheckIn": "Check in",
+        "stepContext": "Ajouter le contexte du jour",
+        "caption": "Exemple illustratif avec des données fictives"
+      }
+    },
+    "story": {
+      "eyebrow": "Le problème",
+      "headline": "Vos symptômes sont des données.",
+      "moments": {
+        "m1": "Le mal de tête de mardi dernier.",
+        "m2": "La nuit où vous avez à peine dormi.",
+        "m3": "L’après-midi où vous n’arriviez pas à vous concentrer.",
+        "m4": "La semaine où votre énergie a disparu."
+      },
+      "body": "Quand ces moments sont éparpillés entre souvenirs, notes et rendez-vous, la vue d’ensemble se perd facilement.",
+      "kicker": "EMBR vous aide à saisir la tendance.",
+      "stepsHeading": "Fonctionnement",
+      "steps": {
+        "record": {
+          "label": "Noter",
+          "title": "Notez comment vous vous sentez.",
+          "body": "Notez vos symptômes avec leur intensité, votre cycle, le contexte du jour comme le sommeil et le stress, et les traitements que vous essayez. Une bouffée de chaleur se note d’un seul geste."
+        },
+        "patterns": {
+          "label": "Voir les tendances",
+          "title": "Suivez les évolutions dans le temps.",
+          "body": "Votre chronologie et vos Signaux montrent à quelle fréquence les symptômes apparaissent, lesquels surviennent ensemble et comment votre cycle a évolué."
+        },
+        "prepare": {
+          "label": "Préparer",
+          "title": "Créez une synthèse concise pour votre rendez-vous.",
+          "body": "Choisissez une période et EMBR construit un EMBR BRIEF à partir de vos saisies. Relisez-le, téléchargez-le en PDF et partagez-le si vous le souhaitez."
+        }
+      }
+    },
+    "product": {
+      "eyebrow": "Le produit",
+      "headline": "Du suivi des symptômes aux données utiles.",
+      "body1": "Un suivi de symptômes ordinaire stocke des saisies. EMBR les relie. Chaque saisie s’inscrit dans un suivi daté et longitudinal, qui alimente directement une synthèse structurée pensée pour un échange avec un professionnel de santé.",
+      "body2": "Les tendances découlent de règles fixes et transparentes appliquées à vos saisies, pas de suppositions. Quand EMBR affiche un signal, vous pouvez voir les jours dont il provient.",
+      "points": {
+        "record": {
+          "title": "Un seul suivi daté",
+          "body": "Symptômes, cycle, contexte quotidien et traitements figurent sur la même chronologie : rien n’est à reconstituer après coup."
+        },
+        "signals": {
+          "title": "Des signaux avec leurs preuves",
+          "body": "Lorsque deux symptômes sont notés le même jour au moins trois fois, EMBR l’affiche, avec les dates correspondantes."
+        },
+        "brief": {
+          "title": "Relié à votre brief",
+          "body": "Ce même suivi devient la synthèse que vous apportez à votre rendez-vous. Rien à ressaisir, rien à reconstituer de mémoire."
+        }
+      },
+      "mockup": {
+        "timelineLabel": "Votre suivi",
+        "cycleLabel": "Historique du cycle"
+      }
+    },
+    "engine": {
+      "eyebrow": "Sous le capot",
+      "headline": "Un moteur de données, pas un chatbot.",
+      "body": "Chaque signal affiché par EMBR découle d’une règle fixe appliquée à vos saisies. Le même suivi donne toujours le même résultat, et chaque résultat peut être relié aux jours dont il provient. L’IA n’intervient qu’une fois, à la fin, pour formuler les résultats calculés en langage simple.",
+      "stages": {
+        "capture": {
+          "label": "Saisir",
+          "title": "Des saisies structurées",
+          "body": "14 catégories de symptômes, 3 niveaux d’intensité, cycle et contexte quotidien, chacun daté du jour où il se produit.",
+          "spec": "taxonomie : fixe, versionnée"
+        },
+        "compute": {
+          "label": "Calculer",
+          "title": "Des règles déterministes",
+          "body": "Décomptes, comparaisons avec la période précédente et chevauchements le même jour, calculés de la même façon à chaque fois.",
+          "spec": "co_occurrence : ≥ 3 jours en commun"
+        },
+        "trace": {
+          "label": "Tracer",
+          "title": "Preuves jointes",
+          "body": "Chaque signal comporte les dates à partir desquelles il a été construit, pour que vous et votre médecin puissiez le vérifier.",
+          "spec": "signal → saisies datées"
+        },
+        "explain": {
+          "label": "Expliquer",
+          "title": "L’IA comme narratrice",
+          "body": "Un modèle de langage rédige la synthèse à partir des seuls décomptes calculés. Ce qu’il cite est vérifié par rapport aux tendances qui lui ont été fournies.",
+          "spec": "notes et noms de traitements : jamais envoyés"
+        }
+      },
+      "specs": {
+        "version": {
+          "key": "Interprétation",
+          "value": "v1.0"
+        },
+        "determinism": {
+          "key": "Même entrée",
+          "value": "→ même résultat"
+        },
+        "aiRole": {
+          "key": "Rôle de l’IA",
+          "value": "rédaction uniquement"
+        },
+        "region": {
+          "key": "Hébergement des données",
+          "value": "UE"
+        },
+        "audit": {
+          "key": "Journal d’audit",
+          "value": "modifications du suivi"
+        }
+      },
+      "run": {
+        "title": "Exemple d’exécution",
+        "example": "données d’exemple, pas un vrai suivi",
+        "controls": "Commandes de l’exemple",
+        "showStep": "Afficher l’étape {label}",
+        "play": "Lecture",
+        "pause": "Pause",
+        "output": {
+          "capture": "symptom=HOT_FLASH  severity=MODERATE  date=2026-09-03",
+          "compute": "hot_flash : 9 jours sur cette période, 4 sur la période précédente",
+          "trace": "preuves : 3 sept., 5 sept., 8 sept., 11 sept., 14 sept. … (9 dates)",
+          "explain": "« Des bouffées de chaleur ont été notées sur 9 jours, contre 4 sur la période précédente. »"
+        }
+      }
+    },
+    "brief": {
+      "eyebrow": "EMBR BRIEF",
+      "headline": "Arriver au rendez-vous avec les idées plus claires.",
+      "body": "EMBR transforme vos symptômes suivis, les informations sur votre cycle, les tendances et les antécédents pertinents en un EMBR BRIEF structuré, que vous pouvez relire et apporter lors d’un échange avec un professionnel de santé.",
+      "disclaimer": "C’est une synthèse de vos données notées, pas un diagnostic ni un avis médical.",
+      "points": {
+        "contents": "La fréquence des symptômes, une synthèse du cycle, les traitements notés et la comparaison avec la période précédente.",
+        "evidence": "Chaque tendance renvoie aux dates où elle a été notée : elle peut être vérifiée plutôt que crue sur parole.",
+        "questions": "Des questions suggérées à aborder. Pas de recommandations de traitement.",
+        "pdf": "Un PDF à télécharger, imprimer ou partager avec la personne que vous consultez."
+      },
+      "clinician": "Votre professionnel de santé prend les décisions cliniques. EMBR vous aide à arriver avec un suivi plus clair.",
+      "mockup": {
+        "range": "Du 1er juin au 31 août"
+      }
+    },
+    "evidence": {
+      "eyebrow": "Le manque de données",
+      "headline": "Votre vécu mérite d’être consigné.",
+      "body1": "Les symptômes de la ménopause arrivent rarement tous en même temps. Ils se déploient sur des semaines et des mois, varient en intensité et se mêlent au sommeil, au stress et à tout le reste.",
+      "body2": "Ils sont donc difficiles à se rappeler avec précision et à décrire lors d’un rendez-vous court. Ce qui se dit en consultation résume souvent les derniers jours, pas les derniers mois.",
+      "body3": "Un suivi régulier et daté aide à combler ce manque. Non pas en interprétant votre corps à votre place, mais en vous assurant que ce que vous avez vécu est consigné.",
+      "points": {
+        "dated": {
+          "title": "Daté, pas remémoré",
+          "body": "Chaque saisie est enregistrée le jour où elle se produit."
+        },
+        "consistent": {
+          "title": "Cohérent dans le temps",
+          "body": "Les mêmes catégories de symptômes et la même échelle d’intensité à chaque fois, pour que l’évolution soit visible."
+        },
+        "descriptive": {
+          "title": "Descriptif, pas diagnostique",
+          "body": "EMBR décrit ce que vous avez noté. Il ne vous dit pas ce qui en est la cause."
+        }
+      }
+    },
+    "privacy": {
+      "eyebrow": "Vos données",
+      "headline": "Votre suivi vous appartient.",
+      "body": "EMBR est conçu pour que votre suivi de santé reste sous votre contrôle.",
+      "points": {
+        "yours": {
+          "title": "Construit à partir de vos saisies",
+          "body": "Chaque tendance et chaque synthèse sont calculées à partir de vos saisies, sans être mêlées aux données de qui que ce soit d’autre."
+        },
+        "export": {
+          "title": "Emportez-le avec vous",
+          "body": "Exportez vos symptômes, votre cycle et vos traitements en CSV, ou une synthèse pour le médecin en PDF, quand vous le souhaitez."
+        },
+        "delete": {
+          "title": "Supprimer votre compte",
+          "body": "La suppression de votre compte efface d’EMBR vos symptômes notés, votre cycle, votre contexte quotidien, vos traitements, vos briefs et vos paramètres."
+        },
+        "sessions": {
+          "title": "Voir où vous êtes connectée",
+          "body": "Consultez vos sessions actives et déconnectez n’importe quel appareil depuis les Paramètres."
+        },
+        "employer": {
+          "title": "Si votre employeur propose EMBR",
+          "body": "Les administrateurs de l’organisation ne voient que des tendances agrégées et anonymisées, et rien du tout lorsqu’un groupe est trop petit pour empêcher l’identification d’une personne. Ils ne voient jamais vos symptômes notés ni vos briefs."
+        }
+      }
+    },
+    "cta": {
+      "headline": "Vos symptômes sont des données. Rendons-les utiles.",
+      "primary": "Commencer avec EMBR",
+      "secondary": "Découvrir le produit"
+    },
+    "footer": {
+      "label": "Pied de page",
+      "tagline": "L’infrastructure de données pour la ménopause.",
+      "product": "Produit",
+      "logIn": "Se connecter",
+      "createAccount": "Créer un compte",
+      "disclaimer": "EMBR n’est pas un outil de diagnostic et ne fournit pas d’avis médical. Parlez de votre santé à un professionnel de santé qualifié."
+    }
+  },
+  "Consent": {
+    "termsLabel": "Je comprends qu’EMBR est en accès anticipé privé et encore en phase de test.",
+    "privacyLabel": "Je comprends comment mes informations seront utilisées pour tester EMBR.",
+    "healthExplanation": "EMBR utilise les informations de santé que vous choisissez de saisir, notamment vos symptômes, votre cycle, votre contexte quotidien et vos traitements, pour constituer votre suivi EMBR, montrer les évolutions dans le temps et créer votre EMBR BRIEF.",
+    "healthLabel": "Je consens au traitement par EMBR des informations de santé que je fournis, pour ces finalités.",
+    "manageNote": "Vous pouvez gérer vos choix de confidentialité dans les paramètres de votre compte. Lorsque le traitement repose sur votre consentement, vous pouvez le retirer à tout moment.",
+    "termsRequired": "Veuillez confirmer cet élément pour continuer.",
+    "privacyRequired": "Veuillez confirmer cet élément pour continuer.",
+    "healthRequired": "Veuillez examiner cet élément pour continuer.",
+    "versionOutdated": "Ces documents viennent d’être mis à jour. Veuillez recharger la page et les relire.",
+    "title": "Avant de continuer",
+    "subtitle": "Veuillez lire ce qui suit. Vos saisies existantes ne sont pas modifiées.",
+    "updatedNote": "Mis à jour depuis votre dernière lecture.",
+    "withdrawnNote": "Vous avez retiré cet élément précédemment. Les fonctions qui utilisent des informations de santé sont suspendues jusqu’à ce que vous le relisiez et l’acceptiez à nouveau.",
+    "continue": "Continuer",
+    "saving": "Enregistrement…",
+    "allRequired": "Veuillez cocher chaque élément ci-dessus pour continuer.",
+    "genericError": "Un problème est survenu. Réessayez dans un instant.",
+    "otherOptions": "Autres choix",
+    "exportData": "Exporter vos données",
+    "accountSettings": "Paramètres du compte, y compris la suppression du compte",
+    "logOut": "Se déconnecter"
+  },
+  "SafetyNotice": {
+    "heading": "Quand demander une aide urgente",
+    "body": "EMBR sert à tenir un suivi. Il ne peut pas savoir si quelque chose relève de l’urgence. En cas de douleur thoracique, de difficulté à respirer, de saignements très abondants ou d’un symptôme soudain et sévère, appelez immédiatement le numéro d’urgence local (par exemple le 15 ou le 112 en France, le 112 dans l’UE, le 999 au Royaume-Uni).",
+    "selfHarm": "Si vous pensez à vous faire du mal, contactez sans attendre les services d’urgence ou une ligne d’écoute près de chez vous (en France, le 3114)."
+  },
+  "History": {
+    "rangeLabel": "Période",
+    "range": {
+      "90d": "90 derniers jours",
+      "12m": "12 derniers mois",
+      "all": "Tout le suivi"
+    },
+    "recordSince": "Votre suivi remonte au {date}.",
+    "recordSummary": "{symptoms, plural, one {# symptôme noté} other {# symptômes notés}}, {cycle, plural, one {# saisie de cycle} other {# saisies de cycle}} et {treatments, plural, one {# traitement} other {# traitements}} à ce jour.",
+    "viewFullTimeline": "Voir toute votre chronologie"
+  },
+  "SymptomHistory": {
+    "sectionTitle": "Historique des symptômes",
+    "sectionIntro": "Jours avec une saisie, comptés à partir de vos propres saisies. Un jour sans saisie est affiché comme <b>aucune saisie</b>, jamais comme un jour sans symptômes.",
+    "rankingTitle": "Symptômes les plus notés",
+    "rankingSubtitle": "Jours avec une saisie, du {from} au {to}. Un jour sans saisie n’est pas compté comme un jour sans symptômes.",
+    "rankingDays": "{count, plural, one {# jour} other {# jours}}",
+    "firstLogged": "Première saisie",
+    "lastLogged": "Dernière saisie",
+    "period": "{from} → {to}",
+    "recentFrequency": "Fréquence récente",
+    "longFrequency": "Fréquence sur 42 jours",
+    "daysOfLast": "{count} des {total} derniers jours",
+    "loggedOnDaysOfLast": "Noté sur {count} des {total} derniers jours.",
+    "notLoggedRecently": "Pas noté récemment",
+    "notLoggedInLast": "Pas noté au cours des {days} derniers jours.",
+    "notLoggedRecentlyRule": "Affiché lorsqu’un symptôme noté sur au moins {min} jours n’a fait l’objet d’aucune saisie depuis {days} jours, alors que d’autres symptômes continuent d’être notés.",
+    "noEntry": "Aucune saisie",
+    "noEntryForDay": "<b>Aucun symptôme noté</b> pour ce jour.",
+    "noHistoryTitle": "Aucun historique",
+    "noHistoryBody": "Ce symptôme n’a pas encore été noté. Dès que vous le noterez, son historique apparaîtra ici.",
+    "viewHistory": "Voir l’historique",
+    "viewHistoryFor": "Voir l’historique : {symptom}",
+    "backToTimeline": "Retour à la chronologie",
+    "calendarTitle": "Calendrier",
+    "calendarLabel": "{symptom}, {month}",
+    "legendLabel": "Légende",
+    "highestSeverityNote": "Chaque jour noté affiche l’intensité la plus forte enregistrée ce jour-là.",
+    "dayLogged": "{date} : {severity}",
+    "dayNoEntry": "{date} : aucune saisie",
+    "dayOutOfRange": "{date} : en dehors de cette période",
+    "note": "Note",
+    "entryCount": "{count, plural, one {# saisie} other {# saisies}}",
+    "dayLoading": "Chargement de ce jour…",
+    "loadError": "Votre historique des symptômes n’a pas pu être chargé. Veuillez réessayer.",
+    "closeDay": "Fermer"
+  },
+  "CheckIn": {
+    "title": "Comment vous sentez-vous aujourd’hui ?",
+    "intro": "Sélectionnez les symptômes que vous avez aujourd’hui, puis choisissez l’intensité de chacun. Ce que vous ne sélectionnez pas n’est <b>simplement pas noté</b> aujourd’hui.",
+    "symptomsLabel": "Symptômes aujourd’hui",
+    "addAnother": "Ajouter un autre symptôme",
+    "showFewer": "Afficher moins de symptômes",
+    "severityFor": "Intensité : {symptom}",
+    "severityRequired": "Choisissez Légère, Modérée ou Sévère pour chaque symptôme sélectionné.",
+    "save": "Enregistrer le check in du jour",
+    "saving": "Enregistrement…",
+    "saved": "Le check in du jour est enregistré. Vous pourrez encore le modifier <b>demain</b>.",
+    "savedEmpty": "Le check in du jour ne comporte plus aucun symptôme noté.",
+    "todayHeading": "Symptômes du jour",
+    "edit": "Modifier le check in du jour",
+    "cancel": "Annuler",
+    "saveError": "Votre check in n’a pas pu être enregistré. Veuillez réessayer.",
+    "loadError": "Le check in du jour n’a pas pu être chargé. Veuillez réessayer.",
+    "severityGuide": "<b>Légère :</b> perceptible. <b>Modérée :</b> gêne votre journée. <b>Sévère :</b> rend la journée difficile à passer.",
+    "dayLabel": "Jour à renseigner",
+    "dayToday": "Aujourd’hui",
+    "dayYesterday": "Hier",
+    "titleYesterday": "Comment vous sentiez-vous hier ?",
+    "introYesterday": "Un jour manqué ? Sélectionnez les symptômes que vous aviez hier, puis choisissez l’intensité de chacun. Ce que vous ne sélectionnez pas n’est <b>simplement pas noté</b> pour hier.",
+    "symptomsLabelYesterday": "Symptômes hier",
+    "saveYesterday": "Enregistrer le check in d’hier",
+    "savedYesterday": "Le check in d’hier est enregistré. Vous pouvez le modifier <b>jusqu’à la fin de la journée</b>.",
+    "savedEmptyYesterday": "Le check in d’hier ne comporte plus aucun symptôme noté.",
+    "todayHeadingYesterday": "Symptômes d’hier",
+    "editYesterday": "Modifier le check in d’hier",
+    "loadErrorYesterday": "Le check in d’hier n’a pas pu être chargé. Veuillez réessayer."
+  },
+  "Notes": {
+    "title": "Carnet",
+    "hint": "Des notes privées, pour vous. Elles sont enregistrées avec votre suivi et incluses lorsque vous l’exportez. EMBR ne les lit jamais pour le BRIEF et ne les envoie jamais à l’IA.",
+    "newNote": "Nouvelle note",
+    "empty": "Aucune note pour l’instant. Commencez-en une pour tout ce que vous voulez retenir : vos questions, ce qu’a dit un médecin, votre ressenti d’une journée.",
+    "openNote": "Ouvrir {title}",
+    "editorLabel": "Page du carnet",
+    "titleLabel": "Titre",
+    "coverLabel": "Couverture",
+    "bodyLabel": "Notes",
+    "titleRequired": "Donnez un titre à cette note.",
+    "saveFailed": "L’enregistrement a échoué. Votre texte est toujours là ; veuillez réessayer.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "backToShelf": "Retour aux notes",
+    "delete": "Supprimer",
+    "deleteConfirm": "Supprimer cette note ? Cette action est irréversible.",
+    "cover": {
+      "LILAC": "Lilas",
+      "PLUM": "Prune",
+      "PEARL": "Perle",
+      "ICE": "Glace",
+      "ROSE": "Rose"
+    },
+    "searchLabel": "Rechercher dans vos notes",
+    "noMatches": "Aucune note ne correspond à « {query} ».",
+    "noText": "Pas encore de texte",
+    "dates": "Commencée le {created} · Modifiée le {updated}",
+    "discardConfirm": "Quitter sans enregistrer ? Vos modifications de cette page seront perdues.",
+    "discard": "Quitter sans enregistrer",
+    "keepEditing": "Continuer la modification",
+    "cancel": "Annuler",
+    "deleteFailed": "La suppression a échoué. Veuillez réessayer."
+  },
+  "PasswordField": {
+    "show": "Afficher",
+    "hide": "Masquer"
+  },
+  "GettingStarted": {
+    "title": "Pour commencer",
+    "intro": "Quatre petites étapes pour tirer le meilleur de vos deux premières semaines.",
+    "hide": "Masquer",
+    "doneLabel": "Fait :",
+    "todoLabel": "À faire :",
+    "steps": {
+      "logToday": {
+        "title": "Notez comment vous vous sentez aujourd’hui",
+        "body": "Cela prend une dizaine de secondes. Une bouffée de chaleur se note d’un seul geste."
+      },
+      "lifeStage": {
+        "title": "Indiquez votre étape de vie",
+        "body": "Dans les Paramètres. Cela oriente ce qu’EMBR vous montre."
+      },
+      "aWeek": {
+        "title": "Faites quelques saisies cette semaine",
+        "body": "Une semaine de saisies suffit pour commencer à voir des tendances."
+      },
+      "firstBrief": {
+        "title": "Créez votre premier BRIEF",
+        "body": "Une synthèse claire de votre suivi à apporter à un rendez-vous."
+      }
+    },
+    "nudgeTitle": "Vous avez une semaine de saisies",
+    "nudgeBody": "C’est suffisant pour un premier EMBR BRIEF : une synthèse claire de ce que vous avez noté, à relire et à apporter à votre prochain rendez-vous si vous le souhaitez.",
+    "nudgeAction": "Créer mon BRIEF",
+    "notNow": "Pas maintenant"
+  },
+  "Beta": {
+    "metaTitle": "Guide de la bêta EMBR",
+    "eyebrow": "Bêta EMBR",
+    "headline": "Bienvenue dans <phrase>la bêta d’EMBR</phrase>",
+    "lead": "Merci de tester EMBR. Pendant les prochaines semaines, notez chaque jour comment vous vous sentez et dites-nous où l’application vous gêne.",
+    "about": "EMBR vous aide à tenir un suivi de vos symptômes de périménopause et de ménopause, à voir les tendances dans le temps et à apporter une synthèse claire, le BRIEF, à votre médecin. EMBR ne pose aucun diagnostic et ne remplace pas un avis médical.",
+    "createAccount": "Créer votre compte",
+    "logIn": "Se connecter",
+    "ask": {
+      "title": "Ce que nous vous demandons",
+      "items": {
+        "checkIn": "Faites un check in la plupart des jours. Cela prend moins d’une minute.",
+        "firstBrief": "Au bout d’une semaine, créez votre premier BRIEF.",
+        "tellUs": "Dites-nous quand quelque chose est déroutant, lent ou incorrect, même si cela semble mineur."
+      }
+    },
+    "start": {
+      "title": "Pour commencer",
+      "intro": "Créez d’abord votre compte sur le web, même si vous comptez utiliser l’application mobile.",
+      "steps": {
+        "signUp": {
+          "title": "Inscrivez-vous sur app.embrhealthcare.com",
+          "body": "Utilisez l’e-mail que vous souhaitez garder pour EMBR. Le mot de passe doit comporter au moins 12 caractères, avec une majuscule, une minuscule et un chiffre. Touchez Afficher pour vérifier ce que vous avez saisi."
+        },
+        "verify": {
+          "title": "Vérifiez votre e-mail",
+          "body": "Ouvrez l’e-mail envoyé par no-reply@embrhealthcare.com et cliquez sur le lien. Vérifiez vos courriers indésirables s’il n’est pas arrivé au bout de quelques minutes. Un e-mail vérifié est nécessaire pour créer un BRIEF."
+        },
+        "welcome": {
+          "title": "Répondez aux questions d’accueil",
+          "body": "Vous pouvez passer n’importe laquelle et modifier vos réponses plus tard dans les Paramètres."
+        },
+        "phone": {
+          "title": "Ajoutez l’application mobile quand elle sera disponible",
+          "body": "Lorsque nous vous enverrons une invitation TestFlight (iPhone) ou Google Play (Android), installez l’application et connectez-vous avec le même e-mail et le même mot de passe. D’ici là, le site fonctionne bien dans le navigateur de votre téléphone."
+        }
+      },
+      "language": "EMBR est disponible en anglais, en japonais et en français. Changez de langue en haut de cette page, sur la page de connexion ou dans les Paramètres."
+    },
+    "week": {
+      "title": "Votre première semaine",
+      "intro": "Votre tableau de bord affiche une liste « Pour commencer » pendant les deux premières semaines. Elle se coche au fur et à mesure.",
+      "items": {
+        "logToday": "Notez comment vous vous sentez aujourd’hui. Une dizaine de secondes ; une bouffée de chaleur se note d’un seul geste.",
+        "lifeStage": "Indiquez votre étape de vie dans les Paramètres.",
+        "aWeek": "Faites quelques saisies cette semaine. Une semaine de saisies suffit pour commencer à voir des tendances.",
+        "firstBrief": "Créez votre premier BRIEF."
+      },
+      "quietDays": "Notez aussi les jours où vous vous sentez bien. Un jour calme est une information, et les tendances ne ressortent que par contraste.",
+      "brief": "Quand votre suivi couvre une semaine, le tableau de bord vous propose votre premier BRIEF : une synthèse de ce que vous avez noté, à relire et à apporter à un rendez-vous si vous le souhaitez. Lisez-le avant de le partager, et signalez-nous tout ce qui vous semble incorrect."
+    },
+    "login": {
+      "title": "Si vous n’arrivez pas à vous connecter",
+      "intro": "Jusqu’ici, la plupart des problèmes de connexion venaient d’un mot de passe mal saisi ou d’un e-mail différent de celui utilisé à l’inscription. Essayez dans cet ordre.",
+      "steps": {
+        "email": "Vérifiez qu’il s’agit exactement de l’e-mail utilisé à l’inscription, en pensant à vos adresses professionnelle et personnelle.",
+        "show": "Touchez Afficher à côté du mot de passe pour voir ce que vous avez saisi.",
+        "link": "Choisissez « Recevoir un lien de connexion par e-mail » sur la page de connexion. Il vous connecte sans mot de passe, ne fonctionne qu’une fois et expire au bout de 15 minutes.",
+        "reset": "Ou choisissez « Mot de passe oublié ? » pour en définir un nouveau. Le lien de réinitialisation expire au bout d’une heure."
+      },
+      "stillStuck": "Toujours bloquée ? Écrivez-nous depuis l’adresse utilisée à l’inscription :",
+      "neverPassword": "Ne nous envoyez jamais votre mot de passe."
+    },
+    "limits": {
+      "title": "Votre suivi, et ce qu’EMBR ne fait pas",
+      "intro": "Votre suivi vous appartient, et EMBR est un outil de suivi, pas un outil médical.",
+      "items": {
+        "diagnosis": {
+          "title": "Pas un diagnostic",
+          "body": "EMBR compte et compare ce que vous avez noté. Il ne vous dit jamais de quelle affection vous souffrez ni quel traitement prendre. Parlez à un médecin de tout ce qui vous inquiète."
+        },
+        "brief": {
+          "title": "Comment le BRIEF est rédigé",
+          "body": "Les tendances d’un BRIEF sont calculées par des règles fixes à partir de vos saisies. L’IA se contente de formuler ces résultats en langage simple, et elle reçoit des décomptes et des tendances, jamais vos notes, les pages de votre carnet ni les noms de vos traitements."
+        },
+        "encrypted": {
+          "title": "Stocké chiffré",
+          "body": "Vos notes, les noms de vos traitements et la rédaction de vos BRIEF sont chiffrés avant d’être enregistrés."
+        },
+        "yours": {
+          "title": "Exportez ou supprimez à tout moment",
+          "body": "Téléchargez vos données depuis la page Exporter. Supprimez votre compte et tout son contenu depuis les Paramètres."
+        },
+        "beta": {
+          "title": "Ceci est une bêta",
+          "body": "Attendez-vous à quelques imperfections, et ne comptez pas sur EMBR comme seul suivi pendant le test."
+        }
+      }
+    },
+    "feedback": {
+      "title": "Envoyer un avis",
+      "how": "Utilisez « Envoyer un avis » dans le menu de l’application (sous Plus sur ordinateur). Cela ouvre un e-mail à info@embrhealthcare.com qui indique déjà la page où vous étiez et le navigateur utilisé. Il ne contient jamais vos saisies de santé.",
+      "helpsTitle": "Ce qui nous aide le plus",
+      "helps": {
+        "what": "Ce que vous essayiez de faire, et ce qui s’est passé à la place.",
+        "screenshot": "Une capture d’écran, si possible. Recadrez tout élément personnel que vous préférez ne pas partager.",
+        "missing": "Tout ce que vous pensiez trouver sans y parvenir.",
+        "nearlyGaveUp": "Les moments où vous avez failli abandonner, même si vous avez trouvé la solution au final."
+      },
+      "iphone": "Sur iPhone, TestFlight vous permet aussi de nous envoyer directement une capture d’écran avec un commentaire."
+    },
+    "closing": "Prête quand vous l’êtes."
+  }
+}

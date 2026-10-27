@@ -30,7 +30,8 @@
   "LanguageSwitcher": {
     "label": "Language",
     "en": "English",
-    "ja": "日本語"
+    "ja": "日本語",
+    "fr": "Français"
   },
   "Common": {
     "loading": "Loading…"
@@ -1424,7 +1425,7 @@
           "body": "When we send you a TestFlight (iPhone) or Google Play (Android) invite, install the app and log in with the same email and password. Until then, the website works well in your phone's browser."
         }
       },
-      "language": "EMBR is in English and Japanese. Switch language at the top of this page, the login page, or in Settings."
+      "language": "EMBR is in English, Japanese and French. Switch language at the top of this page, the login page, or in Settings."
     },
     "week": {
       "title": "Your first week",

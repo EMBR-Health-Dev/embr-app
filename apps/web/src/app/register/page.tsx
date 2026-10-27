@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { ConsentType } from "@embr/types";
 import { CONSENT_TYPES, LEGAL_DOCUMENT_VERSIONS, registerSchema } from "@embr/validation";
 import { api } from "../../lib/api";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "../../i18n/locale";
 import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
@@ -24,7 +25,8 @@ const REQUIRED_MESSAGE = {
 function RegisterForm() {
   const t = useTranslations("Register");
   const tConsent = useTranslations("Consent");
-  const locale = useLocale() === "ja" ? "ja" : "en";
+  const rawLocale = useLocale();
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
   const loginHref = redirectParam
