@@ -169,28 +169,57 @@ export async function sendLoginLinkEmail(to: string, token: string, locale: Loca
   );
 }
 
+const WEEKLY_COPY: Record<
+  Locale,
+  { subject: string; body: string; open: string; stop: (link: string) => string; stopText: string }
+> = {
+  en: {
+    subject: "Your week in EMBR",
+    body: "A short weekly reminder from EMBR. Take a minute to look back at your week: open your timeline to see what you recorded, log today, and create a BRIEF when you're ready.",
+    open: "Open EMBR",
+    stop: (link) =>
+      `To stop these emails, turn off Weekly email in <a href="${link}">Settings</a>.`,
+    stopText: "To stop these emails, turn off Weekly email in Settings: ",
+  },
+  ja: {
+    subject: "EMBRの1週間",
+    body: "EMBRから週に一度のお知らせです。少し時間をとって、この1週間を振り返ってみましょう。タイムラインで記録を確認し、今日の体調を記録して、準備ができたらBRIEFを作成してください。",
+    open: "EMBRを開く",
+    stop: (link) =>
+      `このメールを停止するには、<a href="${link}">設定</a>で週1回のメールをオフにしてください。`,
+    stopText: "このメールを停止するには、設定で週1回のメールをオフにしてください：",
+  },
+  fr: {
+    subject: "Votre semaine dans EMBR",
+    body: "Un petit rappel hebdomadaire d’EMBR. Prenez une minute pour revoir votre semaine\u00a0: ouvrez votre chronologie pour voir ce que vous avez noté, faites la saisie du jour, et créez un BRIEF quand vous le souhaitez.",
+    open: "Ouvrir EMBR",
+    stop: (link) =>
+      `Pour ne plus recevoir ces e-mails, désactivez l’e-mail hebdomadaire dans les <a href="${link}">Paramètres</a>.`,
+    stopText:
+      "Pour ne plus recevoir ces e-mails, désactivez l’e-mail hebdomadaire dans les Paramètres\u00a0: ",
+  },
+};
+
+const WEEKLY_ALL_LOCALES: Locale[] = ["en", "ja", "fr"];
+
 /**
  * The weekly reminder. Deliberately carries nothing from her record (no
- * counts, symptoms or dates): an inbox is not a private place. English,
- * Japanese and French together, since the account stores no language.
+ * counts, symptoms or dates): an inbox is not a private place. Sent in
+ * the language she turned it on in; with no stored language, in English,
+ * Japanese and French together.
  */
-export async function sendWeeklyReminderEmail(to: string) {
+export async function sendWeeklyReminderEmail(to: string, locale?: Locale) {
   const open = `${env.APP_URL}/timeline`;
   const settings = `${env.APP_URL}/settings`;
+  const locales = locale ? [locale] : WEEKLY_ALL_LOCALES;
+  const copies = locales.map((l) => WEEKLY_COPY[l]);
   await sendMail(
     to,
-    "Your week in EMBR / EMBRの1週間 / Votre semaine dans EMBR",
-    `<p>A short weekly reminder from EMBR. Take a minute to look back at your week: open your timeline to see what you recorded, log today, and create a BRIEF when you're ready.</p>` +
-      `<p><a href="${open}">Open EMBR</a></p>` +
-      `<p>EMBRから週に一度のお知らせです。少し時間をとって、この1週間を振り返ってみましょう。タイムラインで記録を確認し、今日の体調を記録して、準備ができたらBRIEFを作成してください。</p>` +
-      `<p><a href="${open}">EMBRを開く</a></p>` +
-      `<p>Un petit rappel hebdomadaire d’EMBR. Prenez une minute pour revoir votre semaine\u00a0: ouvrez votre chronologie pour voir ce que vous avez noté, faites la saisie du jour, et créez un BRIEF quand vous le souhaitez.</p>` +
-      `<p><a href="${open}">Ouvrir EMBR</a></p>` +
-      `<p>To stop these emails, turn off Weekly email in <a href="${settings}">Settings</a>.<br>このメールを停止するには、<a href="${settings}">設定</a>で週1回のメールをオフにしてください。<br>Pour ne plus recevoir ces e-mails, désactivez l’e-mail hebdomadaire dans les <a href="${settings}">Paramètres</a>.</p>`,
-    `A short weekly reminder from EMBR. Take a minute to look back at your week: open your timeline to see what you recorded, log today, and create a BRIEF when you're ready.\n${open}\n\n` +
-      `EMBRから週に一度のお知らせです。少し時間をとって、この1週間を振り返ってみましょう。タイムラインで記録を確認し、今日の体調を記録して、準備ができたらBRIEFを作成してください。\n${open}\n\n` +
-      `Un petit rappel hebdomadaire d’EMBR. Prenez une minute pour revoir votre semaine\u00a0: ouvrez votre chronologie pour voir ce que vous avez noté, faites la saisie du jour, et créez un BRIEF quand vous le souhaitez.\n${open}\n\n` +
-      `To stop these emails, turn off Weekly email in Settings: ${settings}\nこのメールを停止するには、設定で週1回のメールをオフにしてください：${settings}\nPour ne plus recevoir ces e-mails, désactivez l’e-mail hebdomadaire dans les Paramètres\u00a0: ${settings}`,
+    copies.map((c) => c.subject).join(" / "),
+    copies.map((c) => `<p>${c.body}</p><p><a href="${open}">${c.open}</a></p>`).join("") +
+      `<p>${copies.map((c) => c.stop(settings)).join("<br>")}</p>`,
+    copies.map((c) => `${c.body}\n${open}\n\n`).join("") +
+      copies.map((c) => `${c.stopText}${settings}`).join("\n"),
   );
 }
 

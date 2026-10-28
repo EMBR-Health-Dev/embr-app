@@ -28,7 +28,7 @@ export async function runWeeklyEmails(now = new Date()): Promise<{ due: number; 
     if (!(await notificationsRepository.claimWeeklyEmail(user.id, sentBefore, now))) continue;
     // The mailer logs a failed send and never throws; the claim stands,
     // so a failure costs that one week rather than risking a repeat.
-    await sendWeeklyReminderEmail(user.email);
+    await sendWeeklyReminderEmail(user.email, user.weeklyEmailLocale ?? undefined);
     sent += 1;
   }
   return { due: due.length, sent };

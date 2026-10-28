@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import type { Locale } from "../../lib/locale.js";
 
 export const notificationsRepository = {
   async getWeeklyEmail(userId: string): Promise<boolean> {
@@ -9,17 +10,19 @@ export const notificationsRepository = {
     return user?.weeklyEmailOptIn ?? false;
   },
 
-  async setWeeklyEmail(userId: string, enabled: boolean): Promise<boolean> {
+  /** Stores the language to send it in while it is on, and nothing
+   * once it is off. */
+  async setWeeklyEmail(userId: string, enabled: boolean, locale: Locale): Promise<boolean> {
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { weeklyEmailOptIn: enabled },
+      data: { weeklyEmailOptIn: enabled, weeklyEmailLocale: enabled ? locale : null },
       select: { weeklyEmailOptIn: true },
     });
     return user.weeklyEmailOptIn;
   },
 
-  /** Verified, opted in, and not sent one since `sentBefore`. Ids and
-   * emails only. */
+  /** Verified, opted in, and not sent one since `sentBefore`. Ids,
+   * emails and the language to send in only. */
   listDueForWeeklyEmail(sentBefore: Date) {
     return prisma.user.findMany({
       where: {
@@ -27,7 +30,7 @@ export const notificationsRepository = {
         emailVerifiedAt: { not: null },
         OR: [{ weeklyEmailLastSentAt: null }, { weeklyEmailLastSentAt: { lt: sentBefore } }],
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, weeklyEmailLocale: true },
       orderBy: { id: "asc" },
     });
   },
