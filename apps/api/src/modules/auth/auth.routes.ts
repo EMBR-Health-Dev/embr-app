@@ -33,6 +33,7 @@ import {
   REFRESH_TOKEN_COOKIE,
 } from "./cookies.js";
 import { hashToken } from "./tokens.js";
+import { requestLocale } from "../../lib/locale.js";
 import {
   loginLimiter,
   loginLinkLimiter,
@@ -82,7 +83,7 @@ router.post(
   passwordResetLimiter,
   validate(resendVerificationSchema),
   asyncHandler(async (req, res) => {
-    await authService.resendVerification(req.body.email);
+    await authService.resendVerification(req.body.email, requestLocale(req));
     // Always 202 regardless of whether the account exists/is already
     // verified — see authService.resendVerification for why.
     res.status(202).json({ message: "If that account exists, a verification email is on its way" });
@@ -112,7 +113,7 @@ router.post(
   loginLinkLimiter,
   validate(loginLinkRequestSchema),
   asyncHandler(async (req, res) => {
-    await authService.requestLoginLink(req, req.body.email);
+    await authService.requestLoginLink(req, req.body.email, requestLocale(req));
     // Always 202, see /auth/resend-verification.
     res.status(202).json({ message: "If that account exists, a sign in link is on its way" });
   }),
@@ -185,7 +186,7 @@ router.post(
   passwordResetLimiter,
   validate(forgotPasswordSchema),
   asyncHandler(async (req, res) => {
-    await authService.forgotPassword(req.body.email);
+    await authService.forgotPassword(req.body.email, requestLocale(req));
     res
       .status(202)
       .json({ message: "If that account exists, a password reset email is on its way" });

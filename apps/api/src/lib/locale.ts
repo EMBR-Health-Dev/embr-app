@@ -1,3 +1,5 @@
+import type { Request } from "express";
+
 // The API's own view of "which language" — deliberately the exact same
 // values and default as apps/web/src/i18n/locale.ts and
 // apps/mobile/lib/i18n/locale.ts (LOCALES = ["en", "ja", "fr"], DEFAULT_LOCALE
@@ -32,4 +34,9 @@ export function resolveLocaleFromAcceptLanguage(header: string | undefined): Loc
 
   const primaryTag = header.split(",")[0]?.split(";")[0]?.split("-")[0]?.trim().toLowerCase();
   return primaryTag && isLocale(primaryTag) ? primaryTag : DEFAULT_LOCALE;
+}
+
+/** The locale of the client that sent this request. */
+export function requestLocale(req: Request): Locale {
+  return resolveLocaleFromAcceptLanguage(req.headers["accept-language"]);
 }

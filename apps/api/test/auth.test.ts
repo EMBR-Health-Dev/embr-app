@@ -390,6 +390,37 @@ describe("POST /auth/resend-verification", () => {
     expect(sendVerificationEmail).not.toHaveBeenCalled();
   });
 
+  it("sends the first verification email in the language registration happened in", async () => {
+    const app = createApp();
+    vi.mocked(sendVerificationEmail).mockClear();
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "register-fr@embr.health",
+      password: VALID_PASSWORD,
+      locale: "fr",
+    });
+
+    expect(vi.mocked(sendVerificationEmail).mock.calls[0]?.[2]).toBe("fr");
+  });
+
+  it("sends the new verification email in the language of the request", async () => {
+    const app = createApp();
+    await request(app).post("/auth/register").send({
+      consents: CURRENT_CONSENTS,
+      email: "resend-fr@embr.health",
+      password: VALID_PASSWORD,
+    });
+    vi.mocked(sendVerificationEmail).mockClear();
+
+    const res = await request(app)
+      .post("/auth/resend-verification")
+      .set("Accept-Language", "fr")
+      .send({ email: "resend-fr@embr.health" });
+
+    expect(res.status).toBe(202);
+    expect(vi.mocked(sendVerificationEmail).mock.calls[0]?.[2]).toBe("fr");
+  });
+
   it("issues a new token that invalidates the previous one (single live token behavior)", async () => {
     const app = createApp();
     await request(app)

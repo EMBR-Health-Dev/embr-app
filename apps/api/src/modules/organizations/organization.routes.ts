@@ -14,6 +14,7 @@ import {
   type PaginationQuery,
 } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
+import { requestLocale } from "../../lib/locale.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
 import {
@@ -154,6 +155,7 @@ router.post(
       organizationId,
       req.user!.sub,
       req.body as InviteMemberInput,
+      requestLocale(req),
     );
     await writeAuditLog(req, "ORG_MEMBER_INVITED", req.user!.sub, {
       organizationId,
