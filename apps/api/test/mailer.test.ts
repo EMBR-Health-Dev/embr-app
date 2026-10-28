@@ -266,14 +266,54 @@ describe("French transactional emails", () => {
       expect(`${sent.subject} ${sent.html} ${sent.text}`).not.toMatch(/[\u2013\u2014]/);
     });
   }
+});
 
-  it("keeps Japanese on the English copy until Japanese email copy exists", async () => {
-    mockEnv();
-    mockSend.mockResolvedValue({ data: { id: "email_ja" }, error: null });
-    const { sendPasswordResetEmail } = await import("../src/modules/auth/mailer.js");
+describe("Japanese transactional emails", () => {
+  const cases = [
+    {
+      name: "verification",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendVerificationEmail("user@example.com", "tok", "ja"),
+      subject: "EMBRアカウントの確認",
+      body: "このリンクの有効期限は24時間です。",
+    },
+    {
+      name: "password reset",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendPasswordResetEmail("user@example.com", "tok", "ja"),
+      subject: "EMBRのパスワード再設定",
+      body: "このリンクの有効期限は60分です。",
+    },
+    {
+      name: "sign in link",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendLoginLinkEmail("user@example.com", "tok", "ja"),
+      subject: "EMBRのログインリンク",
+      body: "15分で期限切れになります",
+    },
+    {
+      name: "organization invite",
+      send: (m: typeof import("../src/modules/auth/mailer.js")) =>
+        m.sendOrganizationInviteEmail("user@example.com", "Acme Health", "tok", "ja"),
+      subject: "EMBRでAcme Healthへの招待が届いています",
+      body: "このリンクの有効期限は7日です。",
+    },
+  ];
 
-    await sendPasswordResetEmail("user@example.com", "tok", "ja");
+  for (const c of cases) {
+    it(`sends the ${c.name} email in Japanese, keeping the link`, async () => {
+      mockEnv();
+      mockSend.mockResolvedValue({ data: { id: "email_ja" }, error: null });
+      const mailer = await import("../src/modules/auth/mailer.js");
 
-    expect(mockSend.mock.calls[0]![0].subject).toBe("Reset your EMBR password");
-  });
+      await c.send(mailer);
+
+      const sent = mockSend.mock.calls[0]![0];
+      expect(sent.subject).toBe(c.subject);
+      expect(sent.html).toContain(c.body);
+      expect(sent.html).toContain("tok");
+      expect(sent.text).toContain("tok");
+      expect(`${sent.subject} ${sent.html} ${sent.text}`).not.toMatch(/[\u2013\u2014]/);
+    });
+  }
 });
