@@ -194,8 +194,34 @@ describe("sendWeeklyReminderEmail", () => {
     expect(sent.text).toContain("EMBRから週に一度のお知らせです");
     expect(sent.text).toContain("Un petit rappel hebdomadaire d’EMBR");
     expect(sent.html).toContain("Paramètres");
-    // Fixed copy only: the function takes an address and nothing else.
-    expect(sendWeeklyReminderEmail.length).toBe(1);
+    // Fixed copy only: the function takes an address and a language,
+    // nothing from her record.
+    expect(sendWeeklyReminderEmail.length).toBe(2);
+  });
+});
+
+describe("sendWeeklyReminderEmail in her stored language", () => {
+  it.each([
+    ["fr", "Votre semaine dans EMBR", "Un petit rappel hebdomadaire d’EMBR", "Paramètres"],
+    ["ja", "EMBRの1週間", "EMBRから週に一度のお知らせです", "設定"],
+    ["en", "Your week in EMBR", "A short weekly reminder from EMBR", "Settings"],
+  ] as const)("sends only %s", async (locale, subject, body, settingsWord) => {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_weekly" }, error: null });
+    const { sendWeeklyReminderEmail } = await import("../src/modules/auth/mailer.js");
+
+    await sendWeeklyReminderEmail("user@example.com", locale);
+
+    const sent = mockSend.mock.calls[0]![0];
+    expect(sent.subject).toBe(subject);
+    expect(sent.text).toContain(body);
+    expect(sent.html).toContain(settingsWord);
+    expect(sent.html).toContain("http://localhost:3000/settings");
+    // No other language alongside it.
+    const others = ["Un petit rappel", "EMBRから週に一度", "A short weekly reminder"].filter(
+      (b) => !body.startsWith(b),
+    );
+    for (const other of others) expect(sent.text).not.toContain(other);
   });
 });
 

@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/auth.middleware.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { writeAuditLog } from "../auth/audit.js";
 import { notificationsRepository } from "./notifications.repository.js";
+import { requestLocale } from "../../lib/locale.js";
 
 const router: ExpressRouter = Router();
 
@@ -33,6 +34,7 @@ router.patch(
     const weeklyEmail = await notificationsRepository.setWeeklyEmail(
       req.user!.sub,
       input.weeklyEmail,
+      requestLocale(req),
     );
     await writeAuditLog(req, "NOTIFICATION_PREFERENCES_CHANGED", req.user!.sub, { weeklyEmail });
     const data: NotificationPreferencesDto = { weeklyEmail };

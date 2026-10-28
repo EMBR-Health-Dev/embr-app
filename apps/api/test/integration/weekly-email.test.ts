@@ -5,7 +5,10 @@ import { randomUUID } from "node:crypto";
 
 // The weekly reminder against the real tables: the one-send-per-week
 // rule is a conditional write in Postgres, so it is proven there.
-const { sentTo } = vi.hoisted(() => ({ sentTo: [] as string[] }));
+const { sentTo, sentLocale } = vi.hoisted(() => ({
+  sentTo: [] as string[],
+  sentLocale: new Map<string, string | undefined>(),
+}));
 
 vi.mock("../../src/lib/redis.js", () => ({
   redis: { ping: vi.fn().mockResolvedValue("PONG"), quit: vi.fn() },
@@ -15,8 +18,9 @@ vi.mock("../../src/modules/auth/mailer.js", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
   sendLoginLinkEmail: vi.fn().mockResolvedValue(undefined),
-  sendWeeklyReminderEmail: vi.fn((to: string) => {
+  sendWeeklyReminderEmail: vi.fn((to: string, locale?: string) => {
     sentTo.push(to);
+    sentLocale.set(to, locale);
     return Promise.resolve();
   }),
 }));
@@ -108,6 +112,44 @@ describe.skipIf(!reachable)("Weekly email against Postgres", () => {
     const someone = await person({ optIn: true });
     await Promise.all([runWeeklyEmails(), runWeeklyEmails()]);
     expect(sentTo.filter((to) => to === someone.email)).toHaveLength(1);
+  });
+
+  it("stores the app language when she turns it on, sends in it, and clears it when off", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const me = await person({});
+    const login = await agent.post("/auth/login").send({ email: me.email, password: PASSWORD });
+    const csrf = login.headers["set-cookie"]
+      .find((c: string) => c.startsWith("embr_csrf="))!
+      .split(";")[0]!
+      .split("=")[1]!;
+
+    await agent
+      .patch("/notifications/preferences")
+      .set("x-csrf-token", csrf)
+      .set("Accept-Language", "fr")
+      .send({ weeklyEmail: true });
+    const stored = await prisma.user.findUniqueOrThrow({ where: { id: me.id } });
+    expect(stored.weeklyEmailLocale).toBe("fr");
+
+    await runWeeklyEmails();
+    expect(sentTo).toContain(me.email);
+    expect(sentLocale.get(me.email)).toBe("fr");
+
+    await agent
+      .patch("/notifications/preferences")
+      .set("x-csrf-token", csrf)
+      .set("Accept-Language", "fr")
+      .send({ weeklyEmail: false });
+    const cleared = await prisma.user.findUniqueOrThrow({ where: { id: me.id } });
+    expect(cleared.weeklyEmailLocale).toBeNull();
+  });
+
+  it("sends with no language to someone who opted in before languages were stored", async () => {
+    const earlier = await person({ optIn: true });
+    await runWeeklyEmails();
+    expect(sentTo).toContain(earlier.email);
+    expect(sentLocale.get(earlier.email)).toBeUndefined();
   });
 
   it("lets her turn it on and off in Settings, and is off by default", async () => {

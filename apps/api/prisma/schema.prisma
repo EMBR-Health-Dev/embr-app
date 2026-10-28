@@ -44,20 +44,25 @@ enum Role {
 /// the `requireVerifiedEmail` middleware (auth.middleware.ts) applied
 /// on exactly those routes.
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
+  id                    String       @id @default(uuid())
+  email                 String       @unique
   passwordHash          String
-  role                  Role      @default(MEMBER)
+  role                  Role         @default(MEMBER)
   emailVerifiedAt       DateTime?
   /// The weekly email reminder: off until she turns it on in Settings.
   /// It never contains anything from her record. See
   /// modules/notifications/weekly-email.ts.
-  weeklyEmailOptIn      Boolean   @default(false)
+  weeklyEmailOptIn      Boolean      @default(false)
   /// When the last weekly email was claimed for sending; the job skips
   /// anyone sent one in the last six days, so a restart never repeats it.
   weeklyEmailLastSentAt DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  /// The app language she was using when she turned the weekly email on,
+  /// so it arrives in that one language. Cleared when she turns it off.
+  /// Null (anyone who opted in before this existed) gets the email in
+  /// English, Japanese and French together.
+  weeklyEmailLocale     BriefLocale?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   sessions                Session[]
   emailVerificationTokens EmailVerificationToken[]
