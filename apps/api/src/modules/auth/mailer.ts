@@ -80,16 +80,21 @@ async function sendMail(to: string, subject: string, html: string, text: string)
 }
 
 // Transactional emails follow the language of the request that caused
-// them (the client's own Accept-Language, see lib/locale.ts). Japanese
-// has no email copy yet, so it gets English, as it did before French.
-function isFrench(locale: Locale): boolean {
-  return locale === "fr";
-}
+// them (the client's own Accept-Language, see lib/locale.ts).
 
 export async function sendVerificationEmail(to: string, token: string, locale: Locale = "en") {
   const link = `${env.APP_URL}/verify-email?token=${encodeURIComponent(token)}`;
   const hours = Math.round(env.EMAIL_VERIFICATION_TTL_SECONDS / 3600);
-  if (isFrench(locale)) {
+  if (locale === "ja") {
+    await sendMail(
+      to,
+      "EMBRアカウントの確認",
+      `<p>EMBRへようこそ。メールアドレスを確認してください：</p><p><a href="${link}">${link}</a></p><p>このリンクの有効期限は${hours}時間です。</p>`,
+      `EMBRへようこそ。メールアドレスを確認してください：${link}`,
+    );
+    return;
+  }
+  if (locale === "fr") {
     await sendMail(
       to,
       "Vérifiez votre compte EMBR",
@@ -109,7 +114,16 @@ export async function sendVerificationEmail(to: string, token: string, locale: L
 export async function sendPasswordResetEmail(to: string, token: string, locale: Locale = "en") {
   const link = `${env.APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
   const minutes = Math.round(env.PASSWORD_RESET_TTL_SECONDS / 60);
-  if (isFrench(locale)) {
+  if (locale === "ja") {
+    await sendMail(
+      to,
+      "EMBRのパスワード再設定",
+      `<p>パスワード再設定のリクエストを受け付けました。</p><p><a href="${link}">${link}</a></p><p>お心当たりがない場合は、このメールを無視してください。このリンクの有効期限は${minutes}分です。</p>`,
+      `パスワードを再設定する：${link}`,
+    );
+    return;
+  }
+  if (locale === "fr") {
     await sendMail(
       to,
       "Réinitialisez votre mot de passe EMBR",
@@ -129,7 +143,16 @@ export async function sendPasswordResetEmail(to: string, token: string, locale: 
 export async function sendLoginLinkEmail(to: string, token: string, locale: Locale = "en") {
   const link = `${env.APP_URL}/login-link?token=${encodeURIComponent(token)}`;
   const minutes = Math.round(env.LOGIN_LINK_TTL_SECONDS / 60);
-  if (isFrench(locale)) {
+  if (locale === "ja") {
+    await sendMail(
+      to,
+      "EMBRのログインリンク",
+      `<p>以下のリンクからEMBRにログインしてください：</p><p><a href="${link}">${link}</a></p><p>このリンクは1回のみ使用でき、${minutes}分で期限切れになります。お心当たりがない場合は、このメールを無視してください。</p>`,
+      `EMBRにログイン：${link}`,
+    );
+    return;
+  }
+  if (locale === "fr") {
     await sendMail(
       to,
       "Votre lien de connexion EMBR",
@@ -179,7 +202,16 @@ export async function sendOrganizationInviteEmail(
 ) {
   const link = `${env.APP_URL}/organizations/accept-invite?token=${encodeURIComponent(token)}`;
   const days = Math.round(env.ORG_INVITE_TTL_SECONDS / (24 * 60 * 60));
-  if (isFrench(locale)) {
+  if (locale === "ja") {
+    await sendMail(
+      to,
+      `EMBRで${organizationName}への招待が届いています`,
+      `<p>EMBRで<strong>${organizationName}</strong>への招待が届いています。</p><p><a href="${link}">${link}</a></p><p>このリンクの有効期限は${days}日です。お心当たりがない場合は、このメールを無視してください。</p>`,
+      `EMBRで${organizationName}への招待が届いています：${link}`,
+    );
+    return;
+  }
+  if (locale === "fr") {
     await sendMail(
       to,
       `Invitation à rejoindre ${organizationName} sur EMBR`,
