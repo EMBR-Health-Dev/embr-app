@@ -1582,5 +1582,80 @@
     "dashboardTitle": "Monthly symptom rating",
     "dashboardBody": "Eleven questions, about two minutes. Your scores are kept in your record so you can see how they change over the months.",
     "dashboardCta": "Start the rating"
+  },
+  "FirstCheckIn": {
+    "metaTitle": "Your first check in",
+    "progress": "Step {current} of {total}",
+    "back": "Back",
+    "continue": "Continue",
+    "skip": "Skip",
+    "seeResult": "See my result",
+    "skipToResult": "Skip and see my result",
+    "promise": {
+      "headline": "See your last two weeks in about two minutes",
+      "privacy": "Your answers stay on this device. None of them is sent unless you choose to save them to an account.",
+      "notDiagnosis": "EMBR describes what you report. It is not a diagnosis.",
+      "question": "What do you want help with?"
+    },
+    "symptoms": {
+      "headline": "What have you noticed in the last two weeks?",
+      "hint": "Pick any that apply, or skip this step."
+    },
+    "details": {
+      "headline": "For each one, how strong was it at its worst, and how often?",
+      "optional": "Leave any answer blank if you are not sure.",
+      "strength": "At its worst",
+      "often": "How often"
+    },
+    "frequency": {
+      "FEW_DAYS": "A few days",
+      "HALF_THE_DAYS": "About half the days",
+      "MOST_DAYS": "Most days"
+    },
+    "frequencyInSentence": {
+      "FEW_DAYS": "a few days",
+      "HALF_THE_DAYS": "about half the days",
+      "MOST_DAYS": "most days"
+    },
+    "context": {
+      "headline": "Sleep and work",
+      "hint": "Optional. You can skip either question.",
+      "sleep": "How long do you usually sleep?",
+      "work": "Did your symptoms affect your work?"
+    },
+    "result": {
+      "headline": "Your last two weeks",
+      "intro": "This is what you reported, in your own answers.",
+      "none": "You did not pick any symptoms. That is worth knowing too.",
+      "notGiven": "not given",
+      "atWorst": "At its worst: {severity}",
+      "howOften": "How often: {often}",
+      "sleep": "Usual sleep: {value}",
+      "work": "Work affected: {value}",
+      "limitsTitle": "What this can and cannot tell you",
+      "limitsBody": "It describes what you reported for the last two weeks. It is not a diagnosis. It does not name a cause or say whether this is perimenopause. A clinician can help with that.",
+      "nextTitle": "One next step",
+      "next": {
+        "TRACK_A_WEEK": "Track for a week. Daily entries can show patterns that a look back over two weeks cannot.",
+        "KEEP_FOR_APPOINTMENT": "Keep these answers for your appointment. Print them or save them as a PDF before you close this tab."
+      },
+      "questionsTitle": "Questions you could ask a clinician",
+      "exitsTitle": "What would you like to do?",
+      "earlyAccess": "Request early access",
+      "earlyAccessNote": "Saving to an account opens when EMBR leaves private early access. Your answers are not sent with this request.",
+      "print": "Print or save as PDF",
+      "edit": "Change my answers",
+      "clear": "Clear my answers",
+      "clearNote": "This removes them from this device now. They are also removed when you close this tab.",
+      "cleared": "Your answers have been cleared from this device."
+    },
+    "questions": {
+      "main": "The symptom I noticed most often was {symptom}, on {often}. What might be behind it, and what could help?",
+      "mainNoOften": "One thing I noticed was {symptom}. What might be behind it, and what could help?",
+      "together": "Could these be connected: {symptoms}?",
+      "sooner": "What changes would mean I should come back sooner?",
+      "track": "What would be most useful for me to keep track of before we next talk?",
+      "general": "Which changes are worth mentioning to you, even if they seem small?"
+    }
   }
 }

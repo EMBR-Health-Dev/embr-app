@@ -14,6 +14,7 @@ const SIGNED_OUT_PAGES = new Set([
   "/verify-email",
   "/login-link",
   "/beta",
+  "/check-in",
   "/organizations/accept-invite",
 ]);
 

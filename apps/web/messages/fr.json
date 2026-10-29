@@ -1490,5 +1490,80 @@
       "iphone": "Sur iPhone, TestFlight vous permet aussi de nous envoyer directement une capture d’écran avec un commentaire."
     },
     "closing": "Prête quand vous l’êtes."
+  },
+  "FirstCheckIn": {
+    "metaTitle": "Votre premier bilan",
+    "progress": "Étape {current} sur {total}",
+    "back": "Retour",
+    "continue": "Continuer",
+    "skip": "Passer",
+    "seeResult": "Voir mon résultat",
+    "skipToResult": "Passer et voir mon résultat",
+    "promise": {
+      "headline": "Faites le point sur vos deux dernières semaines en deux minutes environ",
+      "privacy": "Vos réponses restent sur cet appareil. Aucune n’est envoyée, sauf si vous choisissez de les enregistrer dans un compte.",
+      "notDiagnosis": "EMBR décrit ce que vous indiquez. Ce n’est pas un diagnostic.",
+      "question": "Pour quoi voulez-vous de l’aide ?"
+    },
+    "symptoms": {
+      "headline": "Qu’avez-vous remarqué ces deux dernières semaines ?",
+      "hint": "Choisissez tout ce qui vous concerne, ou passez cette étape."
+    },
+    "details": {
+      "headline": "Pour chacun, quelle intensité au pire moment, et à quelle fréquence ?",
+      "optional": "Laissez une réponse vide si vous n’êtes pas sûre.",
+      "strength": "Au pire moment",
+      "often": "À quelle fréquence"
+    },
+    "frequency": {
+      "FEW_DAYS": "Quelques jours",
+      "HALF_THE_DAYS": "Environ un jour sur deux",
+      "MOST_DAYS": "La plupart des jours"
+    },
+    "frequencyInSentence": {
+      "FEW_DAYS": "quelques jours",
+      "HALF_THE_DAYS": "environ un jour sur deux",
+      "MOST_DAYS": "la plupart des jours"
+    },
+    "context": {
+      "headline": "Sommeil et travail",
+      "hint": "Facultatif. Vous pouvez passer chaque question.",
+      "sleep": "Combien de temps dormez-vous habituellement ?",
+      "work": "Vos symptômes ont-ils eu un effet sur votre travail ?"
+    },
+    "result": {
+      "headline": "Vos deux dernières semaines",
+      "intro": "Voici ce que vous avez indiqué, avec vos propres réponses.",
+      "none": "Vous n’avez choisi aucun symptôme. C’est aussi une information utile.",
+      "notGiven": "non indiqué",
+      "atWorst": "Au pire moment : {severity}",
+      "howOften": "Fréquence : {often}",
+      "sleep": "Sommeil habituel : {value}",
+      "work": "Effet sur le travail : {value}",
+      "limitsTitle": "Ce que ce résultat peut et ne peut pas vous dire",
+      "limitsBody": "Il décrit ce que vous avez indiqué pour les deux dernières semaines. Ce n’est pas un diagnostic. Il n’indique pas de cause et ne dit pas s’il s’agit de la périménopause. Un professionnel de santé peut vous aider à ce sujet.",
+      "nextTitle": "Une prochaine étape",
+      "next": {
+        "TRACK_A_WEEK": "Suivez vos symptômes pendant une semaine. Des entrées quotidiennes peuvent montrer des tendances qu’un regard sur deux semaines ne montre pas.",
+        "KEEP_FOR_APPOINTMENT": "Gardez ces réponses pour votre rendez-vous. Imprimez-les ou enregistrez-les en PDF avant de fermer cet onglet."
+      },
+      "questionsTitle": "Questions à poser à un professionnel de santé",
+      "exitsTitle": "Que souhaitez-vous faire ?",
+      "earlyAccess": "Demander un accès anticipé",
+      "earlyAccessNote": "L’enregistrement dans un compte ouvrira quand EMBR sortira de l’accès anticipé privé. Vos réponses ne sont pas envoyées avec cette demande.",
+      "print": "Imprimer ou enregistrer en PDF",
+      "edit": "Modifier mes réponses",
+      "clear": "Effacer mes réponses",
+      "clearNote": "Elles sont supprimées de cet appareil dès maintenant. Elles le sont aussi quand vous fermez cet onglet.",
+      "cleared": "Vos réponses ont été effacées de cet appareil."
+    },
+    "questions": {
+      "main": "Le symptôme que j’ai remarqué le plus souvent est {symptom}, {often}. Qu’est-ce qui pourrait l’expliquer, et qu’est-ce qui pourrait m’aider ?",
+      "mainNoOften": "J’ai remarqué {symptom}. Qu’est-ce qui pourrait l’expliquer, et qu’est-ce qui pourrait m’aider ?",
+      "together": "Ces symptômes peuvent-ils être liés : {symptoms} ?",
+      "sooner": "Quels changements devraient me faire revenir plus tôt ?",
+      "track": "Qu’est-ce qu’il me serait le plus utile de noter d’ici notre prochain échange ?",
+      "general": "Quels changements vaut-il la peine de vous signaler, même s’ils semblent minimes ?"
+    }
   }
 }
