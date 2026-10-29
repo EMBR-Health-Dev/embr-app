@@ -158,3 +158,47 @@ describe("buildClinicianSummaryPdf — Unicode rendering", () => {
     expect(text).toContain("No treatments logged in this range.");
   });
 });
+
+describe("buildClinicianSummaryPdf — entry dates on her local day", () => {
+  async function entryDate(occurredAt: string, timeZone?: string) {
+    const doc = buildClinicianSummaryPdf({
+      userEmail: "person@embr.health",
+      ...(timeZone ? { timeZone } : {}),
+      symptomLogs: [symptomLog({ category: "HOT_FLASH", occurredAt: new Date(occurredAt) })],
+      cycleEntries: NO_CYCLE_ENTRIES,
+      treatments: [],
+    });
+    const text = (await extractPdfText(doc)).replace(/\s+/g, " ");
+    return text.match(/(\d{4}-\d{2}-\d{2}) Hot Flash/)?.[1];
+  }
+
+  it("prints a Tokyo morning entry on its Tokyo day, not the previous UTC day", async () => {
+    // 08:00 on 10 October in Tokyo is 23:00 on 9 October in UTC.
+    expect(await entryDate("2026-10-09T23:00:00.000Z", "Asia/Tokyo")).toBe("2026-10-10");
+  });
+
+  it("prints a Los Angeles evening entry on its Los Angeles day, not the next UTC day", async () => {
+    // 20:00 on 10 October in Los Angeles is 03:00 on 11 October in UTC.
+    expect(await entryDate("2026-10-11T03:00:00.000Z", "America/Los_Angeles")).toBe("2026-10-10");
+  });
+
+  it("keeps UTC dates when no time zone is given, as before", async () => {
+    expect(await entryDate("2026-10-09T23:00:00.000Z")).toBe("2026-10-09");
+  });
+
+  it("labels the range with her local days when a time zone is given", async () => {
+    const doc = buildClinicianSummaryPdf({
+      userEmail: "person@embr.health",
+      timeZone: "Pacific/Auckland",
+      // Local midnight 1 October and 23:59:59.999 on 31 October in Auckland
+      // (UTC+13), the offset the 12 hour label shift can't reach.
+      from: new Date("2026-09-30T11:00:00.000Z"),
+      to: new Date("2026-10-31T10:59:59.999Z"),
+      symptomLogs: [],
+      cycleEntries: NO_CYCLE_ENTRIES,
+      treatments: [],
+    });
+    const text = (await extractPdfText(doc)).replace(/\s+/g, " ");
+    expect(text).toContain("Range: 2026-10-01 to 2026-10-31");
+  });
+});

@@ -6,9 +6,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "../../lib/auth-context";
 import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
+import { browserTimeZone } from "../../lib/symptom-evidence";
 import { EmailVerificationRequired } from "../../components/email-verification-required";
 
-function buildExportUrl(path: string, from: string, to: string): string {
+function buildExportUrl(path: string, from: string, to: string, timeZone?: string): string {
   const params = new URLSearchParams();
   // `<input type="date">` gives a bare "YYYY-MM-DD" — `new Date(from)`
   // parses that as UTC midnight, not local midnight, which for `to`
@@ -16,6 +17,7 @@ function buildExportUrl(path: string, from: string, to: string): string {
   // export (see date-format.ts's startOfLocalDay/endOfLocalDay).
   if (from) params.set("from", startOfLocalDay(from));
   if (to) params.set("to", endOfLocalDay(to));
+  if (timeZone) params.set("timeZone", timeZone);
   const query = params.toString();
   return `/api/export/${path}${query ? `?${query}` : ""}`;
 }
@@ -44,7 +46,9 @@ export default function ExportPage() {
     {
       label: t("clinicianSummaryLabel"),
       description: t("clinicianSummaryDescription"),
-      path: buildExportUrl("summary.pdf", from, to),
+      // Her time zone, so the clinician summary prints each entry on
+      // the day she logged it rather than the UTC day.
+      path: buildExportUrl("summary.pdf", from, to, browserTimeZone()),
     },
     {
       label: t("symptomLogsLabel"),

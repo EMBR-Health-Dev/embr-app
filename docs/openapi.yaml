@@ -459,6 +459,12 @@ paths:
       parameters:
         - { name: from, in: query, schema: { type: string, format: date-time } }
         - { name: to, in: query, schema: { type: string, format: date-time } }
+        - {
+            name: timeZone,
+            in: query,
+            description: "IANA time zone (e.g. Asia/Tokyo). Entry dates print on her local day; without it, UTC. An unknown zone is a 400.",
+            schema: { type: string },
+          }
       responses:
         "200":
           description: "PDF file (Content-Disposition: attachment)"

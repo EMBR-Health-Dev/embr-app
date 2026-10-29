@@ -114,7 +114,7 @@ export const exportService = {
   async symptomLogsCsv(userId: string, query: ExportQuery): Promise<string> {
     const logs = await exportRepository.listSymptomLogsForExport(userId, query);
     return toCsv(
-      ["date", "category", "severity", "notes"],
+      ["occurredAt (UTC)", "category", "severity", "notes"],
       logs.map((log: SymptomLogRecord) => [
         log.occurredAt.toISOString(),
         categoryLabel(log.category),
@@ -206,6 +206,7 @@ export const exportService = {
       userEmail,
       from: query.from,
       to: query.to,
+      timeZone: query.timeZone,
       symptomLogs,
       cycleEntries,
       treatments,

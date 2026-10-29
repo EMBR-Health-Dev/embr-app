@@ -524,6 +524,11 @@ describe("GET /export/symptom-logs.csv", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("text/csv");
     expect(res.headers["content-disposition"]).toContain("embr-symptom-logs.csv");
+    // The first column is a full UTC timestamp, and its header says so.
+    expect(res.text.replace(/^\uFEFF/, "").split(/\r?\n/)[0]).toBe(
+      "occurredAt (UTC),category,severity,notes",
+    );
+    expect(res.text).toContain("2026-07-01T00:00:00.000Z");
     expect(res.text).toContain("Hot Flash");
     expect(res.text).toContain("bad one");
     expect(res.text).not.toContain("Brain Fog");
@@ -744,6 +749,19 @@ describe("GET /export/summary.pdf", () => {
     expect(res.headers["content-disposition"]).toContain("embr-health-summary.pdf");
     // PDF files start with the "%PDF-" magic bytes.
     expect((res.body as Buffer).subarray(0, 5).toString("ascii")).toBe("%PDF-");
+  });
+
+  it("accepts her time zone, and refuses an unknown one", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "pdfexport-tz@embr.health");
+    const ok = await agent.get("/export/summary.pdf").query({ timeZone: "Asia/Tokyo" });
+    expect(ok.status).toBe(200);
+    const bad = await agent.get("/export/summary.pdf").query({ timeZone: "Not/AZone" });
+    expect(bad.status).toBe(400);
+    // Refused before any query reads it, on every export taking a range.
+    const badCsv = await agent.get("/export/cycle-entries.csv").query({ timeZone: "Not/AZone" });
+    expect(badCsv.status).toBe(400);
   });
 
   it("requires authentication", async () => {

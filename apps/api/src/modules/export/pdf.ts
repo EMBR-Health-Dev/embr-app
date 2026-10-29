@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit";
 import type { CycleEntry, SymptomLog, Treatment } from "../../generated/prisma/index.js";
 import { computeCycleLengths } from "../../lib/cycle-length.js";
 import { localDayEndLabel, localDayStartLabel } from "../../lib/local-day-label.js";
+import { localDate } from "../trends/symptom-history.js";
 import { computeSymptomFrequency } from "../../lib/symptom-frequency.js";
 import {
   EMBR_PDF_BODY_FONT,
@@ -39,6 +40,10 @@ interface SummaryInput {
   userEmail: string;
   from?: Date;
   to?: Date;
+  /** Her time zone, so each entry prints on the day she logged it. A
+   * Tokyo morning or a Los Angeles evening otherwise lands on the
+   * neighbouring UTC day. Without it, dates are UTC. */
+  timeZone?: string;
   symptomLogs: SymptomLog[];
   cycleEntries: CycleEntry[];
   treatments: Treatment[];
@@ -91,7 +96,7 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
     .fillColor(PDF_INK_SECONDARY)
     .text(`Prepared for ${input.userEmail}`)
     .text(
-      `Range: ${input.from ? localDayStartLabel(input.from) : "all time"} to ${input.to ? localDayEndLabel(input.to) : "present"}`,
+      `Range: ${input.from ? (input.timeZone ? localDate(input.from, input.timeZone) : localDayStartLabel(input.from)) : "all time"} to ${input.to ? (input.timeZone ? localDate(input.to, input.timeZone) : localDayEndLabel(input.to)) : "present"}`,
     )
     .text(`Generated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
   doc
@@ -165,7 +170,7 @@ export function buildClinicianSummaryPdf(input: SummaryInput): PDFKit.PDFDocumen
       doc
         .fillColor(PDF_INK)
         .text(
-          `${formatDate(log.occurredAt)}  ${categoryLabel(log.category)}  (${log.severity.toLowerCase()})`,
+          `${input.timeZone ? localDate(log.occurredAt, input.timeZone) : formatDate(log.occurredAt)}  ${categoryLabel(log.category)}  (${log.severity.toLowerCase()})`,
         );
       if (log.notes) doc.fillColor(PDF_INK_SECONDARY).text(`  ${log.notes}`, { indent: 10 });
     }
