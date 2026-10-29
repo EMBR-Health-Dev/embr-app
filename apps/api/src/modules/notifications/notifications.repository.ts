@@ -21,6 +21,15 @@ export const notificationsRepository = {
     return user.weeklyEmailOptIn;
   },
 
+  /** Keeps the weekly email in the language she now uses, at sign in.
+   * Writes only while the email is on, so nothing is stored otherwise. */
+  async refreshWeeklyEmailLocale(userId: string, locale: Locale): Promise<void> {
+    await prisma.user.updateMany({
+      where: { id: userId, weeklyEmailOptIn: true },
+      data: { weeklyEmailLocale: locale },
+    });
+  },
+
   /** Verified, opted in, and not sent one since `sentBefore`. Ids,
    * emails and the language to send in only. */
   listDueForWeeklyEmail(sentBefore: Date) {

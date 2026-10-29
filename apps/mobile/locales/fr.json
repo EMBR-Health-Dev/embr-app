@@ -455,7 +455,7 @@
     "lastPeriodRemoved": "Retiré",
     "lastPeriodError": "Impossible d’enregistrer. Veuillez réessayer.",
     "weeklyEmailTitle": "E-mail hebdomadaire",
-    "weeklyEmailHelp": "Un court rappel une fois par semaine, le dimanche, pour revoir votre semaine dans EMBR. Il ne contient jamais rien de votre suivi. Désactivé sauf si vous l’activez. Il est envoyé dans la langue que vous utilisez au moment de l’activer.",
+    "weeklyEmailHelp": "Un court rappel une fois par semaine, le dimanche, pour revoir votre semaine dans EMBR. Il ne contient jamais rien de votre suivi. Désactivé sauf si vous l’activez. Il est envoyé dans la langue utilisée lors de votre dernière connexion ou de son activation.",
     "weeklyEmailToggle": "M’envoyer un e-mail hebdomadaire",
     "weeklyEmailOn": "Activé. Le prochain arrive dimanche.",
     "weeklyEmailError": "Impossible d’enregistrer. Veuillez réessayer.",

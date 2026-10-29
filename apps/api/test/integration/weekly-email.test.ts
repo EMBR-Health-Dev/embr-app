@@ -145,6 +145,36 @@ describe.skipIf(!reachable)("Weekly email against Postgres", () => {
     expect(cleared.weeklyEmailLocale).toBeNull();
   });
 
+  it("updates the stored language at sign in while the email is on, and only then", async () => {
+    const app = createApp();
+    const on = await person({ optIn: true });
+    await prisma.user.update({ where: { id: on.id }, data: { weeklyEmailLocale: "en" } });
+    const off = await person({ optIn: false });
+
+    await request(app)
+      .post("/auth/login")
+      .set("Accept-Language", "ja")
+      .send({ email: on.email, password: PASSWORD });
+    await request(app)
+      .post("/auth/login")
+      .set("Accept-Language", "fr")
+      .send({ email: off.email, password: PASSWORD });
+
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: on.id } })).weeklyEmailLocale).toBe(
+      "ja",
+    );
+    // Nothing stored for someone who doesn't get the email.
+    expect(
+      (await prisma.user.findUniqueOrThrow({ where: { id: off.id } })).weeklyEmailLocale,
+    ).toBeNull();
+
+    // A sign in without a language header leaves her choice alone.
+    await request(app).post("/auth/login").send({ email: on.email, password: PASSWORD });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: on.id } })).weeklyEmailLocale).toBe(
+      "ja",
+    );
+  });
+
   it("sends with no language to someone who opted in before languages were stored", async () => {
     const earlier = await person({ optIn: true });
     await runWeeklyEmails();
