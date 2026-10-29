@@ -724,7 +724,7 @@
     "lastPeriodRemoved": "Removed",
     "lastPeriodError": "Could not save. Please try again.",
     "weeklyEmailTitle": "Weekly email",
-    "weeklyEmailHelp": "A short reminder once a week, on Sunday, to look back at your week in EMBR. It never includes anything from your record. Off unless you turn it on. It comes in the language you're using when you turn it on.",
+    "weeklyEmailHelp": "A short reminder once a week, on Sunday, to look back at your week in EMBR. It never includes anything from your record. Off unless you turn it on. It comes in the language you used when you last signed in or turned it on.",
     "weeklyEmailToggle": "Send me a weekly email",
     "weeklyEmailOn": "On. The next one comes on Sunday.",
     "weeklyEmailError": "Could not save. Please try again.",

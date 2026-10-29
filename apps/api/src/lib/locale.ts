@@ -30,13 +30,23 @@ function isLocale(value: string): value is Locale {
  * just doesn't weight the alternatives.
  */
 export function resolveLocaleFromAcceptLanguage(header: string | undefined): Locale {
-  if (!header) return DEFAULT_LOCALE;
+  return supportedLocaleIn(header) ?? DEFAULT_LOCALE;
+}
 
+function supportedLocaleIn(header: string | undefined): Locale | null {
+  if (!header) return null;
   const primaryTag = header.split(",")[0]?.split(";")[0]?.split("-")[0]?.trim().toLowerCase();
-  return primaryTag && isLocale(primaryTag) ? primaryTag : DEFAULT_LOCALE;
+  return primaryTag && isLocale(primaryTag) ? primaryTag : null;
 }
 
 /** The locale of the client that sent this request. */
 export function requestLocale(req: Request): Locale {
   return resolveLocaleFromAcceptLanguage(req.headers["accept-language"]);
+}
+
+/** The request's locale only when the client actually named a supported
+ * one, so a missing header never overwrites a stored choice with the
+ * default. */
+export function explicitRequestLocale(req: Request): Locale | null {
+  return supportedLocaleIn(req.headers["accept-language"]);
 }

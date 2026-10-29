@@ -11,7 +11,8 @@ import { toUserDto } from "./auth.mappers.js";
 import { onboardingRepository } from "../onboarding/onboarding.repository.js";
 import { consentService } from "../consent/consent.service.js";
 import type { RegisterInput } from "@embr/validation";
-import { DEFAULT_LOCALE, type Locale } from "../../lib/locale.js";
+import { DEFAULT_LOCALE, explicitRequestLocale, type Locale } from "../../lib/locale.js";
+import { notificationsRepository } from "../notifications/notifications.repository.js";
 
 interface IssuedSession {
   user: UserDto;
@@ -21,6 +22,14 @@ interface IssuedSession {
 
 function requestMeta(req: Request) {
   return { userAgent: req.header("user-agent") ?? null, ipAddress: req.ip ?? null };
+}
+
+// Password and email link sign in come from the app with its language
+// header; SSO arrives as a browser redirect from the identity provider,
+// whose header is the browser's, not EMBR's, so it is left out.
+async function rememberSignInLocale(req: Request, userId: string): Promise<void> {
+  const locale = explicitRequestLocale(req);
+  if (locale) await notificationsRepository.refreshWeeklyEmailLocale(userId, locale);
 }
 
 export async function issueSession(
@@ -122,6 +131,7 @@ export const authService = {
     }
 
     const { accessToken, refreshToken } = await issueSession(req, user);
+    await rememberSignInLocale(req, user.id);
     await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id);
 
     const onboarding = await onboardingRepository.findByUserId(user.id);
@@ -165,6 +175,7 @@ export const authService = {
     }
 
     const { accessToken, refreshToken } = await issueSession(req, user);
+    await rememberSignInLocale(req, user.id);
     await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id, { method: "email_link" });
 
     const onboarding = await onboardingRepository.findByUserId(user.id);
