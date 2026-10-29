@@ -381,7 +381,7 @@ export const api = {
     // provide. The /export page's own links stay as plain hrefs
     // since they don't need either.
     clinicianSummaryPdf: (query: { from?: string; to?: string }) =>
-      apiFetchBlob("/export/summary.pdf", query),
+      apiFetchBlob("/export/summary.pdf", { ...query, timeZone: deviceTimeZone() }),
   },
 
   sso: {

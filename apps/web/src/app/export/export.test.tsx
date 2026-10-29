@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "../../../messages/en.json";
+import { browserTimeZone } from "../../lib/symptom-evidence";
 import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
 
 vi.mock("next/navigation", () => ({
@@ -47,6 +48,18 @@ describe("Export page — date range boundaries", () => {
     const link = await screen.findByText("Symptom logs (CSV)");
     const href = link.closest("a")!.getAttribute("href")!;
     expect(href).toBe("/api/export/symptom-logs.csv");
+  });
+
+  it("sends her time zone with the clinician summary only", async () => {
+    const { default: ExportPage } = await import("./page");
+    renderWithIntl(<ExportPage />);
+
+    const summary = await screen.findByText("Clinician summary (PDF)");
+    const url = new URL(summary.closest("a")!.getAttribute("href")!, "http://localhost");
+    expect(url.pathname).toBe("/api/export/summary.pdf");
+    expect(url.searchParams.get("timeZone")).toBe(browserTimeZone());
+    const csv = screen.getByText("Symptom logs (CSV)").closest("a")!.getAttribute("href")!;
+    expect(csv).not.toContain("timeZone");
   });
 
   it("offers the daily context CSV alongside the other exports", async () => {

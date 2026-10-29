@@ -415,6 +415,25 @@ export type ContextLogQuery = z.infer<typeof contextLogQuerySchema>;
 export const exportQuerySchema = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+  /** The device's IANA time zone. The clinician summary PDF prints each
+   * entry on her local day with it; without it, dates are UTC. An
+   * unknown zone is refused here, before any query uses it. */
+  timeZone: z
+    .string()
+    .min(1)
+    .max(64)
+    .refine(
+      (zone) => {
+        try {
+          new Intl.DateTimeFormat("en-US", { timeZone: zone });
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "Unknown time zone" },
+    )
+    .optional(),
 });
 export type ExportQuery = z.infer<typeof exportQuerySchema>;
 
