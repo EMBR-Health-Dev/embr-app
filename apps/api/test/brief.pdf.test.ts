@@ -57,6 +57,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     lastRecordedPeriod: null,
     interpretation: null,
     citedPatternIds: null,
+    patientPriorities: null,
     aiNarrative: "No significant patterns were noted in this period.",
     aiDiscussionTopics: ["Any new symptoms since the last visit?"],
     locale: "en",
@@ -138,6 +139,49 @@ describe("buildClinicalBriefPdf — Unicode rendering", () => {
     expect(text).toContain("Estradiol patch");
     expect(text).toContain("Hot Flash");
     expect(text).toContain("No significant patterns were noted in this period.");
+  });
+
+  it("prints her priorities first, numbered, before the AI summary", async () => {
+    const brief = baseBrief({
+      patientPriorities: ["The anger came out of nowhere", "Sex has become painful"],
+    });
+
+    const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
+
+    expect(text).toContain("WHAT I MOST WANT YOU TO UNDERSTAND");
+    expect(text).toContain("The anger came out of nowhere");
+    expect(text).toContain("Sex has become painful");
+    expect(text).toContain("Not seen or changed by AI.");
+    expect(text.indexOf("WHAT I MOST WANT YOU TO UNDERSTAND")).toBeLessThan(
+      text.indexOf("SUMMARY"),
+    );
+  });
+
+  it("leaves the priorities section out when she wrote none, or the brief predates it", async () => {
+    for (const patientPriorities of [[], null]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ patientPriorities }), "person@embr.health"),
+      );
+      expect(text).not.toContain("WHAT I MOST WANT YOU TO UNDERSTAND");
+    }
+  });
+
+  it("prints the priorities heading in Japanese and French", async () => {
+    const ja = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({ locale: "ja", patientPriorities: ["夜中に何度も目が覚めます"] }),
+        "person@embr.health",
+      ),
+    );
+    expect(ja).toContain("担当医に最も理解してほしいこと");
+    expect(ja).toContain("夜中に何度も目が覚めます");
+    const fr = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({ locale: "fr", patientPriorities: ["Je dors mal"] }),
+        "person@embr.health",
+      ),
+    );
+    expect(fr.replace(/\s+/g, " ")).toContain("CE QUE JE SOUHAITE SURTOUT QUE VOUS COMPRENIEZ");
   });
 
   it("draws the period day by day, with its legend and coverage line", async () => {

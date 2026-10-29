@@ -495,6 +495,12 @@ paths:
               properties:
                 fromDate: { type: string, format: date }
                 toDate: { type: string, format: date }
+                timeZone: { type: string, description: "IANA time zone of the device" }
+                priorities:
+                  type: array
+                  maxItems: 3
+                  items: { type: string, maxLength: 300 }
+                  description: Up to three things she most wants her clinician to understand. Blank lines are dropped. Encrypted at rest and never sent to the AI.
       responses:
         "201":
           description: The generated brief
@@ -1089,6 +1095,11 @@ components:
                 averageCycleLengthDays: { type: integer, nullable: true }
                 cycleCount: { type: integer }
                 periodDaysLogged: { type: integer }
+            patientPriorities:
+              type: array
+              nullable: true
+              items: { type: string }
+              description: Her own words, printed first in the brief. Never sent to the AI. Empty when she wrote none; null for briefs made before this field existed.
             aiNarrative:
               type: string
               description: AI-generated from symptomSummary/cycleSummary only — never from raw log notes.

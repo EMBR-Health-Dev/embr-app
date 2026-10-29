@@ -104,6 +104,7 @@ export const briefRepository = {
     lastRecordedPeriod: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;
     citedPatternIds: Prisma.InputJsonValue;
+    patientPriorities: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: Prisma.InputJsonValue;
     locale: Locale;

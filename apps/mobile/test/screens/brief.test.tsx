@@ -143,6 +143,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
+    patientPriorities: [],
     aiNarrative: "A narrative.",
     aiDiscussionTopics: ["A question?"],
     locale: "en",
@@ -244,12 +245,40 @@ describe("Brief screen — generation", () => {
     expect(generateMock).toHaveBeenCalledWith({
       fromDate: startOfLocalDay(new Date(2026, 0, 1)),
       toDate: endOfLocalDay(new Date(2026, 1, 1)),
+      priorities: [],
     });
     // Not just that a success state exists — that it specifically
     // triggered a real refresh of both independent data sources, per
     // handleGenerate's own await loadHistory()/await loadTrends().
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(trendsMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("sends her priorities without blank ones and shows them above the summary", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    generateMock.mockResolvedValue(
+      brief({ id: "new-2", patientPriorities: ["I wake at 4am every night"] }),
+    );
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByText("From"));
+    fireEvent.click(screen.getByText("To"));
+    fireEvent.change(screen.getByLabelText("Priority 2"), {
+      target: { value: "  I wake at 4am every night " },
+    });
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
+
+    expect(await screen.findByText("What I most want you to understand")).toBeInTheDocument();
+    expect(screen.getByText("1. I wake at 4am every night")).toBeInTheDocument();
+    expect(generateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ priorities: ["I wake at 4am every night"] }),
+    );
   });
 
   it("shows the API error message and does not show a false success state when generation fails", async () => {

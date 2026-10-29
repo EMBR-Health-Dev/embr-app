@@ -82,12 +82,14 @@ describe.skipIf(!reachable)("personal text encryption against Postgres", () => {
         treatmentSummary: [{ name: "Estradiol gel", category: "HRT" }],
         aiNarrative: "Hot flashes were logged on 9 days.",
         aiDiscussionTopics: ["Could my sleep be related to hot flashes?"],
+        patientPriorities: ["The anger frightens my family"],
       },
     });
 
     const stored = await prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT n.title, n.body, t.name, t.notes AS tnotes, s.notes AS snotes,
-             b."aiNarrative", b."treatmentSummary"::text AS ts, b."aiDiscussionTopics"::text AS topics
+             b."aiNarrative", b."treatmentSummary"::text AS ts, b."aiDiscussionTopics"::text AS topics,
+             b."patientPriorities"::text AS priorities
       FROM notes n
       JOIN treatments t ON t."userId" = n."userId"
       JOIN symptom_logs s ON s."userId" = n."userId"
@@ -102,6 +104,7 @@ describe.skipIf(!reachable)("personal text encryption against Postgres", () => {
       "board meeting",
       "9 days",
       "Could my sleep",
+      "frightens my family",
     ]) {
       expect(onDisk).not.toContain(secret);
     }
@@ -116,6 +119,7 @@ describe.skipIf(!reachable)("personal text encryption against Postgres", () => {
       aiNarrative: "Hot flashes were logged on 9 days.",
       treatmentSummary: [{ name: "Estradiol gel", category: "HRT" }],
       aiDiscussionTopics: ["Could my sleep be related to hot flashes?"],
+      patientPriorities: ["The anger frightens my family"],
     });
   });
 

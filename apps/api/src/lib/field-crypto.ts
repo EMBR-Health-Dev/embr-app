@@ -91,7 +91,10 @@ export const ENCRYPTED_FIELDS: Record<string, { text?: string[]; json?: string[]
   SymptomLog: { text: ["notes"] },
   CycleEntry: { text: ["notes"] },
   Treatment: { text: ["name", "notes"] },
-  ClinicalBrief: { text: ["aiNarrative"], json: ["treatmentSummary", "aiDiscussionTopics"] },
+  ClinicalBrief: {
+    text: ["aiNarrative"],
+    json: ["treatmentSummary", "aiDiscussionTopics", "patientPriorities"],
+  },
 };
 
 type Row = Record<string, unknown>;
