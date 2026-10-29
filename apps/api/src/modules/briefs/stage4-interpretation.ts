@@ -51,7 +51,7 @@ export const INTERPRETATION_VERSION = "1.0";
 /**
  * Upper bound on how many patterns buildStage4Interpretation() returns.
  * Nothing before this bounded the count: one entry per symptom
- * category with a qualifying frequency change (up to all 14
+ * category with a qualifying frequency change (up to all 18
  * categories), plus one co-occurrence pattern, plus one per treatment
  * with sufficient before/after data — for an account with several
  * newly-elevated categories (trivially true against a sparse or empty

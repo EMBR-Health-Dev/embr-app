@@ -34,6 +34,10 @@ const CATEGORY_LABELS_JA: Record<string, string> = {
   LIBIDO_CHANGE: "性欲の変化",
   WEIGHT_CHANGE: "体重の変化",
   HEADACHE: "頭痛",
+  ANGER: "怒り",
+  IRRITABILITY: "イライラ",
+  LOW_MOOD: "気分の落ち込み",
+  PAINFUL_SEX: "性交痛",
   OTHER: "その他",
 };
 
@@ -68,6 +72,10 @@ const CATEGORY_LABELS_FR: Record<string, string> = {
   LIBIDO_CHANGE: "Changement de libido",
   WEIGHT_CHANGE: "Variation de poids",
   HEADACHE: "Maux de tête",
+  ANGER: "Colère",
+  IRRITABILITY: "Irritabilité",
+  LOW_MOOD: "Baisse de moral",
+  PAINFUL_SEX: "Rapports douloureux",
   OTHER: "Autre",
 };
 

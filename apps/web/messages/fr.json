@@ -204,6 +204,10 @@
       "LIBIDO_CHANGE": "Changement de libido",
       "WEIGHT_CHANGE": "Variation de poids",
       "HEADACHE": "Maux de tête",
+      "ANGER": "Colère",
+      "IRRITABILITY": "Irritabilité",
+      "LOW_MOOD": "Baisse de moral",
+      "PAINFUL_SEX": "Rapports douloureux",
       "OTHER": "Autre"
     },
     "severity": {

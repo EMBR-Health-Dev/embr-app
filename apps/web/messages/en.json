@@ -204,6 +204,10 @@
       "LIBIDO_CHANGE": "Libido Change",
       "WEIGHT_CHANGE": "Weight Change",
       "HEADACHE": "Headache",
+      "ANGER": "Anger",
+      "IRRITABILITY": "Irritability",
+      "LOW_MOOD": "Low Mood",
+      "PAINFUL_SEX": "Painful Sex",
       "OTHER": "Other"
     },
     "severity": {

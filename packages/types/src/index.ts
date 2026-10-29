@@ -133,6 +133,10 @@ export type SymptomCategory =
   | "LIBIDO_CHANGE"
   | "WEIGHT_CHANGE"
   | "HEADACHE"
+  | "ANGER"
+  | "IRRITABILITY"
+  | "LOW_MOOD"
+  | "PAINFUL_SEX"
   | "OTHER";
 
 export type SeverityLevel = "MILD" | "MODERATE" | "SEVERE";

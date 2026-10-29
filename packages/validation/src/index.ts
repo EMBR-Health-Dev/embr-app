@@ -216,6 +216,10 @@ export const symptomCategorySchema = z.enum([
   "LIBIDO_CHANGE",
   "WEIGHT_CHANGE",
   "HEADACHE",
+  "ANGER",
+  "IRRITABILITY",
+  "LOW_MOOD",
+  "PAINFUL_SEX",
   "OTHER",
 ]);
 

@@ -204,6 +204,10 @@
       "LIBIDO_CHANGE": "性欲の変化",
       "WEIGHT_CHANGE": "体重の変化",
       "HEADACHE": "頭痛",
+      "ANGER": "怒り",
+      "IRRITABILITY": "イライラ",
+      "LOW_MOOD": "気分の落ち込み",
+      "PAINFUL_SEX": "性交痛",
       "OTHER": "その他"
     },
     "severity": {
