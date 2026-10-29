@@ -82,7 +82,9 @@ async function call(method, path, { token, body, lang } = {}) {
   let json = null;
   try {
     json = JSON.parse(buf.toString());
-  } catch {}
+  } catch {
+    // Not JSON (a PDF or CSV body); callers use buf or text instead.
+  }
   return { status: r.status, json, buf, text: buf.toString() };
 }
 async function pdfText(buf) {
