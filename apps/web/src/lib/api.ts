@@ -34,8 +34,10 @@ import type {
   TreatmentDto,
   TreatmentImpactDto,
   UserDto,
+  BaselineCheckInDto,
+  SaveBaselineCheckInResultDto,
 } from "@embr/types";
-import type { GrantConsentsInput, RegisterInput } from "@embr/validation";
+import type { GrantConsentsInput, RegisterInput, SaveBaselineCheckInInput } from "@embr/validation";
 import { apiFetch, apiFetchBlob } from "./api-client";
 
 /** The device's IANA time zone, sent with requests that count entries
@@ -208,6 +210,15 @@ export const api = {
     update: (id: string, input: Partial<{ title: string; body: string; cover: NoteCover }>) =>
       apiFetch<NoteDto>(`/notes/${id}`, { method: "PATCH", body: input }),
     delete: (id: string) => apiFetch<void>(`/notes/${id}`, { method: "DELETE" }),
+  },
+
+  baselineCheckIns: {
+    get: () => apiFetch<{ baseline: BaselineCheckInDto | null }>("/baseline-check-ins"),
+    save: (input: SaveBaselineCheckInInput) =>
+      apiFetch<SaveBaselineCheckInResultDto>("/baseline-check-ins", {
+        method: "POST",
+        body: input,
+      }),
   },
 
   mrsCheckIns: {
