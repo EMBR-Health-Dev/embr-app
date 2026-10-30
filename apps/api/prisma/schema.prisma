@@ -208,6 +208,10 @@ enum SymptomCategory {
   LIBIDO_CHANGE
   WEIGHT_CHANGE
   HEADACHE
+  ANGER
+  IRRITABILITY
+  LOW_MOOD
+  PAINFUL_SEX
   OTHER
 }
 
@@ -750,6 +754,14 @@ model ClinicalBrief {
   /// for this brief"). Never recomputed after generation, same
   /// point-in-time-snapshot reasoning as every other field here.
   citedPatternIds Json?
+
+  /// string[] — up to three things she most wants her clinician to
+  /// understand, in her own words, written when she asks for the
+  /// brief and printed first in it. Encrypted at rest (field-crypto.ts)
+  /// and never sent to the AI: like notes, it is hers, not data the
+  /// pattern engine reads. An empty array means she chose to write
+  /// none; null means the brief predates this field.
+  patientPriorities Json?
 
   aiNarrative        String
   /// string[] — see brief.ai.ts's system prompt for the exact framing

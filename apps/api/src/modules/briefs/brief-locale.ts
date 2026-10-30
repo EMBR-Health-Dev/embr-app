@@ -34,6 +34,10 @@ const CATEGORY_LABELS_JA: Record<string, string> = {
   LIBIDO_CHANGE: "性欲の変化",
   WEIGHT_CHANGE: "体重の変化",
   HEADACHE: "頭痛",
+  ANGER: "怒り",
+  IRRITABILITY: "イライラ",
+  LOW_MOOD: "気分の落ち込み",
+  PAINFUL_SEX: "性交痛",
   OTHER: "その他",
 };
 
@@ -68,6 +72,10 @@ const CATEGORY_LABELS_FR: Record<string, string> = {
   LIBIDO_CHANGE: "Changement de libido",
   WEIGHT_CHANGE: "Variation de poids",
   HEADACHE: "Maux de tête",
+  ANGER: "Colère",
+  IRRITABILITY: "Irritabilité",
+  LOW_MOOD: "Baisse de moral",
+  PAINFUL_SEX: "Rapports douloureux",
   OTHER: "Autre",
 };
 
@@ -135,6 +143,8 @@ interface PdfStrings {
   preparedFor: (email: string) => string;
   generatedAt: (utcTimestamp: string) => string;
   topDisclaimer: string;
+  prioritiesHeading: string;
+  prioritiesNote: string;
   summaryHeading: string;
   aiAuthorshipNote: string;
   groundedInHeading: string;
@@ -227,6 +237,8 @@ const EN: PdfStrings = {
   topDisclaimer:
     "This is a structured summary of self-tracked data, generated to help a conversation with a" +
     " healthcare provider. Not a diagnosis, and not medical advice.",
+  prioritiesHeading: "What I most want you to understand",
+  prioritiesNote: "In your own words, as you wrote them. Not seen or changed by AI.",
   summaryHeading: "Summary",
   aiAuthorshipNote:
     "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
@@ -372,6 +384,10 @@ const JA: PdfStrings = {
     "データ要約であり、診断や医学的助言ではありません。",
   // "要約" (native Japanese "summary"), not "サマリー" — avoids reading
   // as a near-homophone of "BRIEF" itself inside the same document.
+  // PDF-only, translated fresh here: the web and mobile apps show the
+  // same heading from their own ja.json, worded identically.
+  prioritiesHeading: "担当医に最も理解してほしいこと",
+  prioritiesNote: "ご本人の言葉のまま記載しています。AIは読んでおらず、変更もしていません。",
   summaryHeading: "要約",
   aiAuthorshipNote:
     "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
@@ -507,6 +523,9 @@ const FR: PdfStrings = {
   topDisclaimer:
     "Ceci est une synthèse structurée de données saisies par la personne elle-même, préparée pour" +
     " faciliter un échange avec un professionnel de santé. Ce n’est ni un diagnostic ni un avis médical.",
+  prioritiesHeading: "Ce que je souhaite surtout que vous compreniez",
+  prioritiesNote:
+    "Dans vos propres mots, tels que vous les avez écrits. Ni lus ni modifiés par l’IA.",
   summaryHeading: "Synthèse",
   aiAuthorshipNote:
     "Cette synthèse et les questions sont rédigées par une IA à partir des totaux et des tendances de ce BRIEF. Vos notes ne sont pas utilisées.",

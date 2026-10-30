@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Trans, useTranslation } from "react-i18next";
 import type {
@@ -10,6 +10,7 @@ import type {
   SeverityTrendDto,
   Stage4Pattern,
 } from "@embr/types";
+import { MAX_BRIEF_PRIORITY_LENGTH } from "@embr/validation";
 import { api } from "../../lib/api";
 import { ApiError } from "../../lib/api-client";
 import { downloadAndShareBriefPdf } from "../../lib/brief-pdf";
@@ -23,6 +24,9 @@ export default function BriefScreen() {
   const { t } = useTranslation();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
+  // What she most wants her clinician to understand: printed first in
+  // the BRIEF, never sent to the AI. Blank lines are dropped by the API.
+  const [priorities, setPriorities] = useState<string[]>(["", "", ""]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [justGenerated, setJustGenerated] = useState<ClinicalBriefDto | null>(null);
@@ -81,8 +85,10 @@ export default function BriefScreen() {
       const brief = await api.briefs.generate({
         fromDate: startOfLocalDay(fromDate),
         toDate: endOfLocalDay(toDate),
+        priorities: priorities.map((p) => p.trim()).filter((p) => p.length > 0),
       });
       setJustGenerated(brief);
+      setPriorities(["", "", ""]);
       await loadHistory();
       await loadTrends();
     } catch (err) {
@@ -164,6 +170,27 @@ export default function BriefScreen() {
                 maximumDate={new Date()}
               />
             </View>
+
+            <Text style={styles.prioritiesLegend}>{t("brief.prioritiesLegend")}</Text>
+            <Text style={styles.prioritiesHint}>{t("brief.prioritiesHint")}</Text>
+            {priorities.map((value, i) => (
+              <View key={i} style={styles.priorityField}>
+                <Text style={styles.priorityLabel}>
+                  {t("brief.priorityLabel", { number: i + 1 })}
+                </Text>
+                <TextInput
+                  style={styles.priorityInput}
+                  accessibilityLabel={t("brief.priorityLabel", { number: i + 1 })}
+                  value={value}
+                  maxLength={MAX_BRIEF_PRIORITY_LENGTH}
+                  multiline
+                  onChangeText={(text) =>
+                    setPriorities((prev) => prev.map((p, j) => (j === i ? text : p)))
+                  }
+                />
+              </View>
+            ))}
+
             {generateError && (
               <View style={styles.errorCallout}>
                 <Text style={styles.error}>{generateError}</Text>
@@ -463,6 +490,17 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
   return (
     <View style={styles.briefContent}>
+      {brief.patientPriorities && brief.patientPriorities.length > 0 && (
+        <View style={styles.priorities}>
+          <Text style={styles.contentSectionTitle}>{t("brief.prioritiesTitle")}</Text>
+          {brief.patientPriorities.map((priority, i) => (
+            <Text key={i} style={styles.topic}>
+              {i + 1}. {priority}
+            </Text>
+          ))}
+          <Text style={styles.prioritiesNote}>{t("brief.prioritiesNote")}</Text>
+        </View>
+      )}
       <Text style={styles.narrative}>{brief.aiNarrative}</Text>
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
@@ -914,6 +952,28 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "600", color: theme.colors.textPrimary },
   hint: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4, marginBottom: 16 },
   dateRow: { flexDirection: "row", gap: 8 },
+  prioritiesLegend: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 16,
+    color: theme.colors.textPrimary,
+  },
+  prioritiesHint: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4 },
+  priorityField: { marginTop: 10 },
+  priorityLabel: { fontSize: 13, color: theme.colors.textSecondary, marginBottom: 4 },
+  priorityInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.borderStrong,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 44,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
+  },
+  priorities: { marginBottom: 12 },
+  prioritiesNote: { fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   errorCallout: {
     marginTop: 8,
     padding: 12,

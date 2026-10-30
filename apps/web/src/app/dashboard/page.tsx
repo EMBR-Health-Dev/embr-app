@@ -47,6 +47,10 @@ const CATEGORIES = [
   "LIBIDO_CHANGE",
   "WEIGHT_CHANGE",
   "HEADACHE",
+  "ANGER",
+  "IRRITABILITY",
+  "LOW_MOOD",
+  "PAINFUL_SEX",
   "OTHER",
 ] as const;
 

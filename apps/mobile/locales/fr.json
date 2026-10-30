@@ -170,6 +170,10 @@
       "LIBIDO_CHANGE": "Changement de libido",
       "WEIGHT_CHANGE": "Variation de poids",
       "HEADACHE": "Maux de tête",
+      "ANGER": "Colère",
+      "IRRITABILITY": "Irritabilité",
+      "LOW_MOOD": "Baisse de moral",
+      "PAINFUL_SEX": "Rapports douloureux",
       "OTHER": "Autre"
     },
     "severity": {
@@ -318,6 +322,11 @@
     "toPlaceholder": "Au",
     "invalidDates": "Choisissez une date de début et une date de fin, la première avant la seconde.",
     "generate": "Générer l’EMBR BRIEF",
+    "prioritiesLegend": "Qu’aimeriez-vous surtout faire comprendre à votre professionnel de santé ?",
+    "prioritiesHint": "Facultatif. Jusqu’à trois, dans vos propres mots. Ils apparaissent en premier dans votre BRIEF, tels que vous les écrivez, et l’IA ne les lit jamais.",
+    "priorityLabel": "Priorité {{number}}",
+    "prioritiesTitle": "Ce que je souhaite surtout que vous compreniez",
+    "prioritiesNote": "Dans vos propres mots. Ni lus ni modifiés par l’IA.",
     "generating": "Génération…",
     "generateError": "Impossible de générer le brief.",
     "generateErrorReassurance": "Votre suivi n’a pas changé et rien n’a été perdu. Vous pouvez réessayer, et vos briefs existants restent disponibles ci-dessous.",

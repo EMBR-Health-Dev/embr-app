@@ -353,7 +353,7 @@ export const api = {
   },
 
   briefs: {
-    generate: (input: { fromDate: string; toDate: string }) =>
+    generate: (input: { fromDate: string; toDate: string; priorities?: string[] }) =>
       apiFetch<ClinicalBriefDto>("/briefs", {
         method: "POST",
         body: { ...input, timeZone: deviceTimeZone() },

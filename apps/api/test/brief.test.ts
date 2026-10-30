@@ -653,6 +653,55 @@ describe("POST /briefs", () => {
     expect(res.status).toBe(201);
   });
 
+  describe("her priorities", () => {
+    it("saves them as she wrote them, drops blank lines, and never sends them to the AI", async () => {
+      const app = createApp();
+      const agent = request.agent(app);
+      await registerAndLogin(agent, "priorities@embr.health");
+      aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+      const res = await agent.post("/briefs").send({
+        ...RANGE,
+        priorities: ["  The rage scares my children  ", "", "I cannot sleep past 4am"],
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.patientPriorities).toEqual([
+        "The rage scares my children",
+        "I cannot sleep past 4am",
+      ]);
+      const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+      expect(aiInput).not.toContain("The rage scares my children");
+      expect(aiInput).not.toContain("I cannot sleep past 4am");
+      expect(aiInput).not.toMatch(/priorit/i);
+    });
+
+    it("stores an empty list when she writes none", async () => {
+      const app = createApp();
+      const agent = request.agent(app);
+      await registerAndLogin(agent, "no-priorities@embr.health");
+      aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+      const res = await agent.post("/briefs").send(RANGE);
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.patientPriorities).toEqual([]);
+    });
+
+    it("rejects more than three, or one longer than 300 characters", async () => {
+      const app = createApp();
+      const agent = request.agent(app);
+      await registerAndLogin(agent, "too-many-priorities@embr.health");
+      const aiCallsBefore = vi.mocked(briefAi.generate).mock.calls.length;
+
+      const four = await agent.post("/briefs").send({ ...RANGE, priorities: ["a", "b", "c", "d"] });
+      expect(four.status).toBe(400);
+      const long = await agent.post("/briefs").send({ ...RANGE, priorities: ["x".repeat(301)] });
+      expect(long.status).toBe(400);
+      expect(vi.mocked(briefAi.generate).mock.calls.length).toBe(aiCallsBefore);
+    });
+  });
+
   it("computes the structured summary correctly and persists it alongside the AI content", async () => {
     const app = createApp();
     const agent = request.agent(app);

@@ -22,7 +22,7 @@ export const ONBOARDING_AREA_LABELS: Record<string, string> = {
 export const ONBOARDING_AREA_TO_CATEGORIES: Record<string, string[]> = {
   SLEEP: ["SLEEP_DISTURBANCE", "NIGHT_SWEATS"],
   ENERGY: ["FATIGUE"],
-  MOOD: ["MOOD_CHANGE", "ANXIETY"],
+  MOOD: ["MOOD_CHANGE", "ANXIETY", "LOW_MOOD", "IRRITABILITY", "ANGER"],
   BODY: [
     "HOT_FLASH",
     "JOINT_PAIN",
@@ -31,6 +31,7 @@ export const ONBOARDING_AREA_TO_CATEGORIES: Record<string, string[]> = {
     "IRREGULAR_HEARTBEAT",
     "VAGINAL_DRYNESS",
     "LIBIDO_CHANGE",
+    "PAINFUL_SEX",
   ],
   FOCUS: ["BRAIN_FOG"],
 };

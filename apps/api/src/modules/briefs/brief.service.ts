@@ -105,6 +105,7 @@ async function generateBriefContent(
   toDate: Date,
   locale: Locale,
   timeZone: string,
+  priorities: string[],
 ): Promise<ClinicalBriefDto> {
   const query = {
     from: fromDate,
@@ -406,6 +407,8 @@ async function generateBriefContent(
     // expected and valid), not "every pattern that happened to
     // qualify."
     citedPatternIds: citedPatterns.map((pattern) => pattern.id),
+    // Her own words, stored as written and never part of aiInput above.
+    patientPriorities: priorities,
     aiNarrative: narrative,
     aiDiscussionTopics: discussionTopics,
     locale,
@@ -437,6 +440,7 @@ export const briefService = {
     toDate: Date,
     locale: Locale = DEFAULT_LOCALE,
     requestedTimeZone?: string,
+    priorities: string[] = [],
   ): Promise<ClinicalBriefDto> {
     if (fromDate >= toDate) {
       throw AppError.validation("fromDate must be before toDate");
@@ -489,7 +493,7 @@ export const briefService = {
           "You already have a brief for exactly this date range. To create a new one for the same dates, delete the existing brief from your past briefs first.",
         );
       }
-      return await generateBriefContent(userId, fromDate, toDate, locale, timeZone);
+      return await generateBriefContent(userId, fromDate, toDate, locale, timeZone, priorities);
     } finally {
       if (lock.status === "acquired") {
         await lock.release();

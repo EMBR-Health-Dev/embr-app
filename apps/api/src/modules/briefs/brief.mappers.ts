@@ -67,6 +67,7 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     // coOccurrence — an empty array means the AI genuinely cited
     // nothing, a real fact distinct from "never computed."
     citedPatternIds: brief.citedPatternIds as unknown as string[] | null,
+    patientPriorities: brief.patientPriorities as unknown as string[] | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
     locale: brief.locale,
