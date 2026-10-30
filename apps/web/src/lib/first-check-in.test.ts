@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import fr from "../../messages/fr.json";
+import { saveBaselineCheckInSchema } from "@embr/validation";
 import {
+  baselineRequest,
   buildResult,
   clearAnswers,
   emptyAnswers,
@@ -203,5 +205,89 @@ describe("first check in copy", () => {
     expect(en.FirstCheckIn.result.limitsBody).toContain("not a diagnosis");
     expect(ja.FirstCheckIn.result.limitsBody).toContain("診断ではありません");
     expect(fr.FirstCheckIn.result.limitsBody).toContain("pas un diagnostic");
+  });
+});
+
+describe("baselineRequest: none of these versus skipped", () => {
+  const send = (a: Partial<FirstCheckInAnswers>) =>
+    baselineRequest(answers(a), "2026-10-29", "UTC", "en");
+
+  it("counts picking symptoms, or choosing none of these, as answering", () => {
+    expect(
+      send({ symptoms: [{ category: "FATIGUE", severity: null, frequency: null }] })
+        .symptomsAnswered,
+    ).toBe(true);
+    expect(send({ noneOfThese: true })).toMatchObject({ symptoms: [], symptomsAnswered: true });
+  });
+
+  it("does not count a skipped question as answered, so empty never means no symptoms", () => {
+    const skipped = send({});
+    expect(skipped).toMatchObject({ symptoms: [], symptomsAnswered: false });
+    expect(saveBaselineCheckInSchema.safeParse(skipped).success).toBe(true);
+  });
+
+  it("is refused by the API schema when symptoms are listed but the question is marked unanswered", () => {
+    const bad = {
+      ...send({ symptoms: [{ category: "FATIGUE", severity: null, frequency: null }] }),
+      symptomsAnswered: false,
+    };
+    expect(saveBaselineCheckInSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("restores answers saved before this field existed, as not chosen", () => {
+    const old: Record<string, unknown> = { ...answers({ goal: "KEEP_RECORD" }) };
+    delete old.noneOfThese;
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(old));
+    expect(loadAnswers()).toEqual({ ...old, noneOfThese: false });
+  });
+
+  it("drops a stored none of these that contradicts picked symptoms", () => {
+    saveAnswers(
+      answers({
+        noneOfThese: true,
+        symptoms: [{ category: "FATIGUE", severity: null, frequency: null }],
+      }),
+    );
+    expect(loadAnswers().noneOfThese).toBe(false);
+  });
+});
+
+describe("baselineRequest", () => {
+  it("sends her answers as given, which the API schema accepts as they are", () => {
+    const request = baselineRequest(
+      answers({
+        goal: "KEEP_RECORD",
+        sleep: "SEVEN_PLUS_H",
+        symptoms: [{ category: "FATIGUE", severity: "MILD", frequency: "FEW_DAYS" }],
+      }),
+      "2026-10-29",
+      "Europe/Paris",
+      "fr",
+    );
+    expect(request).toEqual({
+      completedOn: "2026-10-29",
+      timeZone: "Europe/Paris",
+      locale: "fr",
+      goal: "KEEP_RECORD",
+      sleepDuration: "SEVEN_PLUS_H",
+      workImpact: null,
+      symptomsAnswered: true,
+      symptoms: [{ category: "FATIGUE", severity: "MILD", frequency: "FEW_DAYS" }],
+    });
+    expect(saveBaselineCheckInSchema.parse(request)).toEqual(request);
+  });
+
+  it("carries nothing beyond the answers: no step, version or extra field", () => {
+    const keys = Object.keys(baselineRequest(answers({}), "2026-10-29", "UTC", "en")).sort();
+    expect(keys).toEqual([
+      "completedOn",
+      "goal",
+      "locale",
+      "sleepDuration",
+      "symptoms",
+      "symptomsAnswered",
+      "timeZone",
+      "workImpact",
+    ]);
   });
 });

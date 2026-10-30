@@ -44,9 +44,19 @@ hides the check-in in Japanese.
 - Included in the all data export (`menopauseRatingScale`), deleted
   with the account, audited by date only.
 
+## BRIEF section (web and PDF)
+
+Implemented and gated by the same switches. When MRS check-ins exist in
+the BRIEF period, the report includes:
+
+- How many MRS check-ins fall in the period
+- First and latest scores (total and subscales) with published reference bands
+- Deterministic calculation only (`apps/api/src/modules/briefs/mrs-summary.ts`);
+  MRS answers and scores are never sent to the AI
+
+Shown on the web BRIEF view and in the BRIEF PDF. Behind `MRS_CHECK_IN_ENABLED`.
+
 ## Not built yet
 
-- The BRIEF section (first and latest score in the period, with the
-  published reference bands for the clinician).
-- Mobile.
-- The Japanese version (see Language).
+- Mobile BRIEF / check-in UI for MRS
+- The Japanese version of the instrument (see Language)

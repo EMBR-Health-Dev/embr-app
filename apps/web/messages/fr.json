@@ -54,7 +54,8 @@
     "earlyAccessBody": "Les inscriptions ne sont pas encore ouvertes. Nous préparons EMBR pour un usage public, y compris les documents juridiques et de confidentialité qui s’appliqueront à l’ouverture. Demandez un accès anticipé et nous vous recontacterons.",
     "earlyAccessAction": "Demander un accès anticipé",
     "reassuranceTitle": "Votre suivi vous appartient.",
-    "reassuranceBody": "Exportez-le, partagez-le ou supprimez-le quand vous le souhaitez."
+    "reassuranceBody": "Exportez-le, partagez-le ou supprimez-le quand vous le souhaitez.",
+    "checkInSignInFailed": "Votre compte a été créé. Connectez-vous pour enregistrer vos réponses ; elles sont toujours dans cet onglet."
   },
   "ForgotPassword": {
     "title": "Réinitialiser votre mot de passe",
@@ -1535,7 +1536,8 @@
     },
     "symptoms": {
       "headline": "Qu’avez-vous remarqué ces deux dernières semaines ?",
-      "hint": "Choisissez tout ce qui vous concerne, ou passez cette étape."
+      "hint": "Choisissez tout ce qui vous concerne, indiquez qu’aucun ne vous concerne, ou passez cette étape.",
+      "none": "Aucun de ceux-ci"
     },
     "details": {
       "headline": "Pour chacun, quelle intensité au pire moment, et à quelle fréquence ?",
@@ -1569,7 +1571,7 @@
       "sleep": "Sommeil habituel : {value}",
       "work": "Effet sur le travail : {value}",
       "limitsTitle": "Ce que ce résultat peut et ne peut pas vous dire",
-      "limitsBody": "Il décrit ce que vous avez indiqué pour les deux dernières semaines. Ce n’est pas un diagnostic. Il n’indique pas de cause et ne dit pas s’il s’agit de la périménopause. Un professionnel de santé peut vous aider à ce sujet.",
+      "limitsBody": "Il décrit ce que vous avez indiqué pour les deux dernières semaines : vos propres souvenirs, pas un score clinique validé. Ce n’est pas un diagnostic. Il n’indique pas de cause et ne dit pas s’il s’agit de la périménopause. Un professionnel de santé peut vous aider à ce sujet.",
       "nextTitle": "Une prochaine étape",
       "next": {
         "TRACK_A_WEEK": "Suivez vos symptômes pendant une semaine. Des entrées quotidiennes peuvent montrer des tendances qu’un regard sur deux semaines ne montre pas.",
@@ -1592,6 +1594,20 @@
       "sooner": "Quels changements devraient me faire revenir plus tôt ?",
       "track": "Qu’est-ce qu’il me serait le plus utile de noter d’ici notre prochain échange ?",
       "general": "Quels changements vaut-il la peine de vous signaler, même s’ils semblent minimes ?"
+    },
+    "save": {
+      "saveAction": "Enregistrer comme point de départ",
+      "saveNote": "Enregistre ces réponses une seule fois dans votre compte, comme point de départ. Elles reflètent vos propres souvenirs des deux dernières semaines, pas un score clinique, et ne pourront pas être modifiées ensuite.",
+      "saving": "Enregistrement…",
+      "retry": "Réessayer",
+      "errorBody": "Vos réponses n’ont pas pu être enregistrées. Elles sont toujours sur cet appareil, vous pouvez réessayer.",
+      "existsBody": "Vous avez déjà un point de départ du {date}. Il reste inchangé, et ces réponses n’ont pas été enregistrées.",
+      "savedTitle": "Enregistré comme point de départ",
+      "savedBody": "Vos réponses du {date} sont dans votre compte et ont été effacées de cet appareil. Vos bilans quotidiens s’appuieront dessus.",
+      "goToDashboard": "Aller à mon tableau de bord",
+      "signUpAction": "Enregistrer et continuer le suivi",
+      "signUpNote": "Créez un compte pour garder ces réponses. Elles ne sont envoyées qu’après votre accord pour le traitement de vos informations de santé par EMBR.",
+      "logInToSave": "Vous avez déjà un compte ? Connectez-vous pour enregistrer"
     }
   }
 }

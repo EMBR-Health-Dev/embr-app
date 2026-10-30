@@ -6,9 +6,13 @@ export interface EmbrSdkConfig {
 }
 
 /**
- * Minimal typed HTTP client. From Milestone 2 onward, endpoint methods
- * here are generated from docs/openapi.yaml rather than hand-written, to
- * guarantee the SDK never drifts from the API contract.
+ * Minimal typed HTTP client (health check only).
+ *
+ * Not generated from docs/openapi.yaml. Web and mobile each maintain
+ * their own `lib/api.ts` clients against `@embr/types` and
+ * `@embr/validation`. Nothing in the monorepo imports this package yet.
+ * Keep it only as an experimental stub, or remove it once that decision
+ * is explicit — do not treat it as the API client of record.
  */
 export class EmbrSdk {
   constructor(private readonly config: EmbrSdkConfig) {}

@@ -13,18 +13,19 @@ Women generate longitudinal data
 
 EMBR is not a diagnostic tool and does not give medical advice. It turns what a woman already tracks into structured, observational evidence she can bring into a clinical conversation — and, in aggregate and fully anonymized, into workplace impact data an employer can act on without seeing anyone's individual health information.
 
-**Current status**: production deployment in progress (web, admin, API) with a companion mobile app in active development (Expo, iOS/Android). See `docs/DEPLOYMENT.md` for the deploy architecture and `docs/MILESTONES.md` for the milestone plan.
+**Current status**: private early access. Web, admin, API and worker run on Railway (see `docs/DEPLOYMENT.md`), and the Expo mobile app has beta builds for TestFlight and Play internal testing. Sign up is closed (`PUBLIC_REGISTRATION_ENABLED=false`) until the Launch items in `docs/LAUNCH-READINESS.md` are done. See `docs/DEPLOYMENT.md` for the deploy architecture, `docs/MILESTONES.md` for the milestone plan and `docs/CHANGELOG-2026-10.md` for recent changes.
 
 ## Stack
 
-- **apps/api** — Express + TypeScript, Prisma/PostgreSQL, Redis, OpenAPI-first, structured logging
+- **apps/api** — Express + TypeScript, Prisma/PostgreSQL, Redis, OpenAPI document at `docs/openapi.yaml` (served at `/docs`), structured logging. Web and mobile clients are hand-maintained, not generated from the spec.
 - **apps/web** — Next.js 15 / React 19, patient-facing product
 - **apps/admin** — Next.js 15 / React 19, internal operations console
-- **apps/worker** — BullMQ background job processor
+- **apps/worker** — BullMQ background job processor (deployed; no product jobs enqueued yet)
+- **apps/mobile** — Expo / React Native companion app (iOS, Android). Not started by `pnpm dev`; see `docs/MOBILE-BETA.md` for builds and `docs/MOBILE-DEVICE-QA.md` for the device checklist
 - **packages/shared** — logger, error taxonomy, env validation, HTTP middleware (used by api + worker)
 - **packages/types** — cross-app TypeScript types
 - **packages/validation** — shared Zod schemas
-- **packages/sdk** — typed API client (generated from OpenAPI from Milestone 2 onward)
+- **packages/sdk** — unused experimental health client only. Web and mobile use their own `lib/api.ts`; nothing imports the SDK, and it is not generated from OpenAPI
 - **packages/ui** — shared React component library (shadcn/ui-based)
 
 ## Quickstart
