@@ -16,54 +16,51 @@ OpenAPI schemas or endpoint-level tests.
 
 ## Current status
 
-**The OpenAPI file on `main` is incomplete.**
+**OpenAPI has been restored on `main` (PR #304).** The file is approximately
+53 KB with **48** distinct path entries. A CI floor check prevents another
+silent truncation.
 
-The current `docs/openapi.yaml` contains only the health endpoints. Its size is
-approximately 1.5 KB.
-
-The last known-good full version is available at commit
-`ee3b0c1b6631f2ab88372351b86dc0772b653f04`. It contains approximately 49.4 KB and
-**47** distinct path entries.
-
-Restoring that version is a separate prerequisite (**PR A**). The 47-path version
-is still **not** a complete representation of the current API.
+That baseline is still **not** a complete representation of the current API
+(~96 method/route combinations). Remaining gaps are listed below and are the
+subject of a later documentation pass (PR C). The CI path floor is a regression
+guard, not a completeness claim.
 
 ## Coverage inventory
 
-The API currently declares approximately **96** HTTP method and route combinations
-across the mounted routers. Multiple methods may share a path.
+The API currently declares approximately **96** HTTP method and route
+combinations across the mounted routers. Multiple methods may share a path.
 
-The following table compares the current route implementation with the last
-known-good 47-path OpenAPI version.
+The following table compares the current route implementation with the restored
+OpenAPI baseline on `main`.
 
-| Module | Implemented route coverage | Last known-good OpenAPI coverage |
-| ------ | -------------------------- | -------------------------------- |
-| Health | Liveness and readiness | Present |
-| Authentication | CSRF, registration, verification, login, magic links, refresh, logout, password management, profile and sessions | Path coverage present; verify every method |
-| Symptoms | Logs, date-based check-ins and individual log operations | Partial; date-based check-in paths missing |
-| Treatments | CRUD and treatment impact | Missing |
-| Cycle | Cycle-entry CRUD | Partial; detail path and methods require verification |
-| Context | Daily context logs | Missing |
-| Notes | Create, list, read, update and delete | Missing |
-| MRS | List, save and delete monthly check-ins | Missing |
-| BRIEF | Generate, list, trends, read, PDF and delete | Partial; trends path missing |
-| Onboarding | Read and update onboarding state | Missing |
-| Consent | Read, grant and withdraw consent | Missing |
-| Reflections | Read reflections and create dismissals | Present |
-| Organizations | Organization lifecycle, membership, invitations, leave and aggregate trends | Partial; leave and activation trends missing |
-| SSO | Organization SSO configuration and authentication callbacks | Path coverage present; verify every method |
-| Billing | Billing status, checkout and portal sessions | Missing |
-| Billing webhook | Stripe webhook | Missing |
-| Public assessment | Unauthenticated perimenopause assessment | Missing |
-| Notifications | Read and update notification preferences | Partial; PATCH operation missing |
-| Admin | Users, audit logs and metrics | Partial; metrics missing |
-| Trends | Symptom frequency, history, cycle length, co-occurrence, context co-occurrence and evidence strength | Partial; only symptom frequency and cycle length present |
-| Export | Symptom, cycle, context, notes and treatment CSVs, summary PDF and complete JSON export | Partial; notes, treatments and all-data JSON missing |
+| Module            | Implemented route coverage                                                                                       | Restored OpenAPI coverage                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Health            | Liveness and readiness                                                                                           | Present                                               |
+| Authentication    | CSRF, registration, verification, login, magic links, refresh, logout, password management, profile and sessions | Path coverage present; verify every method            |
+| Symptoms          | Logs, date-based check-ins and individual log operations                                                         | Partial; date-based check-in paths missing            |
+| Treatments        | CRUD and treatment impact                                                                                        | Missing                                               |
+| Cycle             | Cycle-entry CRUD                                                                                                 | Partial; detail path and methods require verification |
+| Context           | Daily context logs                                                                                               | Missing                                               |
+| Notes             | Create, list, read, update and delete                                                                            | Missing                                               |
+| MRS               | List, save and delete monthly check-ins                                                                          | Missing                                               |
+| BRIEF             | Generate, list, trends, read, PDF and delete                                                                     | Partial; trends path missing                          |
+| Onboarding        | Read and update onboarding state                                                                                 | Missing                                               |
+| Consent           | Read, grant and withdraw consent                                                                                 | Missing                                               |
+| Reflections       | Read reflections and create dismissals                                                                           | Present                                               |
+| Organizations     | Organization lifecycle, membership, invitations, leave and aggregate trends                                      | Partial; leave and activation trends missing          |
+| SSO               | Organization SSO configuration and authentication callbacks                                                      | Path coverage present; verify every method            |
+| Billing           | Billing status, checkout and portal sessions                                                                     | Missing                                               |
+| Billing webhook   | Stripe webhook                                                                                                   | Missing                                               |
+| Public assessment | Unauthenticated perimenopause assessment                                                                         | Missing                                               |
+| Notifications     | Read and update notification preferences                                                                         | Partial; method-level verification still needed       |
+| Admin             | Users, audit logs and metrics                                                                                    | Partial; metrics missing                              |
+| Trends            | Symptom frequency, history, cycle length, co-occurrence, context co-occurrence and evidence strength             | Partial; only symptom frequency and cycle length      |
+| Export            | Symptom, cycle, context, notes and treatment CSVs, summary PDF and complete JSON export                          | Partial; notes, treatments and all-data JSON missing  |
 
 ## Routes requiring documentation
 
-The following route families are absent from the last known-good OpenAPI path
-inventory or need additional method-level verification.
+The following route families are absent from the restored OpenAPI path inventory
+or need additional method-level verification.
 
 ### Symptoms and patient record
 
@@ -86,7 +83,7 @@ inventory or need additional method-level verification.
 
 - `/consents`
 - `/consents/withdraw`
-- `PATCH /notifications/preferences`
+- `PATCH /notifications/preferences` (confirm against restored file)
 
 ### Organization and billing
 
@@ -120,7 +117,8 @@ on a path already present in OpenAPI is correctly documented.
 
 ## Contract validation requirements
 
-The OpenAPI contract should satisfy the following checks before it is treated as current.
+The OpenAPI contract should satisfy the following checks before it is treated as
+complete relative to the running API.
 
 1. YAML parses successfully.
 2. The document declares OpenAPI 3.1.
@@ -135,25 +133,33 @@ The OpenAPI contract should satisfy the following checks before it is treated as
 
 ## CI protection
 
-Add a contract validation check to the API CI workflow.
+### Implemented (floor check on main)
 
-At minimum, it should:
+Script: `apps/api/scripts/check-openapi-contract.mjs`  
+Job: **OpenAPI Contract** in `.github/workflows/ci.yml`
 
-- Parse `docs/openapi.yaml`.
-- Reject a missing or unexpectedly small path inventory (truncation safeguard).
-- Assert the presence of critical paths, including `/briefs`, `/treatments`,
-  `/consents`, `/mrs-check-ins`, `/billing/webhook` and `/export/all-data.json`.
-- Validate all schema references.
-- Compare the documented method/path pairs against an explicit route inventory.
+| Check | Purpose |
+| ----- | ------- |
+| YAML parse | Catch malformed specifications |
+| OpenAPI version | Require 3.1.x (`/^3\.1\.\d+$/`) |
+| Minimum path count | Prevent another silent truncation (floor, not target) |
+| File size floor | Secondary truncation signal (`Buffer.byteLength`) |
+| Local `$ref` resolution | Catch broken schema references |
 
-A simple minimum-path-count check is a useful truncation safeguard, but it is not
-sufficient to prove contract completeness. The method/path comparison is the
-important long-term control.
+Raise the path floor deliberately when the documented surface grows. Do not lower
+it to silence a truncation.
+
+### Deferred (PR C and later)
+
+- Critical-path assertions once those operations are documented
+- Method/path parity against an explicit Express route inventory
+- Request/response schema verification against Zod and DTOs
+- Documented auth, CSRF, consent and role requirements per operation
 
 ## Ownership and update policy
 
-The API implementation is the source of truth for runtime behavior. OpenAPI is the
-documented contract.
+The API implementation is the source of truth for runtime behavior. OpenAPI is
+the documented contract.
 
 When a route changes:
 
