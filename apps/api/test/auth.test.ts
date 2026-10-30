@@ -3,7 +3,12 @@ import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { CURRENT_CONSENTS } from "./helpers/consents.js";
-import { sendVerificationEmail } from "../src/modules/auth/mailer.js";
+import {
+  sendLoginLinkEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../src/modules/auth/mailer.js";
+import { hashToken } from "../src/modules/auth/tokens.js";
 
 // vi.mock(...) below is hoisted above all other top-level code in this
 // file, so any state its factory closes over must be created via
@@ -41,6 +46,13 @@ const { state, nextId } = vi.hoisted(() => {
         consumedAt: Date | null;
         createdAt: Date;
       }>,
+      loginLinkTokens: [] as Array<{
+        id: string;
+        userId: string;
+        tokenHash: string;
+        expiresAt: Date;
+        consumedAt: Date | null;
+      }>,
     },
     nextId: () => randomUUID(),
   };
@@ -55,6 +67,8 @@ vi.mock("../src/lib/redis.js", () => ({
 vi.mock("../src/modules/auth/mailer.js", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+  sendLoginLinkEmail: vi.fn().mockResolvedValue(undefined),
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../src/lib/prisma.js", () => ({
@@ -82,6 +96,24 @@ vi.mock("../src/lib/prisma.js", () => ({
         Object.assign(user, data);
         return Promise.resolve(user);
       }),
+      // Conditional like Postgres: only rows still matching
+      // `emailVerifiedAt: null` change, which is what makes the welcome
+      // email once per account.
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { id: string; emailVerifiedAt: null };
+          data: Record<string, unknown>;
+        }) => {
+          const matched = state.users.filter(
+            (u) => u.id === where.id && u.emailVerifiedAt === where.emailVerifiedAt,
+          );
+          matched.forEach((u) => Object.assign(u, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
     },
     session: {
       create: vi.fn(
@@ -187,6 +219,44 @@ vi.mock("../src/lib/prisma.js", () => ({
         return Promise.resolve(token);
       }),
     },
+    loginLinkToken: {
+      // Both shapes auth.repository.ts uses: retiring a user's live
+      // links, and consuming one live, unexpired link by its hash.
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: {
+            userId?: string;
+            tokenHash?: string;
+            consumedAt: null;
+            expiresAt?: { gt: Date };
+          };
+          data: { consumedAt: Date };
+        }) => {
+          const matched = state.loginLinkTokens.filter(
+            (t) =>
+              (where.userId === undefined || t.userId === where.userId) &&
+              (where.tokenHash === undefined || t.tokenHash === where.tokenHash) &&
+              t.consumedAt === null &&
+              (!where.expiresAt || t.expiresAt.getTime() > where.expiresAt.gt.getTime()),
+          );
+          matched.forEach((t) => Object.assign(t, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
+      create: vi.fn(
+        ({ data }: { data: { userId: string; tokenHash: string; expiresAt: Date } }) => {
+          const token = { id: nextId(), consumedAt: null, ...data };
+          state.loginLinkTokens.push(token);
+          return Promise.resolve(token);
+        },
+      ),
+      findUnique: vi.fn(({ where }: { where: { tokenHash: string } }) =>
+        Promise.resolve(state.loginLinkTokens.find((t) => t.tokenHash === where.tokenHash) ?? null),
+      ),
+    },
     passwordResetToken: {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       create: vi.fn().mockResolvedValue({ id: nextId() }),
@@ -227,7 +297,10 @@ beforeEach(() => {
   state.sessions = [];
   state.auditLogEntries = [];
   state.emailVerificationTokens = [];
+  state.loginLinkTokens = [];
   vi.mocked(sendVerificationEmail).mockClear();
+  vi.mocked(sendLoginLinkEmail).mockClear();
+  vi.mocked(sendWelcomeEmail).mockReset().mockResolvedValue(undefined);
 });
 
 describe("POST /auth/register", () => {
@@ -358,6 +431,132 @@ describe("POST /auth/verify-email", () => {
     const second = await request(app).post("/auth/verify-email").send({ token });
     expect(second.status).toBe(400);
     expect(second.body.error.message).toBe("This verification link is invalid or has expired");
+  });
+});
+
+describe("Welcome email after the first verification", () => {
+  async function registerUnverified(app: ReturnType<typeof createApp>, email: string) {
+    await request(app)
+      .post("/auth/register")
+      .send({ consents: CURRENT_CONSENTS, email, password: VALID_PASSWORD });
+    return lastVerificationToken();
+  }
+
+  function lastLoginLinkToken(): string {
+    const lastCall = vi.mocked(sendLoginLinkEmail).mock.calls.at(-1);
+    if (!lastCall) throw new Error("sendLoginLinkEmail was never called");
+    return lastCall[1];
+  }
+
+  it("sends exactly one welcome email when the verification link is opened", async () => {
+    const app = createApp();
+    const token = await registerUnverified(app, "welcome@embr.health");
+
+    // Registration itself never welcomes: the address is not proven yet.
+    expect(sendWelcomeEmail).not.toHaveBeenCalled();
+
+    const res = await request(app).post("/auth/verify-email").send({ token });
+    expect(res.status).toBe(204);
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+    expect(sendWelcomeEmail).toHaveBeenCalledWith("welcome@embr.health", "en");
+  });
+
+  it("welcomes in the language of the request that verified the address", async () => {
+    const app = createApp();
+    const token = await registerUnverified(app, "bienvenue@embr.health");
+
+    await request(app).post("/auth/verify-email").set("Accept-Language", "fr").send({ token });
+    expect(sendWelcomeEmail).toHaveBeenCalledWith("bienvenue@embr.health", "fr");
+  });
+
+  it("does not welcome again when a second valid verification link is opened later", async () => {
+    const app = createApp();
+    const token = await registerUnverified(app, "twice@embr.health");
+    await request(app).post("/auth/verify-email").send({ token });
+    const firstVerifiedAt = state.users[0]!.emailVerifiedAt;
+
+    // A second live token for the same, already verified account, as if
+    // an older email were opened after the newer one.
+    const secondToken = "second-verification-token";
+    state.emailVerificationTokens.push({
+      id: randomUUID(),
+      userId: state.users[0]!.id,
+      tokenHash: hashToken(secondToken),
+      expiresAt: new Date(Date.now() + 60_000),
+      consumedAt: null,
+      createdAt: new Date(),
+    });
+    const res = await request(app).post("/auth/verify-email").send({ token: secondToken });
+
+    expect(res.status).toBe(204);
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+    // The first verification time is kept, not overwritten.
+    expect(state.users[0]!.emailVerifiedAt).toBe(firstVerifiedAt);
+  });
+
+  it("still verifies the address when the welcome email fails", async () => {
+    const app = createApp();
+    const token = await registerUnverified(app, "unlucky@embr.health");
+    vi.mocked(sendWelcomeEmail).mockRejectedValueOnce(new Error("Resend is down"));
+
+    const res = await request(app).post("/auth/verify-email").send({ token });
+
+    expect(res.status).toBe(204);
+    expect(state.users[0]!.emailVerifiedAt).not.toBeNull();
+    expect(
+      state.auditLogEntries.some(
+        (e) => e.action === "EMAIL_VERIFIED" && e.userId === state.users[0]!.id,
+      ),
+    ).toBe(true);
+  });
+
+  it("welcomes once when the address is first proven by a sign in link, and never on later link sign ins", async () => {
+    const app = createApp();
+    await registerUnverified(app, "linked@embr.health");
+
+    await request(app).post("/auth/login-link").send({ email: "linked@embr.health" });
+    const first = await request(app)
+      .post("/auth/login-link/consume")
+      .send({ token: lastLoginLinkToken() });
+    expect(first.status).toBe(200);
+    expect(first.body.data.user.emailVerified).toBe(true);
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+    expect(sendWelcomeEmail).toHaveBeenCalledWith("linked@embr.health", "en");
+
+    await request(app).post("/auth/login-link").send({ email: "linked@embr.health" });
+    const second = await request(app)
+      .post("/auth/login-link/consume")
+      .send({ token: lastLoginLinkToken() });
+    expect(second.status).toBe(200);
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not welcome again when the verification link is opened after a sign in link already verified the address", async () => {
+    const app = createApp();
+    const verificationToken = await registerUnverified(app, "both@embr.health");
+
+    await request(app).post("/auth/login-link").send({ email: "both@embr.health" });
+    await request(app).post("/auth/login-link/consume").send({ token: lastLoginLinkToken() });
+    const res = await request(app).post("/auth/verify-email").send({ token: verificationToken });
+
+    expect(res.status).toBe(204);
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("never welcomes on an ordinary password login or a verification resend", async () => {
+    const app = createApp();
+    await registerUnverified(app, "ordinary@embr.health");
+
+    const login = await request(app)
+      .post("/auth/login")
+      .send({ email: "ordinary@embr.health", password: VALID_PASSWORD });
+    expect(login.status).toBe(200);
+    const resend = await request(app)
+      .post("/auth/resend-verification")
+      .send({ email: "ordinary@embr.health" });
+    expect(resend.status).toBe(202);
+
+    expect(sendWelcomeEmail).not.toHaveBeenCalled();
   });
 });
 

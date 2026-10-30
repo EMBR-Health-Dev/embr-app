@@ -191,8 +191,11 @@ prioritizing before a wider beta, not before a small closed one.
 ## Email delivery
 
 `apps/api/src/modules/auth/mailer.ts` sends verification, password-reset,
-and organization-invite emails via [Resend](https://resend.com)'s HTTPS
-API. This replaced an earlier Nodemailer/SMTP transport outright — Railway
+sign in link, organization-invite, weekly reminder and welcome emails via
+[Resend](https://resend.com)'s HTTPS API. The welcome email goes once per
+account, on the first successful email verification (verification link,
+sign in link, or SSO provisioning), links to `APP_URL/dashboard`, and
+carries nothing from her record. This replaced an earlier Nodemailer/SMTP transport outright — Railway
 (where `apps/api` actually runs, despite the platform table above)
 blocks all outbound SMTP ports below its Pro plan, and recommends
 HTTPS-API email providers even where SMTP is available. There is

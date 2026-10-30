@@ -173,6 +173,7 @@ vi.mock("../src/lib/redis.js", () => ({
 }));
 
 vi.mock("../src/modules/auth/mailer.js", () => ({
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
   sendOrganizationInviteEmail: vi.fn().mockResolvedValue(undefined),
@@ -213,6 +214,22 @@ vi.mock("../src/lib/prisma.js", () => ({
         Object.assign(user, data);
         return Promise.resolve(user);
       }),
+      // Email verification is a conditional write (see auth.test.ts).
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { id: string; emailVerifiedAt: null };
+          data: Record<string, unknown>;
+        }) => {
+          const matched = state.users.filter(
+            (u) => u.id === where.id && u.emailVerifiedAt === where.emailVerifiedAt,
+          );
+          matched.forEach((u) => Object.assign(u, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
     },
     session: {
       create: vi.fn(({ data }: { data: Record<string, unknown> }) =>

@@ -343,3 +343,121 @@ describe("Japanese transactional emails", () => {
     });
   }
 });
+
+describe("sendWelcomeEmail", () => {
+  async function sendWelcome(locale?: "en" | "fr" | "ja") {
+    mockEnv();
+    mockSend.mockResolvedValue({ data: { id: "email_welcome" }, error: null });
+    const { sendWelcomeEmail } = await import("../src/modules/auth/mailer.js");
+    await sendWelcomeEmail("user@example.com", locale);
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    return mockSend.mock.calls[0]![0] as {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      text: string;
+    };
+  }
+
+  it("sends through the existing Resend client from the configured address", async () => {
+    const sent = await sendWelcome();
+    expect(MockResend).toHaveBeenCalledWith("re_test_key");
+    expect(sent).toMatchObject({ from: "no-reply@embrhealthcare.com", to: "user@example.com" });
+  });
+
+  it("has the English subject, headline and one call to action linking to the dashboard", async () => {
+    const sent = await sendWelcome("en");
+    expect(sent.subject).toBe("Welcome to EMBR. Your health deserves to be understood.");
+    expect(sent.html).toContain('<html lang="en">');
+    expect(sent.html).toContain("Your health deserves to be understood.");
+    expect(sent.html).toContain("Open your EMBR dashboard");
+    expect(sent.html).toContain('href="http://localhost:3000/dashboard"');
+    expect(sent.html.match(/<a /g)).toHaveLength(1);
+    expect(sent.html).toContain("Your health. Your data. Your voice.");
+    expect(sent.html).toContain("The EMBR Team");
+  });
+
+  it("defaults to English when no language is given", async () => {
+    const sent = await sendWelcome();
+    expect(sent.subject).toBe("Welcome to EMBR. Your health deserves to be understood.");
+  });
+
+  it("has a plain text version with the whole message and the dashboard link", async () => {
+    const sent = await sendWelcome("en");
+    expect(sent.text).not.toMatch(/<[a-z/]/i);
+    expect(sent.text).toContain("Your health deserves to be understood.");
+    expect(sent.text).toContain("Navigating perimenopause and menopause can be confusing.");
+    expect(sent.text).toContain("Open your EMBR dashboard: http://localhost:3000/dashboard");
+    expect(sent.text).toContain("Your health. Your data. Your voice.");
+  });
+
+  it("is in French, in both versions", async () => {
+    const sent = await sendWelcome("fr");
+    expect(sent.subject).toBe("Bienvenue sur EMBR. Votre santé mérite d’être comprise.");
+    expect(sent.html).toContain('<html lang="fr">');
+    expect(sent.html).toContain("Ouvrir votre tableau de bord EMBR");
+    expect(sent.html).toContain("Votre santé. Vos données. Votre voix.");
+    expect(sent.html).toContain("L’équipe EMBR");
+    expect(sent.text).toContain(
+      "Ouvrir votre tableau de bord EMBR : http://localhost:3000/dashboard",
+    );
+    expect(sent.text).toContain("La périménopause et la ménopause peuvent être déroutantes.");
+    expect(`${sent.subject} ${sent.html} ${sent.text}`).not.toMatch(/Welcome|dashboard</);
+  });
+
+  it("is in Japanese, in both versions", async () => {
+    const sent = await sendWelcome("ja");
+    expect(sent.subject).toBe("EMBRへようこそ。あなたの健康は、きちんと理解されるべきものです。");
+    expect(sent.html).toContain('<html lang="ja">');
+    expect(sent.html).toContain("EMBRのダッシュボードを開く");
+    expect(sent.html).toContain("あなたの健康。あなたのデータ。あなたの声。");
+    expect(sent.html).toContain("EMBRチーム");
+    expect(sent.text).toContain("EMBRのダッシュボードを開く：http://localhost:3000/dashboard");
+    expect(sent.text).toContain("周閉経期");
+    expect(`${sent.subject} ${sent.html} ${sent.text}`).not.toMatch(/Welcome|Bienvenue/);
+  });
+
+  it("carries nothing about the person: only the address it is sent to, and fixed copy", async () => {
+    for (const locale of ["en", "fr", "ja"] as const) {
+      mockSend.mockClear();
+      const sent = await sendWelcome(locale);
+      const all = `${sent.subject} ${sent.html} ${sent.text}`;
+      // Not even the address appears in the message itself.
+      expect(all).not.toContain("user@example.com");
+      // No symptom names, scores or records.
+      expect(all).not.toMatch(
+        /hot flash|night sweats|brain fog|symptom score|bouffées|sueurs|ホットフラッシュ|寝汗/i,
+      );
+      expect(all).not.toMatch(/\/briefs\/|\/timeline|token=/);
+      expect(all).not.toMatch(/[–—]/);
+    }
+
+    // The function takes an address and an optional language, nothing
+    // from her record, so there is nothing personal it could include.
+    const { sendWelcomeEmail } = await import("../src/modules/auth/mailer.js");
+    expect(sendWelcomeEmail.length).toBe(1);
+  });
+
+  it("does not throw or send when RESEND_API_KEY is unset", async () => {
+    mockEnv({ RESEND_API_KEY: undefined });
+    const { sendWelcomeEmail } = await import("../src/modules/auth/mailer.js");
+
+    await expect(sendWelcomeEmail("user@example.com", "en")).resolves.toBeUndefined();
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it("logs and does not throw when Resend rejects or returns an error", async () => {
+    mockEnv();
+    const { sendWelcomeEmail } = await import("../src/modules/auth/mailer.js");
+
+    mockSend.mockRejectedValueOnce(new Error("fetch failed"));
+    await expect(sendWelcomeEmail("user@example.com", "en")).resolves.toBeUndefined();
+
+    mockSend.mockResolvedValueOnce({
+      data: null,
+      error: { message: "Invalid `from` field", statusCode: 422, name: "invalid_from_address" },
+    });
+    await expect(sendWelcomeEmail("user@example.com", "en")).resolves.toBeUndefined();
+  });
+});

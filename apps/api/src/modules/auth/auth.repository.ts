@@ -13,8 +13,19 @@ export const authRepository = {
     return prisma.user.findUnique({ where: { id } });
   },
 
-  markEmailVerified(userId: string) {
-    return prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
+  /**
+   * Marks the address verified only if it is not already, in one
+   * conditional write, and says whether this call made the change. Two
+   * requests racing (a double click, a verification link and a sign in
+   * link at once) cannot both see true: only one matches
+   * `emailVerifiedAt: null`. The first verification time is kept.
+   */
+  async markEmailVerifiedIfUnverified(userId: string): Promise<boolean> {
+    const { count } = await prisma.user.updateMany({
+      where: { id: userId, emailVerifiedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    });
+    return count === 1;
   },
 
   updatePassword(userId: string, passwordHash: string) {

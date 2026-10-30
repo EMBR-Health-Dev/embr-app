@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { CURRENT_CONSENTS } from "./helpers/consents.js";
 import { encryptClientSecret } from "../src/modules/sso/sso.crypto.js";
+import { sendWelcomeEmail } from "../src/modules/auth/mailer.js";
 
 const { state, nextId } = vi.hoisted(() => {
   return {
@@ -104,6 +105,7 @@ vi.mock("../src/modules/auth/mailer.js", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
   sendOrganizationInviteEmail: vi.fn().mockResolvedValue(undefined),
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../src/lib/prisma.js", () => {
@@ -134,6 +136,22 @@ vi.mock("../src/lib/prisma.js", () => {
         Object.assign(user, data);
         return Promise.resolve(user);
       }),
+      // Conditional like Postgres: only a still unverified row changes.
+      updateMany: vi.fn(
+        ({
+          where,
+          data,
+        }: {
+          where: { id: string; emailVerifiedAt: null };
+          data: Record<string, unknown>;
+        }) => {
+          const matched = state.users.filter(
+            (u) => u.id === where.id && u.emailVerifiedAt === where.emailVerifiedAt,
+          );
+          matched.forEach((u) => Object.assign(u, data));
+          return Promise.resolve({ count: matched.length });
+        },
+      ),
     },
     session: {
       create: vi.fn(({ data }: { data: Record<string, unknown> }) =>
@@ -347,6 +365,7 @@ beforeEach(() => {
   redisStore.clear();
   oidcState.discoverShouldFail = false;
   oidcState.nextIdentity = null;
+  vi.mocked(sendWelcomeEmail).mockClear();
 });
 
 describe("GET/PUT /organizations/:organizationId/sso", () => {
@@ -506,6 +525,25 @@ describe("GET /auth/sso/callback", () => {
     expect(membership).toMatchObject({ organizationId: org.id, role: "ORG_MEMBER" });
   });
 
+  it("welcomes a JIT-provisioned account once, and never on its later SSO logins", async () => {
+    const app = createApp();
+    const org = addOrganization("Acme", "acme");
+    addSsoConnection(org.id, { allowedEmailDomain: "acme.com", enabled: true });
+    oidcState.nextIdentity = { email: "newperson@acme.com", emailVerified: true, subject: "sub-1" };
+
+    await startAttempt(app, "newperson@acme.com");
+    await request(app).get("/auth/sso/callback").query({ code: "test-code", state: "test-state" });
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+    expect(sendWelcomeEmail).toHaveBeenCalledWith("newperson@acme.com", "en");
+
+    await startAttempt(app, "newperson@acme.com");
+    const again = await request(app)
+      .get("/auth/sso/callback")
+      .query({ code: "test-code", state: "test-state" });
+    expect(again.headers.location).toBe("http://localhost:3000/dashboard");
+    expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+  });
+
   // Confirmed as a real, reachable bug before writing anything here:
   // JIT provisioning called organizationRepository.createMembership
   // unconditionally, with no seatLimit check at all — a completely
@@ -539,6 +577,8 @@ describe("GET /auth/sso/callback", () => {
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe("http://localhost:3000/login?ssoError=sso_callback_failed");
     expect(res.headers["set-cookie"]).toBeUndefined();
+    // Turned away at the seat limit: not welcomed into a dashboard.
+    expect(sendWelcomeEmail).not.toHaveBeenCalled();
     // No membership was created for the rejected login — the org
     // genuinely stayed at its seat limit, not just an error surfaced
     // while a membership was created anyway.
@@ -597,6 +637,23 @@ describe("GET /auth/sso/callback", () => {
     expect(state.users.filter((u) => u.email === "existing@acme.com")).toHaveLength(1);
     const membership = state.memberships.find((m) => m.userId === existingUserId);
     expect(membership).toMatchObject({ organizationId: org.id, role: "ORG_MEMBER" });
+  });
+
+  it("does not welcome an existing, already verified account that signs in by SSO", async () => {
+    const app = createApp();
+    const org = addOrganization("Acme", "acme");
+    addSsoConnection(org.id, { allowedEmailDomain: "acme.com", enabled: true });
+    await registerAndLogin(request.agent(app), "verified@acme.com");
+    state.users.find((u) => u.email === "verified@acme.com")!.emailVerifiedAt = now();
+    oidcState.nextIdentity = { email: "verified@acme.com", emailVerified: true, subject: "sub-4" };
+
+    await startAttempt(app, "verified@acme.com");
+    const res = await request(app)
+      .get("/auth/sso/callback")
+      .query({ code: "test-code", state: "test-state" });
+
+    expect(res.headers.location).toBe("http://localhost:3000/dashboard");
+    expect(sendWelcomeEmail).not.toHaveBeenCalled();
   });
 
   it("rejects an identity outside the connection's allowed domain", async () => {
