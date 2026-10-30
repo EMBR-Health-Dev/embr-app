@@ -112,6 +112,7 @@ export const briefRepository = {
     workImpact: Prisma.InputJsonValue;
     exercise: Prisma.InputJsonValue;
     socialImpact: Prisma.InputJsonValue;
+    severityTrend: Prisma.InputJsonValue;
     mrs: Prisma.InputJsonValue | null;
     lastRecordedPeriod: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;

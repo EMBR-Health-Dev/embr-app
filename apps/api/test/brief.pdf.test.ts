@@ -53,6 +53,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     nightSweatsRecall: null,
     workImpact: null,
     socialImpact: null,
+    severityTrend: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -419,6 +420,60 @@ describe("buildClinicalBriefPdf — days symptoms affected work", () => {
     const brief = baseBrief({ workImpact: { daysAnswered: 0, breakdown: null } });
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
     expect(text).not.toContain("employer");
+  });
+});
+
+describe("buildClinicalBriefPdf — severity week by week", () => {
+  const trend = {
+    blockDays: 7,
+    blocks: [
+      { start: "2026-01-01", end: "2026-01-07" },
+      { start: "2026-01-08", end: "2026-01-14" },
+    ],
+    rows: [
+      {
+        category: "HOT_FLASH" as const,
+        cells: [{ peak: "SEVERE" as const, daysLogged: 3 }, null],
+      },
+      {
+        category: "BRAIN_FOG" as const,
+        cells: [null, { peak: "MILD" as const, daysLogged: 1 }],
+      },
+    ],
+  };
+
+  it("prints each week's highest severity as a number, with the key and week start dates", async () => {
+    const text = (
+      await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ severityTrend: trend }), "person@embr.health"),
+      )
+    ).replace(/\s+/g, " ");
+    expect(text).toContain("SEVERITY WEEK BY WEEK");
+    expect(text).toContain("1 mild, 2 moderate, 3 severe");
+    expect(text).toContain("not that the symptom was absent");
+    expect(text).toContain("01-01");
+    expect(text).toContain("01-08");
+    expect(text).toMatch(/Hot Flash 3/);
+    expect(text).toMatch(/Brain Fog 1/);
+  });
+
+  it("names 4 week blocks for a long period, in Japanese", async () => {
+    const text = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({ locale: "ja", severityTrend: { ...trend, blockDays: 28 } }),
+        "person@embr.health",
+      ),
+    );
+    expect(text).toContain("4週間ごとの強さ");
+  });
+
+  it("leaves the section out with no symptoms, or for a brief that predates it", async () => {
+    for (const severityTrend of [{ ...trend, rows: [] }, null]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ severityTrend }), "person@embr.health"),
+      );
+      expect(text).not.toContain("SEVERITY WEEK BY WEEK");
+    }
   });
 });
 

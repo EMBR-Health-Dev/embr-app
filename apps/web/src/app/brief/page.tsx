@@ -20,6 +20,7 @@ import { EmailVerificationRequired } from "../../components/email-verification-r
 import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
 import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
 import { BriefDayByDay } from "../../components/brief-day-by-day";
+import { BriefSeverityTrend } from "../../components/brief-severity-trend";
 import { richText } from "../../lib/rich-text";
 import { SEVERITY_FILL, formatHistoryDate } from "../../lib/symptom-history-format";
 
@@ -782,6 +783,12 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
       </div>
 
       <BriefDayByDay
+        brief={brief}
+        headingClassName={BRIEF_SECTION_HEADING}
+        sectionClassName={BRIEF_SECTION}
+      />
+
+      <BriefSeverityTrend
         brief={brief}
         headingClassName={BRIEF_SECTION_HEADING}
         sectionClassName={BRIEF_SECTION}

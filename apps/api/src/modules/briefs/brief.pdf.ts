@@ -191,6 +191,85 @@ function dayByDay(
 }
 
 /**
+ * Severity block by block: one row per symptom, one column per week (or
+ * 4 week block), each cell the highest severity recorded in it, shaded
+ * and printed as 1, 2 or 3 so it reads without colour. A blank cell is
+ * only outlined: nothing recorded, never "none".
+ */
+function severityTrend(
+  doc: PDFKit.PDFDocument,
+  brief: ClinicalBriefDto,
+  locale: Locale,
+  t: ReturnType<typeof pdfStrings>,
+): void {
+  const trend = brief.severityTrend;
+  if (!trend || trend.rows.length === 0) return;
+  const labelWidth = 110;
+  const gridX = LEFT_MARGIN + labelWidth;
+  const pitch = (RIGHT_MARGIN - gridX) / trend.blocks.length;
+  const cell = pitch - 2;
+  const rowHeight = 11;
+  const rowPitch = 15;
+
+  const sectionHeight = 80 + trend.rows.length * rowPitch;
+  if (doc.y + sectionHeight > doc.page.height - doc.page.margins.bottom) doc.addPage();
+
+  sectionHeading(doc, t.severityTrendHeading(trend.blockDays));
+  doc
+    .fontSize(8.5)
+    .font(EMBR_PDF_BODY_FONT)
+    .fillColor(INK_MUTED)
+    .text(t.severityTrendIntro, { width: RIGHT_MARGIN - LEFT_MARGIN });
+  doc.moveDown(0.5);
+
+  // Column headers: each block's first day, as MM-DD.
+  const headerY = doc.y;
+  doc.fontSize(7).fillColor(INK_MUTED);
+  trend.blocks.forEach(({ start }, i) => {
+    doc.text(start.slice(5), gridX + i * pitch, headerY, {
+      width: cell,
+      align: "center",
+      lineBreak: false,
+    });
+  });
+  doc.y = headerY + 12;
+
+  for (const { category, cells } of trend.rows) {
+    const y = doc.y;
+    doc
+      .fontSize(8.5)
+      .font(EMBR_PDF_BODY_FONT)
+      .fillColor(INK)
+      .text(categoryLabel(category, locale), LEFT_MARGIN, y, {
+        width: labelWidth - 8,
+        lineBreak: false,
+        ellipsis: true,
+      });
+    cells.forEach((value, i) => {
+      const x = gridX + i * pitch;
+      if (!value) {
+        doc.lineWidth(0.4).rect(x, y, cell, rowHeight).stroke(INK_FAINT);
+        return;
+      }
+      doc.rect(x, y, cell, rowHeight).fill(PDF_SEVERITY_FILL[value.peak]);
+      doc
+        .fontSize(7.5)
+        .font(EMBR_PDF_HEADING_FONT)
+        // White only on the darkest fill; ink reads better on the others.
+        .fillColor(value.peak === "SEVERE" ? "#FFFFFF" : INK)
+        .text(String(SEVERITY_ORDER.indexOf(value.peak) + 1), x, y + 1, {
+          width: cell,
+          align: "center",
+          lineBreak: false,
+        });
+    });
+    doc.y = y + rowPitch;
+  }
+  doc.x = LEFT_MARGIN;
+  doc.moveDown(1);
+}
+
+/**
  * Renders a previously-generated ClinicalBrief exactly as it was
  * generated — every value here comes from the stored DTO, nothing is
  * recomputed from live symptom/cycle data and nothing calls the AI
@@ -391,6 +470,7 @@ export function buildClinicalBriefPdf(
 
   // ---- Day by day: when, not only how often ----
   dayByDay(doc, brief, locale, t);
+  severityTrend(doc, brief, locale, t);
 
   // ---- Frequency comparison vs. the immediately preceding period ----
   // Only rendered when present — see ClinicalBriefDto's own doc

@@ -291,6 +291,22 @@ export type WorkImpact = "NONE" | "DID_LESS" | "MISSED_TIME";
  * never part of any organisation statistic. */
 export type SocialImpact = "NONE" | "DID_LESS" | "MISSED_PLANS";
 
+/** One block of the severity trend: the highest severity she recorded
+ * in it and on how many days. */
+export interface SeverityTrendCellDto {
+  peak: SeverityLevel;
+  daysLogged: number;
+}
+
+/** Severity over a BRIEF's period, per symptom, in blocks of 7 days (28
+ * for periods over 13 weeks). A null cell means nothing was recorded in
+ * that block, never "none". Descriptive only; never sent to the AI. */
+export interface SeverityTrendDto {
+  blockDays: number;
+  blocks: Array<{ start: string; end: string }>;
+  rows: Array<{ category: SymptomCategory; cells: Array<SeverityTrendCellDto | null> }>;
+}
+
 export interface SocialImpactSummaryDto {
   daysAnswered: number;
   breakdown: Record<SocialImpact, number> | null;
@@ -956,6 +972,10 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * were. Never sent to the AI and never part of organisation
    * statistics. Null for a brief generated before this field existed. */
   socialImpact: SocialImpactSummaryDto | null;
+  /** Highest severity per symptom, block by block over the period; see
+   * SeverityTrendDto. Null for a brief generated before this field
+   * existed. */
+  severityTrend: SeverityTrendDto | null;
   /** The monthly Menopause Rating Scale check-ins in the period. Null
    * when the brief predates the field or the check-in was switched off
    * when it was made. Never sent to the AI. */

@@ -139,6 +139,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     nightSweatsRecall: null,
     workImpact: null,
     socialImpact: null,
+    severityTrend: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -251,6 +252,38 @@ describe("Brief screen — generation", () => {
     // handleGenerate's own await loadHistory()/await loadTrends().
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(trendsMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("shows severity week by week, each cell labelled for a screen reader", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    generateMock.mockResolvedValue(
+      brief({
+        id: "new-3",
+        severityTrend: {
+          blockDays: 7,
+          blocks: [
+            { start: "2026-01-01", end: "2026-01-07" },
+            { start: "2026-01-08", end: "2026-01-14" },
+          ],
+          rows: [{ category: "HOT_FLASH", cells: [{ peak: "MODERATE", daysLogged: 2 }, null] }],
+        },
+      }),
+    );
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByText("From"));
+    fireEvent.click(screen.getByText("To"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
+
+    expect(await screen.findByText("Severity week by week")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^From .+: Moderate, recorded on 2 days$/)).toHaveTextContent("2");
+    expect(screen.getByLabelText(/^From .+: nothing recorded$/)).toBeInTheDocument();
   });
 
   it("shows the API error message and does not show a false success state when generation fails", async () => {

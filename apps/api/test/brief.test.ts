@@ -695,6 +695,22 @@ describe("POST /briefs", () => {
       ]),
     );
     expect(res.body.data.symptomSummary).toHaveLength(2); // not 3 — the out-of-range log excluded
+    // Week by week from 1 January, rows in the summary's order.
+    const trend = res.body.data.severityTrend;
+    expect(trend.blockDays).toBe(7);
+    expect(trend.blocks[0]).toEqual({ start: "2026-01-01", end: "2026-01-07" });
+    expect(trend.rows.map((r: { category: string }) => r.category)).toEqual([
+      "HOT_FLASH",
+      "BRAIN_FOG",
+    ]);
+    expect(trend.rows[0].cells.slice(0, 3)).toEqual([
+      { peak: "MODERATE", daysLogged: 1 },
+      { peak: "SEVERE", daysLogged: 1 },
+      null,
+    ]);
+    expect(trend.rows[1].cells.slice(0, 3)).toEqual([null, null, { peak: "MILD", daysLogged: 1 }]);
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/severityTrend|daysLogged|"peak"/);
     expect(res.body.data.aiNarrative).toBe(aiState.nextResponse.narrative);
     expect(res.body.data.aiDiscussionTopics).toEqual(aiState.nextResponse.discussionTopics);
     expect(state.briefs).toHaveLength(1);

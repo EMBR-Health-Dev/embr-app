@@ -148,6 +148,8 @@ interface PdfStrings {
   dayByDayLegendOther: string;
   dayByDayLegendNoEntry: string;
   dayByDayCoverage: (recorded: number, total: number) => string;
+  severityTrendHeading: (blockDays: number) => string;
+  severityTrendIntro: string;
   comparedWithPreviousHeading: string;
   frequencyComparisonLine: (currentCount: number, previousCount: number) => string;
   ongoingSymptomsHeading: string;
@@ -244,6 +246,10 @@ const EN: PdfStrings = {
     const missing = total - recorded;
     return `Entries on ${recorded} of ${total} days. No entry recorded on ${missing} day${missing === 1 ? "" : "s"}.`;
   },
+  severityTrendHeading: (blockDays) =>
+    blockDays === 7 ? "Severity week by week" : "Severity in 4 week blocks",
+  severityTrendIntro:
+    "The highest severity recorded for each symptom in each block: 1 mild, 2 moderate, 3 severe. A blank means nothing was recorded, not that the symptom was absent. Each column starts on the date above it.",
   comparedWithPreviousHeading: "Compared with the previous period",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `Logged ${currentCount} time${currentCount === 1 ? "" : "s"}, compared with` +
@@ -388,6 +394,9 @@ const JA: PdfStrings = {
   dayByDayLegendNoEntry: "記録なし",
   dayByDayCoverage: (recorded, total) =>
     `${total}日中${recorded}日に記録があります。記録なしは${total - recorded}日です。`,
+  severityTrendHeading: (blockDays) => (blockDays === 7 ? "週ごとの強さ" : "4週間ごとの強さ"),
+  severityTrendIntro:
+    "各期間に記録された、症状ごとの最も強い程度です（1 軽度、2 中等度、3 重度）。空欄は記録がなかったことを示し、症状がなかったことを意味しません。各列は上の日付から始まります。",
   comparedWithPreviousHeading: "前回の期間との比較",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
@@ -517,6 +526,10 @@ const FR: PdfStrings = {
     const missing = total - recorded;
     return `Saisies sur ${recorded} des ${total} jours. Aucune saisie sur ${missing} ${frPlural(missing, "jour", "jours")}.`;
   },
+  severityTrendHeading: (blockDays) =>
+    blockDays === 7 ? "Intensité semaine par semaine" : "Intensité par périodes de 4 semaines",
+  severityTrendIntro:
+    "L’intensité la plus forte notée pour chaque symptôme sur chaque période\u00a0: 1 légère, 2 modérée, 3 sévère. Une case vide signifie que rien n’a été noté, pas que le symptôme était absent. Chaque colonne commence à la date indiquée au-dessus.",
   comparedWithPreviousHeading: "Comparaison avec la période précédente",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `Noté ${currentCount} ${frPlural(currentCount, "fois", "fois")}, contre ${previousCount} sur la période précédente.`,

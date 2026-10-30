@@ -38,6 +38,7 @@ import { summarizeNightSweatsRecall } from "./night-sweats-recall.js";
 import { summarizeWorkImpact } from "./work-impact.js";
 import { summarizeExercise } from "./exercise.js";
 import { summarizeSocialImpact } from "./social-impact.js";
+import { summarizeSeverityTrend } from "./severity-trend.js";
 import { summarizeMrs } from "./mrs-summary.js";
 import { env } from "../../config/env.js";
 import { summarizeLastRecordedPeriod } from "./last-recorded-period.js";
@@ -182,6 +183,16 @@ async function generateBriefContent(
   );
 
   const symptomSummary = computeSymptomSummary(symptomLogs);
+  // The same logs, block by block: highest severity per symptom in each
+  // week of the period, rows in the summary's order. Never in the AI
+  // input. See severity-trend.ts.
+  const severityTrend = summarizeSeverityTrend(
+    symptomLogs,
+    symptomSummary.map((entry) => entry.category),
+    period.fromDate,
+    period.toDate,
+    timeZone,
+  );
   const cycleSummary = computeCycleSummary(cycleEntries);
   const treatmentSummary = computeTreatmentSummary(treatments);
   // The comparison only needs {category, count} — computeSymptomSummary's
@@ -378,6 +389,7 @@ async function generateBriefContent(
     workImpact: JSON.parse(JSON.stringify(workImpact)),
     exercise: JSON.parse(JSON.stringify(exercise)),
     socialImpact: JSON.parse(JSON.stringify(socialImpact)),
+    severityTrend: JSON.parse(JSON.stringify(severityTrend)),
     mrs: mrs === null ? null : JSON.parse(JSON.stringify(mrs)),
     lastRecordedPeriod: JSON.parse(JSON.stringify(lastRecordedPeriod)),
     // The exact same canonical object computed once above — used to
