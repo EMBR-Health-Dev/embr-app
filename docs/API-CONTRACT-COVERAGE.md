@@ -138,13 +138,13 @@ complete relative to the running API.
 Script: `apps/api/scripts/check-openapi-contract.mjs`  
 Job: **OpenAPI Contract** in `.github/workflows/ci.yml`
 
-| Check | Purpose |
-| ----- | ------- |
-| YAML parse | Catch malformed specifications |
-| OpenAPI version | Require 3.1.x (`/^3\.1\.\d+$/`) |
-| Minimum path count | Prevent another silent truncation (floor, not target) |
-| File size floor | Secondary truncation signal (`Buffer.byteLength`) |
-| Local `$ref` resolution | Catch broken schema references |
+| Check                   | Purpose                                               |
+| ----------------------- | ----------------------------------------------------- |
+| YAML parse              | Catch malformed specifications                        |
+| OpenAPI version         | Require 3.1.x (`/^3\.1\.\d+$/`)                       |
+| Minimum path count      | Prevent another silent truncation (floor, not target) |
+| File size floor         | Secondary truncation signal (`Buffer.byteLength`)     |
+| Local `$ref` resolution | Catch broken schema references                        |
 
 Raise the path floor deliberately when the documented surface grows. Do not lower
 it to silence a truncation.
