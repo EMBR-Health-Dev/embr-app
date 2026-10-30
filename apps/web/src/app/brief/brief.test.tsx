@@ -95,6 +95,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     lastRecordedPeriod: null,
     interpretation: { interpretationVersion: "1.0", patterns: [] },
     citedPatternIds: [],
+    patientPriorities: [],
     aiNarrative: "A narrative.",
     aiDiscussionTopics: ["A question?"],
     locale: "en",
@@ -180,8 +181,48 @@ describe("Brief page — generation", () => {
       expect(generateMock).toHaveBeenCalledWith({
         fromDate: startOfLocalDay("2026-01-01"),
         toDate: endOfLocalDay("2026-02-01"),
+        priorities: [],
       }),
     );
+  });
+
+  it("sends her priorities trimmed, leaving out blank ones, and shows them first", async () => {
+    generateMock.mockResolvedValue(
+      brief({ patientPriorities: ["The anger scares me", "Sex hurts now"] }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.type(screen.getByLabelText("Priority 1"), "  The anger scares me ");
+    await user.type(screen.getByLabelText("Priority 3"), "Sex hurts now");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    await waitFor(() =>
+      expect(generateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ priorities: ["The anger scares me", "Sex hurts now"] }),
+      ),
+    );
+    expect(await screen.findByText("What I most want you to understand")).toBeInTheDocument();
+    expect(screen.getByText("The anger scares me")).toBeInTheDocument();
+    expect(screen.getByText("In your own words. Not seen or changed by AI.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Priority 1")).toHaveValue("");
+  });
+
+  it("shows no priorities section when she wrote none", async () => {
+    generateMock.mockResolvedValue(brief({ patientPriorities: [] }));
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    await screen.findByText("A narrative.");
+    expect(screen.queryByText("What I most want you to understand")).not.toBeInTheDocument();
   });
 
   it("shows the API error message when generation fails", async () => {

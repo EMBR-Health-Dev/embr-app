@@ -282,6 +282,30 @@ export function buildClinicalBriefPdf(
     .stroke();
   doc.moveDown(1);
 
+  // ---- Her priorities ----
+  // First, before anything computed or AI-written: what she most wants
+  // her clinician to understand, exactly as she wrote it. Absent when
+  // she wrote none or the brief predates the field.
+  if (brief.patientPriorities && brief.patientPriorities.length > 0) {
+    sectionHeading(doc, t.prioritiesHeading);
+    brief.patientPriorities.forEach((priority, i) => {
+      const y = doc.y;
+      doc
+        .fontSize(11)
+        .font(EMBR_PDF_HEADING_FONT)
+        .fillColor(PLUM)
+        .text(`${i + 1}.`, LEFT_MARGIN + 10, y, { width: 18 });
+      doc
+        .font(EMBR_PDF_BODY_FONT)
+        .fillColor(INK)
+        .text(priority, LEFT_MARGIN + 30, y, { width: RIGHT_MARGIN - LEFT_MARGIN - 30 });
+      doc.x = LEFT_MARGIN;
+      doc.moveDown(0.3);
+    });
+    doc.fontSize(8).fillColor(INK_MUTED).text(t.prioritiesNote);
+    doc.moveDown(1);
+  }
+
   // ---- AI narrative ----
   // brief.aiNarrative was generated in `locale` at generation time —
   // rendered exactly as stored, not re-localized here.

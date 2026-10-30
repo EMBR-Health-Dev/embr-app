@@ -133,6 +133,10 @@ export type SymptomCategory =
   | "LIBIDO_CHANGE"
   | "WEIGHT_CHANGE"
   | "HEADACHE"
+  | "ANGER"
+  | "IRRITABILITY"
+  | "LOW_MOOD"
+  | "PAINFUL_SEX"
   | "OTHER";
 
 export type SeverityLevel = "MILD" | "MODERATE" | "SEVERE";
@@ -971,6 +975,11 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * this field existed; never backfilled, matching every other
    * additive field on this DTO. */
   citedPatternIds: string[] | null;
+  /** Up to three things she most wants her clinician to understand,
+   * in her own words, printed first. Never sent to the AI. An empty
+   * array means she wrote none; null means the brief predates this
+   * field. */
+  patientPriorities: string[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
   /** The language aiNarrative/aiDiscussionTopics and every persisted

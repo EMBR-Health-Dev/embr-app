@@ -170,6 +170,10 @@
       "LIBIDO_CHANGE": "性欲の変化",
       "WEIGHT_CHANGE": "体重の変化",
       "HEADACHE": "頭痛",
+      "ANGER": "怒り",
+      "IRRITABILITY": "イライラ",
+      "LOW_MOOD": "気分の落ち込み",
+      "PAINFUL_SEX": "性交痛",
       "OTHER": "その他"
     },
     "severity": {
@@ -312,6 +316,11 @@
     "toPlaceholder": "終了日",
     "invalidDates": "開始日が終了日より前になるように、両方の日付を選択してください。",
     "generate": "EMBR BRIEFを作成",
+    "prioritiesLegend": "担当医に最も理解してほしいことは何ですか？",
+    "prioritiesHint": "任意です。ご自身の言葉で3つまで書けます。書いたとおりにBRIEFの最初に記載され、AIが読むことはありません。",
+    "priorityLabel": "優先事項 {{number}}",
+    "prioritiesTitle": "担当医に最も理解してほしいこと",
+    "prioritiesNote": "ご本人の言葉のままです。AIは読んでおらず、変更もしていません。",
     "generating": "作成中…",
     "generateError": "BRIEFを作成できませんでした。",
     "generateErrorReassurance": "あなたの記録は変更されておらず、何も失われていません。もう一度お試しいただけます。これまでに作成したBRIEFは以下からそのままご覧いただけます。",

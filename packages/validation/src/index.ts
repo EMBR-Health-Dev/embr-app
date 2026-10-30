@@ -216,6 +216,10 @@ export const symptomCategorySchema = z.enum([
   "LIBIDO_CHANGE",
   "WEIGHT_CHANGE",
   "HEADACHE",
+  "ANGER",
+  "IRRITABILITY",
+  "LOW_MOOD",
+  "PAINFUL_SEX",
   "OTHER",
 ]);
 
@@ -702,11 +706,22 @@ export type UpsertSsoConnectionInput = z.infer<typeof upsertSsoConnectionSchema>
 // visit," not "ever").
 const MAX_BRIEF_RANGE_DAYS = 366;
 
+/** What she most wants her clinician to understand, printed first in
+ * the BRIEF. Optional, at most three, blank lines dropped. Never sent
+ * to the AI. */
+export const MAX_BRIEF_PRIORITIES = 3;
+export const MAX_BRIEF_PRIORITY_LENGTH = 300;
+export const briefPrioritiesSchema = z
+  .array(z.string().trim().max(MAX_BRIEF_PRIORITY_LENGTH))
+  .max(MAX_BRIEF_PRIORITIES)
+  .transform((items) => items.filter((item) => item.length > 0));
+
 export const generateBriefSchema = z
   .object({
     fromDate: z.coerce.date(),
     toDate: z.coerce.date(),
     timeZone: ianaTimeZone,
+    priorities: briefPrioritiesSchema.default([]),
   })
   .refine((v) => v.fromDate < v.toDate, {
     message: "fromDate must be before toDate",

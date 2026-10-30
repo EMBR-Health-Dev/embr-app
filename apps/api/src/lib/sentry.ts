@@ -23,9 +23,16 @@ export function redactSentryEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
     delete event.request.cookies;
     delete event.request.data;
     delete event.request.query_string;
+    // Headers carry the mobile app's bearer token and the cookie header;
+    // nothing in them helps debug an error enough to send them.
+    delete event.request.headers;
     if (event.request.url) {
       event.request.url = event.request.url.split("?")[0];
     }
+  }
+  // Keep only the account id, never her email or IP address.
+  if (event.user) {
+    event.user = event.user.id === undefined ? {} : { id: event.user.id };
   }
   return event;
 }

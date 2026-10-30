@@ -12,6 +12,7 @@ import type {
 } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
+import { MAX_BRIEF_PRIORITY_LENGTH } from "@embr/validation";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
@@ -41,6 +42,9 @@ function BriefPageContent() {
   // so typing into the fields behaves exactly as it did before this.
   const [fromDate, setFromDate] = useState(() => searchParams.get("from") ?? "");
   const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
+  // What she most wants her clinician to understand: printed first in
+  // the BRIEF, never sent to the AI. Blank lines are dropped by the API.
+  const [priorities, setPriorities] = useState<string[]>(["", "", ""]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   // Kept apart from generateError: a missing date is a form-validation
@@ -120,8 +124,10 @@ function BriefPageContent() {
       const brief = await api.briefs.generate({
         fromDate: startOfLocalDay(fromDate),
         toDate: endOfLocalDay(toDate),
+        priorities: priorities.map((p) => p.trim()).filter((p) => p.length > 0),
       });
       setJustGenerated(brief);
+      setPriorities(["", "", ""]);
       loadHistory();
       api.briefs.trends().then(setTrends);
     } catch (err) {
@@ -246,6 +252,24 @@ function BriefPageContent() {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
+          <fieldset className="basis-full">
+            <legend className="text-sm font-medium text-foreground">{t("prioritiesLegend")}</legend>
+            <p className="mt-1 text-xs text-foreground/60">{t("prioritiesHint")}</p>
+            <div className="mt-3 flex flex-col gap-3">
+              {priorities.map((value, i) => (
+                <Field
+                  key={i}
+                  label={t("priorityLabel", { number: i + 1 })}
+                  type="text"
+                  maxLength={MAX_BRIEF_PRIORITY_LENGTH}
+                  value={value}
+                  onChange={(e) =>
+                    setPriorities((prev) => prev.map((p, j) => (j === i ? e.target.value : p)))
+                  }
+                />
+              ))}
+            </div>
+          </fieldset>
           <Button type="submit" disabled={generating}>
             {generating ? t("generating") : t("generate")}
           </Button>
@@ -613,6 +637,26 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
 
   return (
     <div className="mt-4 flex flex-col gap-5 text-sm">
+      {brief.patientPriorities && brief.patientPriorities.length > 0 && (
+        <div className="rounded-sm bg-lilac-100 px-4 py-3">
+          <h3 className={BRIEF_SECTION_HEADING}>{t("prioritiesTitle")}</h3>
+          <ol className="mt-1">
+            {brief.patientPriorities.map((priority, i) => (
+              <li key={i} className="flex gap-3 py-1.5 text-foreground">
+                <span
+                  aria-hidden="true"
+                  className="w-5 shrink-0 font-semibold tabular-nums text-lilac-700"
+                >
+                  {i + 1}.
+                </span>
+                <span>{priority}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-1 text-xs text-foreground/50">{t("prioritiesNote")}</p>
+        </div>
+      )}
+
       <div>
         <p className="leading-relaxed text-foreground/85">{brief.aiNarrative}</p>
         <p className="mt-1 text-xs text-foreground/50">{t.rich("aiAuthorshipNote", richText)}</p>

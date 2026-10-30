@@ -204,6 +204,10 @@
       "LIBIDO_CHANGE": "Libido Change",
       "WEIGHT_CHANGE": "Weight Change",
       "HEADACHE": "Headache",
+      "ANGER": "Anger",
+      "IRRITABILITY": "Irritability",
+      "LOW_MOOD": "Low Mood",
+      "PAINFUL_SEX": "Painful Sex",
       "OTHER": "Other"
     },
     "severity": {
@@ -743,6 +747,11 @@
     "toLabel": "To",
     "generate": "Generate EMBR BRIEF",
     "generating": "Generating…",
+    "prioritiesLegend": "What do you most want your healthcare provider to understand?",
+    "prioritiesHint": "Optional. Up to three, in your own words. They are printed first in your BRIEF, exactly as you write them, and AI never reads them.",
+    "priorityLabel": "Priority {number}",
+    "prioritiesTitle": "What I most want you to understand",
+    "prioritiesNote": "In your own words. Not seen or changed by AI.",
     "pickDates": "Pick both a start and end date.",
     "generateError": "Couldn't generate a brief. Try again.",
     "generateErrorReassurance": "Your record hasn't changed and nothing was lost. You can try again, and your existing briefs are still available below.",
