@@ -379,6 +379,43 @@ describe("POST /context-logs", () => {
     }
   });
 
+  it("stores the family and social answer, keeps it when left out, and clears it only on null", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-social@embr.health");
+
+    const saved = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", socialImpact: "MISSED_PLANS" });
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.socialImpact).toBe("MISSED_PLANS");
+
+    // An app version that predates the question saves the day's other answers.
+    const older = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", workImpact: "DID_LESS" });
+    expect(older.body.data.socialImpact).toBe("MISSED_PLANS");
+
+    const cleared = await agent
+      .post("/context-logs")
+      .send({ date: "2026-07-23", socialImpact: null });
+    expect(cleared.body.data.socialImpact).toBeNull();
+
+    const blank = await agent.post("/context-logs").send({ date: "2026-07-24", alcohol: true });
+    expect(blank.body.data.socialImpact).toBeNull();
+  });
+
+  it("rejects a family and social answer outside the fixed list", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "context-social-bad@embr.health");
+
+    for (const socialImpact of ["SOME", 2, "none", false]) {
+      const res = await agent.post("/context-logs").send({ date: "2026-07-23", socialImpact });
+      expect(res.status).toBe(400);
+    }
+  });
+
   it("logs CONTEXT_LOG_UPSERTED to the audit trail", async () => {
     const app = createApp();
     const agent = request.agent(app);

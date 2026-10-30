@@ -233,6 +233,11 @@
       "DID_LESS": "Yes, I did less",
       "MISSED_TIME": "Yes, I missed time"
     },
+    "socialImpact": {
+      "NONE": "No",
+      "DID_LESS": "Yes, I joined in less",
+      "MISSED_PLANS": "Yes, I missed or cancelled plans"
+    },
     "stressLevel": {
       "LOW": "Low",
       "MODERATE": "Moderate",
@@ -319,6 +324,9 @@
     "workImpactLabel": "Did symptoms affect your work today?",
     "workImpactNone": "Not logged",
     "workImpactHelp": "Counted only in your own BRIEF. Never shared with an employer.",
+    "socialImpactLabel": "Did symptoms affect time with family or friends today?",
+    "socialImpactNone": "Not logged",
+    "socialImpactHelp": "Includes home life and plans with others. Counted only in your own BRIEF, never shared with an employer.",
     "stressLevelLabel": "Stress today",
     "stressLevelNone": "Not logged",
     "caffeineAfternoonLabel": "Caffeine after 2pm",
@@ -372,6 +380,7 @@
     "nightSweatsLabelYesterday": "Night sweats the night before yesterday",
     "stressLevelLabelYesterday": "Stress yesterday",
     "workImpactLabelYesterday": "Did symptoms affect your work yesterday?",
+    "socialImpactLabelYesterday": "Did symptoms affect time with family or friends yesterday?",
     "saveTodaysEntryYesterday": "Save yesterday's entry",
     "todaysEntryLoadErrorYesterday": "Yesterday's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again.",
     "recentToday": "Today",
@@ -439,6 +448,7 @@
     },
     "nightSweatsRecalled": "Night sweats last night: {value} (recalled in the morning)",
     "workImpactAnswered": "Did symptoms affect work? {value}",
+    "socialImpactAnswered": "Did symptoms affect time with family or friends? {value}",
     "cycleLabel": "Cycle",
     "periodStarted": "Period started",
     "periodEnded": "Period ended",
@@ -796,6 +806,8 @@
     "workImpactBreakdown": "No effect on {none}, did less on {didLess}, missed time on {missedTime}.",
     "workImpactFewAnswers": "A breakdown is shown once 7 days have been answered.",
     "workImpactPrivate": "Your own daily answers. Never shared with any employer.",
+    "socialImpactTitle": "Days symptoms affected family and social life",
+    "socialImpactBreakdown": "No effect on {none}, joined in less on {didLess}, missed or cancelled plans on {missedPlans}.",
     "groundedInTitle": "Grounded in your data",
     "viewEvidence": "View recorded days",
     "hideEvidence": "Hide recorded days",

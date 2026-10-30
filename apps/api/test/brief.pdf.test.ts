@@ -52,6 +52,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     persistentSymptoms: null,
     nightSweatsRecall: null,
     workImpact: null,
+    socialImpact: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -418,6 +419,41 @@ describe("buildClinicalBriefPdf — days symptoms affected work", () => {
     const brief = baseBrief({ workImpact: { daysAnswered: 0, breakdown: null } });
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
     expect(text).not.toContain("employer");
+  });
+});
+
+describe("buildClinicalBriefPdf — days symptoms affected family and social life", () => {
+  it("gives the breakdown from 7 answered days, and says it is never shared with an employer", async () => {
+    const brief = baseBrief({
+      socialImpact: { daysAnswered: 8, breakdown: { NONE: 4, DID_LESS: 3, MISSED_PLANS: 1 } },
+    });
+    const text = (await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"))).replace(
+      /\s+/g,
+      " ",
+    );
+    expect(text).toContain("DAYS SYMPTOMS AFFECTED FAMILY AND SOCIAL LIFE");
+    expect(text).toContain("Answered on 8 days in this period.");
+    expect(text).toContain("No effect on 4, joined in less on 3, missed or cancelled plans on 1.");
+    expect(text).toContain("Never shared with any employer.");
+  });
+
+  it("holds back the breakdown below 7, in French", async () => {
+    const brief = baseBrief({ locale: "fr", socialImpact: { daysAnswered: 3, breakdown: null } });
+    const text = (await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"))).replace(
+      /\s+/g,
+      " ",
+    );
+    expect(text).toContain("JOURS OÙ LES SYMPTÔMES ONT AFFECTÉ LA VIE FAMILIALE ET SOCIALE");
+    expect(text).toContain("Une répartition s’affiche à partir de 7 jours de réponses.");
+  });
+
+  it("leaves the section out when no day was answered, or the brief predates it", async () => {
+    for (const socialImpact of [{ daysAnswered: 0, breakdown: null }, null]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ socialImpact }), "person@embr.health"),
+      );
+      expect(text).not.toMatch(/FAMILY AND SOCIAL/);
+    }
   });
 });
 

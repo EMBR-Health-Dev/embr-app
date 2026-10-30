@@ -15,6 +15,7 @@ export function toContextLogDto(entry: ContextLog): ContextLogDto {
     nightSweats: entry.nightSweats,
     workImpact: entry.workImpact,
     exercise: entry.exercise,
+    socialImpact: entry.socialImpact,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   };

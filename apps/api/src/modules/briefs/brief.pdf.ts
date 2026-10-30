@@ -455,6 +455,20 @@ export function buildClinicalBriefPdf(
     doc.moveDown(1);
   }
 
+  // ---- Days symptoms affected family and social life (its own count) ----
+  // The same rules and wording as work impact (see social-impact.ts);
+  // the answered, few answers and privacy lines read the same, so they
+  // are shared.
+  if (brief.socialImpact && brief.socialImpact.daysAnswered > 0) {
+    const { daysAnswered, breakdown } = brief.socialImpact;
+    sectionHeading(doc, t.socialImpactHeading);
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK);
+    doc.text(t.workImpactAnsweredLine(daysAnswered));
+    doc.text(breakdown ? t.socialImpactBreakdownLine(breakdown) : t.workImpactFewAnswersNote);
+    doc.fillColor(INK_MUTED).text(t.workImpactPrivacyNote);
+    doc.moveDown(1);
+  }
+
   // ---- Exercise (its own count) ----
   // Same rules again: a breakdown only from 7 answered days (see
   // exercise.ts); skipped for a brief that predates the field or has

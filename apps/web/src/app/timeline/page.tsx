@@ -11,6 +11,7 @@ import type {
   NightSweatsRecall,
   ExerciseLevel,
   WorkImpact,
+  SocialImpact,
   SymptomHistoryDto,
   SymptomLogDto,
   TreatmentDto,
@@ -97,6 +98,8 @@ interface DayGroup {
   workImpact: WorkImpact | null;
   // How hard she exercised that day, her own answer.
   exercise: ExerciseLevel | null;
+  // Whether symptoms affected time with family or friends, her own answer.
+  socialImpact: SocialImpact | null;
   treatmentEvents: Array<{ treatment: TreatmentDto; kind: "started" | "ended" }>;
 }
 
@@ -234,6 +237,7 @@ export default function TimelinePage() {
         nightSweats: null,
         workImpact: null,
         exercise: null,
+        socialImpact: null,
         treatmentEvents: [],
       };
       groups.set(date, group);
@@ -251,6 +255,7 @@ export default function TimelinePage() {
     if (log.nightSweats) getGroup(log.date).nightSweats = log.nightSweats;
     if (log.workImpact) getGroup(log.date).workImpact = log.workImpact;
     if (log.exercise) getGroup(log.date).exercise = log.exercise;
+    if (log.socialImpact) getGroup(log.date).socialImpact = log.socialImpact;
   }
   for (const treatment of treatments) {
     if (treatment.startDate >= windowStart) {
@@ -276,7 +281,11 @@ export default function TimelinePage() {
     const group = groups.get(date)!;
     return (
       (activeFilters.has("symptoms") &&
-        (group.symptoms.length > 0 || group.nightSweats || group.workImpact || group.exercise)) ||
+        (group.symptoms.length > 0 ||
+          group.nightSweats ||
+          group.workImpact ||
+          group.exercise ||
+          group.socialImpact)) ||
       (activeFilters.has("cycle") && group.cycle !== null) ||
       (activeFilters.has("treatments") && group.treatmentEvents.length > 0)
     );
@@ -312,6 +321,11 @@ export default function TimelinePage() {
         {activeFilters.has("symptoms") && group.workImpact && (
           <p className="text-sm text-foreground/70">
             {t("workImpactAnswered", { value: tEnum(`workImpact.${group.workImpact}`) })}
+          </p>
+        )}
+        {activeFilters.has("symptoms") && group.socialImpact && (
+          <p className="text-sm text-foreground/70">
+            {t("socialImpactAnswered", { value: tEnum(`socialImpact.${group.socialImpact}`) })}
           </p>
         )}
         {activeFilters.has("symptoms") && group.exercise && (
@@ -358,7 +372,8 @@ export default function TimelinePage() {
         (group.symptoms.length > 0 ||
           group.nightSweats !== null ||
           group.workImpact !== null ||
-          group.exercise !== null),
+          group.exercise !== null ||
+          group.socialImpact !== null),
       cycle: activeFilters.has("cycle") && group.cycle !== null,
       treatments: activeFilters.has("treatments") && group.treatmentEvents.length > 0,
     };

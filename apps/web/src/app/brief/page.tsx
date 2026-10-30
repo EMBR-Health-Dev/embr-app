@@ -856,6 +856,27 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
+      {brief.socialImpact && brief.socialImpact.daysAnswered > 0 && (
+        <div className={BRIEF_SECTION}>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("socialImpactTitle")}</h3>
+          {/* The answered, few answers and privacy lines read the same as
+              work impact's, so they are shared. */}
+          <p className="mt-1 text-foreground/70">
+            {t("workImpactAnswered", { count: brief.socialImpact.daysAnswered })}
+          </p>
+          <p className="text-foreground/70">
+            {brief.socialImpact.breakdown
+              ? t("socialImpactBreakdown", {
+                  none: brief.socialImpact.breakdown.NONE,
+                  didLess: brief.socialImpact.breakdown.DID_LESS,
+                  missedPlans: brief.socialImpact.breakdown.MISSED_PLANS,
+                })
+              : t("workImpactFewAnswers")}
+          </p>
+          <p className="mt-1 text-xs text-foreground/50">{t("workImpactPrivate")}</p>
+        </div>
+      )}
+
       {brief.exercise && brief.exercise.daysAnswered > 0 && (
         <div className={BRIEF_SECTION}>
           <h3 className={BRIEF_SECTION_HEADING}>{t("exerciseTitle")}</h3>

@@ -233,6 +233,11 @@
       "DID_LESS": "Oui, j’en ai fait moins",
       "MISSED_TIME": "Oui, j’ai dû m’absenter"
     },
+    "socialImpact": {
+      "NONE": "Non",
+      "DID_LESS": "Oui, j’y ai moins participé",
+      "MISSED_PLANS": "Oui, j’ai manqué ou annulé des projets"
+    },
     "stressLevel": {
       "LOW": "Faible",
       "MODERATE": "Modéré",
@@ -319,6 +324,9 @@
     "workImpactLabel": "Vos symptômes ont-ils affecté votre travail aujourd’hui ?",
     "workImpactNone": "Non renseigné",
     "workImpactHelp": "Pris en compte uniquement dans votre propre BRIEF. Jamais partagé avec un employeur.",
+    "socialImpactLabel": "Vos symptômes ont-ils affecté vos moments en famille ou entre amis aujourd’hui ?",
+    "socialImpactNone": "Non renseigné",
+    "socialImpactHelp": "Comprend la vie à la maison et les projets avec d’autres. Pris en compte uniquement dans votre propre BRIEF, jamais partagé avec un employeur.",
     "stressLevelLabel": "Stress aujourd’hui",
     "stressLevelNone": "Non renseigné",
     "caffeineAfternoonLabel": "Caféine après 14 h",
@@ -372,6 +380,7 @@
     "nightSweatsLabelYesterday": "Sueurs nocturnes la nuit d’avant-hier",
     "stressLevelLabelYesterday": "Stress hier",
     "workImpactLabelYesterday": "Vos symptômes ont-ils affecté votre travail hier ?",
+    "socialImpactLabelYesterday": "Vos symptômes ont-ils affecté vos moments en famille ou entre amis hier ?",
     "saveTodaysEntryYesterday": "Enregistrer la saisie d’hier",
     "todaysEntryLoadErrorYesterday": "La saisie d’hier n’a pas pu être chargée : l’enregistrement est suspendu pour préserver ce qui est déjà noté. Rechargez la page pour réessayer.",
     "recentToday": "Aujourd’hui",
@@ -439,6 +448,7 @@
     },
     "nightSweatsRecalled": "Sueurs nocturnes la nuit dernière : {value} (indiqué le matin)",
     "workImpactAnswered": "Les symptômes ont-ils affecté le travail ? {value}",
+    "socialImpactAnswered": "Les symptômes ont-ils affecté la vie familiale ou sociale ? {value}",
     "cycleLabel": "Cycle",
     "periodStarted": "Début des règles",
     "periodEnded": "Fin des règles",
@@ -796,6 +806,8 @@
     "workImpactBreakdown": "Aucun effet : {none}, en a fait moins : {didLess}, s’est absentée : {missedTime}.",
     "workImpactFewAnswers": "Une répartition s’affiche à partir de 7 jours de réponses.",
     "workImpactPrivate": "Vos propres réponses quotidiennes. Jamais partagées avec un employeur.",
+    "socialImpactTitle": "Jours où les symptômes ont affecté la vie familiale et sociale",
+    "socialImpactBreakdown": "Aucun effet : {none}, y a moins participé : {didLess}, a manqué ou annulé des projets : {missedPlans}.",
     "groundedInTitle": "Fondé sur vos données",
     "viewEvidence": "Voir les jours notés",
     "hideEvidence": "Masquer les jours notés",

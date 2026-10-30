@@ -233,6 +233,11 @@
       "DID_LESS": "はい、仕事量が減った",
       "MISSED_TIME": "はい、休んだ・早退した"
     },
+    "socialImpact": {
+      "NONE": "いいえ",
+      "DID_LESS": "はい、あまり参加できなかった",
+      "MISSED_PLANS": "はい、予定を休んだ・キャンセルした"
+    },
     "stressLevel": {
       "LOW": "低い",
       "MODERATE": "中程度",
@@ -319,6 +324,9 @@
     "workImpactLabel": "今日、症状が仕事に影響しましたか？",
     "workImpactNone": "未記録",
     "workImpactHelp": "あなた自身のBRIEFでのみ集計されます。勤務先と共有されることはありません。",
+    "socialImpactLabel": "今日、症状が家族や友人との時間に影響しましたか？",
+    "socialImpactNone": "未記録",
+    "socialImpactHelp": "家庭での生活や人との予定も含みます。あなた自身のBRIEFでのみ集計され、勤務先と共有されることはありません。",
     "stressLevelLabel": "今日のストレス",
     "stressLevelNone": "未記録",
     "caffeineAfternoonLabel": "午後2時以降のカフェイン",
@@ -372,6 +380,7 @@
     "nightSweatsLabelYesterday": "一昨日の夜の寝汗",
     "stressLevelLabelYesterday": "昨日のストレス",
     "workImpactLabelYesterday": "昨日、症状が仕事に影響しましたか？",
+    "socialImpactLabelYesterday": "昨日、症状が家族や友人との時間に影響しましたか？",
     "saveTodaysEntryYesterday": "昨日の記録を保存",
     "todaysEntryLoadErrorYesterday": "昨日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。",
     "recentToday": "今日",
@@ -438,6 +447,7 @@
     },
     "nightSweatsRecalled": "昨夜の寝汗：{value}（朝に振り返った回答）",
     "workImpactAnswered": "症状が仕事に影響したか：{value}",
+    "socialImpactAnswered": "症状が家族や友人との時間に影響したか：{value}",
     "cycleLabel": "周期",
     "periodStarted": "生理開始",
     "periodEnded": "生理終了",
@@ -795,6 +805,8 @@
     "workImpactBreakdown": "影響なし{none}日、仕事量が減った{didLess}日、休んだ・早退した{missedTime}日。",
     "workImpactFewAnswers": "回答が7日分以上になると、内訳を表示します。",
     "workImpactPrivate": "あなた自身の毎日の回答です。勤務先と共有されることはありません。",
+    "socialImpactTitle": "症状が家族や友人との時間に影響した日",
+    "socialImpactBreakdown": "影響なし{none}日、あまり参加できなかった{didLess}日、予定を休んだ・キャンセルした{missedPlans}日。",
     "groundedInTitle": "データに基づく根拠",
     "viewEvidence": "記録した日を表示",
     "hideEvidence": "記録した日を非表示",

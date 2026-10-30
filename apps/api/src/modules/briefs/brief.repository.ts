@@ -39,6 +39,17 @@ export const briefRepository = {
     return rows.map((row) => row.exercise);
   },
 
+  /** The "did symptoms affect time with family or friends" answer for
+   * each answered day in [fromDate, toDate]. Only the answer is
+   * selected; see social-impact.ts. Read only for her own BRIEF. */
+  async listSocialImpact(userId: string, fromDate: Date, toDate: Date) {
+    const rows = await prisma.contextLog.findMany({
+      where: { userId, date: { gte: fromDate, lte: toDate }, socialImpact: { not: null } },
+      select: { socialImpact: true },
+    });
+    return rows.map((row) => row.socialImpact);
+  },
+
   /** Her MRS check-ins dated in [fromDate, toDate], with only the
    * date and the 11 answers; see mrs-summary.ts. */
   async listMrsCheckIns(userId: string, fromDate: Date, toDate: Date) {
@@ -100,6 +111,7 @@ export const briefRepository = {
     nightSweatsRecall: Prisma.InputJsonValue;
     workImpact: Prisma.InputJsonValue;
     exercise: Prisma.InputJsonValue;
+    socialImpact: Prisma.InputJsonValue;
     mrs: Prisma.InputJsonValue | null;
     lastRecordedPeriod: Prisma.InputJsonValue;
     interpretation: Prisma.InputJsonValue;

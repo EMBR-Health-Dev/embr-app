@@ -195,6 +195,11 @@
       "DID_LESS": "Yes, I did less",
       "MISSED_TIME": "Yes, I missed time"
     },
+    "socialImpact": {
+      "NONE": "No",
+      "DID_LESS": "Yes, I joined in less",
+      "MISSED_PLANS": "Yes, I missed or cancelled plans"
+    },
     "treatmentStopReason": {
       "SIDE_EFFECTS": "Side effects",
       "LONG_TERM_CONCERN": "Worried about long-term effects",
@@ -373,6 +378,8 @@
     "workImpactBreakdown": "No effect on {{none}}, did less on {{didLess}}, missed time on {{missedTime}}.",
     "workImpactFewAnswers": "A breakdown is shown once 7 days have been answered.",
     "workImpactPrivate": "Your own daily answers. Never shared with any employer.",
+    "socialImpactTitle": "Days symptoms affected family and social life",
+    "socialImpactBreakdown": "No effect on {{none}}, joined in less on {{didLess}}, missed or cancelled plans on {{missedPlans}}.",
     "groundedInTitle": "Grounded in your data",
     "viewEvidence": "View recorded days",
     "hideEvidence": "Hide recorded days",
@@ -477,6 +484,16 @@
     "question": "Did symptoms affect your work today?",
     "notLogged": "Not logged",
     "help": "Counted only in your own BRIEF. Never shared with an employer.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "loadError": "Couldn't load today's entry, so saving is off to keep what you logged elsewhere. Try again later.",
+    "genericError": "Couldn't save that. Check your connection and try again."
+  },
+  "socialImpact": {
+    "question": "Did symptoms affect time with family or friends today?",
+    "notLogged": "Not logged",
+    "help": "Includes home life and plans with others. Counted only in your own BRIEF, never shared with an employer.",
     "save": "Save",
     "saving": "Saving…",
     "saved": "Saved ✓",

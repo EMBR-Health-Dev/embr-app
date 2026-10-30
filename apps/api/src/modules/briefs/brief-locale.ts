@@ -164,6 +164,8 @@ interface PdfStrings {
   workImpactBreakdownLine: (b: Record<"NONE" | "DID_LESS" | "MISSED_TIME", number>) => string;
   workImpactFewAnswersNote: string;
   workImpactPrivacyNote: string;
+  socialImpactHeading: string;
+  socialImpactBreakdownLine: (b: Record<"NONE" | "DID_LESS" | "MISSED_PLANS", number>) => string;
   exerciseHeading: string;
   exerciseAnsweredLine: (days: number) => string;
   exerciseBreakdownLine: (b: Record<"NONE" | "LIGHT" | "MODERATE" | "VIGOROUS", number>) => string;
@@ -262,6 +264,9 @@ const EN: PdfStrings = {
     `No effect on ${b.NONE}, did less on ${b.DID_LESS}, missed time on ${b.MISSED_TIME}.`,
   workImpactFewAnswersNote: "A breakdown is shown once 7 days have been answered.",
   workImpactPrivacyNote: "Her own daily answers. Never shared with any employer.",
+  socialImpactHeading: "Days symptoms affected family and social life",
+  socialImpactBreakdownLine: (b) =>
+    `No effect on ${b.NONE}, joined in less on ${b.DID_LESS}, missed or cancelled plans on ${b.MISSED_PLANS}.`,
   exerciseHeading: "Exercise",
   exerciseAnsweredLine: (days) => `Answered on ${days} day${days === 1 ? "" : "s"} in this period.`,
   exerciseBreakdownLine: (b) =>
@@ -400,6 +405,10 @@ const JA: PdfStrings = {
     `影響なし${b.NONE}日、仕事量が減った${b.DID_LESS}日、休んだ・早退した${b.MISSED_TIME}日。`,
   workImpactFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
   workImpactPrivacyNote: "本人による毎日の回答です。勤務先と共有されることはありません。",
+  // PDF wording mirrors the web and mobile Brief.socialImpact* strings.
+  socialImpactHeading: "症状が家族や友人との時間に影響した日",
+  socialImpactBreakdownLine: (b) =>
+    `影響なし${b.NONE}日、あまり参加できなかった${b.DID_LESS}日、予定を休んだ・キャンセルした${b.MISSED_PLANS}日。`,
   exerciseHeading: "運動",
   exerciseAnsweredLine: (days) => `この期間に${days}日分の回答がありました。`,
   exerciseBreakdownLine: (b) =>
@@ -528,6 +537,9 @@ const FR: PdfStrings = {
     `Sans effet\u00a0: ${b.NONE}, moins de travail\u00a0: ${b.DID_LESS}, temps de travail perdu\u00a0: ${b.MISSED_TIME}.`,
   workImpactFewAnswersNote: "Une répartition s’affiche à partir de 7 jours de réponses.",
   workImpactPrivacyNote: "Ses propres réponses quotidiennes. Jamais partagées avec un employeur.",
+  socialImpactHeading: "Jours où les symptômes ont affecté la vie familiale et sociale",
+  socialImpactBreakdownLine: (b) =>
+    `Sans effet\u00a0: ${b.NONE}, a moins participé\u00a0: ${b.DID_LESS}, a manqué ou annulé des projets\u00a0: ${b.MISSED_PLANS}.`,
   exerciseHeading: "Activité physique",
   exerciseAnsweredLine: (days) =>
     `Réponse donnée ${days} ${frPlural(days, "jour", "jours")} sur cette période.`,

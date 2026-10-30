@@ -593,6 +593,32 @@ describe("Dashboard — context quick-log", () => {
     );
   });
 
+  it("saves whether symptoms affected family and social life, and sends null when not logged", async () => {
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Today's context")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /Today's context/ }));
+    const contextSection = screen.getByText("Today's context").closest("div")!;
+
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(1));
+    expect(
+      (contextLogsUpsert.mock.calls[0] as [Record<string, unknown>])[0].socialImpact,
+    ).toBeNull();
+
+    await user.selectOptions(
+      screen.getByLabelText("Did symptoms affect time with family or friends today?"),
+      "MISSED_PLANS",
+    );
+    await user.click(within(contextSection).getByRole("button", { name: "Save today's entry" }));
+    await waitFor(() => expect(contextLogsUpsert).toHaveBeenCalledTimes(2));
+    expect((contextLogsUpsert.mock.calls[1] as [Record<string, unknown>])[0].socialImpact).toBe(
+      "MISSED_PLANS",
+    );
+  });
+
   it("keeps an earlier no as no, and lets her clear an answer back to not logged", async () => {
     const today = new Date();
     const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;

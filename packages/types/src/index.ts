@@ -286,6 +286,16 @@ export interface NightSweatsRecallSummaryDto {
  * organisation statistic. */
 export type WorkImpact = "NONE" | "DID_LESS" | "MISSED_TIME";
 
+/** Whether symptoms affected time with family or friends that day.
+ * Counted only for the person's own BRIEF; never sent to the AI and
+ * never part of any organisation statistic. */
+export type SocialImpact = "NONE" | "DID_LESS" | "MISSED_PLANS";
+
+export interface SocialImpactSummaryDto {
+  daysAnswered: number;
+  breakdown: Record<SocialImpact, number> | null;
+}
+
 /** How hard she exercised that day, as she judges it. */
 export type ExerciseLevel = "NONE" | "LIGHT" | "MODERATE" | "VIGOROUS";
 
@@ -397,6 +407,7 @@ export interface ContextLogDto {
   nightSweats: NightSweatsRecall | null;
   workImpact: WorkImpact | null;
   exercise: ExerciseLevel | null;
+  socialImpact: SocialImpact | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -940,6 +951,11 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * only when at least 7 were. Never sent to the AI. Null for a brief
    * generated before this field existed. */
   exercise: ExerciseSummaryDto | null;
+  /** Days in range where "did symptoms affect time with family or
+   * friends" was answered, and a per-answer count only when at least 7
+   * were. Never sent to the AI and never part of organisation
+   * statistics. Null for a brief generated before this field existed. */
+  socialImpact: SocialImpactSummaryDto | null;
   /** The monthly Menopause Rating Scale check-ins in the period. Null
    * when the brief predates the field or the check-in was switched off
    * when it was made. Never sent to the AI. */

@@ -671,6 +671,27 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </>
       )}
 
+      {brief.socialImpact && brief.socialImpact.daysAnswered > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.socialImpactTitle")}</Text>
+          {/* The answered, few answers and privacy lines read the same as
+              work impact's, so they are shared. */}
+          <Text style={styles.summaryLine}>
+            {t("brief.workImpactAnswered", { count: brief.socialImpact.daysAnswered })}
+          </Text>
+          <Text style={styles.summaryLine}>
+            {brief.socialImpact.breakdown
+              ? t("brief.socialImpactBreakdown", {
+                  none: brief.socialImpact.breakdown.NONE,
+                  didLess: brief.socialImpact.breakdown.DID_LESS,
+                  missedPlans: brief.socialImpact.breakdown.MISSED_PLANS,
+                })
+              : t("brief.workImpactFewAnswers")}
+          </Text>
+          <Text style={styles.summaryLine}>{t("brief.workImpactPrivate")}</Text>
+        </>
+      )}
+
       {/* Same rules: her own daily answers, never sent to the AI.
           Breakdown only from 7 answered days. */}
       {brief.exercise && brief.exercise.daysAnswered > 0 && (

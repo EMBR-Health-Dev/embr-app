@@ -90,6 +90,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    socialImpact: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -752,6 +753,32 @@ describe("Brief page — deterministic evidence sections", () => {
     expect(
       screen.getByText("Your own daily answers. Never shared with any employer."),
     ).toBeInTheDocument();
+  });
+
+  it("states days symptoms affected family and social life, with the breakdown from 7 days", async () => {
+    await generateWith(
+      brief({
+        socialImpact: { daysAnswered: 9, breakdown: { NONE: 5, DID_LESS: 3, MISSED_PLANS: 1 } },
+      }),
+    );
+    expect(
+      await screen.findByText("Days symptoms affected family and social life"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Answered on 9 days in this period.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No effect on 5, joined in less on 3, missed or cancelled plans on 1."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your own daily answers. Never shared with any employer."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the family and social section out when no day was answered", async () => {
+    await generateWith(brief({ socialImpact: { daysAnswered: 0, breakdown: null } }));
+    await screen.findByText("A narrative.");
+    expect(
+      screen.queryByText("Days symptoms affected family and social life"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows her reason for stopping under an ended treatment, and nothing for one without", async () => {

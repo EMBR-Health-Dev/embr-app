@@ -37,6 +37,7 @@ import { briefPeriodLabel } from "./brief-period-label.js";
 import { summarizeNightSweatsRecall } from "./night-sweats-recall.js";
 import { summarizeWorkImpact } from "./work-impact.js";
 import { summarizeExercise } from "./exercise.js";
+import { summarizeSocialImpact } from "./social-impact.js";
 import { summarizeMrs } from "./mrs-summary.js";
 import { env } from "../../config/env.js";
 import { summarizeLastRecordedPeriod } from "./last-recorded-period.js";
@@ -132,6 +133,7 @@ async function generateBriefContent(
     nightSweatsAnswers,
     workImpactAnswers,
     exerciseAnswers,
+    socialImpactAnswers,
     mrsCheckIns,
     lastPeriodDay,
     reportedLastPeriod,
@@ -143,6 +145,7 @@ async function generateBriefContent(
     briefRepository.listNightSweatsRecall(userId, firstDay, lastDay),
     briefRepository.listWorkImpact(userId, firstDay, lastDay),
     briefRepository.listExercise(userId, firstDay, lastDay),
+    briefRepository.listSocialImpact(userId, firstDay, lastDay),
     // Read only while the MRS check-in is switched on (licence); off,
     // the BRIEF has no MRS section at all.
     env.MRS_CHECK_IN_ENABLED
@@ -163,6 +166,9 @@ async function generateBriefContent(
   // Same rules: its own count, in this person's BRIEF only, never in
   // the AI input. See exercise.ts.
   const exercise = summarizeExercise(exerciseAnswers);
+  // The family and social counterpart of work impact, with the same
+  // rules. See social-impact.ts.
+  const socialImpact = summarizeSocialImpact(socialImpactAnswers);
   // Her monthly MRS check-ins in the period: first and latest scores
   // with the published reference bands. Never in the AI input. See
   // mrs-summary.ts.
@@ -371,6 +377,7 @@ async function generateBriefContent(
     nightSweatsRecall: JSON.parse(JSON.stringify(nightSweatsRecall)),
     workImpact: JSON.parse(JSON.stringify(workImpact)),
     exercise: JSON.parse(JSON.stringify(exercise)),
+    socialImpact: JSON.parse(JSON.stringify(socialImpact)),
     mrs: mrs === null ? null : JSON.parse(JSON.stringify(mrs)),
     lastRecordedPeriod: JSON.parse(JSON.stringify(lastRecordedPeriod)),
     // The exact same canonical object computed once above — used to
