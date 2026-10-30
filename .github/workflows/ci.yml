@@ -134,6 +134,15 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api exec prisma generate
+      # prisma migrate deploy exits 0 and logs "No pending migrations
+      # to apply" when apps/api/prisma/migrations is empty or missing —
+      # it does not fail. Every test in this suite mocks prisma.js and
+      # never touches the real Postgres service container below, so a
+      # silently-empty migrations directory would otherwise never
+      # surface as a CI failure at all (see docs/MIGRATION-AUDIT.md).
+      # This check exists specifically so that blind spot can't persist
+      # unnoticed once real migrations exist and one of them is ever
+      # accidentally missing from a commit.
       - name: Verify migration history exists
         run: |
           if [ -z "$(ls -A apps/api/prisma/migrations 2>/dev/null)" ]; then
@@ -165,6 +174,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      # Full GHSA ignore rationale restored from main; see git history of this
+      # file on main if this comment is ever shortened again.
+      # GHSA-w3rx-r6r6-pgpr, GHSA-5p2g-fcmc-qvqq (image-size), GHSA-86w9-cpqp-85rv
+      # (node-forge), GHSA-vfj7-8cjw-p6xm (braces): mobile/dev tooling only.
+      # GHSA-mrhx-c7xc-m3w5 (zod): mitigated via boundedArray until zod 4 migration.
       - name: Dependency audit (pnpm audit)
         run: |
           IGNORED_GHSAS=("GHSA-w3rx-r6r6-pgpr" "GHSA-5p2g-fcmc-qvqq" "GHSA-86w9-cpqp-85rv" "GHSA-vfj7-8cjw-p6xm" "GHSA-mrhx-c7xc-m3w5")
@@ -242,6 +256,8 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @embr/api exec prisma generate
+      # This job is the only one that actually runs `node dist/server.js` and
+      # proves the process reaches "api listening" (see #96, #98).
       - run: pnpm --filter @embr/shared --filter @embr/types --filter @embr/validation build
       - run: pnpm --filter @embr/api build
       - name: Start Redis
