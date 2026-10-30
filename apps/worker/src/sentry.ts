@@ -28,9 +28,13 @@ export function initSentry(logger: Logger): void {
         delete event.request.cookies;
         delete event.request.data;
         delete event.request.query_string;
+        delete event.request.headers;
         if (event.request.url) {
           event.request.url = event.request.url.split("?")[0];
         }
+      }
+      if (event.user) {
+        event.user = event.user.id === undefined ? {} : { id: event.user.id };
       }
       return event;
     },

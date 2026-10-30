@@ -23,6 +23,22 @@ describe("redactSentryEvent", () => {
     expect(result.request?.data).toBeUndefined();
   });
 
+  it("strips request headers — the mobile bearer token and the cookie header travel there", () => {
+    const event = {
+      request: {
+        headers: { authorization: "Bearer secret-access-token", cookie: "embr_refresh=secret" },
+      },
+    };
+    const result = redactSentryEvent(event as never);
+    expect(result.request?.headers).toBeUndefined();
+  });
+
+  it("keeps only the account id on the user, never email or IP address", () => {
+    const event = { user: { id: "u-1", email: "person@example.com", ip_address: "203.0.113.9" } };
+    const result = redactSentryEvent(event as never);
+    expect(result.user).toEqual({ id: "u-1" });
+  });
+
   it("strips query_string entirely", () => {
     const event = { request: { query_string: "token=abc123&email=person@example.com" } };
     const result = redactSentryEvent(event as never);
