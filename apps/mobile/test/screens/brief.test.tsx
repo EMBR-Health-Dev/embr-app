@@ -1204,7 +1204,10 @@ describe("Brief screen — deletion", () => {
       // not masking a second failure mode. See issue #115.
       { timeout: 5000 },
     );
-  });
+    // Above the waitFor's 5000ms, which equals Vitest's default test
+    // timeout: at the default, the test always timed out before the
+    // waitFor could pass or report its own failure.
+  }, 10_000);
 
   it("clears the just-generated section when that same brief is deleted from history", async () => {
     listMock.mockResolvedValue({
@@ -1241,7 +1244,8 @@ describe("Brief screen — deletion", () => {
       // (1176ms runtime vs ~130ms locally). See issue #115.
       { timeout: 5000 },
     );
-  });
+    // Same as the test above: room for the waitFor's own 5000ms.
+  }, 10_000);
 });
 
 describe("Brief screen — history", () => {
