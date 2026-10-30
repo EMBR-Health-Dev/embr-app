@@ -95,10 +95,10 @@ Auth: short-lived JWT access token (httpOnly cookie or Bearer), opaque hashed re
 
 ## Known gaps (engineering, not product roadmap)
 
-| Gap                                    | Status                                                                                               |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| OpenAPI incomplete vs current routes   | Spec restored on main (~48 paths); remaining coverage tracked in `docs/API-CONTRACT-COVERAGE.md`     |
-| `packages/sdk` unused                  | Accept for now; clients remain hand-maintained                                                       |
-| Worker has no real jobs                | Safe to leave deployed; not a signal of product health                                               |
-| Client-side error monitoring           | Not configured; API/worker Sentry only when `SENTRY_DSN` is set                                      |
-| Activity metrics use UTC calendar days | Documented in `docs/METRICS.md`; per-user time zones not stored                                      |
+| Gap                                    | Status                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| OpenAPI incomplete vs current routes   | Spec restored on main (~48 paths); remaining coverage tracked in `docs/API-CONTRACT-COVERAGE.md` |
+| `packages/sdk` unused                  | Accept for now; clients remain hand-maintained                                                   |
+| Worker has no real jobs                | Safe to leave deployed; not a signal of product health                                           |
+| Client-side error monitoring           | Not configured; API/worker Sentry only when `SENTRY_DSN` is set                                  |
+| Activity metrics use UTC calendar days | Documented in `docs/METRICS.md`; per-user time zones not stored                                  |

@@ -358,6 +358,43 @@ describe("GET /treatments", () => {
     expect(res.body.data.items).toHaveLength(1);
     expect(res.body.data.items[0].name).toBe("Current HRT");
   });
+
+  // Regression: z.coerce.boolean() read the string "false" as true, so
+  // this returned only the current treatment.
+  it("active=false applies no filter, the same as leaving it out", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "inactive@embr.health");
+
+    await agent.post("/treatments").send({
+      name: "Old supplement",
+      category: "SUPPLEMENT",
+      startDate: "2025-01-01",
+      endDate: "2025-06-01",
+    });
+    await agent
+      .post("/treatments")
+      .send({ name: "Current HRT", category: "HRT", startDate: "2025-01-01" });
+
+    const res = await agent.get("/treatments").query({ active: "false" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.map((t: { name: string }) => t.name).sort()).toEqual([
+      "Current HRT",
+      "Old supplement",
+    ]);
+  });
+
+  it("rejects an active value other than true or false", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "activeinvalid@embr.health");
+
+    for (const active of ["yes", "1", "0", ""]) {
+      const res = await agent.get("/treatments").query({ active });
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    }
+  });
 });
 
 describe("GET /treatments/:id/impact", () => {
