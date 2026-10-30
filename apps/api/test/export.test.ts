@@ -335,6 +335,7 @@ vi.mock("../src/lib/prisma.js", () => ({
       ),
     },
     mrsCheckIn: { findMany: vi.fn().mockResolvedValue([]) },
+    baselineCheckIn: { findUnique: vi.fn().mockResolvedValue(null) },
     treatment: {
       create: vi.fn(
         ({
@@ -841,7 +842,8 @@ describe("GET /export/all-data.json", () => {
 
     const body = JSON.parse(res.text);
     expect(body.format).toBe("embr-all-data");
-    expect(body.version).toBe(1);
+    expect(body.version).toBe(2);
+    expect(body.baselineCheckIn).toBeNull();
     expect(body.account).toEqual({
       id: userId,
       email: "all-data@embr.health",

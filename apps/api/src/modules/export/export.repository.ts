@@ -138,6 +138,7 @@ export const exportRepository = {
       treatments,
       notes,
       mrsCheckIns,
+      baselineCheckIn,
       briefs,
       reflectionDismissals,
       memberships,
@@ -154,6 +155,11 @@ export const exportRepository = {
       prisma.treatment.findMany({ ...byUser, orderBy: { startDate: "asc" } }),
       prisma.note.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
       prisma.mrsCheckIn.findMany({ ...byUser, orderBy: { completedOn: "asc" } }),
+      prisma.baselineCheckIn.findUnique({
+        where: { userId },
+        omit: { userId: true },
+        include: { symptoms: { omit: { baselineCheckInId: true }, orderBy: { category: "asc" } } },
+      }),
       prisma.clinicalBrief.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
       prisma.reflectionDismissal.findMany({ ...byUser, orderBy: { dismissedAt: "asc" } }),
       prisma.organizationMembership.findMany({
@@ -172,6 +178,7 @@ export const exportRepository = {
       treatments,
       notes,
       mrsCheckIns,
+      baselineCheckIn,
       briefs,
       reflectionDismissals,
       memberships,

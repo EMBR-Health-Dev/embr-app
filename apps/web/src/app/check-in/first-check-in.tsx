@@ -10,7 +10,7 @@ import { LanguageSwitcher } from "../../components/language-switcher";
 import { SafetyNotice } from "../../components/safety-notice";
 import { SeverityMark } from "../../components/severity-mark";
 import { richText } from "../../lib/rich-text";
-import { EARLY_ACCESS_HREF } from "../../lib/registration";
+import { SaveBaseline, useLongDate } from "./save-baseline";
 import {
   buildResult,
   clearAnswers,
@@ -70,6 +70,7 @@ export function FirstCheckIn() {
   const [answers, setAnswers] = useState<FirstCheckInAnswers>(emptyAnswers);
   const [restored, setRestored] = useState(false);
   const [cleared, setCleared] = useState(false);
+  const [savedOn, setSavedOn] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // Session storage only exists in the browser, so the restore waits for
@@ -98,6 +99,14 @@ export function FirstCheckIn() {
   function go(step: Step) {
     update({ step });
     window.scrollTo(0, 0);
+  }
+
+  // Called only once the server has confirmed her baseline exists; until
+  // then the answers stay in the tab.
+  function saved(completedOn: string) {
+    clearAnswers();
+    setAnswers(emptyAnswers());
+    setSavedOn(completedOn);
   }
 
   function clearAll() {
@@ -129,7 +138,7 @@ export function FirstCheckIn() {
           </Link>
           <LanguageSwitcher />
         </div>
-        {answers.step !== "result" && (
+        {!savedOn && answers.step !== "result" && (
           <p className="mt-6 text-caption text-foreground/60">
             {t("progress", { current: index + 1, total: STEPS.length - 1 })}
           </p>
@@ -142,10 +151,11 @@ export function FirstCheckIn() {
         )}
 
         <div className="flex flex-1 flex-col py-8">
-          {answers.step === "promise" && (
+          {savedOn && <Saved heading={heading} completedOn={savedOn} />}
+          {!savedOn && answers.step === "promise" && (
             <Promise heading={heading} onPick={(goal) => update({ goal, step: "symptoms" })} />
           )}
-          {answers.step === "symptoms" && (
+          {!savedOn && answers.step === "symptoms" && (
             <Symptoms
               heading={heading}
               symptoms={answers.symptoms}
@@ -154,7 +164,7 @@ export function FirstCheckIn() {
               onNext={() => go(answers.symptoms.length > 0 ? "details" : "context")}
             />
           )}
-          {answers.step === "details" && (
+          {!savedOn && answers.step === "details" && (
             <Details
               heading={heading}
               symptoms={answers.symptoms}
@@ -163,7 +173,7 @@ export function FirstCheckIn() {
               onNext={() => go("context")}
             />
           )}
-          {answers.step === "context" && (
+          {!savedOn && answers.step === "context" && (
             <Context
               heading={heading}
               answers={answers}
@@ -172,12 +182,13 @@ export function FirstCheckIn() {
               onNext={() => go("result")}
             />
           )}
-          {answers.step === "result" && (
+          {!savedOn && answers.step === "result" && (
             <Result
               heading={heading}
               answers={answers}
               onEdit={() => go("symptoms")}
               onClear={clearAll}
+              onSaved={saved}
             />
           )}
         </div>
@@ -187,6 +198,25 @@ export function FirstCheckIn() {
 }
 
 type Heading = (text: string) => React.ReactNode;
+
+function Saved({ heading, completedOn }: { heading: Heading; completedOn: string }) {
+  const t = useTranslations("FirstCheckIn.save");
+  const longDate = useLongDate();
+  return (
+    <>
+      {heading(t("savedTitle"))}
+      <p role="status" className="mt-4 text-sm text-foreground/80">
+        {t("savedBody", { date: longDate(completedOn) })}
+      </p>
+      <Link
+        href="/dashboard"
+        className="mt-8 inline-flex min-h-11 items-center justify-center rounded-sm bg-foreground px-5 text-sm font-medium text-background hover:bg-graphite-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        {t("goToDashboard")}
+      </Link>
+    </>
+  );
+}
 
 function NavRow({
   onBack,
@@ -445,11 +475,13 @@ function Result({
   answers,
   onEdit,
   onClear,
+  onSaved,
 }: {
   heading: Heading;
   answers: FirstCheckInAnswers;
   onEdit: () => void;
   onClear: () => void;
+  onSaved: (completedOn: string) => void;
 }) {
   const t = useTranslations("FirstCheckIn");
   const tEnum = useTranslations("Enums");
@@ -579,13 +611,7 @@ function Result({
         <h2 id="what-next" className="text-body-m font-medium text-foreground">
           {t("result.exitsTitle")}
         </h2>
-        <a
-          href={EARLY_ACCESS_HREF}
-          className="inline-flex min-h-11 items-center justify-center rounded-sm bg-foreground px-5 text-sm font-medium text-background hover:bg-graphite-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          {t("result.earlyAccess")}
-        </a>
-        <p className="text-caption text-foreground/60">{t("result.earlyAccessNote")}</p>
+        <SaveBaseline answers={answers} onSaved={onSaved} />
         <Button variant="ghost" className="min-h-11" onClick={() => window.print()}>
           {t("result.print")}
         </Button>

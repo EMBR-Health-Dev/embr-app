@@ -12,6 +12,17 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/check-in",
 }));
 
+const { auth, saveMock } = vi.hoisted(() => ({
+  auth: { user: null as null | { id: string }, loading: false },
+  saveMock: vi.fn(),
+}));
+vi.mock("../../lib/auth-context", () => ({
+  useAuth: () => ({ ...auth, refresh: vi.fn(), logout: vi.fn() }),
+}));
+vi.mock("../../lib/api", () => ({
+  api: { baselineCheckIns: { save: (...args: unknown[]) => saveMock(...args) } },
+}));
+
 const fetchSpy = vi.fn();
 
 function renderPage(locale: "en" | "ja" = "en") {
@@ -36,6 +47,8 @@ async function completeCheckIn(user: ReturnType<typeof userEvent.setup>) {
 }
 
 beforeEach(() => {
+  auth.user = null;
+  saveMock.mockReset();
   fetchSpy.mockReset();
   vi.stubGlobal("fetch", fetchSpy);
   vi.stubGlobal("print", vi.fn());
@@ -93,23 +106,29 @@ describe("First check in", () => {
 
     // No score, number or comparison anywhere on the result.
     const main = screen.getByRole("main").textContent ?? "";
-    expect(main).not.toMatch(/score|out of|\d+ ?%|compared/i);
+    // The only mention of a score is the line saying this is not one.
+    expect(main).toContain("not a validated clinical score");
+    expect(main.replace("not a validated clinical score", "")).not.toMatch(
+      /score|out of|\d+ ?%|compared/i,
+    );
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("offers early access while saving is not available, without sending her answers", async () => {
+  it("signed out, offers sign up or log in in this tab, and sends nothing yet", async () => {
     const user = userEvent.setup();
     renderPage();
     await completeCheckIn(user);
 
-    const link = screen.getByRole("link", { name: "Request early access" });
-    expect(link).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Save and keep tracking" })).toHaveAttribute(
       "href",
-      "mailto:info@embrhealthcare.com?subject=EMBR%20early%20access",
+      "/register?redirect=%2Fcheck-in",
     );
-    expect(link.getAttribute("href")).not.toMatch(/hot|flash|fog|severe/i);
-    expect(screen.queryByRole("button", { name: /keep tracking/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Already have an account? Log in to save" }),
+    ).toHaveAttribute("href", "/login?redirect=%2Fcheck-in");
+    expect(saveMock).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("keeps her place when the page is reloaded in the same tab", async () => {
@@ -177,5 +196,96 @@ describe("First check in", () => {
     expect(
       screen.getByRole("heading", { name: "約2分で、この2週間をふり返りましょう" }),
     ).toBeInTheDocument();
+  });
+
+  describe("signed in", () => {
+    beforeEach(() => {
+      auth.user = { id: "u1" };
+    });
+
+    it("saves her answers once, then clears them from the tab", async () => {
+      saveMock.mockResolvedValue({ created: true, baseline: { completedOn: "2026-10-29" } });
+      const user = userEvent.setup();
+      renderPage();
+      await completeCheckIn(user);
+      await user.click(screen.getByRole("button", { name: "Save as my starting point" }));
+
+      expect(
+        await screen.findByRole("heading", { name: "Saved as your starting point" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent("October 29, 2026");
+      expect(screen.getByRole("link", { name: "Go to my dashboard" })).toHaveAttribute(
+        "href",
+        "/dashboard",
+      );
+      expect(saveMock).toHaveBeenCalledTimes(1);
+      expect(saveMock.mock.calls[0]![0]).toEqual({
+        completedOn: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        timeZone: expect.any(String),
+        locale: "en",
+        goal: "PREPARE_FOR_APPOINTMENT",
+        sleepDuration: "UNDER_6H",
+        workImpact: null,
+        symptoms: [
+          { category: "HOT_FLASH", severity: "SEVERE", frequency: "MOST_DAYS" },
+          { category: "BRAIN_FOG", severity: "MILD", frequency: null },
+        ],
+      });
+      expect(window.sessionStorage.getItem(STORAGE_KEY) ?? "").not.toContain("HOT_FLASH");
+    });
+
+    it("keeps her answers when the save fails, and lets her try again", async () => {
+      saveMock
+        .mockRejectedValueOnce(new Error("offline"))
+        .mockResolvedValueOnce({ created: true, baseline: { completedOn: "2026-10-29" } });
+      const user = userEvent.setup();
+      renderPage();
+      await completeCheckIn(user);
+      await user.click(screen.getByRole("button", { name: "Save as my starting point" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Your answers could not be saved. They are still on this device, so you can try again.",
+      );
+      expect(window.sessionStorage.getItem(STORAGE_KEY)).toContain("HOT_FLASH");
+      expect(screen.getByRole("heading", { name: "Your last two weeks" })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Try again" }));
+      expect(
+        await screen.findByRole("heading", { name: "Saved as your starting point" }),
+      ).toBeInTheDocument();
+      expect(saveMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("tells her an earlier starting point stays as it was, and keeps these answers", async () => {
+      saveMock.mockResolvedValue({ created: false, baseline: { completedOn: "2026-10-20" } });
+      const user = userEvent.setup();
+      renderPage();
+      await completeCheckIn(user);
+      await user.click(screen.getByRole("button", { name: "Save as my starting point" }));
+
+      expect(
+        await screen.findByText(
+          "You already have a starting point from October 20, 2026. It stays as it was, and these answers were not saved.",
+        ),
+      ).toBeInTheDocument();
+      expect(window.sessionStorage.getItem(STORAGE_KEY)).toContain("HOT_FLASH");
+      expect(screen.getByRole("button", { name: "Clear my answers" })).toBeInTheDocument();
+    });
+
+    it("sends one save however many times she taps", async () => {
+      let resolve: (v: unknown) => void = () => {};
+      saveMock.mockReturnValue(new Promise((r) => (resolve = r)));
+      const user = userEvent.setup();
+      renderPage();
+      await completeCheckIn(user);
+      const button = screen.getByRole("button", { name: "Save as my starting point" });
+      await user.click(button);
+      await user.click(screen.getByRole("button", { name: "Saving…" }));
+      expect(saveMock).toHaveBeenCalledTimes(1);
+      resolve({ created: true, baseline: { completedOn: "2026-10-29" } });
+      expect(
+        await screen.findByRole("heading", { name: "Saved as your starting point" }),
+      ).toBeInTheDocument();
+    });
   });
 });

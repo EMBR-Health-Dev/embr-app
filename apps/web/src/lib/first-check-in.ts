@@ -1,5 +1,9 @@
 import type { SeverityLevel, SymptomCategory } from "@embr/types";
-import { severityLevelSchema, symptomCategorySchema } from "@embr/validation";
+import {
+  severityLevelSchema,
+  symptomCategorySchema,
+  type SaveBaselineCheckInInput,
+} from "@embr/validation";
 import { ONBOARDING_AREA_TO_CATEGORIES } from "./onboarding-areas";
 
 /**
@@ -174,5 +178,29 @@ export function buildResult(answers: FirstCheckInAnswers): FirstCheckInResult {
     ranked: ranked.slice(0, 3),
     nextStep: answers.goal === "PREPARE_FOR_APPOINTMENT" ? "KEEP_FOR_APPOINTMENT" : "TRACK_A_WEEK",
     questions: questions.slice(0, 3),
+  };
+}
+
+/** What the baseline save sends: her answers as she gave them, with the
+ * day and time zone she completed them in. Nothing else. */
+export function baselineRequest(
+  answers: FirstCheckInAnswers,
+  completedOn: string,
+  timeZone: string,
+  locale: "en" | "ja" | "fr",
+): SaveBaselineCheckInInput {
+  return {
+    completedOn,
+    timeZone,
+    locale,
+    goal: answers.goal,
+    sleepDuration: answers.sleep,
+    workImpact: answers.work,
+    symptoms: answers.symptoms.map(({ category, severity, frequency }) => ({
+      // OTHER is never offered and is dropped when answers are restored.
+      category: category as Exclude<SymptomCategory, "OTHER">,
+      severity,
+      frequency,
+    })),
   };
 }

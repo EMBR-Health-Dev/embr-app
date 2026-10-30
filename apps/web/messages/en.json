@@ -54,7 +54,8 @@
     "earlyAccessBody": "New accounts are not open yet. We are preparing EMBR for public use, including the privacy and legal documents that will apply when it opens. Request early access and we will be in touch.",
     "earlyAccessAction": "Request early access",
     "reassuranceTitle": "Your record stays yours.",
-    "reassuranceBody": "Export it, share it, or delete it when you choose."
+    "reassuranceBody": "Export it, share it, or delete it when you choose.",
+    "checkInSignInFailed": "Your account was created. Log in to save your answers; they are still in this tab."
   },
   "ForgotPassword": {
     "title": "Reset your password",
@@ -1661,7 +1662,7 @@
       "sleep": "Usual sleep: {value}",
       "work": "Work affected: {value}",
       "limitsTitle": "What this can and cannot tell you",
-      "limitsBody": "It describes what you reported for the last two weeks. It is not a diagnosis. It does not name a cause or say whether this is perimenopause. A clinician can help with that.",
+      "limitsBody": "It describes what you reported for the last two weeks: your own recall, not a validated clinical score. It is not a diagnosis. It does not name a cause or say whether this is perimenopause. A clinician can help with that.",
       "nextTitle": "One next step",
       "next": {
         "TRACK_A_WEEK": "Track for a week. Daily entries can show patterns that a look back over two weeks cannot.",
@@ -1684,6 +1685,20 @@
       "sooner": "What changes would mean I should come back sooner?",
       "track": "What would be most useful for me to keep track of before we next talk?",
       "general": "Which changes are worth mentioning to you, even if they seem small?"
+    },
+    "save": {
+      "saveAction": "Save as my starting point",
+      "saveNote": "Saves these answers to your account once, as your starting point. They are your own recall of the last two weeks, not a clinical score, and cannot be changed later.",
+      "saving": "Saving…",
+      "retry": "Try again",
+      "errorBody": "Your answers could not be saved. They are still on this device, so you can try again.",
+      "existsBody": "You already have a starting point from {date}. It stays as it was, and these answers were not saved.",
+      "savedTitle": "Saved as your starting point",
+      "savedBody": "Your answers from {date} are in your account and have been cleared from this device. Your daily check ins will build on them.",
+      "goToDashboard": "Go to my dashboard",
+      "signUpAction": "Save and keep tracking",
+      "signUpNote": "Create an account to keep these answers. They are sent only after you agree to EMBR processing your health information.",
+      "logInToSave": "Already have an account? Log in to save"
     }
   }
 }
