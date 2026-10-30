@@ -24,6 +24,7 @@ import YAML from "yaml";
 
 /** Known-good path count after restoring from ee3b0c1 / PR #304. Floor, not target. */
 const MIN_PATHS = 47;
+const MIN_BYTES = 10_000;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // apps/api/scripts → repo root docs/openapi.yaml
@@ -70,9 +71,10 @@ try {
   fail(`cannot read ${openapiPath}: ${err.message}`);
 }
 
-if (raw.length < 10_000) {
+const byteLength = Buffer.byteLength(raw, "utf8");
+if (byteLength < MIN_BYTES) {
   fail(
-    `docs/openapi.yaml is only ${raw.length} bytes — likely truncated (expected a full multi-path contract, known-good ~49 KB)`,
+    `docs/openapi.yaml is only ${byteLength} bytes — likely truncated (expected a full multi-path contract, known-good ~49 KB)`,
   );
 }
 
@@ -88,8 +90,8 @@ if (!doc || typeof doc !== "object") {
 }
 
 const version = String(doc.openapi ?? "");
-if (!version.startsWith("3.1")) {
-  fail(`expected openapi 3.1.x, got ${JSON.stringify(doc.openapi)}`);
+if (!/^3\.1\.\d+$/.test(version)) {
+  fail(`expected openapi 3.1.x (e.g. 3.1.0), got ${JSON.stringify(doc.openapi)}`);
 }
 
 const paths = doc.paths && typeof doc.paths === "object" ? Object.keys(doc.paths) : [];
@@ -113,5 +115,5 @@ if (missing.length > 0) {
 }
 
 console.log(
-  `OpenAPI contract OK: openapi=${version}, paths=${paths.length} (min ${MIN_PATHS}), local $refs=${refs.length} resolved`,
+  `OpenAPI contract OK: openapi=${version}, paths=${paths.length} (min ${MIN_PATHS}), bytes=${byteLength}, local $refs=${refs.length} resolved`,
 );
