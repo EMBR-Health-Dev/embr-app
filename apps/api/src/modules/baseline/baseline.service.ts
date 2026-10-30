@@ -21,6 +21,7 @@ export function toBaselineCheckInDto(row: Row): BaselineCheckInDto {
     goal: row.goal,
     sleepDuration: row.sleepDuration,
     workImpact: row.workImpact,
+    symptomsAnswered: row.symptomsAnswered,
     symptoms: row.symptoms.map((s) => ({
       category: s.category,
       severity: s.severity,

@@ -159,7 +159,10 @@ export function FirstCheckIn() {
             <Symptoms
               heading={heading}
               symptoms={answers.symptoms}
-              onChange={(symptoms) => update({ symptoms })}
+              noneOfThese={answers.noneOfThese}
+              // Picking a symptom withdraws "none of these"; choosing it clears the picks.
+              onChange={(symptoms) => update({ symptoms, noneOfThese: false })}
+              onNone={() => update({ symptoms: [], noneOfThese: !answers.noneOfThese })}
               onBack={() => go("promise")}
               onNext={() => go(answers.symptoms.length > 0 ? "details" : "context")}
             />
@@ -268,13 +271,17 @@ function Promise({ heading, onPick }: { heading: Heading; onPick: (goal: Goal) =
 function Symptoms({
   heading,
   symptoms,
+  noneOfThese,
   onChange,
+  onNone,
   onBack,
   onNext,
 }: {
   heading: Heading;
   symptoms: SymptomAnswer[];
+  noneOfThese: boolean;
   onChange: (symptoms: SymptomAnswer[]) => void;
+  onNone: () => void;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -312,11 +319,22 @@ function Symptoms({
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-pressed={noneOfThese}
+          onClick={onNone}
+          className={`${choice} mt-2 w-full ${noneOfThese ? chosen : unchosen}`}
+        >
+          <span>{t("symptoms.none")}</span>
+          <span aria-hidden="true" className="text-caption">
+            {noneOfThese ? "✓" : ""}
+          </span>
+        </button>
       </fieldset>
       <NavRow
         onBack={onBack}
         onNext={onNext}
-        nextLabel={symptoms.length > 0 ? t("continue") : t("skip")}
+        nextLabel={symptoms.length > 0 || noneOfThese ? t("continue") : t("skip")}
       />
     </>
   );

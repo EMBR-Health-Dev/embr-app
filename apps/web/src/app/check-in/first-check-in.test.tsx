@@ -226,12 +226,64 @@ describe("First check in", () => {
         goal: "PREPARE_FOR_APPOINTMENT",
         sleepDuration: "UNDER_6H",
         workImpact: null,
+        symptomsAnswered: true,
         symptoms: [
           { category: "HOT_FLASH", severity: "SEVERE", frequency: "MOST_DAYS" },
           { category: "BRAIN_FOG", severity: "MILD", frequency: null },
         ],
       });
       expect(window.sessionStorage.getItem(STORAGE_KEY) ?? "").not.toContain("HOT_FLASH");
+    });
+
+    it('saves "none of these" as an answer, and a skipped question as not answered', async () => {
+      saveMock.mockResolvedValue({ created: true, baseline: { completedOn: "2026-10-29" } });
+
+      // Chose "none of these": an answer, with nothing picked.
+      let user = userEvent.setup();
+      const first = renderPage();
+      await user.click(screen.getByRole("button", { name: "Not sure yet" }));
+      expect(screen.getByRole("button", { name: "Skip" })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "None of these" }));
+      expect(screen.getByRole("button", { name: "None of these" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      expect(screen.queryByRole("button", { name: "Skip" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+      await user.click(screen.getByRole("button", { name: "Skip and see my result" }));
+      await user.click(screen.getByRole("button", { name: "Save as my starting point" }));
+      await screen.findByRole("heading", { name: "Saved as your starting point" });
+      expect(saveMock.mock.calls[0]![0]).toMatchObject({ symptoms: [], symptomsAnswered: true });
+      first.unmount();
+
+      // Skipped the question: the same empty list, but not an answer.
+      saveMock.mockClear();
+      window.sessionStorage.clear();
+      user = userEvent.setup();
+      renderPage();
+      await user.click(screen.getByRole("button", { name: "Not sure yet" }));
+      await user.click(screen.getByRole("button", { name: "Skip" }));
+      await user.click(screen.getByRole("button", { name: "Skip and see my result" }));
+      await user.click(screen.getByRole("button", { name: "Save as my starting point" }));
+      await screen.findByRole("heading", { name: "Saved as your starting point" });
+      expect(saveMock.mock.calls[0]![0]).toMatchObject({ symptoms: [], symptomsAnswered: false });
+    });
+
+    it('picking a symptom withdraws "none of these", and choosing it clears the picks', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(screen.getByRole("button", { name: "Not sure yet" }));
+      await user.click(screen.getByRole("button", { name: "None of these" }));
+      await user.click(screen.getByRole("button", { name: "Hot Flash" }));
+      expect(screen.getByRole("button", { name: "None of these" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+      await user.click(screen.getByRole("button", { name: "None of these" }));
+      expect(screen.getByRole("button", { name: "Hot Flash" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
     });
 
     it("keeps her answers when the save fails, and lets her try again", async () => {

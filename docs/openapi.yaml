@@ -980,7 +980,17 @@ paths:
           application/json:
             schema:
               type: object
-              required: [completedOn, timeZone, locale, goal, sleepDuration, workImpact, symptoms]
+              required:
+                [
+                  completedOn,
+                  timeZone,
+                  locale,
+                  goal,
+                  sleepDuration,
+                  workImpact,
+                  symptomsAnswered,
+                  symptoms,
+                ]
               properties:
                 completedOn:
                   type: string
@@ -1002,10 +1012,18 @@ paths:
                 sleepDuration:
                   { type: string, nullable: true, enum: [UNDER_6H, SIX_TO_SEVEN_H, SEVEN_PLUS_H] }
                 workImpact: { type: string, nullable: true, enum: [NONE, DID_LESS, MISSED_TIME] }
+                symptomsAnswered:
+                  type: boolean
+                  description: >-
+                    True when she answered the symptoms question (picked some, or chose
+                    "none of these"); false when she skipped it. Must be true when
+                    `symptoms` is not empty. An empty list with false means not answered,
+                    never "no symptoms".
                 symptoms:
                   type: array
-                  maxItems: 13
-                  description: Unique categories; OTHER is refused.
+                  description: >-
+                    Unique categories, one entry per symptom she picked; OTHER is refused.
+                    At most one per category.
                   items:
                     type: object
                     required: [category, severity, frequency]

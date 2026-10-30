@@ -858,24 +858,35 @@ export const recallFrequencySchema = z.enum(["FEW_DAYS", "HALF_THE_DAYS", "MOST_
 /** The recall window the first check in asks about, in days. */
 export const BASELINE_RECALL_DAYS = 14;
 
-export const saveBaselineCheckInSchema = z.object({
-  /** Her local date when she completed it; checked against timeZone by the API. */
-  completedOn: isoCalendarDate,
-  timeZone: knownTimeZone,
-  locale: consentLocaleSchema,
-  goal: onboardingJobToBeDoneSchema.nullable(),
-  sleepDuration: sleepDurationBucketSchema.nullable(),
-  workImpact: workImpactSchema.nullable(),
-  symptoms: boundedArray(
-    z.object({
-      // "Other" needs words to mean anything, and the check in has no free text.
-      category: symptomCategorySchema.exclude(["OTHER"]),
-      severity: severityLevelSchema.nullable(),
-      frequency: recallFrequencySchema.nullable(),
+export const saveBaselineCheckInSchema = z
+  .object({
+    /** Her local date when she completed it; checked against timeZone by the API. */
+    completedOn: isoCalendarDate,
+    timeZone: knownTimeZone,
+    locale: consentLocaleSchema,
+    goal: onboardingJobToBeDoneSchema.nullable(),
+    sleepDuration: sleepDurationBucketSchema.nullable(),
+    workImpact: workImpactSchema.nullable(),
+    /**
+     * True when she answered the symptoms question: she picked symptoms, or
+     * chose "none of these". False when she skipped it. An empty list with
+     * false means "not answered", never "no symptoms".
+     */
+    symptomsAnswered: z.boolean(),
+    symptoms: boundedArray(
+      z.object({
+        // "Other" needs words to mean anything, and the check in has no free text.
+        category: symptomCategorySchema.exclude(["OTHER"]),
+        severity: severityLevelSchema.nullable(),
+        frequency: recallFrequencySchema.nullable(),
+      }),
+      symptomCategorySchema.options.length - 1,
+    ).refine((symptoms) => new Set(symptoms.map((s) => s.category)).size === symptoms.length, {
+      message: "Each symptom can appear only once",
     }),
-    symptomCategorySchema.options.length - 1,
-  ).refine((symptoms) => new Set(symptoms.map((s) => s.category)).size === symptoms.length, {
-    message: "Each symptom can appear only once",
-  }),
-});
+  })
+  .refine((input) => input.symptoms.length === 0 || input.symptomsAnswered, {
+    message: "A baseline that lists symptoms has answered the symptoms question",
+    path: ["symptomsAnswered"],
+  });
 export type SaveBaselineCheckInInput = z.infer<typeof saveBaselineCheckInSchema>;

@@ -1600,7 +1600,8 @@
     },
     "symptoms": {
       "headline": "What have you noticed in the last two weeks?",
-      "hint": "Pick any that apply, or skip this step."
+      "hint": "Pick any that apply, choose none of these, or skip this step.",
+      "none": "None of these"
     },
     "details": {
       "headline": "For each one, how strong was it at its worst, and how often?",

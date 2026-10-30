@@ -53,6 +53,9 @@ export interface FirstCheckInAnswers {
   step: Step;
   goal: Goal | null;
   symptoms: SymptomAnswer[];
+  /** She chose "none of these" on the symptoms step. Different from
+   * skipping it: both leave the list empty, only this one is an answer. */
+  noneOfThese: boolean;
   sleep: (typeof SLEEP_OPTIONS)[number] | null;
   work: (typeof WORK_OPTIONS)[number] | null;
 }
@@ -68,6 +71,8 @@ function isAnswers(value: unknown): value is FirstCheckInAnswers {
   if (v.version !== 1 || !STEPS.includes(v.step as Step)) return false;
   if (!oneOfOrNull(GOALS, v.goal) || !oneOfOrNull(SLEEP_OPTIONS, v.sleep)) return false;
   if (!oneOfOrNull(WORK_OPTIONS, v.work) || !Array.isArray(v.symptoms)) return false;
+  // Absent in answers written before this field existed; read as false.
+  if (v.noneOfThese !== undefined && typeof v.noneOfThese !== "boolean") return false;
   const seen = new Set<string>();
   return v.symptoms.every((s: unknown) => {
     if (typeof s !== "object" || s === null) return false;
@@ -82,7 +87,15 @@ function isAnswers(value: unknown): value is FirstCheckInAnswers {
 }
 
 export function emptyAnswers(): FirstCheckInAnswers {
-  return { version: 1, step: "promise", goal: null, symptoms: [], sleep: null, work: null };
+  return {
+    version: 1,
+    step: "promise",
+    goal: null,
+    symptoms: [],
+    noneOfThese: false,
+    sleep: null,
+    work: null,
+  };
 }
 
 // Session storage, not local storage: on a shared or borrowed computer
@@ -96,7 +109,9 @@ export function loadAnswers(): FirstCheckInAnswers {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return emptyAnswers();
     const parsed: unknown = JSON.parse(raw);
-    return isAnswers(parsed) ? parsed : emptyAnswers();
+    return isAnswers(parsed)
+      ? { ...parsed, noneOfThese: parsed.noneOfThese === true && parsed.symptoms.length === 0 }
+      : emptyAnswers();
   } catch {
     return emptyAnswers();
   }
@@ -196,6 +211,9 @@ export function baselineRequest(
     goal: answers.goal,
     sleepDuration: answers.sleep,
     workImpact: answers.work,
+    // Picking symptoms or choosing "none of these" answers the question;
+    // skipping it does not, so an empty list is never read as "no symptoms".
+    symptomsAnswered: answers.symptoms.length > 0 || answers.noneOfThese,
     symptoms: answers.symptoms.map(({ category, severity, frequency }) => ({
       // OTHER is never offered and is dropped when answers are restored.
       category: category as Exclude<SymptomCategory, "OTHER">,

@@ -1042,6 +1042,10 @@ model BaselineCheckIn {
   goal                 OnboardingJobToBeDone?
   sleepDuration        SleepDurationBucket?
   workImpact           WorkImpact?
+  /// True when she answered the symptoms question: she picked symptoms, or
+  /// chose "none of these". False when she skipped it, so an empty list
+  /// means "not answered" and is never read as "no symptoms".
+  symptomsAnswered     Boolean                  @default(false)
   /// The health information consent that covered the save, copied from
   /// the consent ledger (which keeps the full record).
   healthConsentVersion String

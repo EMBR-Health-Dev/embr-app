@@ -1127,6 +1127,10 @@ export interface BaselineCheckInDto {
     | null;
   sleepDuration: SleepDurationBucket | null;
   workImpact: WorkImpact | null;
+  /** True when she answered the symptoms question (picked some, or chose
+   * "none of these"); false when she skipped it. With no symptoms listed,
+   * false means "not answered", not "no symptoms". */
+  symptomsAnswered: boolean;
   symptoms: Array<{
     category: SymptomCategory;
     severity: SeverityLevel | null;

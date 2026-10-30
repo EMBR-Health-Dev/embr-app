@@ -42,6 +42,7 @@ export const baselineRepository = {
           goal: input.goal,
           sleepDuration: input.sleepDuration,
           workImpact: input.workImpact,
+          symptomsAnswered: input.symptomsAnswered,
           healthConsentVersion: consent.version,
           healthConsentAt: consent.grantedAt,
           symptoms: { create: input.symptoms },

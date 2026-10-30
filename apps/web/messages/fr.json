@@ -1508,7 +1508,8 @@
     },
     "symptoms": {
       "headline": "Qu’avez-vous remarqué ces deux dernières semaines ?",
-      "hint": "Choisissez tout ce qui vous concerne, ou passez cette étape."
+      "hint": "Choisissez tout ce qui vous concerne, indiquez qu’aucun ne vous concerne, ou passez cette étape.",
+      "none": "Aucun de ceux-ci"
     },
     "details": {
       "headline": "Pour chacun, quelle intensité au pire moment, et à quelle fréquence ?",

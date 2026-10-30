@@ -99,6 +99,7 @@ function body(overrides: Record<string, unknown> = {}) {
     goal: "PREPARE_FOR_APPOINTMENT",
     sleepDuration: "UNDER_6H",
     workImpact: null,
+    symptomsAnswered: true,
     symptoms: [
       { category: "HOT_FLASH", severity: "SEVERE", frequency: "MOST_DAYS" },
       { category: "BRAIN_FOG", severity: null, frequency: null },
@@ -225,6 +226,34 @@ describe.skipIf(!reachable)("Baseline check in against Postgres", () => {
     expect(aAfter.body.data.baseline).toEqual(forA.body.data.baseline);
   });
 
+  it('keeps "none of these" and a skipped question apart, though both list no symptoms', async () => {
+    const none = await person();
+    const skipped = await person();
+
+    const noneRes = await request(app)
+      .post("/baseline-check-ins")
+      .set(none.auth)
+      .send(body({ symptoms: [], symptomsAnswered: true }));
+    const skippedRes = await request(app)
+      .post("/baseline-check-ins")
+      .set(skipped.auth)
+      .send(body({ symptoms: [], symptomsAnswered: false }));
+    expect(noneRes.status).toBe(201);
+    expect(skippedRes.status).toBe(201);
+    expect(noneRes.body.data.baseline).toMatchObject({ symptoms: [], symptomsAnswered: true });
+    expect(skippedRes.body.data.baseline).toMatchObject({ symptoms: [], symptomsAnswered: false });
+
+    // The stored value is what comes back on a later read, and a retry never changes it.
+    const read = await request(app).get("/baseline-check-ins").set(skipped.auth);
+    expect(read.body.data.baseline.symptomsAnswered).toBe(false);
+    const retry = await request(app)
+      .post("/baseline-check-ins")
+      .set(skipped.auth)
+      .send(body({ symptoms: [], symptomsAnswered: true }));
+    expect(retry.status).toBe(200);
+    expect(retry.body.data.baseline.symptomsAnswered).toBe(false);
+  });
+
   it.each([
     [
       "Other, which has no meaning without words",
@@ -239,6 +268,8 @@ describe.skipIf(!reachable)("Baseline check in against Postgres", () => {
         ],
       },
     ],
+    ["symptoms listed but the question marked unanswered", { symptomsAnswered: false }],
+    ["no symptomsAnswered field at all", { symptomsAnswered: undefined }],
     ["an unknown time zone", { timeZone: "Mars/Olympus" }],
     ["a date in the future", { completedOn: "2999-01-01" }],
     ["a date more than a week old", { completedOn: "2020-01-01" }],

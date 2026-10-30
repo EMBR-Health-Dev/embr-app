@@ -36,7 +36,8 @@ Spec: "EMBR account free first check in" (Claude doc), phase 2. Phase 1
 ## Database migration
 
 `20261029120000_baseline_check_ins`, additive only: two new tables and one
-new enum. No existing table or column changes, so it is safe to roll
+new enum. A second migration, `20261030140000_baseline_symptoms_answered`,
+adds the one column `symptomsAnswered` (default false) to a table the first migration creates. Neither changes an existing table or column, so it is safe to roll
 forward and nothing existing is rewritten.
 
 ```prisma
@@ -58,6 +59,7 @@ model BaselineCheckIn {
   goal                 OnboardingJobToBeDone?
   sleepDuration        SleepDurationBucket?
   workImpact           WorkImpact?
+  symptomsAnswered     Boolean                           @default(false)  // skipped vs answered
   healthConsentVersion String                            // copied from the consent ledger at save time
   healthConsentAt      DateTime
   createdAt            DateTime               @default(now())
@@ -118,7 +120,11 @@ Request:
 - `completedOn` must be her local today or up to 7 days before (a tab left
   open), never in the future, judged in `timeZone`.
 - `timeZone` must be a known IANA zone.
-- `symptoms`: 0 to 13, unique categories, no `OTHER`.
+- `symptoms`: unique categories, at most one per category, no `OTHER`.
+- `symptomsAnswered`: true when she picked symptoms or chose "none of
+  these", false when she skipped the question. It must be true whenever
+  `symptoms` is not empty. An empty list with `false` means "not
+  answered" and is never read as "no symptoms".
 
 Responses:
 
