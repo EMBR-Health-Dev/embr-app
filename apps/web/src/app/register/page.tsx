@@ -2,7 +2,7 @@
 
 import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type { ConsentType } from "@embr/types";
 import { CONSENT_TYPES, LEGAL_DOCUMENT_VERSIONS, registerSchema } from "@embr/validation";
@@ -10,6 +10,8 @@ import { api } from "../../lib/api";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "../../i18n/locale";
 import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 import { ApiError } from "../../lib/api-client";
+import { useAuth } from "../../lib/auth-context";
+import { consentHref, needsConsentReview } from "../../lib/consent";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { PasswordField } from "../../components/password-field";
@@ -29,6 +31,13 @@ function RegisterForm() {
   const locale: Locale = isLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
+  const router = useRouter();
+  const { refresh } = useAuth();
+  // From the first check in: her answers are in this tab, and the
+  // verification email would open in another, so sign her in now with
+  // the password she just typed and take her back to save them.
+  const fromCheckIn = redirectParam === "/check-in";
+  const [signInFailed, setSignInFailed] = useState(false);
   const loginHref = redirectParam
     ? `/login?redirect=${encodeURIComponent(redirectParam)}`
     : "/login";
@@ -76,6 +85,17 @@ function RegisterForm() {
     setSubmitting(true);
     try {
       await api.auth.register(parsed.data);
+      if (fromCheckIn) {
+        try {
+          const session = await api.auth.login({ email, password });
+          await refresh();
+          router.push(needsConsentReview(session.user) ? consentHref("/check-in") : "/check-in");
+          return;
+        } catch {
+          // The account exists; she can log in from the next screen.
+          setSignInFailed(true);
+        }
+      }
       setDone(true);
     } catch (err) {
       if (err instanceof ApiError && err.code === "CONSENT_VERSION_OUTDATED") {
@@ -106,6 +126,11 @@ function RegisterForm() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
         <h1 className="font-display text-display-m text-foreground">{t("checkEmailTitle")}</h1>
+        {signInFailed && (
+          <p role="alert" className="max-w-sm text-sm font-medium text-foreground">
+            {t("checkInSignInFailed")}
+          </p>
+        )}
         <p className="max-w-sm text-foreground/70">
           {t.rich("checkEmailBody", {
             email,

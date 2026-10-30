@@ -416,28 +416,30 @@ export type ContextLogQuery = z.infer<typeof contextLogQuerySchema>;
 // not a page of it. The route layer applies its own hard safety cap
 // (see exportRepository) rather than exposing that as a client-facing
 // parameter.
+/** An IANA time zone this runtime knows; anything else is refused. */
+const knownTimeZone = z
+  .string()
+  .min(1)
+  .max(64)
+  .refine(
+    (zone) => {
+      try {
+        new Intl.DateTimeFormat("en-US", { timeZone: zone });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: "Unknown time zone" },
+  );
+
 export const exportQuerySchema = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
   /** The device's IANA time zone. The clinician summary PDF prints each
    * entry on her local day with it; without it, dates are UTC. An
    * unknown zone is refused here, before any query uses it. */
-  timeZone: z
-    .string()
-    .min(1)
-    .max(64)
-    .refine(
-      (zone) => {
-        try {
-          new Intl.DateTimeFormat("en-US", { timeZone: zone });
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      { message: "Unknown time zone" },
-    )
-    .optional(),
+  timeZone: knownTimeZone.optional(),
 });
 export type ExportQuery = z.infer<typeof exportQuerySchema>;
 
@@ -859,3 +861,47 @@ export const perimenopauseAssessmentSchema = z
   })
   .strict();
 export type PerimenopauseAssessmentInput = z.infer<typeof perimenopauseAssessmentSchema>;
+
+// ---- Baseline check in (the first check in, saved to an account) ----
+//
+// Her recall of the last two weeks, saved once as her starting point.
+// Self reported, not a clinical score. See docs/planning/baseline-check-in.md.
+
+/** How often over the recall window, as she recalls it. */
+export const recallFrequencySchema = z.enum(["FEW_DAYS", "HALF_THE_DAYS", "MOST_DAYS"]);
+
+/** The recall window the first check in asks about, in days. */
+export const BASELINE_RECALL_DAYS = 14;
+
+export const saveBaselineCheckInSchema = z
+  .object({
+    /** Her local date when she completed it; checked against timeZone by the API. */
+    completedOn: isoCalendarDate,
+    timeZone: knownTimeZone,
+    locale: consentLocaleSchema,
+    goal: onboardingJobToBeDoneSchema.nullable(),
+    sleepDuration: sleepDurationBucketSchema.nullable(),
+    workImpact: workImpactSchema.nullable(),
+    /**
+     * True when she answered the symptoms question: she picked symptoms, or
+     * chose "none of these". False when she skipped it. An empty list with
+     * false means "not answered", never "no symptoms".
+     */
+    symptomsAnswered: z.boolean(),
+    symptoms: boundedArray(
+      z.object({
+        // "Other" needs words to mean anything, and the check in has no free text.
+        category: symptomCategorySchema.exclude(["OTHER"]),
+        severity: severityLevelSchema.nullable(),
+        frequency: recallFrequencySchema.nullable(),
+      }),
+      symptomCategorySchema.options.length - 1,
+    ).refine((symptoms) => new Set(symptoms.map((s) => s.category)).size === symptoms.length, {
+      message: "Each symptom can appear only once",
+    }),
+  })
+  .refine((input) => input.symptoms.length === 0 || input.symptomsAnswered, {
+    message: "A baseline that lists symptoms has answered the symptoms question",
+    path: ["symptomsAnswered"],
+  });
+export type SaveBaselineCheckInInput = z.infer<typeof saveBaselineCheckInSchema>;

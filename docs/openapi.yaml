@@ -956,6 +956,97 @@ paths:
       responses:
         "302":
           { description: "Redirect to /dashboard on success, or /login?ssoError=... on failure" }
+  /baseline-check-ins:
+    get:
+      summary: Her baseline check in, or null
+      description: >
+        Her first check in, saved once as her starting point: her own
+        recall of the last two weeks, self reported, not a clinical score.
+        Only ever the signed in person's own. Needs current consent,
+        including health processing.
+      tags: [Baseline]
+      security: [{ cookieAuth: [] }]
+      responses:
+        "200":
+          description: "`{ data: { baseline: BaselineCheckIn | null } }`"
+        "401": { description: Not signed in }
+        "403": { description: CONSENT_REQUIRED }
+    post:
+      summary: Save her first check in as her baseline, once
+      description: >
+        Creates her baseline, or returns the one she already has unchanged
+        (one per account, never edited). A retry after a lost response is
+        safe. Needs current consent, including health processing; the
+        baseline keeps the version and time of the health consent that
+        covered it. Never writes daily symptom or context logs.
+      tags: [Baseline]
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                [
+                  completedOn,
+                  timeZone,
+                  locale,
+                  goal,
+                  sleepDuration,
+                  workImpact,
+                  symptomsAnswered,
+                  symptoms,
+                ]
+              properties:
+                completedOn:
+                  type: string
+                  format: date
+                  description: Her local date; today or up to 7 days before, in timeZone.
+                timeZone: { type: string, example: Asia/Tokyo }
+                locale: { type: string, enum: [en, ja, fr] }
+                goal:
+                  type: string
+                  nullable: true
+                  enum:
+                    [
+                      UNDERSTAND_EXPERIENCE,
+                      UNDERSTAND_PATTERNS,
+                      PREPARE_FOR_APPOINTMENT,
+                      KEEP_RECORD,
+                      NOT_SURE,
+                    ]
+                sleepDuration:
+                  { type: string, nullable: true, enum: [UNDER_6H, SIX_TO_SEVEN_H, SEVEN_PLUS_H] }
+                workImpact: { type: string, nullable: true, enum: [NONE, DID_LESS, MISSED_TIME] }
+                symptomsAnswered:
+                  type: boolean
+                  description: >-
+                    True when she answered the symptoms question (picked some, or chose
+                    "none of these"); false when she skipped it. Must be true when
+                    `symptoms` is not empty. An empty list with false means not answered,
+                    never "no symptoms".
+                symptoms:
+                  type: array
+                  description: >-
+                    Unique categories, one entry per symptom she picked; OTHER is refused.
+                    At most one per category.
+                  items:
+                    type: object
+                    required: [category, severity, frequency]
+                    properties:
+                      category: { $ref: "#/components/schemas/SymptomCategory" }
+                      severity: { type: string, nullable: true, enum: [MILD, MODERATE, SEVERE] }
+                      frequency:
+                        { type: string, nullable: true, enum: [FEW_DAYS, HALF_THE_DAYS, MOST_DAYS] }
+      responses:
+        "201": { description: "Saved now: `{ data: { baseline, created: true } }`" }
+        "200":
+          description: "She already had one, returned unchanged: `{ data: { baseline, created: false } }`"
+        "400": { description: Invalid body }
+        "401": { description: Not signed in }
+        "403": { description: CONSENT_REQUIRED }
+        "429": { description: Rate limited }
 components:
   securitySchemes:
     cookieAuth:

@@ -1113,3 +1113,46 @@ export interface AdminMetricsDto {
     briefsGenerated: number;
   }>;
 }
+
+// ---- Baseline check in ----
+
+export type RecallFrequency = "FEW_DAYS" | "HALF_THE_DAYS" | "MOST_DAYS";
+
+/** Her first check in, saved once as her starting point. Her own recall
+ * of the last `recallDays` days, not a clinical score. Never changed. */
+export interface BaselineCheckInDto {
+  id: string;
+  /** Her local date, YYYY-MM-DD. */
+  completedOn: string;
+  timeZone: string;
+  recallDays: number;
+  locale: "en" | "ja" | "fr";
+  goal:
+    | "UNDERSTAND_EXPERIENCE"
+    | "UNDERSTAND_PATTERNS"
+    | "PREPARE_FOR_APPOINTMENT"
+    | "KEEP_RECORD"
+    | "NOT_SURE"
+    | null;
+  sleepDuration: SleepDurationBucket | null;
+  workImpact: WorkImpact | null;
+  /** True when she answered the symptoms question (picked some, or chose
+   * "none of these"); false when she skipped it. With no symptoms listed,
+   * false means "not answered", not "no symptoms". */
+  symptomsAnswered: boolean;
+  symptoms: Array<{
+    category: SymptomCategory;
+    severity: SeverityLevel | null;
+    frequency: RecallFrequency | null;
+  }>;
+  /** The health information consent that covered the save. */
+  healthConsentVersion: string;
+  healthConsentAt: string;
+  createdAt: string;
+}
+
+export interface SaveBaselineCheckInResultDto {
+  baseline: BaselineCheckInDto;
+  /** False when she already had a baseline; it is returned unchanged. */
+  created: boolean;
+}
