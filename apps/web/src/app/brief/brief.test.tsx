@@ -806,7 +806,7 @@ describe("Brief page — deterministic evidence sections", () => {
             { start: "2026-01-01", end: "2026-01-07" },
             { start: "2026-01-08", end: "2026-01-14" },
           ],
-          rows: [{ category: "HOT_FLASH", cells: [{ peak: "SEVERE", daysLogged: 3 }, null] }],
+          rows: [{ category: "HOT_FLASH", cells: [{ peak: "SEVERE", daysLogged: 5 }, null] }],
         },
       }),
     );
@@ -814,7 +814,11 @@ describe("Brief page — deterministic evidence sections", () => {
     const table = screen.getByRole("table");
     const row = within(table).getByRole("row", { name: /Hot Flash/ });
     expect(within(row).getByText("3")).toBeInTheDocument();
-    expect(within(row).getByText("Severe, recorded on 3 days")).toBeInTheDocument();
+    // The days recorded are printed in the cell too, not only read out, so
+    // one severe day cannot pass for a persistent pattern.
+    expect(within(row).getByText("5")).toBeInTheDocument();
+    expect(within(row).getByText("Severe, recorded on 5 days")).toBeInTheDocument();
+    expect(screen.getByText(/small number beside it is how many days/)).toBeInTheDocument();
     expect(within(row).getByText("Nothing recorded")).toBeInTheDocument();
     expect(screen.getByText(/not that the symptom was absent/)).toBeInTheDocument();
   });

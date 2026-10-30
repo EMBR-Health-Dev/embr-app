@@ -841,7 +841,7 @@
     "presetAll": "Depuis votre première saisie",
     "severityTrendTitleWeekly": "Intensité semaine par semaine",
     "severityTrendTitleBlocks": "Intensité par périodes de 4 semaines",
-    "severityTrendIntro": "L’intensité la plus forte notée pour chaque symptôme sur chaque période : 1 légère, 2 modérée, 3 sévère. Une case vide signifie que rien n’a été noté, pas que le symptôme était absent.",
+    "severityTrendIntro": "L’intensité la plus forte notée pour chaque symptôme sur chaque période : 1 légère, 2 modérée, 3 sévère. Une case vide signifie que rien n’a été noté, pas que le symptôme était absent. Le petit chiffre à côté indique sur combien de jours le symptôme a été noté sur la période.",
     "severityTrendSymptom": "Symptôme",
     "severityTrendBlock": "du {start} au {end}",
     "severityTrendCell": "{severity}, notée {count, plural, one {# jour} other {# jours}}",

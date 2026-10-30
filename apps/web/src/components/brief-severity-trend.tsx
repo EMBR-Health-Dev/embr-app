@@ -89,7 +89,12 @@ export function BriefSeverityTrend({
                   >
                     {cell ? (
                       <>
-                        <span aria-hidden="true">{SEVERITY_NUMBER[cell.peak]}</span>
+                        <span aria-hidden="true">
+                          {SEVERITY_NUMBER[cell.peak]}
+                          <span className="ml-0.5 align-baseline text-[9px] font-normal">
+                            {cell.daysLogged}
+                          </span>
+                        </span>
                         <span className="sr-only">
                           {t("severityTrendCell", {
                             severity: tEnum(`severity.${cell.peak}`),

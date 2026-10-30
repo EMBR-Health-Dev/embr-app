@@ -841,7 +841,7 @@
     "presetAll": "Since your first entry",
     "severityTrendTitleWeekly": "Severity week by week",
     "severityTrendTitleBlocks": "Severity in 4 week blocks",
-    "severityTrendIntro": "The highest severity recorded for each symptom in each block: 1 mild, 2 moderate, 3 severe. A blank means nothing was recorded, not that the symptom was absent.",
+    "severityTrendIntro": "The highest severity recorded for each symptom in each block: 1 mild, 2 moderate, 3 severe. A blank means nothing was recorded, not that the symptom was absent. The small number beside it is how many days that symptom was recorded in the block.",
     "severityTrendSymptom": "Symptom",
     "severityTrendBlock": "{start} to {end}",
     "severityTrendCell": "{severity}, recorded on {count, plural, one {# day} other {# days}}",

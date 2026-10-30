@@ -257,9 +257,19 @@ function severityTrend(
         .font(EMBR_PDF_HEADING_FONT)
         // White only on the darkest fill; ink reads better on the others.
         .fillColor(value.peak === "SEVERE" ? "#FFFFFF" : INK)
-        .text(String(SEVERITY_ORDER.indexOf(value.peak) + 1), x, y + 1, {
-          width: cell,
-          align: "center",
+        .text(String(SEVERITY_ORDER.indexOf(value.peak) + 1), x + 3, y + 1, {
+          width: cell / 2,
+          align: "left",
+          lineBreak: false,
+        });
+      // Days recorded in this block, small, so one severe day is not read
+      // as a persistent pattern. Same colour as the severity digit.
+      doc
+        .fontSize(6)
+        .font(EMBR_PDF_BODY_FONT)
+        .text(String(value.daysLogged), x, y + 3, {
+          width: cell - 3,
+          align: "right",
           lineBreak: false,
         });
     });

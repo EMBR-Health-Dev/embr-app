@@ -477,11 +477,11 @@ describe("buildClinicalBriefPdf — severity week by week", () => {
     rows: [
       {
         category: "HOT_FLASH" as const,
-        cells: [{ peak: "SEVERE" as const, daysLogged: 3 }, null],
+        cells: [{ peak: "SEVERE" as const, daysLogged: 5 }, null],
       },
       {
         category: "BRAIN_FOG" as const,
-        cells: [null, { peak: "MILD" as const, daysLogged: 1 }],
+        cells: [null, { peak: "MILD" as const, daysLogged: 2 }],
       },
     ],
   };
@@ -499,6 +499,10 @@ describe("buildClinicalBriefPdf — severity week by week", () => {
     expect(text).toContain("01-08");
     expect(text).toMatch(/Hot Flash 3/);
     expect(text).toMatch(/Brain Fog 1/);
+    // Days recorded in each block are printed beside the severity, with a key.
+    expect(text).toContain("small number beside a severity is how many days");
+    expect(text).toMatch(/Hot Flash 3\s*5/);
+    expect(text).toMatch(/Brain Fog 1\s*2/);
   });
 
   it("names 4 week blocks for a long period, in Japanese", async () => {

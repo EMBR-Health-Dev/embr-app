@@ -840,7 +840,7 @@
     "presetAll": "最初の記録から",
     "severityTrendTitleWeekly": "週ごとの強さ",
     "severityTrendTitleBlocks": "4週間ごとの強さ",
-    "severityTrendIntro": "各期間に記録された、症状ごとの最も強い程度です（1 軽度、2 中等度、3 重度）。空欄は記録がなかったことを示し、症状がなかったことを意味しません。",
+    "severityTrendIntro": "各期間に記録された、症状ごとの最も強い程度です（1 軽度、2 中等度、3 重度）。空欄は記録がなかったことを示し、症状がなかったことを意味しません。横の小さな数字は、その期間に症状を記録した日数です。",
     "severityTrendSymptom": "症状",
     "severityTrendBlock": "{start}〜{end}",
     "severityTrendCell": "{severity}、{count}日記録",
