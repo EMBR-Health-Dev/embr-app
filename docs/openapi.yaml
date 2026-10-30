@@ -1,15 +1,1 @@
-openapi: 3.1.0
-info:
-  title: EMBR API
-  description: >
-    API for the EMBR perimenopause and menopause health platform.
-    This spec documents request/response contracts. New endpoints are
-    documented here before or alongside implementation. Clients are
-    hand-maintained in apps/web and apps/mobile (lib/api.ts); packages/sdk
-    is not generated from this file.
-  version: 0.1.0
-  contact:
-    name: EMBR Engineering
-servers:
-  - url: http://localhost:4000
-    description: Local development
+PLACEHOLDER_WILL_FAIL
