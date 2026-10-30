@@ -17,15 +17,15 @@ EMBR is not a diagnostic tool and does not give medical advice. It turns what a 
 
 ## Stack
 
-- **apps/api** — Express + TypeScript, Prisma/PostgreSQL, Redis, OpenAPI-first, structured logging
+- **apps/api** — Express + TypeScript, Prisma/PostgreSQL, Redis, OpenAPI document at `docs/openapi.yaml` (served at `/docs`), structured logging. Web and mobile clients are hand-maintained, not generated from the spec.
 - **apps/web** — Next.js 15 / React 19, patient-facing product
 - **apps/admin** — Next.js 15 / React 19, internal operations console
-- **apps/worker** — BullMQ background job processor
+- **apps/worker** — BullMQ background job processor (deployed; no product jobs enqueued yet)
 - **apps/mobile** — Expo / React Native companion app (iOS, Android). Not started by `pnpm dev`; see `docs/MOBILE-BETA.md` for builds and `docs/MOBILE-DEVICE-QA.md` for the device checklist
 - **packages/shared** — logger, error taxonomy, env validation, HTTP middleware (used by api + worker)
 - **packages/types** — cross-app TypeScript types
 - **packages/validation** — shared Zod schemas
-- **packages/sdk** — minimal typed HTTP client (health check only today). Web and mobile use their own `lib/api.ts` clients; nothing imports the SDK yet, and it is not generated from OpenAPI
+- **packages/sdk** — unused experimental health client only. Web and mobile use their own `lib/api.ts`; nothing imports the SDK, and it is not generated from OpenAPI
 - **packages/ui** — shared React component library (shadcn/ui-based)
 
 ## Quickstart
