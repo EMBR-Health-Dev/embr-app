@@ -9,7 +9,7 @@ Status key: **Done** (verified), **In progress**, **Not started**,
 **Decision** (waiting on a person, named where known). Update the date
 and the evidence column whenever a status changes.
 
-_Last reviewed: 11 October 2026._ What changed since 2 October is listed in
+_Last reviewed: 11 October 2026._ Statuses below have not been re-verified since; some items (mobile QA, admin and worker deploys, accessibility) may have moved, so check the evidence before relying on them. What changed since 2 October is listed in
 [`CHANGELOG-2026-10.md`](CHANGELOG-2026-10.md); the working drafts for counsel,
 the clinician and the ethics board are in [`planning/`](planning/README.md).
 

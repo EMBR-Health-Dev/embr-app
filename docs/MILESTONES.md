@@ -688,4 +688,6 @@ A single commit (`4ce7af4`), and deliberately a separate milestone from Mileston
 
 ### Next milestone
 
+_Note, 30 October 2026: this file stops at Milestone 21. Work after it (French and Japanese, daily context and the Timeline, the Menopause Rating Scale check in, the first check in, encryption of personal text, weekly email, metrics) was not written up here as numbered milestones. [`CHANGELOG-2026-10.md`](CHANGELOG-2026-10.md) is the record of it, pull request by pull request._
+
 To be scoped from here with that correction in mind — treatment tracking UI is not an open gap. The SSO dual-login-path decision (still open since Milestone 15) remains the one genuinely open carried-over item.
