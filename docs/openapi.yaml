@@ -1,1 +1,50 @@
-PLACEHOLDER_WILL_FAIL
+openapi: 3.1.0
+info:
+  title: EMBR API
+  description: >
+    API for the EMBR perimenopause and menopause health platform.
+    This spec documents request/response contracts. New endpoints are
+    documented here before or alongside implementation. Clients are
+    hand-maintained in apps/web and apps/mobile (lib/api.ts); packages/sdk
+    is not generated from this file.
+  version: 0.1.0
+  contact:
+    name: EMBR Engineering
+servers:
+  - url: http://localhost:4000
+    description: Local development
+paths:
+  /health/live:
+    get:
+      summary: Liveness probe
+      description: Returns 200 if the process is running. Does not check dependencies.
+      tags: [Health]
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+  /health/ready:
+    get:
+      summary: Readiness probe
+      description: Returns 200 only if the database and Redis are both reachable.
+      tags: [Health]
+      responses:
+        "200":
+          description: Service and dependencies are healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResponse"
+        "503":
+          description: One or more dependencies are unreachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResponse"
