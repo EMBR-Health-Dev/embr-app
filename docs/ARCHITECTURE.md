@@ -28,18 +28,18 @@ _Last aligned with the codebase: October 2026._
                only; counts only)
 ```
 
-| App / package | Role |
-| ------------- | ---- |
-| `apps/api` | Source of truth for auth, domain data, BRIEF, export, admin metrics |
-| `apps/web` | Patient product |
-| `apps/admin` | Ops console: accounts, audit log, product metrics — never individual health rows |
-| `apps/mobile` | Expo companion; same API contracts as web |
-| `apps/worker` | BullMQ process; **deployed but no product job is enqueued yet** — placeholder only |
-| `packages/shared` | Logger, `AppError`, env validation, HTTP middleware |
-| `packages/types` | Shared DTOs |
-| `packages/validation` | Shared Zod schemas (API + clients) |
-| `packages/ui` | Shared React components |
-| `packages/sdk` | **Unused.** Minimal hand-written health client only; web and mobile use their own `lib/api.ts`. Do not treat as the API client of record. |
+| App / package         | Role                                                                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api`            | Source of truth for auth, domain data, BRIEF, export, admin metrics                                                                       |
+| `apps/web`            | Patient product                                                                                                                           |
+| `apps/admin`          | Ops console: accounts, audit log, product metrics — never individual health rows                                                          |
+| `apps/mobile`         | Expo companion; same API contracts as web                                                                                                 |
+| `apps/worker`         | BullMQ process; **deployed but no product job is enqueued yet** — placeholder only                                                        |
+| `packages/shared`     | Logger, `AppError`, env validation, HTTP middleware                                                                                       |
+| `packages/types`      | Shared DTOs                                                                                                                               |
+| `packages/validation` | Shared Zod schemas (API + clients)                                                                                                        |
+| `packages/ui`         | Shared React components                                                                                                                   |
+| `packages/sdk`        | **Unused.** Minimal hand-written health client only; web and mobile use their own `lib/api.ts`. Do not treat as the API client of record. |
 
 ## Principles
 
@@ -65,23 +65,23 @@ Auth: short-lived JWT access token (httpOnly cookie or Bearer), opaque hashed re
 
 ## Domain shape (high level)
 
-| Area | Models / modules | Notes |
-| ---- | ---------------- | ----- |
-| Auth | User, Session, tokens, AuditLog | Argon2id passwords; role `MEMBER` \| `ADMIN` |
-| Record | SymptomLog, CycleEntry / bleeding, ContextLog, treatments, notes | Longitudinal patient record |
-| Clinical | BRIEF pipeline (deterministic patterns → optional AI wording) | Point-in-time snapshots; re-download is stable |
-| Org / B2B | Organization, membership, invites, SSO | Org admin sees roster + k-anonymized aggregates only |
-| MRS | `mrs_check_ins` | Feature-flagged until commercial licence is confirmed (`docs/MRS-CHECK-IN.md`) |
+| Area      | Models / modules                                                 | Notes                                                                          |
+| --------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Auth      | User, Session, tokens, AuditLog                                  | Argon2id passwords; role `MEMBER` \| `ADMIN`                                   |
+| Record    | SymptomLog, CycleEntry / bleeding, ContextLog, treatments, notes | Longitudinal patient record                                                    |
+| Clinical  | BRIEF pipeline (deterministic patterns → optional AI wording)    | Point-in-time snapshots; re-download is stable                                 |
+| Org / B2B | Organization, membership, invites, SSO                           | Org admin sees roster + k-anonymized aggregates only                           |
+| MRS       | `mrs_check_ins`                                                  | Feature-flagged until commercial licence is confirmed (`docs/MRS-CHECK-IN.md`) |
 
 ## Durable decisions (still true)
 
-| Decision | Why |
-| -------- | --- |
-| `/health/live` vs `/health/ready` | Liveness ≠ readiness; avoids restart loops when a dependency is slow |
-| Global error handler normalizes Zod errors | One 400 shape; routes cannot forget to format validation failures |
-| Query-level ownership scoping | No code path that “forgets” the userId check |
-| Worker scaffolded early | Topology and CI cost less than retrofitting later; product jobs still optional |
-| Field encryption in the Prisma client layer | Repositories never see plaintext personal text; none can forget to encrypt |
+| Decision                                               | Why                                                                                 |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `/health/live` vs `/health/ready`                      | Liveness ≠ readiness; avoids restart loops when a dependency is slow                |
+| Global error handler normalizes Zod errors             | One 400 shape; routes cannot forget to format validation failures                   |
+| Query-level ownership scoping                          | No code path that “forgets” the userId check                                        |
+| Worker scaffolded early                                | Topology and CI cost less than retrofitting later; product jobs still optional      |
+| Field encryption in the Prisma client layer            | Repositories never see plaintext personal text; none can forget to encrypt          |
 | BRIEF: deterministic evidence first, AI wording second | Clinical logic stays testable and provider-swappable; AI is not the source of truth |
 
 ## What is intentionally not architecture here
@@ -95,6 +95,12 @@ Auth: short-lived JWT access token (httpOnly cookie or Bearer), opaque hashed re
 
 ## Known gaps (engineering, not product roadmap)
 
+| Gap                                                 | Status                                                                                                                    |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `packages/sdk` unused; OpenAPI not wired to codegen | Accept for now; clients are hand-maintained. Either generate from OpenAPI later or remove the package to reduce confusion |
+| Worker has no real jobs                             | Safe to leave deployed; do not treat its health as product health                                                         |
+| Client-side error monitoring (web / admin / mobile) | Not configured; API/worker Sentry only when `SENTRY_DSN` is set                                                           |
+| Activity metrics use UTC calendar days              | Documented in `docs/METRICS.md`; per-user time zones not stored                                                           |
 | Gap | Status |
 | --- | ------ |
 | `docs/openapi.yaml` truncated on `main` (~1.5 KB; health only) | **P0.** Restore from `ee3b0c1` (~49 KB, 47 paths), then close remaining gaps in `docs/API-CONTRACT-COVERAGE.md` |
