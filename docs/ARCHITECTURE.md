@@ -4,6 +4,7 @@ Internal engineering architecture for the EMBR platform.
 Acquirer-facing overview (proprietary vs third-party, switching cost):
 `docs/acquisition/architecture.md`.
 Deployment topology and production config: `docs/DEPLOYMENT.md`.
+API routes vs OpenAPI inventory: `docs/API-CONTRACT-COVERAGE.md`.
 
 _Last aligned with the codebase: October 2026._
 
@@ -44,7 +45,7 @@ _Last aligned with the codebase: October 2026._
 
 - **Business logic never lives in controllers.** Routes parse and validate, then call a service; repositories own persistence.
 - **Throw, don't respond.** Services throw `AppError` (`@embr/shared`); only `errorHandlerMiddleware` maps errors to HTTP. One response shape for every endpoint.
-- **OpenAPI documents the contract; it does not generate clients.** `docs/openapi.yaml` is updated with new endpoints. Typed clients live in `apps/web` and `apps/mobile` (`lib/api.ts`) against `packages/types` and `packages/validation`. Drift is caught by review and tests, not codegen.
+- **OpenAPI documents the contract; it does not generate clients.** `docs/openapi.yaml` is the documented contract. Typed clients live in `apps/web` and `apps/mobile` (`lib/api.ts`) against `packages/types` and `packages/validation`. Drift is caught by review, tests, and the inventory in `docs/API-CONTRACT-COVERAGE.md` — not by codegen. **As of 30 October 2026 the file on `main` is truncated; restore before treating it as current.**
 - **Cross-cutting code lives in `packages/shared`.** API and worker share the same logger, errors, and env loader.
 - **Fail fast on bad config.** `loadEnv()` (Zod) validates at boot. Missing required secrets crash startup with a clear message.
 - **Ownership is in the query, not an after-the-fact check.** Resource lookups use `where: { id, userId }` (or org membership). Cross-user access returns 404, not 403 that would confirm existence.
@@ -90,12 +91,15 @@ Auth: short-lived JWT access token (httpOnly cookie or Bearer), opaque hashed re
 - Backup / restore mechanics → `docs/BACKUPS.md`
 - Retention of dead sessions/tokens → `docs/RETENTION.md`
 - Product metrics definitions → `docs/METRICS.md`
+- Route ↔ OpenAPI inventory → `docs/API-CONTRACT-COVERAGE.md`
 
 ## Known gaps (engineering, not product roadmap)
 
 | Gap | Status |
 | --- | ------ |
-| `packages/sdk` unused; OpenAPI not wired to codegen | Accept for now; clients are hand-maintained. Either generate from OpenAPI later or remove the package to reduce confusion |
+| `docs/openapi.yaml` truncated on `main` (~1.5 KB; health only) | **P0.** Restore from `ee3b0c1` (~49 KB, 47 paths), then close remaining gaps in `docs/API-CONTRACT-COVERAGE.md` |
+| OpenAPI incomplete vs ~96 method/route pairs | After restore, still missing treatments, context, notes, MRS, consent, billing, public assessment, and several trends/export paths |
+| `packages/sdk` unused; OpenAPI not wired to codegen | Accept for now; clients are hand-maintained. Either generate from OpenAPI later or remove the package |
 | Worker has no real jobs | Safe to leave deployed; do not treat its health as product health |
 | Client-side error monitoring (web / admin / mobile) | Not configured; API/worker Sentry only when `SENTRY_DSN` is set |
 | Activity metrics use UTC calendar days | Documented in `docs/METRICS.md`; per-user time zones not stored |
