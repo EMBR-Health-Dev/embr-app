@@ -62,7 +62,7 @@ lead, **M** Michelle, **L** counsel.
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | --------------------------------- |
 | P1  | Taxonomy: painful sex, irritability, anger, low mood, in EN, FR, JA, web, mobile, BRIEF PDF                                                                                | E       | 29 Oct | Built, PR                         |
 | P2  | Clinical lead signs off the four new names and their FR and JA wording                                                                                                     | C       | 8 Nov  | Not started                       |
-| P3  | BRIEF "your priorities": up to three things she most wants her clinician to understand, printed first, encrypted like notes, never sent to the AI                          | E       | 15 Nov | Not started                       |
+| P3  | BRIEF "your priorities": up to three things she most wants her clinician to understand, printed first, encrypted like notes, never sent to the AI                          | E       | 15 Nov | Built, PR                         |
 | P4  | BRIEF "questions to discuss" section, using the signed off questions sheet                                                                                                 | E, C    | 22 Nov | Blocked: questions sheet sign off |
 | P5  | Context: three positive, optional daily questions: ate in a way that supported her, felt connected to someone, did something that eased stress. Yes or no, never free text | E, C    | 29 Nov | Not started                       |
 | P6  | Functional impact: one weekly question on family and social life, kept apart from employer statistics like work impact                                                     | E, C, L | 6 Dec  | Not started                       |
@@ -120,14 +120,14 @@ What the repo already shows, so the plan starts from facts:
   (`ENCRYPTION.md`), encrypted backups with a restore drill, audit logs,
   IDOR audit, minimal summary counts to the AI, tested deletion and export.
 
-| #   | Item                                                                                     | Owner | Target |
-| --- | ---------------------------------------------------------------------------------------- | ----- | ------ |
-| G1  | Correct the HIPAA answer given in the meeting (in the follow up below)                   | F     | 31 Oct |
-| G2  | Add "Is EMBR HIPAA compliant?" to the counsel brief as question 14, with the facts above | F     | 8 Nov  |
-| G3  | Set `DATA_ENCRYPTION_KEY` in production and run the backfill                             | F, E  | 8 Nov  |
-| G4  | Error monitoring (`SENTRY_DSN`), with health data scrubbed                               | E     | 22 Nov |
-| G5  | Counsel brief answered; Privacy Policy and Terms approved                                | L     | 15 Dec |
-| G6  | Contributor agreement for video and content (permissions, attribution, withdrawal)       | F, L  | 30 Nov |
+| #   | Item                                                                                    | Owner | Target |
+| --- | --------------------------------------------------------------------------------------- | ----- | ------ |
+| G1  | Correct the HIPAA answer given in the meeting (in the follow up below)                  | F     | 31 Oct |
+| G2  | Send counsel question 14 (added); readiness and gaps in `docs/legal/hipaa-readiness.md` | F     | 8 Nov  |
+| G3  | Set `DATA_ENCRYPTION_KEY` in production and run the backfill                            | F, E  | 8 Nov  |
+| G4  | Error monitoring (`SENTRY_DSN`), with health data scrubbed                              | E     | 22 Nov |
+| G5  | Counsel brief answered; Privacy Policy and Terms approved                               | L     | 15 Dec |
+| G6  | Contributor agreement for video and content (permissions, attribution, withdrawal)      | F, L  | 30 Nov |
 
 Until G5 is done, the answer to "are you compliant?" is the list of
 safeguards, in those words, and "our counsel is reviewing our obligations

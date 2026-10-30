@@ -54,6 +54,7 @@ the clinician and the ethics board are in [`planning/`](planning/README.md).
 | Terms approved                      | Decision    | Draft in `docs/legal/drafts/`; placeholders unresolved                                                             |
 | Privacy Policy approved             | Decision    | Draft in `docs/legal/drafts/`; reconcile with the real data flows below                                            |
 | Health data consent approved        | Decision    | Wording at `0.2-draft`; consent vs acknowledgement per `docs/legal/consent-decision-sheet.md`                      |
+| HIPAA applicability decided         | Decision    | Counsel question 14; readiness and gaps in `docs/legal/hipaa-readiness.md`; no HIPAA claims until decided          |
 | Medical device positioning reviewed | Decision    | Site FAQ says EMBR is not a medical device; counsel to confirm for each target market                              |
 | Data retention language reviewed    | Decision    | Backups roll off after about 30 days; deletion is immediate in the live service                                    |
 | Third party processors reviewed     | In progress | Railway (EU, Amsterdam), Anthropic (BRIEF wording, summary counts only), email provider, Formspree (website forms) |
