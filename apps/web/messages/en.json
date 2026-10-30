@@ -54,7 +54,8 @@
     "earlyAccessBody": "New accounts are not open yet. We are preparing EMBR for public use, including the privacy and legal documents that will apply when it opens. Request early access and we will be in touch.",
     "earlyAccessAction": "Request early access",
     "reassuranceTitle": "Your record stays yours.",
-    "reassuranceBody": "Export it, share it, or delete it when you choose."
+    "reassuranceBody": "Export it, share it, or delete it when you choose.",
+    "checkInSignInFailed": "Your account was created. Log in to save your answers; they are still in this tab."
   },
   "ForgotPassword": {
     "title": "Reset your password",
@@ -237,6 +238,11 @@
       "DID_LESS": "Yes, I did less",
       "MISSED_TIME": "Yes, I missed time"
     },
+    "socialImpact": {
+      "NONE": "No",
+      "DID_LESS": "Yes, I joined in less",
+      "MISSED_PLANS": "Yes, I missed or cancelled plans"
+    },
     "stressLevel": {
       "LOW": "Low",
       "MODERATE": "Moderate",
@@ -323,6 +329,9 @@
     "workImpactLabel": "Did symptoms affect your work today?",
     "workImpactNone": "Not logged",
     "workImpactHelp": "Counted only in your own BRIEF. Never shared with an employer.",
+    "socialImpactLabel": "Did symptoms affect time with family or friends today?",
+    "socialImpactNone": "Not logged",
+    "socialImpactHelp": "Includes home life and plans with others. Counted only in your own BRIEF, never shared with an employer.",
     "stressLevelLabel": "Stress today",
     "stressLevelNone": "Not logged",
     "caffeineAfternoonLabel": "Caffeine after 2pm",
@@ -376,6 +385,7 @@
     "nightSweatsLabelYesterday": "Night sweats the night before yesterday",
     "stressLevelLabelYesterday": "Stress yesterday",
     "workImpactLabelYesterday": "Did symptoms affect your work yesterday?",
+    "socialImpactLabelYesterday": "Did symptoms affect time with family or friends yesterday?",
     "saveTodaysEntryYesterday": "Save yesterday's entry",
     "todaysEntryLoadErrorYesterday": "Yesterday's entry could not be loaded, so saving is paused to keep what is already recorded. Reload the page to try again.",
     "recentToday": "Today",
@@ -443,6 +453,7 @@
     },
     "nightSweatsRecalled": "Night sweats last night: {value} (recalled in the morning)",
     "workImpactAnswered": "Did symptoms affect work? {value}",
+    "socialImpactAnswered": "Did symptoms affect time with family or friends? {value}",
     "cycleLabel": "Cycle",
     "periodStarted": "Period started",
     "periodEnded": "Period ended",
@@ -805,6 +816,8 @@
     "workImpactBreakdown": "No effect on {none}, did less on {didLess}, missed time on {missedTime}.",
     "workImpactFewAnswers": "A breakdown is shown once 7 days have been answered.",
     "workImpactPrivate": "Your own daily answers. Never shared with any employer.",
+    "socialImpactTitle": "Days symptoms affected family and social life",
+    "socialImpactBreakdown": "No effect on {none}, joined in less on {didLess}, missed or cancelled plans on {missedPlans}.",
     "groundedInTitle": "Grounded in your data",
     "viewEvidence": "View recorded days",
     "hideEvidence": "Hide recorded days",
@@ -827,6 +840,13 @@
     "preset30": "Last 30 days",
     "preset90": "Last 90 days",
     "presetAll": "Since your first entry",
+    "severityTrendTitleWeekly": "Severity week by week",
+    "severityTrendTitleBlocks": "Severity in 4 week blocks",
+    "severityTrendIntro": "The highest severity recorded for each symptom in each block: 1 mild, 2 moderate, 3 severe. A blank means nothing was recorded, not that the symptom was absent.",
+    "severityTrendSymptom": "Symptom",
+    "severityTrendBlock": "{start} to {end}",
+    "severityTrendCell": "{severity}, recorded on {count, plural, one {# day} other {# days}}",
+    "severityTrendNothing": "Nothing recorded",
     "dayByDayTitle": "Day by day",
     "dayByDayIntro": "Each column is one day of this BRIEF, oldest on the left. It shows which days each symptom was recorded, not how severe it was.",
     "dayByDayLegendLogged": "Recorded",
@@ -1642,7 +1662,7 @@
       "sleep": "Usual sleep: {value}",
       "work": "Work affected: {value}",
       "limitsTitle": "What this can and cannot tell you",
-      "limitsBody": "It describes what you reported for the last two weeks. It is not a diagnosis. It does not name a cause or say whether this is perimenopause. A clinician can help with that.",
+      "limitsBody": "It describes what you reported for the last two weeks: your own recall, not a validated clinical score. It is not a diagnosis. It does not name a cause or say whether this is perimenopause. A clinician can help with that.",
       "nextTitle": "One next step",
       "next": {
         "TRACK_A_WEEK": "Track for a week. Daily entries can show patterns that a look back over two weeks cannot.",
@@ -1665,6 +1685,20 @@
       "sooner": "What changes would mean I should come back sooner?",
       "track": "What would be most useful for me to keep track of before we next talk?",
       "general": "Which changes are worth mentioning to you, even if they seem small?"
+    },
+    "save": {
+      "saveAction": "Save as my starting point",
+      "saveNote": "Saves these answers to your account once, as your starting point. They are your own recall of the last two weeks, not a clinical score, and cannot be changed later.",
+      "saving": "Saving…",
+      "retry": "Try again",
+      "errorBody": "Your answers could not be saved. They are still on this device, so you can try again.",
+      "existsBody": "You already have a starting point from {date}. It stays as it was, and these answers were not saved.",
+      "savedTitle": "Saved as your starting point",
+      "savedBody": "Your answers from {date} are in your account and have been cleared from this device. Your daily check ins will build on them.",
+      "goToDashboard": "Go to my dashboard",
+      "signUpAction": "Save and keep tracking",
+      "signUpNote": "Create an account to keep these answers. They are sent only after you agree to EMBR processing your health information.",
+      "logInToSave": "Already have an account? Log in to save"
     }
   }
 }

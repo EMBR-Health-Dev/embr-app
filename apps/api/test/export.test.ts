@@ -335,6 +335,7 @@ vi.mock("../src/lib/prisma.js", () => ({
       ),
     },
     mrsCheckIn: { findMany: vi.fn().mockResolvedValue([]) },
+    baselineCheckIn: { findUnique: vi.fn().mockResolvedValue(null) },
     treatment: {
       create: vi.fn(
         ({
@@ -574,6 +575,7 @@ describe("GET /export/context-logs.csv", () => {
       nightSweats: "TWO_TO_THREE",
       workImpact: "DID_LESS",
       exercise: "LIGHT",
+      socialImpact: "MISSED_PLANS",
     });
     await agentA.post("/context-logs").send({ date: "2026-06-03", alcohol: false });
     await agentB.post("/context-logs").send({ date: "2026-06-02", sleepDuration: "SEVEN_PLUS_H" });
@@ -583,9 +585,9 @@ describe("GET /export/context-logs.csv", () => {
     expect(res.headers["content-type"]).toContain("text/csv");
     expect(res.headers["content-disposition"]).toContain("embr-daily-context.csv");
     expect(res.text.split("\r\n")).toEqual([
-      "date,sleepDuration,caffeineAfternoon,alcohol,stressLevel,nightSweatsRecalled,workImpact,exercise",
-      "2026-06-02,UNDER_6H,true,,HIGH,TWO_TO_THREE,DID_LESS,LIGHT",
-      "2026-06-03,,,false,,,,",
+      "date,sleepDuration,caffeineAfternoon,alcohol,stressLevel,nightSweatsRecalled,workImpact,exercise,socialImpact",
+      "2026-06-02,UNDER_6H,true,,HIGH,TWO_TO_THREE,DID_LESS,LIGHT,MISSED_PLANS",
+      "2026-06-03,,,false,,,,,",
       "",
     ]);
     expect(res.text).not.toContain("SEVEN_PLUS_H");
@@ -840,7 +842,8 @@ describe("GET /export/all-data.json", () => {
 
     const body = JSON.parse(res.text);
     expect(body.format).toBe("embr-all-data");
-    expect(body.version).toBe(1);
+    expect(body.version).toBe(2);
+    expect(body.baselineCheckIn).toBeNull();
     expect(body.account).toEqual({
       id: userId,
       email: "all-data@embr.health",

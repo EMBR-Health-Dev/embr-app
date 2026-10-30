@@ -48,3 +48,1229 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthCheckResponse"
+  /auth/csrf:
+    get:
+      summary: Issue a CSRF token
+      description: >
+        Sets the CSRF cookie and returns the token in the response body.
+        Call once on app load and before any state-changing auth request;
+        echo the returned value back in the `x-csrf-token` header.
+      tags: [Auth]
+      responses:
+        "200":
+          description: CSRF token issued
+  /auth/register:
+    post:
+      summary: Register a new account
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 12 }
+      responses:
+        "201":
+          description: Account created — a verification email has been sent
+        "409":
+          description: An account with this email already exists
+        "429":
+          description: Too many registration attempts from this IP
+  /auth/verify-email:
+    post:
+      summary: Consume an email-verification token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties: { token: { type: string } }
+      responses:
+        "204": { description: Email verified }
+        "400": { description: Token invalid or expired }
+  /auth/resend-verification:
+    post:
+      summary: Resend the verification email
+      description: Always returns 202, regardless of whether the account exists or is already verified, to avoid email enumeration.
+      tags: [Auth]
+      responses:
+        "202": { description: Accepted }
+  /auth/login:
+    post:
+      summary: Log in with email and password
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: >
+            Sets embr_at (access token), embr_rt (refresh token), and
+            embr_csrf cookies; also returns both the access token and
+            refresh token in the body for non-browser (mobile) clients,
+            which have no cookie jar to read them from. Browser clients
+            rely on the cookies and can ignore both fields.
+        "401": { description: Invalid email or password }
+        "429": { description: Too many login attempts for this account/IP }
+  /auth/login-link:
+    post:
+      summary: Email a one time sign in link
+      description: >
+        Always returns 202 regardless of whether the account exists, to
+        avoid email enumeration. The link expires after 15 minutes
+        (LOGIN_LINK_TTL_SECONDS) and only the newest one works.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202": { description: Accepted }
+        "429": { description: Too many requests for this account/IP }
+  /auth/login-link/consume:
+    post:
+      summary: Sign in with an emailed link token
+      description: >
+        Uses the token once. Marks the email verified, since opening the
+        link proves the address. Same response and cookies as /auth/login.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200": { description: Signed in, same body and cookies as /auth/login }
+        "401": { description: Link invalid, expired or already used }
+  /notifications/preferences:
+    get:
+      summary: Her email preferences
+      security: [{ cookieAuth: [] }]
+      tags: [Notifications]
+      responses:
+        "200": { description: "{ weeklyEmail: boolean }, false until she turns it on" }
+    patch:
+      summary: Turn the weekly reminder email on or off
+      description: >
+        Not behind the consent gate, so it can always be turned off. The
+        email itself carries nothing from her record.
+      security: [{ cookieAuth: [] }]
+      tags: [Notifications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weeklyEmail]
+              properties:
+                weeklyEmail: { type: boolean }
+      responses:
+        "200": { description: The saved preference }
+        "400": { description: Not a boolean }
+  /auth/refresh:
+    post:
+      summary: Rotate the refresh token and issue a new access token
+      description: >
+        Reads the refresh token from the embr_rt cookie if present
+        (browser clients — requires a matching x-csrf-token header in
+        that case), or from `refreshToken` in the request body
+        otherwise (mobile clients, which are not CSRF-vulnerable in the
+        first place since they present the token explicitly rather than
+        via an ambient cookie). The response body always includes the
+        rotated refreshToken alongside accessToken — a mobile client
+        that discards it can only refresh once.
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string, description: "Mobile clients only" }
+      responses:
+        "200": { description: New access/refresh tokens issued }
+        "401": { description: Session expired, already used, or reuse detected }
+        "403": { description: Missing or invalid CSRF token (cookie-authenticated requests only) }
+  /auth/logout:
+    post:
+      summary: Revoke the current session
+      description: >
+        Same refreshToken-in-body fallback as /auth/refresh for mobile
+        clients.
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string, description: "Mobile clients only" }
+      responses:
+        "204": { description: Logged out }
+        "403": { description: Missing or invalid CSRF token (cookie-authenticated requests only) }
+  /auth/logout-all:
+    post:
+      summary: Revoke every session for the current user
+      description: Works via Bearer access token (mobile) or cookie (browser) — see requireAuth().
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "204": { description: All sessions revoked }
+  /auth/forgot-password:
+    post:
+      summary: Request a password reset email
+      description: Always returns 202 regardless of whether the account exists, to avoid email enumeration.
+      tags: [Auth]
+      responses:
+        "202": { description: Accepted }
+  /auth/reset-password:
+    post:
+      summary: Reset a password using an emailed token
+      description: Revokes every existing session for the account on success.
+      tags: [Auth]
+      responses:
+        "204": { description: Password reset }
+        "400": { description: Token invalid or expired }
+  /auth/change-password:
+    post:
+      summary: Change the current user's password
+      description: Requires the current password; revokes every session (including the current one) on success.
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "204": { description: Password changed }
+        "400": { description: Current password incorrect }
+  /auth/me:
+    get:
+      summary: Get the current authenticated user
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "200": { description: Current user }
+        "401": { description: Not authenticated }
+  /auth/sessions:
+    get:
+      summary: List active device sessions for the current user
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "200": { description: Active sessions, with the current one flagged }
+  /auth/sessions/{id}:
+    delete:
+      summary: Revoke a specific device session
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Session revoked }
+        "404": { description: No active session with that id for this user }
+  /symptom-logs:
+    post:
+      summary: Log a symptom occurrence
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, severity, occurredAt]
+              properties:
+                category: { $ref: "#/components/schemas/SymptomCategory" }
+                severity: { $ref: "#/components/schemas/SeverityLevel" }
+                occurredAt: { type: string, format: date-time }
+                notes: { type: string, maxLength: 2000 }
+      responses:
+        "201": { description: Symptom log created }
+    get:
+      summary: List the current user's symptom logs
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: category, in: query, schema: { $ref: "#/components/schemas/SymptomCategory" } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200": { description: Paginated symptom logs }
+  /symptom-logs/{id}:
+    get:
+      summary: Get a single symptom log
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Symptom log }
+        "404": { description: No log with that id owned by this user }
+    patch:
+      summary: Update a symptom log
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Updated symptom log }
+        "404": { description: No log with that id owned by this user }
+    delete:
+      summary: Delete a symptom log
+      security: [{ cookieAuth: [] }]
+      tags: [Symptoms]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "404": { description: No log with that id owned by this user }
+  /cycle-entries:
+    post:
+      summary: Create or replace the cycle entry for a date
+      description: Upsert keyed on (user, date) — calling again for the same date overwrites rather than duplicating.
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date]
+              properties:
+                date: { type: string, format: date }
+                flow: { $ref: "#/components/schemas/FlowIntensity" }
+                isPeriodStart: { type: boolean, default: false }
+                isPeriodEnd: { type: boolean, default: false }
+                notes: { type: string, maxLength: 2000 }
+      responses:
+        "200": { description: Entry created or replaced }
+    get:
+      summary: List the current user's cycle entries
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        "200": { description: Paginated cycle entries }
+  /cycle-entries/{id}:
+    get:
+      summary: Get a single cycle entry
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Cycle entry }
+        "404": { description: No entry with that id owned by this user }
+    patch:
+      summary: Update a cycle entry (all fields except date)
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Updated cycle entry }
+        "404": { description: No entry with that id owned by this user }
+    delete:
+      summary: Delete a cycle entry
+      security: [{ cookieAuth: [] }]
+      tags: [Cycle]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "404": { description: No entry with that id owned by this user }
+  /export/symptom-logs.csv:
+    get:
+      summary: Download symptom logs as CSV
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "CSV file (Content-Disposition: attachment)"
+          content:
+            text/csv: {}
+  /export/cycle-entries.csv:
+    get:
+      summary: Download cycle entries as CSV
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "CSV file (Content-Disposition: attachment)"
+          content:
+            text/csv: {}
+  /export/context-logs.csv:
+    get:
+      summary: Download daily context entries as CSV
+      description: One row per day. A blank cell means the factor was not logged.
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: "CSV file (Content-Disposition: attachment)"
+          content:
+            text/csv: {}
+  /export/summary.pdf:
+    get:
+      summary: Download a clinician-facing PDF summary
+      description: Symptom frequency, cycle length, and the full symptom log for the range — deliberately non-diagnostic language throughout.
+      security: [{ cookieAuth: [] }]
+      tags: [Export]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - {
+            name: timeZone,
+            in: query,
+            description: "IANA time zone (e.g. Asia/Tokyo). Entry dates print on her local day; without it, UTC. An unknown zone is a 400.",
+            schema: { type: string },
+          }
+      responses:
+        "200":
+          description: "PDF file (Content-Disposition: attachment)"
+          content:
+            application/pdf: {}
+  /briefs:
+    post:
+      summary: Generate a new EMBR BRIEF
+      description: >
+        Computes a structured summary (symptom frequency + severity
+        breakdown, cycle length trend) over the given range, sends only
+        that aggregate — never raw free-text notes — to the AI for a
+        narrative and GP discussion questions, and persists the result
+        as a point-in-time snapshot. Re-downloading later reproduces
+        this exact brief even if the underlying logs have since
+        changed. See brief.ai.ts for the system prompt's safety scope
+        (data-grounded only, never diagnostic, questions not
+        assertions).
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromDate, toDate]
+              properties:
+                fromDate: { type: string, format: date }
+                toDate: { type: string, format: date }
+                timeZone: { type: string, description: "IANA time zone of the device" }
+                priorities:
+                  type: array
+                  maxItems: 3
+                  items: { type: string, maxLength: 300 }
+                  description: Up to three things she most wants her clinician to understand. Blank lines are dropped. Encrypted at rest and never sent to the AI.
+      responses:
+        "201":
+          description: The generated brief
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClinicalBriefDto" }
+        "400": { description: "Validation failed, or fromDate is not before toDate" }
+        "429":
+          {
+            description: "Generation rate limit exceeded — 10 per hour, keyed by user (cost control, not brute-force protection)",
+          }
+    get:
+      summary: List past briefs (paginated, newest first)
+      description: List items omit the AI content — fetch GET /briefs/{id} for the full narrative.
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200":
+          description: Paginated brief history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/ClinicalBriefListItemDto" }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+                  totalPages: { type: integer }
+  /briefs/{id}:
+    get:
+      summary: Get a single brief, including the AI narrative and discussion topics
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The brief
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClinicalBriefDto" }
+        "404":
+          {
+            description: "Doesn't exist, or belongs to a different user — not distinguished, to avoid confirming existence",
+          }
+    delete:
+      summary: Delete a brief
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+  /briefs/{id}/pdf:
+    get:
+      summary: Download a brief as PDF
+      description: Rendered entirely from the stored snapshot — never re-queries symptom/cycle data and never re-calls the AI.
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: "PDF file (Content-Disposition: attachment)"
+          content:
+            application/pdf: {}
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+  /trends/symptom-frequency:
+    get:
+      summary: Symptom frequency by category (DB-side aggregate)
+      description: COUNT ... GROUP BY category, computed entirely in Postgres — not subject to the pageSize:100 cap the list endpoints have.
+      security: [{ cookieAuth: [] }]
+      tags: [Trends]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Symptom counts by category, sorted descending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category: { $ref: "#/components/schemas/SymptomCategory" }
+                    count: { type: integer }
+  /trends/cycle-length:
+    get:
+      summary: Cycle length between period starts
+      description: Sequential diff between consecutive period-start dates in the range, plus the average. Cycle irregularity is expected during perimenopause; this is not a diagnostic signal.
+      security: [{ cookieAuth: [] }]
+      tags: [Trends]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Cycle-length entries and the average over the range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  averageDays: { type: integer, nullable: true }
+                  lengths:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from: { type: string, format: date }
+                        to: { type: string, format: date }
+                        days: { type: integer }
+  /reflections:
+    get:
+      summary: List not-yet-dismissed reflections for the trailing period
+      description: Live-computed, not stored — Stage 3 deterministic pattern detection (logging activity, top symptom frequency, symptom co-occurrence, treatment context), the same "calculate facts, keep presentation outside the analytical primitive" contract /trends follows. Defaults to the trailing 7 days when from/to are omitted. Every item describes what was logged; none imply diagnosis, causality, or treatment efficacy.
+      security: [{ cookieAuth: [] }]
+      tags: [Reflections]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Qualifying, not-yet-dismissed reflections, in home-screen display order
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ReflectionDto" }
+        "401": { description: Not authenticated }
+  /reflections/dismissals:
+    post:
+      summary: Dismiss one specific reflection instance
+      description: Suppresses this exact (type, key) pair going forward — keyed by the reflection's own content and period, not a stored payload id, since nothing about a reflection is persisted except the fact that it was dismissed (see ReflectionDismissal in schema.prisma). Dismissing an already-dismissed key is a no-op, not an error.
+      security: [{ cookieAuth: [] }]
+      tags: [Reflections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, key]
+              properties:
+                type:
+                  type: string
+                  enum:
+                    [LOGGING_ACTIVITY, SYMPTOM_FREQUENCY, SYMPTOM_CO_OCCURRENCE, TREATMENT_CONTEXT]
+                key:
+                  {
+                    type: string,
+                    description: "Echoed back from the ReflectionDto's own `key` field",
+                  }
+      responses:
+        "204": { description: Dismissed (or already was) }
+        "401": { description: Not authenticated }
+  /admin/users:
+    get:
+      summary: List user accounts (admin only)
+      description: Account metadata only — never symptom/cycle data. Requires the ADMIN role.
+      security: [{ cookieAuth: [] }]
+      tags: [Admin]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200": { description: Paginated user accounts }
+        "403": { description: Authenticated but not an admin }
+  /admin/audit-logs:
+    get:
+      summary: List the security audit trail (admin only)
+      security: [{ cookieAuth: [] }]
+      tags: [Admin]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: action, in: query, schema: { type: string } }
+        - { name: userId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Paginated audit log entries }
+  /organizations:
+    get:
+      summary: List organizations (platform admin only)
+      description: Metadata only (name/slug/seat count) — same read-only ops-visibility boundary as /admin/users, never a route into any organization's roster or health data.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200": { description: Paginated organizations }
+        "403": { description: Authenticated but not a platform admin }
+    post:
+      summary: Provision a new organization (platform admin only)
+      description: Deliberately not self-serve — orgs are provisioned by EMBR ops, matching the sales-assisted pilot-to-enterprise progression the business runs on.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name: { type: string }
+                slug: { type: string, description: "Lowercase alphanumeric, single hyphens" }
+                seatLimit: { type: integer, minimum: 1 }
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationDto" }
+        "403": { description: Authenticated but not a platform admin }
+        "409": { description: Slug already in use }
+  /organizations/mine:
+    get:
+      summary: List the organizations the current user belongs to
+      description: The one organization route keyed by the caller's own membership rather than a path param — lets a user (or a brand-new ORG_ADMIN who just accepted an invite) discover which org(s) they're in and in what role, without already knowing an organizationId.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      responses:
+        "200":
+          description: The caller's own organization memberships (possibly empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MyOrganizationMembershipDto" }
+        "401": { description: Not authenticated }
+  /organizations/{organizationId}:
+    get:
+      summary: Get organization details
+      description: Any member (ORG_ADMIN or ORG_MEMBER) can view basic org info.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationDto" }
+        "404":
+          {
+            description: "Not found, or the caller isn't a member (same response either way, matching Milestone 3's ownership-scoping precedent)",
+          }
+  /organizations/{organizationId}/members:
+    get:
+      summary: List an organization's member roster (ORG_ADMIN only)
+      description: Roster metadata only — never a member's own symptom/cycle records.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200":
+          description: Paginated member roster
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OrganizationMemberDto" }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+  /organizations/{organizationId}/members/{userId}:
+    delete:
+      summary: Revoke a member's organization access (ORG_ADMIN only)
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Membership revoked }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404":
+          {
+            description: "Org doesn't exist, caller isn't a member, or the target user wasn't a member",
+          }
+  /organizations/{organizationId}/invites:
+    post:
+      summary: Invite someone to join the organization (ORG_ADMIN only)
+      description: Sends a single-use, hashed-token invite email (same pattern as email verification / password reset). A prior unconsumed invite for the same email is invalidated when a new one is issued.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                role: { $ref: "#/components/schemas/OrgRole" }
+      responses:
+        "201":
+          description: Invite created and emailed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationInviteDto" }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "409": { description: "Already a member, or the organization has no remaining seats" }
+  /organizations/invites/accept:
+    post:
+      summary: Accept an organization invite
+      description: Not organization-scoped in the URL — the invite token itself carries the organization. The authenticated user's account email must match the invited address exactly.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200": { description: Membership created }
+        "400": { description: "Invite token is invalid, expired, or already consumed" }
+        "403":
+          {
+            description: "Invite was sent to a different email address than the authenticated account",
+          }
+        "409": { description: Already a member of this organization }
+  /organizations/{organizationId}/trends/symptom-frequency:
+    get:
+      summary: Anonymized, cohort-level symptom frequency for an organization (ORG_ADMIN only)
+      description: >
+        Never individual member records. Below the configured k-anonymity
+        floor (ORG_TRENDS_MIN_COHORT_SIZE, default 5 active loggers),
+        the response is suppressed entirely rather than returning a
+        small, individually-identifying count.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Cohort-level symptom frequency, possibly suppressed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrgSymptomFrequencyDto" }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+  /organizations/{organizationId}/sso:
+    get:
+      summary: Get the organization's SSO connection (ORG_ADMIN only)
+      description: Returns null if no connection is configured yet. Never includes the client secret in any form — only whether one is set.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations, SSO]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The connection, or null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/SsoConnectionDto" }
+                  - type: "null"
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+    put:
+      summary: Configure the organization's SSO connection (ORG_ADMIN only)
+      description: >
+        Full replace, not a partial update — the client secret is always
+        required, even when only e.g. flipping `enabled`, since it's
+        never echoed back by GET for a partial update to omit. Verifies
+        the issuer's OIDC discovery document is reachable before saving;
+        a bad issuer URL or unreachable IdP fails the request rather
+        than silently saving a broken connection.
+      security: [{ cookieAuth: [] }]
+      tags: [Organizations, SSO]
+      parameters:
+        - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [issuerUrl, clientId, clientSecret, allowedEmailDomain]
+              properties:
+                issuerUrl: { type: string, format: uri, description: "Must use https" }
+                clientId: { type: string }
+                clientSecret: { type: string }
+                allowedEmailDomain: { type: string, example: acme.com }
+                enabled: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Connection saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SsoConnectionDto" }
+        "400":
+          {
+            description: "Validation failed, or the issuer's OIDC discovery document couldn't be verified",
+          }
+        "403": { description: "Member, but not ORG_ADMIN" }
+        "404": { description: "Org doesn't exist, or the caller isn't a member" }
+  /auth/sso/start:
+    get:
+      summary: Begin SP-initiated OIDC login
+      description: >
+        Not a JSON endpoint — hit via a full-page browser navigation.
+        Looks up which organization's SSO connection (if any) governs
+        the given email's domain and 302s to that IdP's authorization
+        endpoint with PKCE, state, and nonce. No connection for the
+        domain (or a disabled one) redirects to
+        `/login?ssoError=sso_not_configured` rather than returning 404
+        JSON — there's no XHR caller here to parse it.
+      tags: [Auth, SSO]
+      parameters:
+        - { name: email, in: query, required: true, schema: { type: string, format: email } }
+      responses:
+        "302": { description: "Redirect to the IdP, or back to /login?ssoError=... on failure" }
+  /auth/sso/callback:
+    get:
+      summary: Complete SP-initiated OIDC login
+      description: >
+        The IdP's redirect target. Validates state/PKCE/nonce (single-use;
+        Redis-backed, ~10 minute TTL), exchanges the code, JIT-provisions
+        the user and org membership if this is their first time, and
+        issues the same session cookies password login would. Every
+        outcome is a redirect — success to `/dashboard`, any failure to
+        `/login?ssoError=...` — never a JSON error response.
+      tags: [Auth, SSO]
+      parameters:
+        - { name: code, in: query, schema: { type: string } }
+        - { name: state, in: query, schema: { type: string } }
+      responses:
+        "302":
+          { description: "Redirect to /dashboard on success, or /login?ssoError=... on failure" }
+  /baseline-check-ins:
+    get:
+      summary: Her baseline check in, or null
+      description: >
+        Her first check in, saved once as her starting point: her own
+        recall of the last two weeks, self reported, not a clinical score.
+        Only ever the signed in person's own. Needs current consent,
+        including health processing.
+      tags: [Baseline]
+      security: [{ cookieAuth: [] }]
+      responses:
+        "200":
+          description: "`{ data: { baseline: BaselineCheckIn | null } }`"
+        "401": { description: Not signed in }
+        "403": { description: CONSENT_REQUIRED }
+    post:
+      summary: Save her first check in as her baseline, once
+      description: >
+        Creates her baseline, or returns the one she already has unchanged
+        (one per account, never edited). A retry after a lost response is
+        safe. Needs current consent, including health processing; the
+        baseline keeps the version and time of the health consent that
+        covered it. Never writes daily symptom or context logs.
+      tags: [Baseline]
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [completedOn, timeZone, locale, goal, sleepDuration, workImpact, symptoms]
+              properties:
+                completedOn:
+                  type: string
+                  format: date
+                  description: Her local date; today or up to 7 days before, in timeZone.
+                timeZone: { type: string, example: Asia/Tokyo }
+                locale: { type: string, enum: [en, ja, fr] }
+                goal:
+                  type: string
+                  nullable: true
+                  enum:
+                    [
+                      UNDERSTAND_EXPERIENCE,
+                      UNDERSTAND_PATTERNS,
+                      PREPARE_FOR_APPOINTMENT,
+                      KEEP_RECORD,
+                      NOT_SURE,
+                    ]
+                sleepDuration:
+                  { type: string, nullable: true, enum: [UNDER_6H, SIX_TO_SEVEN_H, SEVEN_PLUS_H] }
+                workImpact: { type: string, nullable: true, enum: [NONE, DID_LESS, MISSED_TIME] }
+                symptoms:
+                  type: array
+                  maxItems: 13
+                  description: Unique categories; OTHER is refused.
+                  items:
+                    type: object
+                    required: [category, severity, frequency]
+                    properties:
+                      category: { $ref: "#/components/schemas/SymptomCategory" }
+                      severity: { type: string, nullable: true, enum: [MILD, MODERATE, SEVERE] }
+                      frequency:
+                        { type: string, nullable: true, enum: [FEW_DAYS, HALF_THE_DAYS, MOST_DAYS] }
+      responses:
+        "201": { description: "Saved now: `{ data: { baseline, created: true } }`" }
+        "200":
+          description: "She already had one, returned unchanged: `{ data: { baseline, created: false } }`"
+        "400": { description: Invalid body }
+        "401": { description: Not signed in }
+        "403": { description: CONSENT_REQUIRED }
+        "429": { description: Rate limited }
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: embr_at
+  schemas:
+    SymptomCategory:
+      type: string
+      enum:
+        [
+          HOT_FLASH,
+          NIGHT_SWEATS,
+          MOOD_CHANGE,
+          SLEEP_DISTURBANCE,
+          BRAIN_FOG,
+          JOINT_PAIN,
+          FATIGUE,
+          ANXIETY,
+          IRREGULAR_HEARTBEAT,
+          VAGINAL_DRYNESS,
+          LIBIDO_CHANGE,
+          WEIGHT_CHANGE,
+          HEADACHE,
+          ANGER,
+          IRRITABILITY,
+          LOW_MOOD,
+          PAINFUL_SEX,
+          OTHER,
+        ]
+    SeverityLevel:
+      type: string
+      enum: [MILD, MODERATE, SEVERE]
+    TreatmentCategory:
+      type: string
+      description: "Pre-existing enum, not previously documented here — added alongside the Reflections schemas below, which are the first response bodies in this spec to reference it."
+      enum: [HRT, SUPPLEMENT, MEDICATION, LIFESTYLE, OTHER]
+    FlowIntensity:
+      type: string
+      enum: [SPOTTING, LIGHT, MEDIUM, HEAVY]
+    OrgRole:
+      type: string
+      enum: [ORG_ADMIN, ORG_MEMBER]
+    SsoConnectionDto:
+      type: object
+      description: Never includes the client secret, encrypted or otherwise — hasClientSecret is all a config UI needs.
+      properties:
+        id: { type: string, format: uuid }
+        protocol: { type: string, enum: [OIDC] }
+        issuerUrl: { type: string, format: uri }
+        clientId: { type: string }
+        hasClientSecret: { type: boolean }
+        allowedEmailDomain: { type: string }
+        enabled: { type: boolean }
+        enforced:
+          { type: boolean, description: "Reserved — not read anywhere yet as of Milestone 15" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ReflectionDto:
+      description: "One of four Reflection MVP variants (discriminated by `type`) — always structured facts describing what was logged, never a diagnosis, causal claim, or efficacy claim. See each variant below. `key` identifies this specific instance for POST /reflections/dismissals; it is not a database id, since reflections are computed live on every request rather than stored (see ReflectionDismissal in schema.prisma)."
+      oneOf:
+        - $ref: "#/components/schemas/LoggingActivityReflectionDto"
+        - $ref: "#/components/schemas/SymptomFrequencyReflectionDto"
+        - $ref: "#/components/schemas/SymptomCoOccurrenceReflectionDto"
+        - $ref: "#/components/schemas/TreatmentContextReflectionDto"
+      discriminator:
+        propertyName: type
+        mapping:
+          LOGGING_ACTIVITY: "#/components/schemas/LoggingActivityReflectionDto"
+          SYMPTOM_FREQUENCY: "#/components/schemas/SymptomFrequencyReflectionDto"
+          SYMPTOM_CO_OCCURRENCE: "#/components/schemas/SymptomCoOccurrenceReflectionDto"
+          TREATMENT_CONTEXT: "#/components/schemas/TreatmentContextReflectionDto"
+    LoggingActivityReflectionDto:
+      type: object
+      properties:
+        type: { type: string, enum: [LOGGING_ACTIVITY] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        logCount: { type: integer }
+        daysLogged: { type: integer }
+    SymptomFrequencyReflectionDto:
+      type: object
+      properties:
+        type: { type: string, enum: [SYMPTOM_FREQUENCY] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        category: { $ref: "#/components/schemas/SymptomCategory" }
+        count: { type: integer }
+    SymptomCoOccurrenceReflectionDto:
+      type: object
+      description: "Same underlying detection as GET /trends/co-occurrence's response — surfaced here as a home-screen acknowledgement rather than a trends-page query result."
+      properties:
+        type: { type: string, enum: [SYMPTOM_CO_OCCURRENCE] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        categoryA: { $ref: "#/components/schemas/SymptomCategory" }
+        categoryB: { $ref: "#/components/schemas/SymptomCategory" }
+        days: { type: integer }
+    TreatmentContextReflectionDto:
+      type: object
+      description: "Deliberately just a count of logs during the treatment's active window — never an outcome or efficacy claim."
+      properties:
+        type: { type: string, enum: [TREATMENT_CONTEXT] }
+        key: { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd: { type: string, format: date }
+        treatmentId: { type: string, format: uuid }
+        treatmentName: { type: string }
+        treatmentCategory: { $ref: "#/components/schemas/TreatmentCategory" }
+        logCount: { type: integer }
+    ClinicalBriefListItemDto:
+      type: object
+      description: The list-view shape — no AI content, keeps history/pagination responses small.
+      properties:
+        id: { type: string, format: uuid }
+        fromDate: { type: string, format: date }
+        toDate: { type: string, format: date }
+        createdAt: { type: string, format: date-time }
+    ClinicalBriefDto:
+      allOf:
+        - { $ref: "#/components/schemas/ClinicalBriefListItemDto" }
+        - type: object
+          properties:
+            symptomSummary:
+              type: array
+              items:
+                type: object
+                properties:
+                  category: { $ref: "#/components/schemas/SymptomCategory" }
+                  count: { type: integer }
+                  severityBreakdown: { type: object, additionalProperties: { type: integer } }
+            cycleSummary:
+              type: object
+              properties:
+                averageCycleLengthDays: { type: integer, nullable: true }
+                cycleCount: { type: integer }
+                periodDaysLogged: { type: integer }
+            patientPriorities:
+              type: array
+              nullable: true
+              items: { type: string }
+              description: Her own words, printed first in the brief. Never sent to the AI. Empty when she wrote none; null for briefs made before this field existed.
+            aiNarrative:
+              type: string
+              description: AI-generated from symptomSummary/cycleSummary only — never from raw log notes.
+            aiDiscussionTopics:
+              type: array
+              items: { type: string }
+              description: Always phrased as questions to ask a GP, never as assertions or advice — see brief.ai.ts's system prompt.
+    OrganizationDto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        seatLimit: { type: integer, nullable: true }
+        memberCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+    OrganizationMemberDto:
+      type: object
+      description: Roster entry — account + org-role metadata only, never anything from that member's own symptom/cycle records.
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        joinedAt: { type: string, format: date-time }
+    OrganizationInviteDto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        expiresAt: { type: string, format: date-time }
+    MyOrganizationMembershipDto:
+      type: object
+      properties:
+        organizationId: { type: string, format: uuid }
+        organizationName: { type: string }
+        organizationSlug: { type: string }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        joinedAt: { type: string, format: date-time }
+    OrgSymptomFrequencyDto:
+      type: object
+      description: Anonymized, cohort-level only. When suppressed, categories is always empty — a small enough organization makes even a category-level count individually identifying.
+      properties:
+        suppressed:
+          type: boolean
+          description: True when the active cohort is below the configured k-anonymity floor (ORG_TRENDS_MIN_COHORT_SIZE).
+        cohortSize:
+          type: integer
+          description: Distinct members with at least one logged entry in range — not raw membership count.
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category: { $ref: "#/components/schemas/SymptomCategory" }
+              count: { type: integer }
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        uptimeSeconds:
+          type: integer
+        version:
+          type: string
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [ok, down]
+              latencyMs:
+                type: number
+              message:
+                type: string
+    ApiErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string

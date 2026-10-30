@@ -74,6 +74,7 @@ model User {
   contextLogs             ContextLog[]
   notes                   Note[]
   mrsCheckIns             MrsCheckIn[]
+  baselineCheckIn         BaselineCheckIn?
   treatments              Treatment[]
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
@@ -303,6 +304,16 @@ enum WorkImpact {
   MISSED_TIME
 }
 
+/// Whether symptoms affected time with family or friends that day, as
+/// she answers it. The family and social counterpart of WorkImpact, kept
+/// apart from SymptomLog and from every organisation statistic in the
+/// same way. Null means not recorded, never "no".
+enum SocialImpact {
+  NONE
+  DID_LESS
+  MISSED_PLANS
+}
+
 /// How hard she exercised that day, as she judges it: any sport,
 /// workout or movement that raised her breathing. A fixed scale, never
 /// minutes or free text. Null means not recorded, never "none".
@@ -342,6 +353,7 @@ model ContextLog {
   nightSweats       NightSweatsRecall?
   workImpact        WorkImpact?
   exercise          ExerciseLevel?
+  socialImpact      SocialImpact?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
@@ -697,6 +709,17 @@ model ClinicalBrief {
   /// exercise.ts. Breakdown only from 7 answered days. Never sent to the
   /// AI. Null means "never computed for this brief".
   exercise           Json?
+  /// { daysAnswered: number, breakdown: Record<SocialImpact, number> | null }
+  /// Counted from ContextLog.socialImpact over [fromDate, toDate]; see
+  /// social-impact.ts. Breakdown only from 7 answered days. Never sent
+  /// to the AI and never part of organisation statistics. Null means
+  /// "never computed for this brief".
+  socialImpact       Json?
+  /// { blockDays: number, blocks: [{ start, end }], rows: [{ category, cells: [{ peak, daysLogged } | null] }] }
+  /// Highest severity per symptom in each 7 day block of the period (28
+  /// day blocks past 13 weeks); see severity-trend.ts. Descriptive only,
+  /// never sent to the AI. Null means "never computed for this brief".
+  severityTrend      Json?
   /// { checkInsInPeriod: number, first: BriefMrsPoint | null, latest: BriefMrsPoint | null }
   /// The monthly Menopause Rating Scale check-ins dated in the period,
   /// with each point's scores and published reference bands; see
@@ -1020,6 +1043,60 @@ model MrsCheckIn {
 
   @@unique([userId, completedOn])
   @@map("mrs_check_ins")
+}
+
+// ---- Baseline check in ----
+//
+// Her first check in, saved once to her account as her starting point:
+// her own recall of the last two weeks, not a clinical score. One per
+// account (userId is unique) and never changed; it goes only with the
+// account. Kept apart from daily symptom and context logs so a BRIEF,
+// pattern or trend never counts recalled weeks as logged days. See
+// docs/planning/baseline-check-in.md.
+
+/// How often a symptom happened over the recall window, as she recalls it.
+enum RecallFrequency {
+  FEW_DAYS
+  HALF_THE_DAYS
+  MOST_DAYS
+}
+
+model BaselineCheckIn {
+  id                   String                   @id @default(uuid())
+  userId               String                   @unique
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Her local calendar date when she completed it.
+  completedOn          DateTime                 @db.Date
+  /// The IANA time zone she completed it in.
+  timeZone             String
+  /// The recall window the questions named, in days.
+  recallDays           Int                      @default(14) @db.SmallInt
+  /// Language the questions were shown in.
+  locale               BriefLocale
+  goal                 OnboardingJobToBeDone?
+  sleepDuration        SleepDurationBucket?
+  workImpact           WorkImpact?
+  /// The health information consent that covered the save, copied from
+  /// the consent ledger (which keeps the full record).
+  healthConsentVersion String
+  healthConsentAt      DateTime
+  createdAt            DateTime                 @default(now())
+  symptoms             BaselineCheckInSymptom[]
+
+  @@map("baseline_check_ins")
+}
+
+/// A symptom she picked. One she did not pick is not stored, never as "absent".
+model BaselineCheckInSymptom {
+  id                String           @id @default(uuid())
+  baselineCheckInId String
+  baselineCheckIn   BaselineCheckIn  @relation(fields: [baselineCheckInId], references: [id], onDelete: Cascade)
+  category          SymptomCategory
+  severity          SeverityLevel?
+  frequency         RecallFrequency?
+
+  @@unique([baselineCheckInId, category])
+  @@map("baseline_check_in_symptoms")
 }
 
 // ---- Consent (Terms, Privacy, health information) ----

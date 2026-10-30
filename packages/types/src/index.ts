@@ -290,6 +290,32 @@ export interface NightSweatsRecallSummaryDto {
  * organisation statistic. */
 export type WorkImpact = "NONE" | "DID_LESS" | "MISSED_TIME";
 
+/** Whether symptoms affected time with family or friends that day.
+ * Counted only for the person's own BRIEF; never sent to the AI and
+ * never part of any organisation statistic. */
+export type SocialImpact = "NONE" | "DID_LESS" | "MISSED_PLANS";
+
+/** One block of the severity trend: the highest severity she recorded
+ * in it and on how many days. */
+export interface SeverityTrendCellDto {
+  peak: SeverityLevel;
+  daysLogged: number;
+}
+
+/** Severity over a BRIEF's period, per symptom, in blocks of 7 days (28
+ * for periods over 13 weeks). A null cell means nothing was recorded in
+ * that block, never "none". Descriptive only; never sent to the AI. */
+export interface SeverityTrendDto {
+  blockDays: number;
+  blocks: Array<{ start: string; end: string }>;
+  rows: Array<{ category: SymptomCategory; cells: Array<SeverityTrendCellDto | null> }>;
+}
+
+export interface SocialImpactSummaryDto {
+  daysAnswered: number;
+  breakdown: Record<SocialImpact, number> | null;
+}
+
 /** How hard she exercised that day, as she judges it. */
 export type ExerciseLevel = "NONE" | "LIGHT" | "MODERATE" | "VIGOROUS";
 
@@ -401,6 +427,7 @@ export interface ContextLogDto {
   nightSweats: NightSweatsRecall | null;
   workImpact: WorkImpact | null;
   exercise: ExerciseLevel | null;
+  socialImpact: SocialImpact | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -944,6 +971,15 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
    * only when at least 7 were. Never sent to the AI. Null for a brief
    * generated before this field existed. */
   exercise: ExerciseSummaryDto | null;
+  /** Days in range where "did symptoms affect time with family or
+   * friends" was answered, and a per-answer count only when at least 7
+   * were. Never sent to the AI and never part of organisation
+   * statistics. Null for a brief generated before this field existed. */
+  socialImpact: SocialImpactSummaryDto | null;
+  /** Highest severity per symptom, block by block over the period; see
+   * SeverityTrendDto. Null for a brief generated before this field
+   * existed. */
+  severityTrend: SeverityTrendDto | null;
   /** The monthly Menopause Rating Scale check-ins in the period. Null
    * when the brief predates the field or the check-in was switched off
    * when it was made. Never sent to the AI. */
@@ -1112,4 +1148,43 @@ export interface AdminMetricsDto {
     newAccounts: number;
     briefsGenerated: number;
   }>;
+}
+
+// ---- Baseline check in ----
+
+export type RecallFrequency = "FEW_DAYS" | "HALF_THE_DAYS" | "MOST_DAYS";
+
+/** Her first check in, saved once as her starting point. Her own recall
+ * of the last `recallDays` days, not a clinical score. Never changed. */
+export interface BaselineCheckInDto {
+  id: string;
+  /** Her local date, YYYY-MM-DD. */
+  completedOn: string;
+  timeZone: string;
+  recallDays: number;
+  locale: "en" | "ja" | "fr";
+  goal:
+    | "UNDERSTAND_EXPERIENCE"
+    | "UNDERSTAND_PATTERNS"
+    | "PREPARE_FOR_APPOINTMENT"
+    | "KEEP_RECORD"
+    | "NOT_SURE"
+    | null;
+  sleepDuration: SleepDurationBucket | null;
+  workImpact: WorkImpact | null;
+  symptoms: Array<{
+    category: SymptomCategory;
+    severity: SeverityLevel | null;
+    frequency: RecallFrequency | null;
+  }>;
+  /** The health information consent that covered the save. */
+  healthConsentVersion: string;
+  healthConsentAt: string;
+  createdAt: string;
+}
+
+export interface SaveBaselineCheckInResultDto {
+  baseline: BaselineCheckInDto;
+  /** False when she already had a baseline; it is returned unchanged. */
+  created: boolean;
 }

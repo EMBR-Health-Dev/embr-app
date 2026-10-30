@@ -14,6 +14,7 @@ import { EmptyState } from "../../components/empty-state";
 import { LoadingState } from "../../components/loading-state";
 import { ReflectionsSection } from "../../components/reflections-section";
 import { WorkImpactCard } from "../../components/work-impact-card";
+import { SocialImpactCard } from "../../components/social-impact-card";
 import { errorMarker, destructiveText, theme } from "../../lib/theme";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 
@@ -208,6 +209,7 @@ export default function HomeScreen() {
 
             {confirmation && <Text style={styles.confirmation}>{confirmation}</Text>}
             <WorkImpactCard />
+            <SocialImpactCard />
             <ReflectionsSection refreshKey={reflectionsRefreshKey} />
 
             <Text style={[styles.sectionLabel, { marginTop: 28 }]}>{t("home.recentLogs")}</Text>

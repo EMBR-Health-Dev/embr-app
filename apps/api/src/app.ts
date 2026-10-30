@@ -23,6 +23,7 @@ import { cycleRouter } from "./modules/cycle/cycle.routes.js";
 import { contextRouter } from "./modules/context/context.routes.js";
 import { noteRouter } from "./modules/notes/note.routes.js";
 import { mrsRouter } from "./modules/mrs/mrs.routes.js";
+import { baselineRouter } from "./modules/baseline/baseline.routes.js";
 import { exportRouter } from "./modules/export/export.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { trendsRouter } from "./modules/trends/trends.routes.js";
@@ -136,6 +137,7 @@ export function createApp(): Express {
   app.use(contextRouter);
   app.use(noteRouter);
   app.use(mrsRouter);
+  app.use(baselineRouter);
   app.use(exportRouter);
   app.use(adminRouter);
   app.use(trendsRouter);

@@ -54,7 +54,8 @@
     "earlyAccessBody": "新規アカウントの受付はまだ開始していません。一般公開に向けて、公開時に適用されるプライバシーや法的な文書を含め、準備を進めています。早期アクセスをお申し込みいただければ、こちらからご連絡します。",
     "earlyAccessAction": "早期アクセスを申し込む",
     "reassuranceTitle": "記録は、あなたのものです。",
-    "reassuranceBody": "エクスポート、共有、削除は、いつでもご自身で選べます。"
+    "reassuranceBody": "エクスポート、共有、削除は、いつでもご自身で選べます。",
+    "checkInSignInFailed": "アカウントを作成しました。ログインして回答を保存してください。回答はこのタブに残っています。"
   },
   "ForgotPassword": {
     "title": "パスワードを再設定",
@@ -237,6 +238,11 @@
       "DID_LESS": "はい、仕事量が減った",
       "MISSED_TIME": "はい、休んだ・早退した"
     },
+    "socialImpact": {
+      "NONE": "いいえ",
+      "DID_LESS": "はい、あまり参加できなかった",
+      "MISSED_PLANS": "はい、予定を休んだ・キャンセルした"
+    },
     "stressLevel": {
       "LOW": "低い",
       "MODERATE": "中程度",
@@ -323,6 +329,9 @@
     "workImpactLabel": "今日、症状が仕事に影響しましたか？",
     "workImpactNone": "未記録",
     "workImpactHelp": "あなた自身のBRIEFでのみ集計されます。勤務先と共有されることはありません。",
+    "socialImpactLabel": "今日、症状が家族や友人との時間に影響しましたか？",
+    "socialImpactNone": "未記録",
+    "socialImpactHelp": "家庭での生活や人との予定も含みます。あなた自身のBRIEFでのみ集計され、勤務先と共有されることはありません。",
     "stressLevelLabel": "今日のストレス",
     "stressLevelNone": "未記録",
     "caffeineAfternoonLabel": "午後2時以降のカフェイン",
@@ -376,6 +385,7 @@
     "nightSweatsLabelYesterday": "一昨日の夜の寝汗",
     "stressLevelLabelYesterday": "昨日のストレス",
     "workImpactLabelYesterday": "昨日、症状が仕事に影響しましたか？",
+    "socialImpactLabelYesterday": "昨日、症状が家族や友人との時間に影響しましたか？",
     "saveTodaysEntryYesterday": "昨日の記録を保存",
     "todaysEntryLoadErrorYesterday": "昨日の記録を読み込めなかったため、すでに記録された内容を守るために保存を停止しています。ページを再読み込みしてもう一度お試しください。",
     "recentToday": "今日",
@@ -442,6 +452,7 @@
     },
     "nightSweatsRecalled": "昨夜の寝汗：{value}（朝に振り返った回答）",
     "workImpactAnswered": "症状が仕事に影響したか：{value}",
+    "socialImpactAnswered": "症状が家族や友人との時間に影響したか：{value}",
     "cycleLabel": "周期",
     "periodStarted": "生理開始",
     "periodEnded": "生理終了",
@@ -804,6 +815,8 @@
     "workImpactBreakdown": "影響なし{none}日、仕事量が減った{didLess}日、休んだ・早退した{missedTime}日。",
     "workImpactFewAnswers": "回答が7日分以上になると、内訳を表示します。",
     "workImpactPrivate": "あなた自身の毎日の回答です。勤務先と共有されることはありません。",
+    "socialImpactTitle": "症状が家族や友人との時間に影響した日",
+    "socialImpactBreakdown": "影響なし{none}日、あまり参加できなかった{didLess}日、予定を休んだ・キャンセルした{missedPlans}日。",
     "groundedInTitle": "データに基づく根拠",
     "viewEvidence": "記録した日を表示",
     "hideEvidence": "記録した日を非表示",
@@ -826,6 +839,13 @@
     "preset30": "過去30日間",
     "preset90": "過去90日間",
     "presetAll": "最初の記録から",
+    "severityTrendTitleWeekly": "週ごとの強さ",
+    "severityTrendTitleBlocks": "4週間ごとの強さ",
+    "severityTrendIntro": "各期間に記録された、症状ごとの最も強い程度です（1 軽度、2 中等度、3 重度）。空欄は記録がなかったことを示し、症状がなかったことを意味しません。",
+    "severityTrendSymptom": "症状",
+    "severityTrendBlock": "{start}〜{end}",
+    "severityTrendCell": "{severity}、{count}日記録",
+    "severityTrendNothing": "記録なし",
     "dayByDayTitle": "日ごとの記録",
     "dayByDayIntro": "1列が1日を表し、左が最も古い日です。各症状が記録された日を示し、重症度は示しません。",
     "dayByDayLegendLogged": "記録あり",
@@ -1549,7 +1569,7 @@
       "sleep": "ふだんの睡眠：{value}",
       "work": "仕事への影響：{value}",
       "limitsTitle": "この結果でわかること、わからないこと",
-      "limitsBody": "この2週間にあなたが記録した内容を示しています。診断ではありません。原因を特定したり、更年期かどうかを判断したりするものではありません。それについては医療者に相談してください。",
+      "limitsBody": "この2週間にあなたが記録した内容を示しています。あなた自身のふり返りであり、検証された臨床的なスコアではありません。診断ではありません。原因を特定したり、更年期かどうかを判断したりするものではありません。それについては医療者に相談してください。",
       "nextTitle": "次のステップ",
       "next": {
         "TRACK_A_WEEK": "1週間、記録を続けてみましょう。毎日の記録からは、2週間のふり返りではわからないパターンが見えることがあります。",
@@ -1572,6 +1592,20 @@
       "sooner": "どのような変化があれば、早めに受診したほうがよいですか？",
       "track": "次に相談するまでに、何を記録しておくといちばん役に立ちますか？",
       "general": "小さなことに思えても、伝えておいたほうがよい変化はどれですか？"
+    },
+    "save": {
+      "saveAction": "スタート地点として保存する",
+      "saveNote": "この回答を、あなたのスタート地点としてアカウントに一度だけ保存します。この2週間をあなた自身がふり返った内容で、臨床的なスコアではありません。保存後は変更できません。",
+      "saving": "保存しています…",
+      "retry": "もう一度試す",
+      "errorBody": "回答を保存できませんでした。回答はこの端末に残っているので、もう一度お試しください。",
+      "existsBody": "{date}のスタート地点がすでにあります。それは変更されず、今回の回答は保存されていません。",
+      "savedTitle": "スタート地点として保存しました",
+      "savedBody": "{date}の回答はアカウントに保存され、この端末からは消去されました。これからの毎日のチェックインは、この回答をもとに積み重なっていきます。",
+      "goToDashboard": "ダッシュボードへ",
+      "signUpAction": "保存して記録を続ける",
+      "signUpNote": "この回答を残すにはアカウントを作成してください。回答は、EMBRが健康情報を取り扱うことにあなたが同意した後にのみ送信されます。",
+      "logInToSave": "アカウントをお持ちの方は、ログインして保存"
     }
   }
 }

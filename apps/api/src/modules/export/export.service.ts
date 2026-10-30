@@ -27,6 +27,7 @@ interface ContextLogRecord {
   nightSweats: string | null;
   workImpact: string | null;
   exercise: string | null;
+  socialImpact: string | null;
 }
 
 interface TreatmentRecord {
@@ -59,7 +60,7 @@ function treatmentCategoryLabel(category: string): string {
 }
 
 /** Version of the all-data file's layout, so a reader can tell what to expect. */
-export const ALL_DATA_EXPORT_VERSION = 1;
+export const ALL_DATA_EXPORT_VERSION = 2;
 
 /** Drops the owner id from rows that carry it. The repository already
  * omits it; this keeps the file clean whatever the query returns. */
@@ -101,6 +102,8 @@ export const exportService = {
       treatments: withoutUserId(data.treatments),
       notes: withoutUserId(data.notes),
       menopauseRatingScale: withoutUserId(data.mrsCheckIns),
+      // Her first check in: her recall of the last two weeks, not daily logs.
+      baselineCheckIn: data.baselineCheckIn,
       briefs: withoutUserId(data.briefs),
       dismissedReflections: withoutUserId(data.reflectionDismissals),
       organizations: data.memberships.map((m) => ({
@@ -152,6 +155,7 @@ export const exportService = {
         "nightSweatsRecalled",
         "workImpact",
         "exercise",
+        "socialImpact",
       ],
       logs.map((log: ContextLogRecord) => [
         log.date.toISOString().slice(0, 10),
@@ -162,6 +166,7 @@ export const exportService = {
         log.nightSweats,
         log.workImpact,
         log.exercise,
+        log.socialImpact,
       ]),
     );
   },

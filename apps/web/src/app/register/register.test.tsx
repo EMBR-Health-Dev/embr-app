@@ -13,6 +13,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
 
+vi.mock("../../lib/auth-context", () => ({
+  useAuth: () => ({ user: null, loading: false, refresh: vi.fn(), logout: vi.fn() }),
+}));
+
 const registerMock = vi.fn();
 vi.mock("../../lib/api", () => ({
   api: { auth: { register: (...args: unknown[]) => registerMock(...args) } },

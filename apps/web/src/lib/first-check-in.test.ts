@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import fr from "../../messages/fr.json";
+import { saveBaselineCheckInSchema } from "@embr/validation";
 import {
+  baselineRequest,
   buildResult,
   clearAnswers,
   emptyAnswers,
@@ -203,5 +205,43 @@ describe("first check in copy", () => {
     expect(en.FirstCheckIn.result.limitsBody).toContain("not a diagnosis");
     expect(ja.FirstCheckIn.result.limitsBody).toContain("診断ではありません");
     expect(fr.FirstCheckIn.result.limitsBody).toContain("pas un diagnostic");
+  });
+});
+
+describe("baselineRequest", () => {
+  it("sends her answers as given, which the API schema accepts as they are", () => {
+    const request = baselineRequest(
+      answers({
+        goal: "KEEP_RECORD",
+        sleep: "SEVEN_PLUS_H",
+        symptoms: [{ category: "FATIGUE", severity: "MILD", frequency: "FEW_DAYS" }],
+      }),
+      "2026-10-29",
+      "Europe/Paris",
+      "fr",
+    );
+    expect(request).toEqual({
+      completedOn: "2026-10-29",
+      timeZone: "Europe/Paris",
+      locale: "fr",
+      goal: "KEEP_RECORD",
+      sleepDuration: "SEVEN_PLUS_H",
+      workImpact: null,
+      symptoms: [{ category: "FATIGUE", severity: "MILD", frequency: "FEW_DAYS" }],
+    });
+    expect(saveBaselineCheckInSchema.parse(request)).toEqual(request);
+  });
+
+  it("carries nothing beyond the answers: no step, version or extra field", () => {
+    const keys = Object.keys(baselineRequest(answers({}), "2026-10-29", "UTC", "en")).sort();
+    expect(keys).toEqual([
+      "completedOn",
+      "goal",
+      "locale",
+      "sleepDuration",
+      "symptoms",
+      "timeZone",
+      "workImpact",
+    ]);
   });
 });
