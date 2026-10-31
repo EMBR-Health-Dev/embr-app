@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
 import type { Locale } from "../../lib/locale.js";
+import { renderWelcomeEmail } from "./welcome-email.js";
 
 /**
  * Resend's HTTPS API — replaces the previous Nodemailer/SMTP transport
@@ -167,6 +168,17 @@ export async function sendLoginLinkEmail(to: string, token: string, locale: Loca
     `<p>Use this link to sign in to EMBR:</p><p><a href="${link}">${link}</a></p><p>It works once and expires in ${minutes} minutes. If you didn't request this, you can safely ignore this email.</p>`,
     `Sign in to EMBR: ${link}`,
   );
+}
+
+/**
+ * The one-time welcome email after the first successful email
+ * verification. Takes only the address and a language: the copy is
+ * fixed and links to the dashboard, with nothing from her record. The
+ * caller (auth.service.ts) decides it is the first verification.
+ */
+export async function sendWelcomeEmail(to: string, locale: Locale = "en") {
+  const { subject, html, text } = renderWelcomeEmail(locale, `${env.APP_URL}/dashboard`);
+  await sendMail(to, subject, html, text);
 }
 
 const WEEKLY_COPY: Record<

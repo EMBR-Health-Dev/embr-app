@@ -5,7 +5,10 @@ import { randomUUID } from "node:crypto";
 
 // Sign in by email link, against the real tables: the single use rule
 // is one conditional write in Postgres, so it is proven there.
-const { sentLinks } = vi.hoisted(() => ({ sentLinks: [] as Array<{ to: string; token: string }> }));
+const { sentLinks, sentWelcomes } = vi.hoisted(() => ({
+  sentLinks: [] as Array<{ to: string; token: string }>,
+  sentWelcomes: [] as string[],
+}));
 
 vi.mock("../../src/lib/redis.js", () => ({
   redis: { ping: vi.fn().mockResolvedValue("PONG"), quit: vi.fn() },
@@ -16,6 +19,10 @@ vi.mock("../../src/modules/auth/mailer.js", () => ({
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
   sendLoginLinkEmail: vi.fn((to: string, token: string) => {
     sentLinks.push({ to, token });
+    return Promise.resolve();
+  }),
+  sendWelcomeEmail: vi.fn((to: string) => {
+    sentWelcomes.push(to);
     return Promise.resolve();
   }),
 }));
@@ -77,6 +84,7 @@ describe.skipIf(!reachable)("Sign in by email link against Postgres", () => {
 
   beforeEach(() => {
     sentLinks.length = 0;
+    sentWelcomes.length = 0;
   });
 
   afterAll(async () => {
@@ -164,5 +172,35 @@ describe.skipIf(!reachable)("Sign in by email link against Postgres", () => {
     expect(res.body.data.user.emailVerified).toBe(true);
     const after = await prisma.user.findUnique({ where: { id: user.id } });
     expect(after!.emailVerifiedAt).not.toBeNull();
+    expect(sentWelcomes).toEqual([user.email]);
+  });
+
+  it("welcomes once when two different links verify the same address at the same moment", async () => {
+    // Only one link is live per account, so both are reopened here: what
+    // races is the verification write itself, not the token.
+    const user = await person({ verified: false });
+    const first = await requestLink(app, user.email);
+    await prisma.loginLinkToken.updateMany({
+      where: { userId: user.id },
+      data: { consumedAt: null },
+    });
+    const second = await requestLink(app, user.email);
+    await prisma.loginLinkToken.updateMany({
+      where: { userId: user.id },
+      data: { consumedAt: null },
+    });
+    const results = await Promise.all([
+      request(app).post("/auth/login-link/consume").send({ token: first }),
+      request(app).post("/auth/login-link/consume").send({ token: second }),
+    ]);
+    expect(results.map((r) => r.status)).toEqual([200, 200]);
+    expect(sentWelcomes).toEqual([user.email]);
+  });
+
+  it("sends no welcome when an already verified address signs in by link", async () => {
+    const user = await person();
+    const token = await requestLink(app, user.email);
+    expect((await request(app).post("/auth/login-link/consume").send({ token })).status).toBe(200);
+    expect(sentWelcomes).toHaveLength(0);
   });
 });

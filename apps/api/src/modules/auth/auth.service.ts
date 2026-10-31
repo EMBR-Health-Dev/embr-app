@@ -5,13 +5,24 @@ import { env } from "../../config/env.js";
 import { authRepository } from "./auth.repository.js";
 import { hashPassword, verifyPassword } from "./password.js";
 import { generateRefreshToken, generateOpaqueToken, hashToken, signAccessToken } from "./tokens.js";
-import { sendLoginLinkEmail, sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
+import {
+  sendLoginLinkEmail,
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "./mailer.js";
 import { writeAuditLog } from "./audit.js";
 import { toUserDto } from "./auth.mappers.js";
 import { onboardingRepository } from "../onboarding/onboarding.repository.js";
 import { consentService } from "../consent/consent.service.js";
 import type { RegisterInput } from "@embr/validation";
-import { DEFAULT_LOCALE, explicitRequestLocale, type Locale } from "../../lib/locale.js";
+import {
+  DEFAULT_LOCALE,
+  explicitRequestLocale,
+  requestLocale,
+  type Locale,
+} from "../../lib/locale.js";
+import { logger } from "../../lib/logger.js";
 import { notificationsRepository } from "../notifications/notifications.repository.js";
 
 interface IssuedSession {
@@ -30,6 +41,26 @@ function requestMeta(req: Request) {
 async function rememberSignInLocale(req: Request, userId: string): Promise<void> {
   const locale = explicitRequestLocale(req);
   if (locale) await notificationsRepository.refreshWeeklyEmailLocale(userId, locale);
+}
+
+/**
+ * The welcome email, for an account whose address was just verified for
+ * the first time. Callers only reach this when their own conditional
+ * write made that transition (markEmailVerifiedIfUnverified, or SSO's
+ * provisioning transaction), which is what makes it once per account.
+ * In the language of the request that verified it. Best effort: a
+ * failed send never fails the verification or sign in behind it, and
+ * the log carries the account id, not the address.
+ */
+export async function sendWelcomeAfterFirstVerification(
+  req: Request,
+  user: { id: string; email: string },
+): Promise<void> {
+  try {
+    await sendWelcomeEmail(user.email, requestLocale(req));
+  } catch (err) {
+    logger.error({ err, userId: user.id }, "failed to send welcome email");
+  }
 }
 
 export async function issueSession(
@@ -99,8 +130,13 @@ export const authService = {
       throw AppError.validation("This verification link is invalid or has expired");
     }
     await authRepository.consumeEmailVerificationToken(record.id);
-    await authRepository.markEmailVerified(record.userId);
+    const firstVerification = await authRepository.markEmailVerifiedIfUnverified(record.userId);
     await writeAuditLog(req, "EMAIL_VERIFIED", record.userId);
+
+    if (firstVerification) {
+      const user = await authRepository.findUserById(record.userId);
+      if (user) await sendWelcomeAfterFirstVerification(req, user);
+    }
   },
 
   async resendVerification(email: string, locale: Locale = DEFAULT_LOCALE): Promise<void> {
@@ -169,14 +205,19 @@ export const authService = {
     // Opening a link sent to the address proves the address, the same
     // proof the verification email asks for.
     let current = user;
+    let firstVerification = false;
     if (!user.emailVerifiedAt) {
-      current = await authRepository.markEmailVerified(user.id);
-      await writeAuditLog(req, "EMAIL_VERIFIED", user.id, { method: "email_link" });
+      firstVerification = await authRepository.markEmailVerifiedIfUnverified(user.id);
+      current = (await authRepository.findUserById(user.id)) ?? user;
+      if (firstVerification) {
+        await writeAuditLog(req, "EMAIL_VERIFIED", user.id, { method: "email_link" });
+      }
     }
 
     const { accessToken, refreshToken } = await issueSession(req, user);
     await rememberSignInLocale(req, user.id);
     await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id, { method: "email_link" });
+    if (firstVerification) await sendWelcomeAfterFirstVerification(req, user);
 
     const onboarding = await onboardingRepository.findByUserId(user.id);
     const consents = await consentService.statesFor(user.id);

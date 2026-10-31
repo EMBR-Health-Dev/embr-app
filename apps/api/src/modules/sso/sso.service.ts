@@ -13,7 +13,7 @@ import { ssoOidc } from "./sso.oidc.js";
 import { organizationRepository } from "../organizations/organization.repository.js";
 import { hashPassword } from "../auth/password.js";
 import { generateOpaqueToken } from "../auth/tokens.js";
-import { issueSession } from "../auth/auth.service.js";
+import { issueSession, sendWelcomeAfterFirstVerification } from "../auth/auth.service.js";
 import { writeAuditLog } from "../auth/audit.js";
 
 /** Redirect target the IdP is configured to send the user back to.
@@ -241,14 +241,19 @@ export const ssoService = {
         created = true;
       }
 
+      let verifiedNow = false;
       if (!txUser.emailVerifiedAt) {
         // The IdP vouching for this identity is at least as strong
         // evidence of email ownership as our own unclicked verification
-        // link would be.
-        txUser = await tx.user.update({
-          where: { id: txUser.id },
+        // link would be. Conditional, like markEmailVerifiedIfUnverified
+        // in auth.repository.ts, so only the request that makes the
+        // first transition sends the welcome email below.
+        const { count } = await tx.user.updateMany({
+          where: { id: txUser.id, emailVerifiedAt: null },
           data: { emailVerifiedAt: new Date() },
         });
+        verifiedNow = count === 1;
+        txUser = (await tx.user.findUnique({ where: { id: txUser.id } })) ?? txUser;
       }
 
       const existingMembership = await tx.organizationMembership.findUnique({
@@ -305,7 +310,7 @@ export const ssoService = {
         }
       }
 
-      return { user: txUser, created, membershipCreated, seatLimitReached };
+      return { user: txUser, created, verifiedNow, membershipCreated, seatLimitReached };
     });
 
     const user = provisionResult.user;
@@ -326,6 +331,12 @@ export const ssoService = {
         organizationId: connection.organizationId,
         via: "sso",
       });
+    }
+    // After the seat check: someone turned away at the seat limit is not
+    // welcomed into a dashboard they cannot use. Later SSO logins find
+    // the address already verified, so this never repeats.
+    if (provisionResult.verifiedNow) {
+      await sendWelcomeAfterFirstVerification(req, user);
     }
 
     const session = await issueSession(req, user);
