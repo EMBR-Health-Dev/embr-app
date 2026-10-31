@@ -8,7 +8,7 @@
 //
 // Usage:
 //   GITHUB_TOKEN=ghp_xxx node scripts/setup-branch-protection.mjs
-//   GITHUB_TOKEN=ghp_xxx node scripts/setup-branch-protection.mjs --repo tiy1/embr-app --branch main
+//   GITHUB_TOKEN=ghp_xxx node scripts/setup-branch-protection.mjs --repo EMBR-Health-Dev/embr-app --branch main
 //
 // GITHUB_TOKEN needs the "repo" scope (classic PAT) or "Administration:
 // write" (fine-grained PAT) on this repository.
@@ -19,7 +19,7 @@ function argValue(flag, fallback) {
   return i !== -1 && args[i + 1] ? args[i + 1] : fallback;
 }
 
-const repo = argValue("--repo", "tiy1/embr-app");
+const repo = argValue("--repo", "EMBR-Health-Dev/embr-app");
 const branch = argValue("--branch", "main");
 const token = process.env.GITHUB_TOKEN;
 
@@ -28,10 +28,21 @@ if (!token) {
   process.exit(1);
 }
 
-// Mirrors the job names in .github/workflows/ci.yml — if you rename a
-// job there, update this list too, or branch protection will silently
-// wait forever on a check that no longer reports.
-const requiredStatusChecks = ["Lint & Typecheck", "Unit & Integration Tests", "Security & Dependency Scan", "Build All Apps"];
+// Mirrors the job `name:` values in .github/workflows/ci.yml, all of
+// which run on every pull request to main — if you rename or add a job
+// there, update this list too, or branch protection will silently wait
+// forever on a check that no longer reports.
+const requiredStatusChecks = [
+  "Format Check",
+  "Lint",
+  "Typecheck",
+  "OpenAPI Contract",
+  "Unit & Integration Tests",
+  "Security & Dependency Scan",
+  "Mobile Bundle (iOS, Android, web)",
+  "Build All Apps",
+  "Boot Smoke",
+];
 
 const body = {
   required_status_checks: {
