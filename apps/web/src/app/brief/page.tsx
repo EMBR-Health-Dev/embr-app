@@ -21,6 +21,7 @@ import { EmailVerificationRequired } from "../../components/email-verification-r
 import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
 import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
 import { BriefDayByDay } from "../../components/brief-day-by-day";
+import { BriefSeverityTrend } from "../../components/brief-severity-trend";
 import { richText } from "../../lib/rich-text";
 import { SEVERITY_FILL, formatHistoryDate } from "../../lib/symptom-history-format";
 
@@ -831,6 +832,12 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         sectionClassName={BRIEF_SECTION}
       />
 
+      <BriefSeverityTrend
+        brief={brief}
+        headingClassName={BRIEF_SECTION_HEADING}
+        sectionClassName={BRIEF_SECTION}
+      />
+
       {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
         <div className={BRIEF_SECTION}>
           <h3 className={BRIEF_SECTION_HEADING}>{t("frequencyComparisonTitle")}</h3>
@@ -893,6 +900,27 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                   none: brief.workImpact.breakdown.NONE,
                   didLess: brief.workImpact.breakdown.DID_LESS,
                   missedTime: brief.workImpact.breakdown.MISSED_TIME,
+                })
+              : t("workImpactFewAnswers")}
+          </p>
+          <p className="mt-1 text-xs text-foreground/50">{t("workImpactPrivate")}</p>
+        </div>
+      )}
+
+      {brief.socialImpact && brief.socialImpact.daysAnswered > 0 && (
+        <div className={BRIEF_SECTION}>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("socialImpactTitle")}</h3>
+          {/* The answered, few answers and privacy lines read the same as
+              work impact's, so they are shared. */}
+          <p className="mt-1 text-foreground/70">
+            {t("workImpactAnswered", { count: brief.socialImpact.daysAnswered })}
+          </p>
+          <p className="text-foreground/70">
+            {brief.socialImpact.breakdown
+              ? t("socialImpactBreakdown", {
+                  none: brief.socialImpact.breakdown.NONE,
+                  didLess: brief.socialImpact.breakdown.DID_LESS,
+                  missedPlans: brief.socialImpact.breakdown.MISSED_PLANS,
                 })
               : t("workImpactFewAnswers")}
           </p>

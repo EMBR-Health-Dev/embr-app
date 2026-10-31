@@ -138,6 +138,8 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    socialImpact: null,
+    severityTrend: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -252,6 +254,38 @@ describe("Brief screen — generation", () => {
     // handleGenerate's own await loadHistory()/await loadTrends().
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(trendsMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("shows severity week by week, each cell labelled for a screen reader", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    generateMock.mockResolvedValue(
+      brief({
+        id: "new-3",
+        severityTrend: {
+          blockDays: 7,
+          blocks: [
+            { start: "2026-01-01", end: "2026-01-07" },
+            { start: "2026-01-08", end: "2026-01-14" },
+          ],
+          rows: [{ category: "HOT_FLASH", cells: [{ peak: "MODERATE", daysLogged: 2 }, null] }],
+        },
+      }),
+    );
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByText("From"));
+    fireEvent.click(screen.getByText("To"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
+
+    expect(await screen.findByText("Severity week by week")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^From .+: Moderate, recorded on 2 days$/)).toHaveTextContent("2");
+    expect(screen.getByLabelText(/^From .+: nothing recorded$/)).toBeInTheDocument();
   });
 
   it("sends her priorities without blank ones and shows them above the summary", async () => {
@@ -1170,7 +1204,10 @@ describe("Brief screen — deletion", () => {
       // not masking a second failure mode. See issue #115.
       { timeout: 5000 },
     );
-  });
+    // Above the waitFor's 5000ms, which equals Vitest's default test
+    // timeout: at the default, the test always timed out before the
+    // waitFor could pass or report its own failure.
+  }, 10_000);
 
   it("clears the just-generated section when that same brief is deleted from history", async () => {
     listMock.mockResolvedValue({
@@ -1207,7 +1244,8 @@ describe("Brief screen — deletion", () => {
       // (1176ms runtime vs ~130ms locally). See issue #115.
       { timeout: 5000 },
     );
-  });
+    // Same as the test above: room for the waitFor's own 5000ms.
+  }, 10_000);
 });
 
 describe("Brief screen — history", () => {

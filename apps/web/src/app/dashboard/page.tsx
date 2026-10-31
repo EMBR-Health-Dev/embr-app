@@ -74,6 +74,7 @@ function fromYesNo(value: YesNo): boolean | undefined {
 const EXERCISE_LEVELS = ["NONE", "LIGHT", "MODERATE", "VIGOROUS"] as const;
 const NIGHT_SWEATS = ["NONE", "ONE", "TWO_TO_THREE", "FOUR_PLUS"] as const;
 const WORK_IMPACT = ["NONE", "DID_LESS", "MISSED_TIME"] as const;
+const SOCIAL_IMPACT = ["NONE", "DID_LESS", "MISSED_PLANS"] as const;
 const LOGS_PAGE_SIZE = 5;
 
 function dayBefore(isoDate: string): string {
@@ -179,6 +180,7 @@ function DashboardContent() {
   // Never prefilled: a blank answer means "not logged", never "none".
   const [nightSweats, setNightSweats] = useState<(typeof NIGHT_SWEATS)[number] | "">("");
   const [workImpact, setWorkImpact] = useState<(typeof WORK_IMPACT)[number] | "">("");
+  const [socialImpact, setSocialImpact] = useState<(typeof SOCIAL_IMPACT)[number] | "">("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextSaved, setContextSaved] = useState(false);
   const [contextError, setContextError] = useState<string | null>(null);
@@ -220,6 +222,7 @@ function DashboardContent() {
         setExercise(entry?.exercise ?? "");
         setNightSweats(entry?.nightSweats ?? "");
         setWorkImpact(entry?.workImpact ?? "");
+        setSocialImpact(entry?.socialImpact ?? "");
         setContextLoad("ready");
       })
       .catch(() => {
@@ -512,6 +515,7 @@ function DashboardContent() {
         workImpact: workImpact || undefined,
         // Sent as null when not logged, so clearing it is saved too.
         exercise: exercise || null,
+        socialImpact: socialImpact || null,
       });
       setContextSaved(true);
       setWeekRefreshKey((key) => key + 1);
@@ -1035,6 +1039,32 @@ function DashboardContent() {
               </select>
               <span id="work-impact-help" className="text-foreground/70">
                 {t("workImpactHelp")}
+              </span>
+            </div>
+
+            <div className="mt-4 flex max-w-xs flex-col gap-1.5 text-sm">
+              <label htmlFor="social-impact" className="font-medium text-foreground">
+                {t(contextKey("socialImpactLabel"))}
+              </label>
+              <select
+                id="social-impact"
+                value={socialImpact}
+                onChange={(e) => {
+                  setSocialImpact(e.target.value as (typeof SOCIAL_IMPACT)[number] | "");
+                  setContextSaved(false);
+                }}
+                aria-describedby="social-impact-help"
+                className="rounded-sm border border-border bg-background px-3 py-2 text-foreground"
+              >
+                <option value="">{t("socialImpactNone")}</option>
+                {SOCIAL_IMPACT.map((s) => (
+                  <option key={s} value={s}>
+                    {tEnum(`socialImpact.${s}`)}
+                  </option>
+                ))}
+              </select>
+              <span id="social-impact-help" className="text-foreground/70">
+                {t("socialImpactHelp")}
               </span>
             </div>
 

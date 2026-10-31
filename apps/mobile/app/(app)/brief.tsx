@@ -6,6 +6,8 @@ import type {
   BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
+  SeverityLevel,
+  SeverityTrendDto,
   Stage4Pattern,
 } from "@embr/types";
 import { MAX_BRIEF_PRIORITY_LENGTH } from "@embr/validation";
@@ -622,6 +624,10 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         ))
       )}
 
+      {brief.severityTrend && brief.severityTrend.rows.length > 0 && (
+        <SeverityTrend trend={brief.severityTrend} />
+      )}
+
       {brief.frequencyComparison && brief.frequencyComparison.length > 0 && (
         <>
           <Text style={styles.contentSectionTitle}>{t("brief.frequencyComparisonTitle")}</Text>
@@ -702,6 +708,27 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
                   none: brief.workImpact.breakdown.NONE,
                   didLess: brief.workImpact.breakdown.DID_LESS,
                   missedTime: brief.workImpact.breakdown.MISSED_TIME,
+                })
+              : t("brief.workImpactFewAnswers")}
+          </Text>
+          <Text style={styles.summaryLine}>{t("brief.workImpactPrivate")}</Text>
+        </>
+      )}
+
+      {brief.socialImpact && brief.socialImpact.daysAnswered > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.socialImpactTitle")}</Text>
+          {/* The answered, few answers and privacy lines read the same as
+              work impact's, so they are shared. */}
+          <Text style={styles.summaryLine}>
+            {t("brief.workImpactAnswered", { count: brief.socialImpact.daysAnswered })}
+          </Text>
+          <Text style={styles.summaryLine}>
+            {brief.socialImpact.breakdown
+              ? t("brief.socialImpactBreakdown", {
+                  none: brief.socialImpact.breakdown.NONE,
+                  didLess: brief.socialImpact.breakdown.DID_LESS,
+                  missedPlans: brief.socialImpact.breakdown.MISSED_PLANS,
                 })
               : t("brief.workImpactFewAnswers")}
           </Text>
@@ -840,7 +867,85 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
   );
 }
 
+// Lilac 300, 500 and 700, as in the web app and the PDF. Mobile has no
+// dark theme yet, so the text on each fill is fixed.
+const SEVERITY_CELL: Record<SeverityLevel, { fill: string; text: string; number: number }> = {
+  MILD: { fill: "#D1BDD9", text: theme.colors.textPrimary, number: 1 },
+  MODERATE: { fill: theme.colors.data, text: theme.colors.textPrimary, number: 2 },
+  SEVERE: { fill: theme.colors.accent, text: theme.colors.onAccent, number: 3 },
+};
+
+/** Severity block by block: one row per symptom, each cell the highest
+ * severity recorded that week (or 4 week block), shaded and numbered
+ * 1 to 3 so it reads without colour. Blank means nothing recorded. */
+function SeverityTrend({ trend }: { trend: SeverityTrendDto }) {
+  const { t, i18n } = useTranslation();
+  const short = new Intl.DateTimeFormat(i18n.language, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+  const label = (iso: string) => short.format(new Date(`${iso}T00:00:00Z`));
+  return (
+    <>
+      <Text style={styles.contentSectionTitle}>
+        {trend.blockDays === 7
+          ? t("brief.severityTrendTitleWeekly")
+          : t("brief.severityTrendTitleBlocks")}
+      </Text>
+      <Text style={styles.summaryLine}>{t("brief.severityTrendIntro")}</Text>
+      {trend.rows.map(({ category, cells }) => (
+        <View key={category} style={styles.trendRow}>
+          <Text style={styles.trendLabel} numberOfLines={1}>
+            {t(`enums.category.${category}`)}
+          </Text>
+          <View style={styles.trendCells}>
+            {cells.map((cell, i) => {
+              const start = label(trend.blocks[i]!.start);
+              return cell ? (
+                <View
+                  key={i}
+                  accessible
+                  accessibilityLabel={t("brief.severityTrendCell", {
+                    start,
+                    severity: t(`enums.severity.${cell.peak}`),
+                    count: cell.daysLogged,
+                  })}
+                  style={[styles.trendCell, { backgroundColor: SEVERITY_CELL[cell.peak].fill }]}
+                >
+                  <Text style={[styles.trendNumber, { color: SEVERITY_CELL[cell.peak].text }]}>
+                    {SEVERITY_CELL[cell.peak].number}
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  key={i}
+                  accessible
+                  accessibilityLabel={t("brief.severityTrendNothing", { start })}
+                  style={[styles.trendCell, styles.trendCellEmpty]}
+                />
+              );
+            })}
+          </View>
+        </View>
+      ))}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
+  trendRow: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 },
+  trendLabel: { width: 96, fontSize: 12, color: theme.colors.textSecondary },
+  trendCells: { flex: 1, flexDirection: "row", gap: 2 },
+  trendCell: {
+    flex: 1,
+    height: 18,
+    borderRadius: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  trendCellEmpty: { borderWidth: 1, borderColor: theme.colors.border },
+  trendNumber: { fontSize: 10, fontWeight: "600" },
   screen: { flex: 1, backgroundColor: theme.colors.surface },
   listContent: { padding: 20, paddingBottom: 40 },
   header: { gap: 4, marginBottom: 8 },

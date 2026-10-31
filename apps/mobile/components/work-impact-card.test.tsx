@@ -47,6 +47,7 @@ function entry(overrides: Partial<ContextLogDto> = {}): ContextLogDto {
     nightSweats: null,
     workImpact: null,
     exercise: null,
+    socialImpact: null,
     createdAt: "",
     updatedAt: "",
     ...overrides,

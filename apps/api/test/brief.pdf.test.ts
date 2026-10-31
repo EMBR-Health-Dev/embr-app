@@ -52,6 +52,8 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     persistentSymptoms: null,
     nightSweatsRecall: null,
     workImpact: null,
+    socialImpact: null,
+    severityTrend: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -462,6 +464,99 @@ describe("buildClinicalBriefPdf — days symptoms affected work", () => {
     const brief = baseBrief({ workImpact: { daysAnswered: 0, breakdown: null } });
     const text = await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"));
     expect(text).not.toContain("employer");
+  });
+});
+
+describe("buildClinicalBriefPdf — severity week by week", () => {
+  const trend = {
+    blockDays: 7,
+    blocks: [
+      { start: "2026-01-01", end: "2026-01-07" },
+      { start: "2026-01-08", end: "2026-01-14" },
+    ],
+    rows: [
+      {
+        category: "HOT_FLASH" as const,
+        cells: [{ peak: "SEVERE" as const, daysLogged: 5 }, null],
+      },
+      {
+        category: "BRAIN_FOG" as const,
+        cells: [null, { peak: "MILD" as const, daysLogged: 2 }],
+      },
+    ],
+  };
+
+  it("prints each week's highest severity as a number, with the key and week start dates", async () => {
+    const text = (
+      await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ severityTrend: trend }), "person@embr.health"),
+      )
+    ).replace(/\s+/g, " ");
+    expect(text).toContain("SEVERITY WEEK BY WEEK");
+    expect(text).toContain("1 mild, 2 moderate, 3 severe");
+    expect(text).toContain("not that the symptom was absent");
+    expect(text).toContain("01-01");
+    expect(text).toContain("01-08");
+    expect(text).toMatch(/Hot Flash 3/);
+    expect(text).toMatch(/Brain Fog 1/);
+    // Days recorded in each block are printed beside the severity, with a key.
+    expect(text).toContain("small number beside a severity is how many days");
+    expect(text).toMatch(/Hot Flash 3\s*5/);
+    expect(text).toMatch(/Brain Fog 1\s*2/);
+  });
+
+  it("names 4 week blocks for a long period, in Japanese", async () => {
+    const text = await extractPdfText(
+      buildClinicalBriefPdf(
+        baseBrief({ locale: "ja", severityTrend: { ...trend, blockDays: 28 } }),
+        "person@embr.health",
+      ),
+    );
+    expect(text).toContain("4週間ごとの強さ");
+  });
+
+  it("leaves the section out with no symptoms, or for a brief that predates it", async () => {
+    for (const severityTrend of [{ ...trend, rows: [] }, null]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ severityTrend }), "person@embr.health"),
+      );
+      expect(text).not.toContain("SEVERITY WEEK BY WEEK");
+    }
+  });
+});
+
+describe("buildClinicalBriefPdf — days symptoms affected family and social life", () => {
+  it("gives the breakdown from 7 answered days, and says it is never shared with an employer", async () => {
+    const brief = baseBrief({
+      socialImpact: { daysAnswered: 8, breakdown: { NONE: 4, DID_LESS: 3, MISSED_PLANS: 1 } },
+    });
+    const text = (await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"))).replace(
+      /\s+/g,
+      " ",
+    );
+    expect(text).toContain("DAYS SYMPTOMS AFFECTED FAMILY AND SOCIAL LIFE");
+    expect(text).toContain("Answered on 8 days in this period.");
+    expect(text).toContain("No effect on 4, joined in less on 3, missed or cancelled plans on 1.");
+    expect(text).toContain("Never shared with any employer.");
+  });
+
+  it("holds back the breakdown below 7, in French", async () => {
+    const brief = baseBrief({ locale: "fr", socialImpact: { daysAnswered: 3, breakdown: null } });
+    const text = (await extractPdfText(buildClinicalBriefPdf(brief, "person@embr.health"))).replace(
+      /\s+/g,
+      " ",
+    );
+    expect(text).toContain("JOURS OÙ LES SYMPTÔMES ONT AFFECTÉ LA VIE FAMILIALE ET SOCIALE");
+    expect(text).toContain("Une répartition s’affiche à partir de 7 jours de réponses.");
+  });
+
+  it("leaves the section out when no day was answered, or the brief predates it", async () => {
+    for (const socialImpact of [{ daysAnswered: 0, breakdown: null }, null]) {
+      const text = await extractPdfText(
+        buildClinicalBriefPdf(baseBrief({ socialImpact }), "person@embr.health"),
+      );
+      expect(text).not.toMatch(/FAMILY AND SOCIAL/);
+    }
   });
 });
 

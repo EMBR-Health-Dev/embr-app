@@ -199,6 +199,11 @@
       "DID_LESS": "Oui, j’en ai fait moins",
       "MISSED_TIME": "Oui, j’ai dû m’absenter"
     },
+    "socialImpact": {
+      "NONE": "Non",
+      "DID_LESS": "Oui, j’y ai moins participé",
+      "MISSED_PLANS": "Oui, j’ai manqué ou annulé des projets"
+    },
     "treatmentStopReason": {
       "SIDE_EFFECTS": "Effets indésirables",
       "LONG_TERM_CONCERN": "Inquiétude sur les effets à long terme",
@@ -335,6 +340,12 @@
     "delete": "Supprimer",
     "questionsForGp": "Questions à poser à votre professionnel de santé",
     "symptomFrequency": "Fréquence des symptômes",
+    "severityTrendTitleWeekly": "Intensité semaine par semaine",
+    "severityTrendTitleBlocks": "Intensité par périodes de 4 semaines",
+    "severityTrendIntro": "L’intensité la plus forte notée pour chaque symptôme sur chaque période : 1 légère, 2 modérée, 3 sévère. Une case vide signifie que rien n’a été noté, pas que le symptôme était absent.",
+    "severityTrendCell_one": "À partir du {{start}} : {{severity}}, notée {{count}} jour",
+    "severityTrendCell_other": "À partir du {{start}} : {{severity}}, notée {{count}} jours",
+    "severityTrendNothing": "À partir du {{start}} : rien de noté",
     "noSymptomsInRange": "Aucun symptôme noté sur cette période.",
     "occurrenceCount_one": "{{count}} occurrence",
     "occurrenceCount_other": "{{count}} occurrences",
@@ -382,6 +393,8 @@
     "workImpactBreakdown": "Aucun effet : {{none}}, en a fait moins : {{didLess}}, s’est absentée : {{missedTime}}.",
     "workImpactFewAnswers": "Une répartition s’affiche à partir de 7 jours de réponses.",
     "workImpactPrivate": "Vos propres réponses quotidiennes. Jamais partagées avec un employeur.",
+    "socialImpactTitle": "Jours où les symptômes ont affecté la vie familiale et sociale",
+    "socialImpactBreakdown": "Aucun effet : {{none}}, y a moins participé : {{didLess}}, a manqué ou annulé des projets : {{missedPlans}}.",
     "groundedInTitle": "Fondé sur vos données",
     "viewEvidence": "Voir les jours notés",
     "hideEvidence": "Masquer les jours notés",
@@ -486,6 +499,16 @@
     "question": "Vos symptômes ont-ils affecté votre travail aujourd’hui ?",
     "notLogged": "Non renseigné",
     "help": "Pris en compte uniquement dans votre propre BRIEF. Jamais partagé avec un employeur.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré ✓",
+    "loadError": "La saisie du jour n’a pas pu être chargée : l’enregistrement est désactivé pour préserver ce que vous avez noté ailleurs. Réessayez plus tard.",
+    "genericError": "Impossible d’enregistrer. Vérifiez votre connexion et réessayez."
+  },
+  "socialImpact": {
+    "question": "Vos symptômes ont-ils affecté vos moments en famille ou entre amis aujourd’hui ?",
+    "notLogged": "Non renseigné",
+    "help": "Comprend la vie à la maison et les projets avec d’autres. Pris en compte uniquement dans votre propre BRIEF, jamais partagé avec un employeur.",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
     "saved": "Enregistré ✓",

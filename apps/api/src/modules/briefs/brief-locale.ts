@@ -158,6 +158,8 @@ interface PdfStrings {
   dayByDayLegendOther: string;
   dayByDayLegendNoEntry: string;
   dayByDayCoverage: (recorded: number, total: number) => string;
+  severityTrendHeading: (blockDays: number) => string;
+  severityTrendIntro: string;
   comparedWithPreviousHeading: string;
   frequencyComparisonLine: (currentCount: number, previousCount: number) => string;
   ongoingSymptomsHeading: string;
@@ -174,6 +176,8 @@ interface PdfStrings {
   workImpactBreakdownLine: (b: Record<"NONE" | "DID_LESS" | "MISSED_TIME", number>) => string;
   workImpactFewAnswersNote: string;
   workImpactPrivacyNote: string;
+  socialImpactHeading: string;
+  socialImpactBreakdownLine: (b: Record<"NONE" | "DID_LESS" | "MISSED_PLANS", number>) => string;
   exerciseHeading: string;
   exerciseAnsweredLine: (days: number) => string;
   exerciseBreakdownLine: (b: Record<"NONE" | "LIGHT" | "MODERATE" | "VIGOROUS", number>) => string;
@@ -254,6 +258,10 @@ const EN: PdfStrings = {
     const missing = total - recorded;
     return `Entries on ${recorded} of ${total} days. No entry recorded on ${missing} day${missing === 1 ? "" : "s"}.`;
   },
+  severityTrendHeading: (blockDays) =>
+    blockDays === 7 ? "Severity week by week" : "Severity in 4 week blocks",
+  severityTrendIntro:
+    "The highest severity recorded for each symptom in each block: 1 mild, 2 moderate, 3 severe. A blank means nothing was recorded, not that the symptom was absent. Each column starts on the date above it. The small number beside a severity is how many days that symptom was recorded in the block.",
   comparedWithPreviousHeading: "Compared with the previous period",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `Logged ${currentCount} time${currentCount === 1 ? "" : "s"}, compared with` +
@@ -274,6 +282,9 @@ const EN: PdfStrings = {
     `No effect on ${b.NONE}, did less on ${b.DID_LESS}, missed time on ${b.MISSED_TIME}.`,
   workImpactFewAnswersNote: "A breakdown is shown once 7 days have been answered.",
   workImpactPrivacyNote: "Her own daily answers. Never shared with any employer.",
+  socialImpactHeading: "Days symptoms affected family and social life",
+  socialImpactBreakdownLine: (b) =>
+    `No effect on ${b.NONE}, joined in less on ${b.DID_LESS}, missed or cancelled plans on ${b.MISSED_PLANS}.`,
   exerciseHeading: "Exercise",
   exerciseAnsweredLine: (days) => `Answered on ${days} day${days === 1 ? "" : "s"} in this period.`,
   exerciseBreakdownLine: (b) =>
@@ -399,6 +410,9 @@ const JA: PdfStrings = {
   dayByDayLegendNoEntry: "記録なし",
   dayByDayCoverage: (recorded, total) =>
     `${total}日中${recorded}日に記録があります。記録なしは${total - recorded}日です。`,
+  severityTrendHeading: (blockDays) => (blockDays === 7 ? "週ごとの強さ" : "4週間ごとの強さ"),
+  severityTrendIntro:
+    "各期間に記録された、症状ごとの最も強い程度です（1 軽度、2 中等度、3 重度）。空欄は記録がなかったことを示し、症状がなかったことを意味しません。各列は上の日付から始まります。強さの横の小さな数字は、その期間に症状を記録した日数です。",
   comparedWithPreviousHeading: "前回の期間との比較",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `今回の期間に${currentCount}回記録され、前回の期間は${previousCount}回でした。`,
@@ -416,6 +430,10 @@ const JA: PdfStrings = {
     `影響なし${b.NONE}日、仕事量が減った${b.DID_LESS}日、休んだ・早退した${b.MISSED_TIME}日。`,
   workImpactFewAnswersNote: "回答が7日分以上になると、内訳を表示します。",
   workImpactPrivacyNote: "本人による毎日の回答です。勤務先と共有されることはありません。",
+  // PDF wording mirrors the web and mobile Brief.socialImpact* strings.
+  socialImpactHeading: "症状が家族や友人との時間に影響した日",
+  socialImpactBreakdownLine: (b) =>
+    `影響なし${b.NONE}日、あまり参加できなかった${b.DID_LESS}日、予定を休んだ・キャンセルした${b.MISSED_PLANS}日。`,
   exerciseHeading: "運動",
   exerciseAnsweredLine: (days) => `この期間に${days}日分の回答がありました。`,
   exerciseBreakdownLine: (b) =>
@@ -527,6 +545,10 @@ const FR: PdfStrings = {
     const missing = total - recorded;
     return `Saisies sur ${recorded} des ${total} jours. Aucune saisie sur ${missing} ${frPlural(missing, "jour", "jours")}.`;
   },
+  severityTrendHeading: (blockDays) =>
+    blockDays === 7 ? "Intensité semaine par semaine" : "Intensité par périodes de 4 semaines",
+  severityTrendIntro:
+    "L’intensité la plus forte notée pour chaque symptôme sur chaque période\u00a0: 1 légère, 2 modérée, 3 sévère. Une case vide signifie que rien n’a été noté, pas que le symptôme était absent. Chaque colonne commence à la date indiquée au-dessus. Le petit chiffre à côté de l’intensité indique sur combien de jours le symptôme a été noté sur la période.",
   comparedWithPreviousHeading: "Comparaison avec la période précédente",
   frequencyComparisonLine: (currentCount, previousCount) =>
     `Noté ${currentCount} ${frPlural(currentCount, "fois", "fois")}, contre ${previousCount} sur la période précédente.`,
@@ -547,6 +569,9 @@ const FR: PdfStrings = {
     `Sans effet\u00a0: ${b.NONE}, moins de travail\u00a0: ${b.DID_LESS}, temps de travail perdu\u00a0: ${b.MISSED_TIME}.`,
   workImpactFewAnswersNote: "Une répartition s’affiche à partir de 7 jours de réponses.",
   workImpactPrivacyNote: "Ses propres réponses quotidiennes. Jamais partagées avec un employeur.",
+  socialImpactHeading: "Jours où les symptômes ont affecté la vie familiale et sociale",
+  socialImpactBreakdownLine: (b) =>
+    `Sans effet\u00a0: ${b.NONE}, a moins participé\u00a0: ${b.DID_LESS}, a manqué ou annulé des projets\u00a0: ${b.MISSED_PLANS}.`,
   exerciseHeading: "Activité physique",
   exerciseAnsweredLine: (days) =>
     `Réponse donnée ${days} ${frPlural(days, "jour", "jours")} sur cette période.`,

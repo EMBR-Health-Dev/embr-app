@@ -650,3 +650,41 @@ describe("Timeline page — exercise", () => {
     expect(screen.getAllByText(/^Exercise:/)).toHaveLength(1);
   });
 });
+
+describe("Timeline page — family and social impact", () => {
+  it("shows her answer on its day, and nothing for a blank day", async () => {
+    const today = new Date();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const answered = iso(today);
+    const blank = iso(new Date(today.getTime() - 86_400_000));
+    const base = {
+      sleepDuration: null,
+      caffeineAfternoon: null,
+      alcohol: null,
+      stressLevel: null,
+      nightSweats: null,
+      workImpact: null,
+      exercise: null,
+      createdAt: "",
+      updatedAt: "",
+    };
+    contextLogsList.mockResolvedValue({
+      ...emptyPage,
+      items: [
+        { ...base, id: "s1", date: answered, socialImpact: "DID_LESS" },
+        { ...base, id: "s2", date: blank, socialImpact: null },
+      ],
+      total: 2,
+    });
+
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    expect(
+      await screen.findByText(
+        "Did symptoms affect time with family or friends? Yes, I joined in less",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/time with family or friends\?/)).toHaveLength(1);
+  });
+});

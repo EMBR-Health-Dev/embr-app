@@ -391,6 +391,10 @@ export const nightSweatsRecallSchema = z.enum(["NONE", "ONE", "TWO_TO_THREE", "F
 // statistics; blank means not recorded, never "no".
 export const workImpactSchema = z.enum(["NONE", "DID_LESS", "MISSED_TIME"]);
 
+// Whether symptoms affected time with family or friends that day. Never
+// part of organisation statistics; blank means not recorded, never "no".
+export const socialImpactSchema = z.enum(["NONE", "DID_LESS", "MISSED_PLANS"]);
+
 // How hard she exercised that day (sport, workout, any movement that
 // raised her breathing), on a fixed scale; blank means not recorded.
 export const exerciseLevelSchema = z.enum(["NONE", "LIGHT", "MODERATE", "VIGOROUS"]);
@@ -407,6 +411,8 @@ export const upsertContextLogSchema = z.object({
   // recorded and only null clears it, so app versions that predate it
   // can save a day without erasing it.
   exercise: exerciseLevelSchema.nullable().optional(),
+  // Same as exercise: left out keeps it, null clears it.
+  socialImpact: socialImpactSchema.nullable().optional(),
 });
 export type UpsertContextLogInput = z.infer<typeof upsertContextLogSchema>;
 

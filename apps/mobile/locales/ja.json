@@ -199,6 +199,11 @@
       "DID_LESS": "はい、仕事量が減った",
       "MISSED_TIME": "はい、休んだ・早退した"
     },
+    "socialImpact": {
+      "NONE": "いいえ",
+      "DID_LESS": "はい、あまり参加できなかった",
+      "MISSED_PLANS": "はい、予定を休んだ・キャンセルした"
+    },
     "treatmentStopReason": {
       "SIDE_EFFECTS": "副作用",
       "LONG_TERM_CONCERN": "長期的な影響が心配",
@@ -334,6 +339,11 @@
     "delete": "削除",
     "questionsForGp": "担当医への質問",
     "symptomFrequency": "症状の頻度",
+    "severityTrendTitleWeekly": "週ごとの強さ",
+    "severityTrendTitleBlocks": "4週間ごとの強さ",
+    "severityTrendIntro": "各期間に記録された、症状ごとの最も強い程度です（1 軽度、2 中等度、3 重度）。空欄は記録がなかったことを示し、症状がなかったことを意味しません。",
+    "severityTrendCell_other": "{{start}}から：{{severity}}、{{count}}日記録",
+    "severityTrendNothing": "{{start}}から：記録なし",
     "noSymptomsInRange": "この期間に記録された症状はありません。",
     "occurrenceCount_other": "{{count}}回",
     "cycleSummary": "周期の要約",
@@ -372,6 +382,8 @@
     "workImpactBreakdown": "影響なし{{none}}日、仕事量が減った{{didLess}}日、休んだ・早退した{{missedTime}}日。",
     "workImpactFewAnswers": "回答が7日分以上になると、内訳を表示します。",
     "workImpactPrivate": "あなた自身の毎日の回答です。勤務先と共有されることはありません。",
+    "socialImpactTitle": "症状が家族や友人との時間に影響した日",
+    "socialImpactBreakdown": "影響なし{{none}}日、あまり参加できなかった{{didLess}}日、予定を休んだ・キャンセルした{{missedPlans}}日。",
     "groundedInTitle": "データに基づく根拠",
     "viewEvidence": "記録した日を表示",
     "hideEvidence": "記録した日を非表示",
@@ -473,6 +485,16 @@
     "question": "今日、症状が仕事に影響しましたか？",
     "notLogged": "未記録",
     "help": "あなた自身のBRIEFでのみ集計されます。勤務先と共有されることはありません。",
+    "save": "保存",
+    "saving": "保存中…",
+    "saved": "保存しました ✓",
+    "loadError": "今日の記録を読み込めませんでした。ほかで記録した内容を守るため、保存は止めています。時間をおいてお試しください。",
+    "genericError": "保存できませんでした。接続を確認して、もう一度お試しください。"
+  },
+  "socialImpact": {
+    "question": "今日、症状が家族や友人との時間に影響しましたか？",
+    "notLogged": "未記録",
+    "help": "家庭での生活や人との予定も含みます。あなた自身のBRIEFでのみ集計され、勤務先と共有されることはありません。",
     "save": "保存",
     "saving": "保存中…",
     "saved": "保存しました ✓",

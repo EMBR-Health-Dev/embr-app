@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ClinicalBriefDto, Stage4Pattern } from "@embr/types";
@@ -90,6 +90,8 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     persistentSymptoms: [],
     nightSweatsRecall: null,
     workImpact: null,
+    socialImpact: null,
+    severityTrend: null,
     exercise: null,
     mrs: null,
     lastRecordedPeriod: null,
@@ -793,6 +795,71 @@ describe("Brief page — deterministic evidence sections", () => {
     expect(
       screen.getByText("Your own daily answers. Never shared with any employer."),
     ).toBeInTheDocument();
+  });
+
+  it("shows severity week by week as a table, readable without colour", async () => {
+    await generateWith(
+      brief({
+        severityTrend: {
+          blockDays: 7,
+          blocks: [
+            { start: "2026-01-01", end: "2026-01-07" },
+            { start: "2026-01-08", end: "2026-01-14" },
+          ],
+          rows: [{ category: "HOT_FLASH", cells: [{ peak: "SEVERE", daysLogged: 5 }, null] }],
+        },
+      }),
+    );
+    expect(await screen.findByText("Severity week by week")).toBeInTheDocument();
+    const table = screen.getByRole("table");
+    const row = within(table).getByRole("row", { name: /Hot Flash/ });
+    expect(within(row).getByText("3")).toBeInTheDocument();
+    // The days recorded are printed in the cell too, not only read out, so
+    // one severe day cannot pass for a persistent pattern.
+    expect(within(row).getByText("5")).toBeInTheDocument();
+    expect(within(row).getByText("Severe, recorded on 5 days")).toBeInTheDocument();
+    expect(screen.getByText(/small number beside it is how many days/)).toBeInTheDocument();
+    expect(within(row).getByText("Nothing recorded")).toBeInTheDocument();
+    expect(screen.getByText(/not that the symptom was absent/)).toBeInTheDocument();
+  });
+
+  it("names 4 week blocks, and leaves the section out for a brief that predates it", async () => {
+    await generateWith(
+      brief({
+        severityTrend: {
+          blockDays: 28,
+          blocks: [{ start: "2026-01-01", end: "2026-01-28" }],
+          rows: [{ category: "FATIGUE", cells: [{ peak: "MILD", daysLogged: 1 }] }],
+        },
+      }),
+    );
+    expect(await screen.findByText("Severity in 4 week blocks")).toBeInTheDocument();
+  });
+
+  it("states days symptoms affected family and social life, with the breakdown from 7 days", async () => {
+    await generateWith(
+      brief({
+        socialImpact: { daysAnswered: 9, breakdown: { NONE: 5, DID_LESS: 3, MISSED_PLANS: 1 } },
+      }),
+    );
+    expect(
+      await screen.findByText("Days symptoms affected family and social life"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Answered on 9 days in this period.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No effect on 5, joined in less on 3, missed or cancelled plans on 1."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your own daily answers. Never shared with any employer."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the family and social section out when no day was answered", async () => {
+    await generateWith(brief({ socialImpact: { daysAnswered: 0, breakdown: null } }));
+    await screen.findByText("A narrative.");
+    expect(
+      screen.queryByText("Days symptoms affected family and social life"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows her reason for stopping under an ended treatment, and nothing for one without", async () => {

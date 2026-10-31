@@ -10,6 +10,8 @@ import type {
   NightSweatsRecallSummaryDto,
   WorkImpactSummaryDto,
   ExerciseSummaryDto,
+  SocialImpactSummaryDto,
+  SeverityTrendDto,
   BriefMrsSummaryDto,
   LastRecordedPeriodDto,
   Stage4Result,
@@ -50,6 +52,8 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     nightSweatsRecall: brief.nightSweatsRecall as unknown as NightSweatsRecallSummaryDto | null,
     workImpact: brief.workImpact as unknown as WorkImpactSummaryDto | null,
     exercise: brief.exercise as unknown as ExerciseSummaryDto | null,
+    socialImpact: brief.socialImpact as unknown as SocialImpactSummaryDto | null,
+    severityTrend: brief.severityTrend as unknown as SeverityTrendDto | null,
     mrs: brief.mrs as unknown as BriefMrsSummaryDto | null,
     lastRecordedPeriod: brief.lastRecordedPeriod as unknown as LastRecordedPeriodDto | null,
     // The canonical Stage 4 result, exactly as generation computed and

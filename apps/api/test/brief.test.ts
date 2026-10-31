@@ -761,6 +761,22 @@ describe("POST /briefs", () => {
       ]),
     );
     expect(res.body.data.symptomSummary).toHaveLength(2); // not 3 — the out-of-range log excluded
+    // Week by week from 1 January, rows in the summary's order.
+    const trend = res.body.data.severityTrend;
+    expect(trend.blockDays).toBe(7);
+    expect(trend.blocks[0]).toEqual({ start: "2026-01-01", end: "2026-01-07" });
+    expect(trend.rows.map((r: { category: string }) => r.category)).toEqual([
+      "HOT_FLASH",
+      "BRAIN_FOG",
+    ]);
+    expect(trend.rows[0].cells.slice(0, 3)).toEqual([
+      { peak: "MODERATE", daysLogged: 1 },
+      { peak: "SEVERE", daysLogged: 1 },
+      null,
+    ]);
+    expect(trend.rows[1].cells.slice(0, 3)).toEqual([null, null, { peak: "MILD", daysLogged: 1 }]);
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/severityTrend|daysLogged|"peak"/);
     expect(res.body.data.aiNarrative).toBe(aiState.nextResponse.narrative);
     expect(res.body.data.aiDiscussionTopics).toEqual(aiState.nextResponse.discussionTopics);
     expect(state.briefs).toHaveLength(1);
@@ -894,6 +910,52 @@ describe("POST /briefs — night sweats recalled in the morning", () => {
       morningsAnswered: 7,
       breakdown: { NONE: 2, ONE: 3, TWO_TO_THREE: 1, FOUR_PLUS: 1 },
     });
+  });
+});
+
+describe("POST /briefs — family and social impact", () => {
+  function addSocialImpact(userId: string, day: string, socialImpact: string | null) {
+    state.contextLogs.push({
+      userId,
+      date: new Date(`${day}T00:00:00.000Z`),
+      nightSweats: null,
+      socialImpact,
+    });
+  }
+
+  it("counts only answered days in range and keeps them out of the AI input", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "social-few@embr.health");
+    addSocialImpact(userId, "2026-01-03", "MISSED_PLANS");
+    addSocialImpact(userId, "2026-01-04", "NONE");
+    addSocialImpact(userId, "2026-01-05", null); // not logged, never counted as no
+    addSocialImpact(userId, "2026-03-01", "DID_LESS"); // outside the range
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.socialImpact).toEqual({ daysAnswered: 2, breakdown: null });
+    const aiInput = JSON.stringify(vi.mocked(briefAi.generate).mock.calls.at(-1)![0]);
+    expect(aiInput).not.toMatch(/social|MISSED_PLANS|daysAnswered/i);
+  });
+
+  it("adds a per answer breakdown once 7 days are answered, apart from work impact", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    const userId = await registerAndLogin(agent, "social-seven@embr.health");
+    const answers = ["NONE", "NONE", "DID_LESS", "DID_LESS", "DID_LESS", "MISSED_PLANS", "NONE"];
+    answers.forEach((a, i) => addSocialImpact(userId, `2026-01-${String(10 + i)}`, a));
+    aiState.nextResponse = { narrative: "n/a", discussionTopics: ["n/a"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.body.data.socialImpact).toEqual({
+      daysAnswered: 7,
+      breakdown: { NONE: 3, DID_LESS: 3, MISSED_PLANS: 1 },
+    });
+    expect(res.body.data.workImpact).toEqual({ daysAnswered: 0, breakdown: null });
   });
 });
 
