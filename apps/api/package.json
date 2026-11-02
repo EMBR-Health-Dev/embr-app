@@ -37,7 +37,7 @@
     "openid-client": "^6.8.8",
     "pdfkit": "^0.20.2",
     "rate-limit-redis": "^4.3.1",
-    "resend": "^6.34.1",
+    "resend": "^6.36.0",
     "stripe": "^22.6.2",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.9.1",
