@@ -36,6 +36,8 @@ const listMock = vi
   .mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
 const getMock = vi.fn();
 const deleteMock = vi.fn();
+const feedbackMock = vi.fn().mockResolvedValue(null);
+const saveFeedbackMock = vi.fn();
 const summaryPdfMock = vi.fn();
 const trendsMock = vi.fn().mockResolvedValue({
   briefCount: 0,
@@ -52,6 +54,8 @@ vi.mock("../../lib/api", () => ({
       trends: (...args: unknown[]) => trendsMock(...args),
       get: (...args: unknown[]) => getMock(...args),
       delete: (...args: unknown[]) => deleteMock(...args),
+      feedback: (...args: unknown[]) => feedbackMock(...args),
+      saveFeedback: (...args: unknown[]) => saveFeedbackMock(...args),
       pdfUrl: (id: string) => `/api/briefs/${id}/pdf`,
     },
     export: {
@@ -100,6 +104,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     patientPriorities: [],
     aiNarrative: "A narrative.",
     aiDiscussionTopics: ["A question?"],
+    aiStatus: "GENERATED",
     locale: "en",
     ...overrides,
   };
@@ -163,6 +168,30 @@ describe("Brief page — generation", () => {
 
     expect(await screen.findByText("Hot flashes were logged often.")).toBeInTheDocument();
     expect(screen.getByText("A question?")).toBeInTheDocument();
+  });
+
+  it("labels a brief whose AI wording is unavailable, shows its findings, and invents no text", async () => {
+    generateMock.mockResolvedValue(
+      brief({ aiStatus: "UNAVAILABLE", aiNarrative: "", aiDiscussionTopics: [] }),
+    );
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.type(screen.getByLabelText("To"), "2026-02-01");
+    await user.click(screen.getByRole("button", { name: /generate/i }));
+
+    expect(await screen.findByTestId("brief-ai-unavailable")).toHaveTextContent(
+      "Written summary not available",
+    );
+    // No AI authorship note and no empty questions section.
+    expect(screen.queryByText(/written by AI/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Questions to bring to your healthcare provider"),
+    ).not.toBeInTheDocument();
+    // The deterministic sections still render.
+    expect(screen.getByText("Symptom frequency")).toBeInTheDocument();
   });
 
   it("sends precise start/end-of-local-day instants, not bare date strings", async () => {
@@ -1304,6 +1333,91 @@ describe("Brief page — history", () => {
 
     expect(await screen.findByText("Past brief narrative.")).toBeInTheDocument();
     expect(getMock).toHaveBeenCalledWith("b1");
+  });
+
+  it("asks the appointment question on a past brief and saves her answer and optional comment", async () => {
+    listMock.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
+    getMock.mockResolvedValue(brief({ id: "b1", aiNarrative: "Past brief narrative." }));
+    feedbackMock.mockResolvedValue(null);
+    saveFeedbackMock.mockResolvedValue({
+      briefId: "b1",
+      answer: "YES_SOMEWHAT",
+      comment: "Helped me start",
+      updatedAt: "2026-02-10T00:00:00Z",
+    });
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByText("2026-01-01 to 2026-02-01"));
+    expect(
+      await screen.findByText(
+        "Did your EMBR BRIEF help you communicate your symptoms or concerns during your appointment?",
+      ),
+    ).toBeInTheDocument();
+
+    // Saving with no answer asks for one and sends nothing.
+    await user.click(screen.getByRole("button", { name: "Save answer" }));
+    expect(screen.getByText("Choose an answer first.")).toBeInTheDocument();
+    expect(saveFeedbackMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByLabelText("Yes, somewhat"));
+    await user.type(
+      screen.getByLabelText(/Anything you would like to tell us/),
+      "  Helped me start ",
+    );
+    await user.click(screen.getByRole("button", { name: "Save answer" }));
+
+    expect(saveFeedbackMock).toHaveBeenCalledWith("b1", {
+      answer: "YES_SOMEWHAT",
+      comment: "Helped me start",
+    });
+    expect(await screen.findByText(/your answer is saved/)).toBeInTheDocument();
+  });
+
+  it("shows her earlier answer when she reopens a past brief", async () => {
+    listMock.mockResolvedValue({
+      items: [
+        {
+          id: "b1",
+          fromDate: "2026-01-01",
+          toDate: "2026-02-01",
+          createdAt: "2026-02-01T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
+    getMock.mockResolvedValue(brief({ id: "b1" }));
+    feedbackMock.mockResolvedValue({
+      briefId: "b1",
+      answer: "NO_APPOINTMENT_YET",
+      comment: null,
+      updatedAt: "2026-02-10T00:00:00Z",
+    });
+    const { default: BriefPage } = await import("./page");
+    renderWithIntl(<BriefPage />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByText("2026-01-01 to 2026-02-01"));
+    await waitFor(() =>
+      expect(screen.getByLabelText("I have not had an appointment yet")).toBeChecked(),
+    );
   });
 
   it("shows a real error, not a permanent loading state, when fetching a brief's detail fails", async () => {

@@ -501,7 +501,16 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
           <Text style={styles.prioritiesNote}>{t("brief.prioritiesNote")}</Text>
         </View>
       )}
-      <Text style={styles.narrative}>{brief.aiNarrative}</Text>
+      {brief.aiStatus === "UNAVAILABLE" ? (
+        // The optional AI wording failed; everything shown is the
+        // deterministic findings. Say so, substitute nothing.
+        <View testID="brief-ai-unavailable" style={styles.aiUnavailable}>
+          <Text style={styles.aiUnavailableTitle}>{t("brief.aiUnavailableTitle")}</Text>
+          <Text style={styles.narrative}>{t("brief.aiUnavailableBody")}</Text>
+        </View>
+      ) : (
+        <Text style={styles.narrative}>{brief.aiNarrative}</Text>
+      )}
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
         <>
@@ -604,12 +613,16 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </>
       )}
 
-      <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
-      {brief.aiDiscussionTopics.map((topic, i) => (
-        <Text key={i} style={styles.topic}>
-          • {topic}
-        </Text>
-      ))}
+      {brief.aiDiscussionTopics.length > 0 && (
+        <>
+          <Text style={styles.contentSectionTitle}>{t("brief.questionsForGp")}</Text>
+          {brief.aiDiscussionTopics.map((topic, i) => (
+            <Text key={i} style={styles.topic}>
+              • {topic}
+            </Text>
+          ))}
+        </>
+      )}
 
       <Text style={styles.contentSectionTitle}>{t("brief.symptomFrequency")}</Text>
       {brief.symptomSummary.length === 0 ? (
@@ -1018,6 +1031,14 @@ const styles = StyleSheet.create({
   longitudinalSection: { marginTop: 12 },
   briefContent: { marginTop: 10, gap: 4 },
   narrative: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
+  aiUnavailable: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 4,
+    padding: 12,
+    gap: 4,
+  },
+  aiUnavailableTitle: { fontSize: 14, fontWeight: "600", color: theme.colors.textPrimary },
   contentSectionTitle: {
     fontSize: 13,
     fontWeight: "600",

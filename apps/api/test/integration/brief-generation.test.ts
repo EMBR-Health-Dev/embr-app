@@ -7,7 +7,9 @@ import { randomUUID } from "node:crypto";
 // deterministic engine before the AI is involved. The record has
 // entries for "today" and "yesterday" around a range that ends
 // yesterday, the way the web check in now fills them in.
-vi.mock("../../src/modules/briefs/brief.ai.js", () => ({
+vi.mock("../../src/modules/briefs/brief.ai.js", async (importOriginal) => ({
+  // Real reason tagging and PROMPT_VERSION; only the model call is stubbed.
+  ...(await importOriginal<typeof import("../../src/modules/briefs/brief.ai.js")>()),
   briefAi: {
     generate: vi.fn(async () => ({
       narrative: "stub",

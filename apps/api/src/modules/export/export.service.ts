@@ -105,6 +105,8 @@ export const exportService = {
       // Her first check in: her recall of the last two weeks, not daily logs.
       baselineCheckIn: data.baselineCheckIn,
       briefs: withoutUserId(data.briefs),
+      // Her answers to the appointment follow up, one per brief.
+      briefFeedback: withoutUserId(data.briefFeedback),
       dismissedReflections: withoutUserId(data.reflectionDismissals),
       organizations: data.memberships.map((m) => ({
         organizationName: m.organization.name,

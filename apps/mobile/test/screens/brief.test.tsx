@@ -148,6 +148,7 @@ function brief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto {
     patientPriorities: [],
     aiNarrative: "A narrative.",
     aiDiscussionTopics: ["A question?"],
+    aiStatus: "GENERATED",
     locale: "en",
     ...overrides,
   };
@@ -254,6 +255,27 @@ describe("Brief screen — generation", () => {
     // handleGenerate's own await loadHistory()/await loadTrends().
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(trendsMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("labels a brief whose AI wording is unavailable and shows no questions section", async () => {
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    generateMock.mockResolvedValue(
+      brief({ id: "fb-1", aiStatus: "UNAVAILABLE", aiNarrative: "", aiDiscussionTopics: [] }),
+    );
+    const { default: BriefScreen } = await import("../../app/(app)/brief");
+    render(
+      <I18nextProvider i18n={i18next}>
+        <BriefScreen />
+      </I18nextProvider>,
+    );
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByText("From"));
+    fireEvent.click(screen.getByText("To"));
+    fireEvent.click(screen.getByText("Generate EMBR BRIEF"));
+
+    expect(await screen.findByText("Written summary not available")).toBeInTheDocument();
+    expect(screen.queryByText("Questions to bring to your healthcare provider")).toBeNull();
+    expect(screen.getByText("Symptom frequency")).toBeInTheDocument();
   });
 
   it("shows severity week by week, each cell labelled for a screen reader", async () => {

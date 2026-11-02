@@ -140,6 +140,7 @@ export const exportRepository = {
       mrsCheckIns,
       baselineCheckIn,
       briefs,
+      briefFeedback,
       reflectionDismissals,
       memberships,
     ] = await Promise.all([
@@ -161,6 +162,10 @@ export const exportRepository = {
         include: { symptoms: { omit: { baselineCheckInId: true }, orderBy: { category: "asc" } } },
       }),
       prisma.clinicalBrief.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
+      // Queried on its own, not included on the briefs, so the
+      // encryption extension decrypts the comment (it handles
+      // top level rows only).
+      prisma.briefFeedback.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
       prisma.reflectionDismissal.findMany({ ...byUser, orderBy: { dismissedAt: "asc" } }),
       prisma.organizationMembership.findMany({
         where: { userId },
@@ -180,6 +185,7 @@ export const exportRepository = {
       mrsCheckIns,
       baselineCheckIn,
       briefs,
+      briefFeedback,
       reflectionDismissals,
       memberships,
     };

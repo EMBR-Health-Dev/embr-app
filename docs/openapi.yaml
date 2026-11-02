@@ -562,6 +562,48 @@ paths:
       responses:
         "204": { description: Deleted }
         "404": { description: "Doesn't exist, or belongs to a different user" }
+  /briefs/{id}/feedback:
+    get:
+      summary: Her answer to the appointment follow up for this brief, or null
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The answer, or null when she has not answered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BriefFeedbackDto" }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+    put:
+      summary: Save or change her answer to the appointment follow up
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answer]
+              properties:
+                answer:
+                  {
+                    type: string,
+                    enum: [YES_SIGNIFICANTLY, YES_SOMEWHAT, NOT_REALLY, NO, NO_APPOINTMENT_YET],
+                  }
+                comment: { type: string, nullable: true, maxLength: 500 }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BriefFeedbackDto" }
+        "400": { description: Invalid answer or comment too long }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
   /briefs/{id}/pdf:
     get:
       summary: Download a brief as PDF
@@ -1199,6 +1241,22 @@ components:
               type: array
               items: { type: string }
               description: Always phrased as questions to ask a GP, never as assertions or advice — see brief.ai.ts's system prompt.
+            aiStatus:
+              type: string
+              enum: [GENERATED, UNAVAILABLE]
+              description: UNAVAILABLE when the optional AI wording failed and the brief was saved with its deterministic findings only; aiNarrative is then "" and aiDiscussionTopics is []. Clients show a labelled notice, never substitute text.
+    BriefFeedbackDto:
+      type: object
+      description: Her answer to "Did your EMBR BRIEF help you communicate your symptoms or concerns during your appointment?" The comment is encrypted at rest, never sent to the AI and never shown in admin metrics.
+      properties:
+        briefId: { type: string, format: uuid }
+        answer:
+          {
+            type: string,
+            enum: [YES_SIGNIFICANTLY, YES_SOMEWHAT, NOT_REALLY, NO, NO_APPOINTMENT_YET],
+          }
+        comment: { type: string, nullable: true, maxLength: 500 }
+        updatedAt: { type: string, format: date-time }
     OrganizationDto:
       type: object
       properties:

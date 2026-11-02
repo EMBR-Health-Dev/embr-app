@@ -62,6 +62,7 @@ function baseBrief(overrides: Partial<ClinicalBriefDto> = {}): ClinicalBriefDto 
     patientPriorities: null,
     aiNarrative: "No significant patterns were noted in this period.",
     aiDiscussionTopics: ["Any new symptoms since the last visit?"],
+    aiStatus: "GENERATED",
     locale: "en",
     ...overrides,
   };
@@ -752,5 +753,38 @@ describe("buildClinicalBriefPdf — her reason for stopping a treatment", () => 
       ),
     );
     expect(text).not.toContain("reason for stopping");
+  });
+});
+
+describe("buildClinicalBriefPdf — AI wording unavailable", () => {
+  const unavailable = {
+    aiStatus: "UNAVAILABLE" as const,
+    aiNarrative: "",
+    aiDiscussionTopics: [],
+    symptomSummary: [
+      { category: "HOT_FLASH" as const, count: 6, severityBreakdown: { MILD: 2, MODERATE: 4 } },
+    ],
+  };
+
+  it("labels the missing wording, keeps the deterministic sections, and drops the AI note and questions", async () => {
+    const text = await extractPdfText(
+      buildClinicalBriefPdf(baseBrief(unavailable), "person@embr.health"),
+    );
+    expect(text).toContain("written summary and suggested questions are not available");
+    expect(text).not.toContain("written by AI");
+    expect(text).not.toContain("Questions to bring to your healthcare provider");
+    // Deterministic evidence is still printed.
+    expect(text).toMatch(/Hot flash/i);
+  });
+
+  it("labels it in French and Japanese too", async () => {
+    const fr = await extractPdfText(
+      buildClinicalBriefPdf(baseBrief({ ...unavailable, locale: "fr" }), "person@embr.health"),
+    );
+    expect(fr).toContain("ne sont pas disponibles pour ce BRIEF");
+    const ja = await extractPdfText(
+      buildClinicalBriefPdf(baseBrief({ ...unavailable, locale: "ja" }), "person@embr.health"),
+    );
+    expect(ja.replace(/\s/g, "")).toContain("文章による要約と質問の候補は利用できません");
   });
 });

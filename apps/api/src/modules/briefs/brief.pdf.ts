@@ -399,14 +399,22 @@ export function buildClinicalBriefPdf(
   // brief.aiNarrative was generated in `locale` at generation time —
   // rendered exactly as stored, not re-localized here.
   sectionHeading(doc, t.summaryHeading);
-  doc
-    .fontSize(10)
-    .font(EMBR_PDF_BODY_FONT)
-    .fillColor(INK)
-    .text(brief.aiNarrative, { align: "left" });
-  // Says which parts are AI-written (this summary and the questions)
-  // as opposed to the deterministic sections, and what the model saw.
-  doc.moveDown(0.3).fontSize(8).fillColor(INK_MUTED).text(t.aiAuthorshipNote);
+  if (brief.aiStatus === "UNAVAILABLE") {
+    // The optional AI wording failed: say so, and substitute nothing.
+    // Every later section is deterministic and renders as usual.
+    doc.fontSize(10).font(EMBR_PDF_BODY_FONT).fillColor(INK).text(t.aiUnavailableNote, {
+      align: "left",
+    });
+  } else {
+    doc
+      .fontSize(10)
+      .font(EMBR_PDF_BODY_FONT)
+      .fillColor(INK)
+      .text(brief.aiNarrative, { align: "left" });
+    // Says which parts are AI-written (this summary and the questions)
+    // as opposed to the deterministic sections, and what the model saw.
+    doc.moveDown(0.3).fontSize(8).fillColor(INK_MUTED).text(t.aiAuthorshipNote);
+  }
   doc.moveDown(1);
 
   // ---- Grounded in your data (the deterministic findings the AI actually cited) ----
@@ -438,7 +446,9 @@ export function buildClinicalBriefPdf(
   // ---- Discussion topics ----
   // brief.aiDiscussionTopics was generated in `locale` — rendered as
   // stored.
-  sectionHeading(doc, t.questionsHeading);
+  // Left out entirely when there are none (AI wording unavailable),
+  // rather than an empty heading.
+  if (brief.aiDiscussionTopics.length > 0) sectionHeading(doc, t.questionsHeading);
   brief.aiDiscussionTopics.forEach((topic, i) => {
     const y = doc.y;
     doc
@@ -453,7 +463,7 @@ export function buildClinicalBriefPdf(
     doc.x = LEFT_MARGIN;
     doc.moveDown(0.3);
   });
-  doc.moveDown(0.8);
+  if (brief.aiDiscussionTopics.length > 0) doc.moveDown(0.8);
 
   // ---- Symptom frequency ----
   // Labeled "Symptom Signals" in English — the same "signal"

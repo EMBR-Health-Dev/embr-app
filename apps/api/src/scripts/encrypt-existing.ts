@@ -43,6 +43,7 @@ const MODELS: Record<string, { delegate: string; hasUpdatedAt: boolean }> = {
   CycleEntry: { delegate: "cycleEntry", hasUpdatedAt: true },
   Treatment: { delegate: "treatment", hasUpdatedAt: true },
   ClinicalBrief: { delegate: "clinicalBrief", hasUpdatedAt: false },
+  BriefFeedback: { delegate: "briefFeedback", hasUpdatedAt: true },
 };
 
 const BATCH = 500;

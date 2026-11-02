@@ -755,6 +755,31 @@ export const generateBriefSchema = z
   });
 export type GenerateBriefInput = z.infer<typeof generateBriefSchema>;
 
+// ---- Appointment follow up on a BRIEF ----
+
+export const APPOINTMENT_OUTCOMES = [
+  "YES_SIGNIFICANTLY",
+  "YES_SOMEWHAT",
+  "NOT_REALLY",
+  "NO",
+  "NO_APPOINTMENT_YET",
+] as const;
+
+/** The longest optional comment, in characters. Kept short on purpose:
+ * this asks how the conversation went, not for clinical detail. */
+export const BRIEF_FEEDBACK_COMMENT_MAX = 500;
+
+export const briefFeedbackSchema = z.object({
+  answer: z.enum(APPOINTMENT_OUTCOMES),
+  comment: z
+    .string()
+    .trim()
+    .max(BRIEF_FEEDBACK_COMMENT_MAX)
+    .nullish()
+    .transform((v) => (v ? v : null)),
+});
+export type BriefFeedbackInput = z.infer<typeof briefFeedbackSchema>;
+
 // ---- Onboarding (Milestone 18) ----
 
 export const onboardingJobToBeDoneSchema = z.enum([

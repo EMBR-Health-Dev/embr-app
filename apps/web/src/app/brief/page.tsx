@@ -13,6 +13,7 @@ import type {
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
 import { MAX_BRIEF_PRIORITY_LENGTH } from "@embr/validation";
+import { AppointmentFeedback } from "../../components/appointment-feedback";
 import { ApiError } from "../../lib/api-client";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
@@ -433,7 +434,10 @@ function BriefPageContent() {
                   </div>
                   {openBriefId === item.id &&
                     (openBrief ? (
-                      <BriefContent brief={openBrief} />
+                      <>
+                        <BriefContent brief={openBrief} />
+                        <AppointmentFeedback briefId={openBrief.id} />
+                      </>
                     ) : (
                       <p className="mt-3 text-sm text-foreground/50">{tCommon("loading")}</p>
                     ))}
@@ -658,10 +662,24 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
-      <div>
-        <p className="leading-relaxed text-foreground/85">{brief.aiNarrative}</p>
-        <p className="mt-1 text-xs text-foreground/50">{t.rich("aiAuthorshipNote", richText)}</p>
-      </div>
+      {brief.aiStatus === "UNAVAILABLE" ? (
+        // The optional AI wording failed; the findings below are the
+        // deterministic ones. Say so plainly, substitute nothing.
+        <div
+          data-testid="brief-ai-unavailable"
+          className="rounded-sm border border-border-subtle bg-graphite-100/40 p-4"
+        >
+          <p className="font-semibold text-foreground">{t("aiUnavailableTitle")}</p>
+          <p className="mt-1 text-sm leading-relaxed text-foreground/80">
+            {t("aiUnavailableBody")}
+          </p>
+        </div>
+      ) : (
+        <div>
+          <p className="leading-relaxed text-foreground/85">{brief.aiNarrative}</p>
+          <p className="mt-1 text-xs text-foreground/50">{t.rich("aiAuthorshipNote", richText)}</p>
+        </div>
+      )}
 
       {brief.citedPatternIds && brief.citedPatternIds.length > 0 && brief.interpretation && (
         <div className={BRIEF_SECTION}>
@@ -758,22 +776,24 @@ function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         </div>
       )}
 
-      <div className={BRIEF_SECTION}>
-        <h3 className={BRIEF_SECTION_HEADING}>{t("questionsForGp")}</h3>
-        <ol className="mt-1 divide-y divide-border-subtle">
-          {brief.aiDiscussionTopics.map((topic, i) => (
-            <li key={i} className="flex gap-3 py-3 text-foreground">
-              <span
-                aria-hidden="true"
-                className="w-5 shrink-0 font-semibold tabular-nums text-lilac-700"
-              >
-                {i + 1}.
-              </span>
-              <span>{topic}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
+      {brief.aiDiscussionTopics.length > 0 && (
+        <div className={BRIEF_SECTION}>
+          <h3 className={BRIEF_SECTION_HEADING}>{t("questionsForGp")}</h3>
+          <ol className="mt-1 divide-y divide-border-subtle">
+            {brief.aiDiscussionTopics.map((topic, i) => (
+              <li key={i} className="flex gap-3 py-3 text-foreground">
+                <span
+                  aria-hidden="true"
+                  className="w-5 shrink-0 font-semibold tabular-nums text-lilac-700"
+                >
+                  {i + 1}.
+                </span>
+                <span>{topic}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       <div className={BRIEF_SECTION}>
         <h3 className={BRIEF_SECTION_HEADING}>{t("symptomFrequency")}</h3>
