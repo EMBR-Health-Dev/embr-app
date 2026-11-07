@@ -780,6 +780,8 @@
     "briefDetailError": "BRIEFを読み込めませんでした。もう一度お試しください。",
     "deleteError": "BRIEFを削除できませんでした。もう一度お試しください。",
     "questionsForGp": "担当医への質問",
+    "aiUnavailableTitle": "文章による要約は利用できません",
+    "aiUnavailableBody": "このBRIEFでは、文章による要約と質問の候補を作成できませんでした。以下の内容はすべてあなたの記録から直接計算したもので、推定や補完は行っていません。後でもう一度試す場合は、過去のBRIEFからこのBRIEFを削除して、改めて作成してください。",
     "symptomFrequency": "症状の頻度",
     "occurrenceCount": "{count, plural, other {#回}}",
     "cycleSummary": "周期の要約",
@@ -1608,5 +1610,21 @@
       "signUpNote": "この回答を残すにはアカウントを作成してください。回答は、EMBRが健康情報を取り扱うことにあなたが同意した後にのみ送信されます。",
       "logInToSave": "アカウントをお持ちの方は、ログインして保存"
     }
+  },
+  "AppointmentFeedback": {
+    "title": "受診のあとで",
+    "question": "EMBR BRIEFは、診察の際に症状や気になっていることを伝えるのに役立ちましたか？",
+    "YES_SIGNIFICANTLY": "はい、とても役立った",
+    "YES_SOMEWHAT": "はい、ある程度役立った",
+    "NOT_REALLY": "あまり役立たなかった",
+    "NO": "いいえ",
+    "NO_APPOINTMENT_YET": "まだ受診していない",
+    "commentLabel": "ほかにお伝えいただけることはありますか？（任意）",
+    "commentHint": "医療に関する詳しい内容は記入しないでください。ご回答は、EMBRが役に立っているかを知るために使います。担当医に共有されることはありません。",
+    "save": "回答を保存",
+    "saving": "保存しています…",
+    "saved": "ありがとうございます。回答を保存しました。いつでも変更できます。",
+    "error": "回答を保存できませんでした。もう一度お試しください。",
+    "chooseFirst": "先に回答を選んでください。"
   }
 }

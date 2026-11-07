@@ -408,197 +408,275 @@ function failsContentSafety(content: BriefContent, locale: Locale): string | nul
   return null;
 }
 
-export const briefAi = {
-  async generate(input: BriefInput, locale: Locale = DEFAULT_LOCALE): Promise<BriefContent> {
-    const client = new Anthropic({
-      apiKey: env.ANTHROPIC_API_KEY,
-      // Explicit, reviewed values — not the SDK's own defaults (a
-      // 10-minute timeout and its own retry count), which are tuned
-      // for long-running/background use, not a synchronous request a
-      // person is sitting in front of a "Generating…" spinner for.
-      // maxRetries only applies to the SDK's own retryable conditions
-      // (connection errors, 408/429/5xx) — not reimplementing retry
-      // logic here, just making the count a deliberate decision
-      // instead of an implicit default.
-      // SDK default is a 10-minute timeout with automatic retries on
-      // timeout — meaning a slow response could hold this synchronous
-      // request/response endpoint open for a very long multiple of that
-      // before failing. This is a short text-generation call
-      // (max_tokens: 1024); 30s with a single retry keeps worst-case
-      // latency bounded and predictable instead of hanging.
-      timeout: 30_000,
-      maxRetries: 1,
-    });
+/**
+ * Why an AI wording attempt was rejected. A closed set of codes, never
+ * free text: these are written to brief_ai_runs and to the logs, and
+ * neither may ever hold anything the model wrote (its text is built
+ * from her own symptom data).
+ */
+export const BRIEF_AI_FAILURE_REASONS = [
+  "timeout",
+  "upstream_unavailable",
+  "upstream_error",
+  "no_text",
+  "truncated",
+  "invalid_json",
+  "invalid_shape",
+  "citation",
+  "content_safety",
+  "unknown",
+] as const;
+export type BriefAiFailureReason = (typeof BRIEF_AI_FAILURE_REASONS)[number];
 
-    let message: Anthropic.Message;
-    const requestStartedAt = Date.now();
-    try {
-      message = await client.messages.create({
-        model: env.ANTHROPIC_BRIEF_MODEL,
-        // 1024 was too small for this response's real shape — confirmed
-        // in production: with thinking disabled (below), a genuine,
-        // well-formed JSON response still hit stop_reason "max_tokens"
-        // at exactly 1024 output tokens, cutting an in-progress string
-        // off mid-word (parse error: "Unterminated string in JSON at
-        // position 2860"). 2048 is the smallest bump past the observed
-        // 2860-character (not token) response — leaves headroom since
-        // tokens and characters aren't 1:1 — without guessing at a much
-        // larger budget than what was actually observed.
-        max_tokens: 2048,
-        // Without this, claude-sonnet-5 defaults to adaptive extended
-        // thinking, which draws from the same max_tokens budget as the
-        // final response — confirmed in production (see brief AI
-        // response logging below): every request spent all 1024 tokens
-        // on a "thinking" block and hit stop_reason "max_tokens" before
-        // emitting any text, so generation never produced output at
-        // all. This is a short, structured JSON response, not the kind
-        // of multi-step reasoning task extended thinking is for.
-        thinking: { type: "disabled" },
-        system: systemPrompt(locale),
-        messages: [
-          {
-            role: "user",
-            content: JSON.stringify({
-              dateRange: { from: input.fromDate, to: input.toDate },
-              symptomSummary: input.symptomSummary,
-              cycleSummary: input.cycleSummary,
-              interpretation: input.interpretation,
-            }),
-          },
-        ],
-      });
-    } catch (err) {
-      // Anthropic's own SDK errors (APIError and its subclasses --
-      // AuthenticationError, RateLimitError, BadRequestError, ...)
-      // carry a real, readonly `.status` property in the same 4xx/5xx
-      // shape this API's own client-facing errors use. Without this
-      // catch, the global error handler's duck-typed
-      // hasClientErrorStatus() check would misclassify e.g. a 401 from
-      // a misconfigured ANTHROPIC_API_KEY as *our own user's* bad
-      // request -- passing Anthropic's raw error message straight
-      // through to them, and, worse, logging it at warn instead of
-      // error, silently missing the Sentry page for what's actually a
-      // real incident on our side. Wrapping here guarantees every
-      // failure from this call is always a 500, always logged and
-      // alerted as an incident, and never leaks upstream error detail
-      // to the client -- the original error is preserved as `cause`
-      // for our own logs/Sentry, just never sent over the wire.
-      throw classifyAnthropicError(err);
-    }
+const FAILURE_REASON = Symbol("briefAiFailureReason");
 
-    const textBlock = message.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      // Diagnostic only — deliberately excludes symptomSummary/
-      // cycleSummary/interpretation (sent in the request) and anything
-      // from message.content itself (the response body, which could
-      // echo user-derived text back): only response *metadata* that
-      // can't carry patient data.
-      logger.error(
-        {
-          stopReason: message.stop_reason,
-          contentTypes: message.content.map((block) => block.type),
-          usage: message.usage,
-          model: env.ANTHROPIC_BRIEF_MODEL,
-          requestDurationMs: Date.now() - requestStartedAt,
-        },
-        "brief AI response contained no text content block",
-      );
-      throw AppError.internal("Brief generation failed: model returned no text content");
-    }
+/** Attaches a reason code to an error without changing its class,
+ * status or message (existing callers and tests read those). */
+export function tagBriefAiFailure<E extends Error>(err: E, reason: BriefAiFailureReason): E {
+  Object.defineProperty(err, FAILURE_REASON, { value: reason, enumerable: false });
+  return err;
+}
 
-    // "JSON only, no other text" in the system prompt is an instruction,
-    // not a guarantee — despite it, the model can still wrap its
-    // response in a ```json fenced code block (ordinary Markdown habit
-    // for many models when producing structured output). Stripping a
-    // fence if present is purely mechanical text handling before
-    // parsing; it doesn't touch what content is allowed through the
-    // safety checks below.
-    const candidate = textBlock.text
-      .trim()
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/```\s*$/, "")
-      .trim();
+/** The reason code for any error thrown by this module, or "unknown". */
+export function briefAiFailureReason(err: unknown): BriefAiFailureReason {
+  if (err !== null && typeof err === "object" && FAILURE_REASON in err) {
+    return (err as { [FAILURE_REASON]: BriefAiFailureReason })[FAILURE_REASON];
+  }
+  return "unknown";
+}
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(candidate);
-    } catch (err) {
-      // Shape only, never content: the narrative/discussionTopics text
-      // is built from this user's own symptom/cycle data, so even a
-      // truncated raw-text sample could put real patient health
-      // information into Railway's log stream. These five fields are
-      // enough to tell a truncated response apart from a stray fence
-      // or leading/trailing prose, without ever capturing what the
-      // text actually says.
-      logger.error(
-        {
-          stopReason: message.stop_reason,
-          contentTypes: message.content.map((block) => block.type),
-          usage: message.usage,
-          model: env.ANTHROPIC_BRIEF_MODEL,
-          requestDurationMs: Date.now() - requestStartedAt,
-          textLength: candidate.length,
-          firstCharacter: candidate.slice(0, 1),
-          lastCharacter: candidate.slice(-1),
-          hasJsonFence: /```/.test(textBlock.text),
-          parseErrorMessage: err instanceof Error ? err.message : String(err),
-        },
-        "brief AI response was not valid JSON",
-      );
-      throw AppError.internal("Brief generation failed: model response was not valid JSON");
-    }
+/**
+ * Metadata about one model call, for reliability metrics. Counts and
+ * timings only: never the request, never the response text.
+ */
+export interface BriefAiTelemetry {
+  model: string;
+  latencyMs: number;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  stopReason: string | null;
+}
 
-    const result = rawResponseSchema.safeParse(parsed);
-    if (!result.success) {
-      logger.error(
-        { zodError: result.error.message },
-        "brief AI response didn't match the expected shape",
-      );
-      throw AppError.internal("Brief generation failed: unexpected response shape");
-    }
+/**
+ * Parses and validates the model's raw text into BriefContent: JSON,
+ * shape, discussion topic citations and the content safety deny-list.
+ * Throws a tagged error (see briefAiFailureReason) on the first
+ * failure. Pure, with no network call, so the offline evaluation
+ * harness (apps/api/eval/brief) runs exactly the checks production
+ * runs. Logs shape metadata only, never the text itself.
+ */
+export function parseBriefResponse(
+  rawText: string,
+  locale: Locale,
+  meta: { stopReason?: string | null; model?: string; requestDurationMs?: number } = {},
+): BriefContent {
+  // "JSON only, no other text" in the system prompt is an instruction,
+  // not a guarantee: the model can still wrap its response in a
+  // ```json fence. Stripping one is mechanical and does not touch what
+  // the safety checks below allow through.
+  const candidate = rawText
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/, "")
+    .trim();
 
-    // Discussion-topic citation provenance: any patternIds a topic
-    // cites must resolve to a pattern the model also echoed in this
-    // same response's `patterns` array — the same array
-    // stage4-validation.ts checks against canonical evidence
-    // downstream. An empty patternIds is always fine (see
-    // discussionTopicSchema's own doc comment); only a citation to
-    // something that doesn't exist in `patterns` fails.
-    const returnedPatternIds = new Set(result.data.patterns.map((pattern) => pattern.id));
-    for (const topic of result.data.discussionTopics) {
-      for (const patternId of topic.patternIds) {
-        if (!returnedPatternIds.has(patternId)) {
-          throw AppError.internal(
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(candidate);
+  } catch (err) {
+    // Shape only, never content: the narrative is built from her own
+    // symptom data, so even a truncated sample could put health
+    // information into the log stream.
+    const truncated = meta.stopReason === "max_tokens";
+    logger.error(
+      {
+        stopReason: meta.stopReason ?? null,
+        model: meta.model,
+        requestDurationMs: meta.requestDurationMs,
+        textLength: candidate.length,
+        firstCharacter: candidate.slice(0, 1),
+        lastCharacter: candidate.slice(-1),
+        hasJsonFence: /```/.test(rawText),
+        parseErrorMessage: err instanceof Error ? err.message : String(err),
+      },
+      "brief AI response was not valid JSON",
+    );
+    throw tagBriefAiFailure(
+      AppError.internal("Brief generation failed: model response was not valid JSON"),
+      truncated ? "truncated" : "invalid_json",
+    );
+  }
+
+  const result = rawResponseSchema.safeParse(parsed);
+  if (!result.success) {
+    // Zod issue paths and codes only: a zod message can quote values.
+    logger.error(
+      {
+        issues: result.error.issues.map((issue) => ({ path: issue.path, code: issue.code })),
+      },
+      "brief AI response didn't match the expected shape",
+    );
+    throw tagBriefAiFailure(
+      AppError.internal("Brief generation failed: unexpected response shape"),
+      "invalid_shape",
+    );
+  }
+
+  // Discussion-topic citation provenance: any patternIds a topic cites
+  // must resolve to a pattern the model also echoed in this same
+  // response's `patterns` array, the same array stage4-validation.ts
+  // checks against canonical evidence downstream. An empty patternIds
+  // is always fine; only a citation to something absent fails.
+  const returnedPatternIds = new Set(result.data.patterns.map((pattern) => pattern.id));
+  for (const topic of result.data.discussionTopics) {
+    for (const patternId of topic.patternIds) {
+      if (!returnedPatternIds.has(patternId)) {
+        throw tagBriefAiFailure(
+          AppError.internal(
             `Brief generation failed: discussion topic cited a pattern id not present in ` +
               `patterns: "${patternId}"`,
-          );
-        }
+          ),
+          "citation",
+        );
       }
     }
+  }
 
-    // patternIds only ever needed to exist for the validation above —
-    // BriefContent's public shape stays discussionTopics: string[],
-    // exactly as it was before this citation requirement existed, so
-    // nothing downstream (brief.service.ts, the DTO, persistence, any
-    // UI surface) needs to change.
-    const content: BriefContent = {
-      narrative: result.data.narrative,
-      discussionTopics: result.data.discussionTopics.map((topic) => topic.text),
-      patterns: result.data.patterns,
-      modelId: env.ANTHROPIC_BRIEF_MODEL,
-      promptVersion: PROMPT_VERSION,
+  // patternIds only needed to exist for the check above; the public
+  // shape stays discussionTopics: string[].
+  const content: BriefContent = {
+    narrative: result.data.narrative,
+    discussionTopics: result.data.discussionTopics.map((topic) => topic.text),
+    patterns: result.data.patterns,
+    modelId: meta.model ?? env.ANTHROPIC_BRIEF_MODEL,
+    promptVersion: PROMPT_VERSION,
+  };
+
+  const safetyFailure = failsContentSafety(content, locale);
+  if (safetyFailure) {
+    // Fail closed: nothing from this response is kept.
+    throw tagBriefAiFailure(
+      new Error(`Brief output failed content safety check: ${safetyFailure}`),
+      "content_safety",
+    );
+  }
+
+  return content;
+}
+
+/** The exact user message the model receives, shared with the
+ * evaluation harness so both send the same thing. */
+export function briefUserMessage(input: BriefInput): string {
+  return JSON.stringify({
+    dateRange: { from: input.fromDate, to: input.toDate },
+    symptomSummary: input.symptomSummary,
+    cycleSummary: input.cycleSummary,
+    interpretation: input.interpretation,
+  });
+}
+
+/**
+ * The exact request production sends for a BRIEF's wording. Exported so
+ * the evaluation harness's live mode sends the same thing.
+ */
+export function buildBriefRequest(
+  input: BriefInput,
+  locale: Locale,
+): Anthropic.MessageCreateParamsNonStreaming {
+  return {
+    model: env.ANTHROPIC_BRIEF_MODEL,
+    // 1024 was too small for this response's real shape, confirmed in
+    // production: a well formed JSON response hit stop_reason
+    // "max_tokens" at exactly 1024 output tokens and was cut off mid
+    // string. 2048 is the smallest bump past the observed response,
+    // without guessing at a much larger budget.
+    max_tokens: 2048,
+    // Without this the model defaults to adaptive extended thinking,
+    // which draws from the same max_tokens budget: confirmed in
+    // production, every request spent its whole budget thinking and
+    // emitted no text. This is a short structured response, not a
+    // multi step reasoning task.
+    thinking: { type: "disabled" },
+    system: systemPrompt(locale),
+    messages: [{ role: "user", content: briefUserMessage(input) }],
+  };
+}
+
+export const briefAi = {
+  /**
+   * Asks the model for the BRIEF's wording. `observe`, when given, is
+   * called exactly once with timing and token counts, whether the call
+   * succeeds or fails, so the caller can record reliability metrics.
+   */
+  async generate(
+    input: BriefInput,
+    locale: Locale = DEFAULT_LOCALE,
+    observe?: (telemetry: BriefAiTelemetry) => void,
+  ): Promise<BriefContent> {
+    const model = env.ANTHROPIC_BRIEF_MODEL;
+    const telemetry: BriefAiTelemetry = {
+      model,
+      latencyMs: 0,
+      inputTokens: null,
+      outputTokens: null,
+      stopReason: null,
     };
+    const requestStartedAt = Date.now();
+    try {
+      const client = new Anthropic({
+        apiKey: env.ANTHROPIC_API_KEY,
+        // Explicit, reviewed values instead of the SDK's defaults (a
+        // 10 minute timeout with automatic retries), which suit
+        // background work, not a request someone is waiting on. This
+        // is a short text generation call; 30s with a single retry
+        // keeps worst case latency bounded. maxRetries only applies to
+        // the SDK's own retryable conditions (connection, 408/429/5xx).
+        timeout: 30_000,
+        maxRetries: 1,
+      });
 
-    const safetyFailure = failsContentSafety(content, locale);
-    if (safetyFailure) {
-      // Fail closed, same as every other validation failure above --
-      // brief.service.ts awaits this call before ever persisting
-      // anything, so throwing here means no ClinicalBrief is created
-      // at all, not a partially-trusted one.
-      throw new Error(`Brief output failed content safety check: ${safetyFailure}`);
+      let message: Anthropic.Message;
+      try {
+        message = await client.messages.create(buildBriefRequest(input, locale));
+      } catch (err) {
+        // Wrapped so every failure here is a 500 or 503 with a safe
+        // message, never Anthropic's own status or error text passed
+        // through to the client. See classifyAnthropicError.
+        throw classifyAnthropicError(err);
+      }
+
+      telemetry.inputTokens = message.usage?.input_tokens ?? null;
+      telemetry.outputTokens = message.usage?.output_tokens ?? null;
+      telemetry.stopReason = message.stop_reason ?? null;
+
+      const textBlock = message.content.find((block) => block.type === "text");
+      if (!textBlock || textBlock.type !== "text") {
+        // Response metadata only, never the content itself.
+        logger.error(
+          {
+            stopReason: message.stop_reason,
+            contentTypes: message.content.map((block) => block.type),
+            usage: message.usage,
+            model,
+            requestDurationMs: Date.now() - requestStartedAt,
+          },
+          "brief AI response contained no text content block",
+        );
+        throw tagBriefAiFailure(
+          AppError.internal("Brief generation failed: model returned no text content"),
+          message.stop_reason === "max_tokens" ? "truncated" : "no_text",
+        );
+      }
+
+      return parseBriefResponse(textBlock.text, locale, {
+        stopReason: message.stop_reason,
+        model,
+        requestDurationMs: Date.now() - requestStartedAt,
+      });
+    } finally {
+      telemetry.latencyMs = Date.now() - requestStartedAt;
+      observe?.(telemetry);
     }
-
-    return content;
   },
 };
 
@@ -635,9 +713,16 @@ function classifyAnthropicError(err: unknown): AppError {
     err instanceof Anthropic.InternalServerError
   ) {
     logger.warn({ err }, "brief generation: transient Anthropic API error");
-    return AppError.serviceUnavailable(
-      "Brief generation is temporarily unavailable — please try again shortly.",
-      err,
+    // APIConnectionTimeoutError extends APIConnectionError: the 30s
+    // limit above was reached (after the one retry).
+    const reason =
+      err instanceof Anthropic.APIConnectionTimeoutError ? "timeout" : "upstream_unavailable";
+    return tagBriefAiFailure(
+      AppError.serviceUnavailable(
+        "Brief generation is temporarily unavailable — please try again shortly.",
+        err,
+      ),
+      reason,
     );
   }
 
@@ -647,9 +732,9 @@ function classifyAnthropicError(err: unknown): AppError {
     // all indicate a bug or misconfiguration on our side, not a
     // transient upstream blip and not the user's fault.
     logger.error({ err, status: err.status }, "brief generation: Anthropic API error");
-    return AppError.internal("Brief generation failed", err);
+    return tagBriefAiFailure(AppError.internal("Brief generation failed", err), "upstream_error");
   }
 
   logger.error({ err }, "brief generation: unexpected error calling Anthropic");
-  return AppError.internal("Brief generation failed", err);
+  return tagBriefAiFailure(AppError.internal("Brief generation failed", err), "upstream_error");
 }

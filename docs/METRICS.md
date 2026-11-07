@@ -73,8 +73,8 @@ their account (see Known limits).
 - **Unverified and never-active accounts are in the cohort.** Someone
   who signed up but never verified her email or made a single entry
   counts in the denominator. That is the honest view of signups. An
-  activation metric (for example, retention among people who made an
-  entry in week 1) would answer a different question and is not built.
+  activation metric answers a different question; see Activation
+  below.
 - **Activity before this definition.** Rows created by the demo seed
   script, or imported in bulk, carry the time they were inserted, not
   the time a person made them. The seed script refuses to run against
@@ -91,3 +91,46 @@ their account (see Known limits).
 | BRIEFs created      | BRIEFs generated in the last 7 and 30 days                                          |
 | BRIEFs downloaded   | PDF downloads in the last 30 days, from the audit log (`CLINICAL_BRIEF_DOWNLOADED`) |
 | People with a BRIEF | People who have generated at least one BRIEF, ever                                  |
+
+## Activation
+
+Signup day is day 0. As with week 4 retention, a cohort only holds
+people whose whole window is over, so recent signups never pull a rate
+down before they have had the chance.
+
+| Metric                 | Cohort (denominator)                 | Reached (numerator)                                                                   |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
+| First log in 48 hours  | Signed up 2 to 30 days ago           | Made her first symptom entry (`symptom_logs.createdAt`) within 48 hours of signing up |
+| 7 of her first 14 days | Signed up 14 to 55 days ago, by date | Active (the Activity rule above) on at least 7 distinct days among days 0 to 13       |
+
+Deleted accounts are not in these cohorts (only week 4 retention keeps
+them). Admin accounts are excluded.
+
+## BRIEF AI reliability
+
+From `brief_ai_runs`, one row per attempt at the BRIEF's optional AI
+wording, written by `brief-ai-runs.ts`. A row holds the outcome, a
+reason code, the model, prompt version, language, latency and token
+counts. It holds no user id, brief id or text, so it cannot say whose
+brief it was or what it said. For the same reason, attempts by admin or
+test accounts are counted too.
+
+| Metric                  | Definition                                                                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rejection rate, 30 days | Rejected attempts divided by all attempts. A rejected attempt still saves the BRIEF, without the wording                                                  |
+| Rejections by reason    | `timeout`, `upstream_unavailable`, `upstream_error`, `no_text`, `truncated`, `invalid_json`, `invalid_shape`, `citation`, `content_safety`, `unknown`     |
+| Latency                 | Median and 95th percentile of the model call, including its one retry                                                                                     |
+| Tokens                  | Mean input and output tokens per attempt                                                                                                                  |
+| Cost per BRIEF          | Mean tokens times the prices in `BRIEF_AI_INPUT_USD_PER_MTOK` and `BRIEF_AI_OUTPUT_USD_PER_MTOK`. Shown only when both are set; never estimated otherwise |
+
+## Appointment outcome
+
+Her answer, per BRIEF, to "Did your EMBR BRIEF help you communicate
+your symptoms or concerns during your appointment?" (`brief_feedback`).
+The dashboard shows how many answers of each kind, all time, admin
+accounts excluded. It never shows the optional comment, which is
+encrypted at rest. An answer is removed with its BRIEF or her account,
+so deleting either removes it from the counts.
+
+A useful reading excludes "I have not had an appointment yet": of the
+people who have had one, how many said yes.

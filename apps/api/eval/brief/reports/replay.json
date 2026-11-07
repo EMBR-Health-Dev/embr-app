@@ -1,0 +1,3392 @@
+[
+  {
+    "recordId": "en-01-sparse-single-entry",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-01-sparse-single-entry",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-01-sparse-single-entry",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-01-sparse-single-entry",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-01-sparse-single-entry",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-01-sparse-single-entry",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 3991 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-02-no-entries",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-02-no-entries",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-02-no-entries",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-02-no-entries",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-02-no-entries",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-02-no-entries",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 3958 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-03-complete",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-03-complete",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-03-complete",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-03-complete",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-03-complete",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-03-complete",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4396 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-04-contradictory",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-04-contradictory",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-04-contradictory",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-04-contradictory",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-04-contradictory",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-04-contradictory",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4098 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-05-no-cycle-data",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-05-no-cycle-data",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-05-no-cycle-data",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-05-no-cycle-data",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-05-no-cycle-data",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-05-no-cycle-data",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4094 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-06-unchanged",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-06-unchanged",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-06-unchanged",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-06-unchanged",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-06-unchanged",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-06-unchanged",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 3958 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-07-co-occurrence-at-threshold",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-07-co-occurrence-at-threshold",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-07-co-occurrence-at-threshold",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-07-co-occurrence-at-threshold",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-07-co-occurrence-at-threshold",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-07-co-occurrence-at-threshold",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4160 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-08-co-occurrence-below-threshold",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-08-co-occurrence-below-threshold",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-08-co-occurrence-below-threshold",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-08-co-occurrence-below-threshold",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-08-co-occurrence-below-threshold",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-08-co-occurrence-below-threshold",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 3958 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-09-every-category",
+    "locale": "en",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-09-every-category",
+    "locale": "en",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-09-every-category",
+    "locale": "en",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-09-every-category",
+    "locale": "en",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in en"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-09-every-category",
+    "locale": "en",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "en-09-every-category",
+    "locale": "en",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4485 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-10-complete",
+    "locale": "fr",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-10-complete",
+    "locale": "fr",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-10-complete",
+    "locale": "fr",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-10-complete",
+    "locale": "fr",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in fr"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-10-complete",
+    "locale": "fr",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-10-complete",
+    "locale": "fr",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 5244 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-11-sparse",
+    "locale": "fr",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-11-sparse",
+    "locale": "fr",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-11-sparse",
+    "locale": "fr",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-11-sparse",
+    "locale": "fr",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in fr"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-11-sparse",
+    "locale": "fr",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-11-sparse",
+    "locale": "fr",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4929 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-12-contradictory",
+    "locale": "fr",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-12-contradictory",
+    "locale": "fr",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-12-contradictory",
+    "locale": "fr",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-12-contradictory",
+    "locale": "fr",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in fr"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-12-contradictory",
+    "locale": "fr",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "fr-12-contradictory",
+    "locale": "fr",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 4922 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-13-complete",
+    "locale": "ja",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-13-complete",
+    "locale": "ja",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-13-complete",
+    "locale": "ja",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-13-complete",
+    "locale": "ja",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in ja"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-13-complete",
+    "locale": "ja",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-13-complete",
+    "locale": "ja",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 1871 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-14-missing-data",
+    "locale": "ja",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-14-missing-data",
+    "locale": "ja",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-14-missing-data",
+    "locale": "ja",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-14-missing-data",
+    "locale": "ja",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in ja"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-14-missing-data",
+    "locale": "ja",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-14-missing-data",
+    "locale": "ja",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 1729 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-15-treatment-too-recent",
+    "locale": "ja",
+    "variant": "faithful",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-15-treatment-too-recent",
+    "locale": "ja",
+    "variant": "invented_citation",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": false,
+        "detail": "pattern_not_supplied_or_altered"
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-15-treatment-too-recent",
+    "locale": "ja",
+    "variant": "prohibited_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": false,
+        "detail": "content_safety"
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-15-treatment-too-recent",
+    "locale": "ja",
+    "variant": "wrong_language",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": false,
+        "detail": "1 piece(s) not in ja"
+      },
+      {
+        "name": "length",
+        "passed": true,
+        "detail": null
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-15-treatment-too-recent",
+    "locale": "ja",
+    "variant": "truncated",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": false,
+        "detail": "max_tokens"
+      },
+      {
+        "name": "schema",
+        "passed": false,
+        "detail": "truncated"
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": "not reached"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  },
+  {
+    "recordId": "ja-15-treatment-too-recent",
+    "locale": "ja",
+    "variant": "overlong",
+    "checks": [
+      {
+        "name": "truncation",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "schema",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "prohibited_language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "citation_integrity",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "language",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "name": "length",
+        "passed": false,
+        "detail": "narrative 1737 chars, 0 long topic(s)"
+      }
+    ],
+    "asExpected": true,
+    "latencyMs": null,
+    "inputTokens": null,
+    "outputTokens": null
+  }
+]

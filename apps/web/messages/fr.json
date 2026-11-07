@@ -781,6 +781,8 @@
     "briefDetailError": "Impossible de charger ce brief. Réessayez.",
     "deleteError": "Impossible de supprimer ce brief. Réessayez.",
     "questionsForGp": "Questions à poser à votre professionnel de santé",
+    "aiUnavailableTitle": "Synthèse rédigée indisponible",
+    "aiUnavailableBody": "La synthèse rédigée et les questions suggérées n’ont pas pu être préparées pour ce BRIEF. Tout ce qui suit est calculé directement à partir de vos données, sans estimation ni ajout. Pour réessayer plus tard, supprimez ce BRIEF de vos briefs précédents, puis créez-le à nouveau.",
     "symptomFrequency": "Fréquence des symptômes",
     "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",
     "cycleSummary": "Synthèse du cycle",
@@ -1609,5 +1611,21 @@
       "signUpNote": "Créez un compte pour garder ces réponses. Elles ne sont envoyées qu’après votre accord pour le traitement de vos informations de santé par EMBR.",
       "logInToSave": "Vous avez déjà un compte ? Connectez-vous pour enregistrer"
     }
+  },
+  "AppointmentFeedback": {
+    "title": "Après votre consultation",
+    "question": "Votre BRIEF EMBR vous a-t-il aidée à exprimer vos symptômes ou vos préoccupations pendant votre consultation ?",
+    "YES_SIGNIFICANTLY": "Oui, beaucoup",
+    "YES_SOMEWHAT": "Oui, un peu",
+    "NOT_REALLY": "Pas vraiment",
+    "NO": "Non",
+    "NO_APPOINTMENT_YET": "Je n’ai pas encore eu de consultation",
+    "commentLabel": "Souhaitez-vous nous dire quelque chose ? (facultatif)",
+    "commentHint": "Merci de ne pas indiquer de détails médicaux. Votre réponse nous aide à savoir si EMBR vous est utile. Elle n’est pas transmise à votre professionnel de santé.",
+    "save": "Enregistrer la réponse",
+    "saving": "Enregistrement…",
+    "saved": "Merci, votre réponse est enregistrée. Vous pouvez la modifier à tout moment.",
+    "error": "Votre réponse n’a pas pu être enregistrée. Veuillez réessayer.",
+    "chooseFirst": "Choisissez d’abord une réponse."
   }
 }

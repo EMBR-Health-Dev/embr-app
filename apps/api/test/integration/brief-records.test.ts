@@ -7,7 +7,9 @@ import { randomUUID } from "node:crypto";
 // run, so a change in counting shows up as a failing figure here.
 // Only the AI wording call is stubbed; every figure is computed by the
 // deterministic engine before the AI is involved.
-vi.mock("../../src/modules/briefs/brief.ai.js", () => ({
+vi.mock("../../src/modules/briefs/brief.ai.js", async (importOriginal) => ({
+  // Real reason tagging and PROMPT_VERSION; only the model call is stubbed.
+  ...(await importOriginal<typeof import("../../src/modules/briefs/brief.ai.js")>()),
   briefAi: {
     generate: vi.fn(async () => ({
       narrative: "stub",

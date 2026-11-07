@@ -1,17 +1,108 @@
 # EMBR Launch Readiness
 
-The control document for moving EMBR from private early access to real
-users. Sign up stays closed (`PUBLIC_REGISTRATION_ENABLED=false`, see
-`docs/DEPLOYMENT.md`) until every **Launch** item is ticked, and no
-Launch item is ticked until the sections above it are.
+The control document for moving EMBR from beta interest to real users.
+It is split into five tracks that gate different things, so that a
+clinical review never blocks collecting interest, and legal and security
+work stays a genuine gate on processing anyone's health data:
 
-Status key: **Done** (verified), **In progress**, **Not started**,
-**Decision** (waiting on a person, named where known). Update the date
-and the evidence column whenever a status changes.
+| Track                             | What it gates                                     | Blocked by                       |
+| --------------------------------- | ------------------------------------------------- | -------------------------------- |
+| A. Beta interest collection       | Collecting names and emails of interested people  | Nothing clinical; privacy notice |
+| B. Account registration readiness | Turning on sign up (the three registration flags) | Legal documents, consent wording |
+| C. Health data processing         | Recording anyone's symptoms                       | Legal basis, consent, security   |
+| D. Clinical validation            | Clinical claims and clinical content in the app   | A menopause clinician's sign off |
+| E. Commercial launch              | Public launch, pricing, employer sales            | A to D, plus company and support |
 
-_Last reviewed: 11 October 2026._ Statuses below have not been re-verified since; some items (mobile QA, admin and worker deploys, accessibility) may have moved, so check the evidence before relying on them. What changed since 2 October is listed in
-[`CHANGELOG-2026-10.md`](CHANGELOG-2026-10.md); the working drafts for counsel,
-the clinician and the ethics board are in [`planning/`](planning/README.md).
+Status key: **Done** (verified, evidence named), **In progress**, **Not
+started**, **Decision** (waiting on a person), **Unverified** (true in
+code on `main`; the production setting could not be checked from the
+review environment).
+
+_Last reviewed: 2 November 2026, against `main` at `15b57e9`._ Code
+evidence is from `main`. Production configuration (Railway variables,
+DNS, the live site) could not be reached from the review environment,
+so anything that depends on it is marked Unverified rather than Done.
+
+## A. Beta interest collection
+
+Not gated on clinical sign off. People can say they are interested
+without creating an account or giving any health information.
+
+| Item                                 | Status   | Evidence / next step                                                                                                                                                                       |
+| ------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Early access by email (site and app) | Done     | `apps/web/src/lib/registration.ts` `EARLY_ACCESS_HREF`; `/register` and the login page show it while sign up is closed; mobile links to web sign up (`apps/mobile/lib/registration.ts`)    |
+| Waitlist form on the website         | Decision | [landingpage#10](https://github.com/EMBR-Health-Dev/landingpage/pull/10) adds a form (email, country, language, optional question, consent) next to email; founder to confirm before merge |
+| Privacy notice for interest data     | Decision | The site form's consent text names what is collected; counsel to confirm wording and the Formspree processor                                                                               |
+| Invited testers' guide               | Done     | `/beta` (`apps/web/src/app/beta/page.tsx`), not indexed                                                                                                                                    |
+
+## B. Account registration readiness
+
+Sign up stays closed until these are Done. Existing accounts sign in as
+normal throughout; no flag below affects login.
+
+| Item                                  | Status      | Evidence / next step                                                                                                                                                                                                    |
+| ------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API sign up flag                      | Done (off)  | `PUBLIC_REGISTRATION_ENABLED` defaults to `false` (`apps/api/src/config/env.ts`); `POST /auth/register` returns 403 before reading the request (`auth.routes.ts`). Production value Unverified                          |
+| Web sign up flag                      | Done (off)  | `NEXT_PUBLIC_REGISTRATION_OPEN` defaults to unset/false (web `Dockerfile` build arg); tests `register-closed.test.tsx`, `landing-closed.test.tsx`                                                                       |
+| Mobile sign up flag                   | Done (off)  | `EXPO_PUBLIC_REGISTRATION_OPEN` unset shows "sign up on the web". The mobile form sends no consents, so the API would refuse it even if both flags were on; keep it off until a mobile consent step is built and tested |
+| Terms and Privacy required at sign up | Done        | `consentService.validateRegistration` requires TERMS and PRIVACY at their current versions before the account is created; nothing is written on failure                                                                 |
+| Web sign up works once opened         | Done        | Consent checkboxes and version checks in `apps/web/src/app/register/page.tsx`; covered by the web register tests                                                                                                        |
+| Welcome email on first verification   | Done (code) | #305: sent once, on the first verification, by link or SSO; production `RESEND_API_KEY`, sender domain records and `APP_URL` Unverified                                                                                 |
+| Privacy Policy and Terms final        | Decision    | Drafts in `docs/legal/drafts/`; counsel                                                                                                                                                                                 |
+| Final document versions set in code   | Not started | `LEGAL_DOCUMENT_VERSIONS` still `0.1-draft` / `0.2-draft` (`packages/validation`)                                                                                                                                       |
+| Mobile consent step                   | Not started | Required before `EXPO_PUBLIC_REGISTRATION_OPEN` may be set                                                                                                                                                              |
+
+## C. Health data processing readiness
+
+Genuine gates. Nobody's health data is processed without these.
+
+| Item                                  | Status      | Evidence / next step                                                                                                                                                      |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Health consent enforced server side   | Done        | `requireCurrentConsent()` on every health router (symptoms, cycle, context, briefs, treatments, notes, MRS, baseline, onboarding, reflections, trends); export stays open |
+| Legal basis and consent wording       | Decision    | `docs/legal/consent-decision-sheet.md`, five questions for counsel                                                                                                        |
+| HIPAA applicability                   | Decision    | `docs/legal/hipaa-readiness.md`; no HIPAA claims until decided                                                                                                            |
+| Personal text encrypted at rest       | Unverified  | Code done (`ENCRYPTION.md`, now including the appointment follow up comment); confirm `DATA_ENCRYPTION_KEY` is set in production and the backfill has run                 |
+| AI processor sees summary counts only | Done        | `brief.ai.ts` `BriefInput`; notes, priorities and treatment names never sent; evaluation harness asserts no treatment name reaches the AI input                           |
+| BRIEF survives an AI failure          | Done        | Deterministic fallback in this sprint: findings, charts and severity saved, wording marked unavailable, nothing invented                                                  |
+| Error monitoring                      | Unverified  | `apps/api/src/lib/sentry.ts` reads `SENTRY_DSN`; set it in production                                                                                                     |
+| Backups and restore drill             | Done        | Restore drill 12 October 2026 (`BACKUPS.md`); repeat quarterly (next due January 2027)                                                                                    |
+| Branch protection on `main`           | Not started | `scripts/setup-branch-protection.mjs` fixed in #307; not applied (GitHub reported `protected: false` on 1 November)                                                       |
+| Access review (Railway, GitHub)       | In progress | GitHub: two admins, one writer; review Railway                                                                                                                            |
+| Incident response named and rehearsed | In progress | `docs/INCIDENT_RESPONSE.md`; name people, run a tabletop                                                                                                                  |
+| Dependency scanning                   | Done        | CI blocks high and critical advisories; `main` green after #308                                                                                                           |
+| Multi factor sign in                  | Not started | Planned; not required for beta                                                                                                                                            |
+
+## D. Clinical validation
+
+Gates clinical claims and clinical content, not interest collection.
+Features already merged without sign off are listed so the review can
+cover them in one sitting.
+
+| Item                                          | Status   | Evidence / next step                                                                                           |
+| --------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| Severity week by week grid                    | Decision | Merged in #299 without sign off; wording, 7 day blocks, 4 week blocks past 13 weeks, and the day count display |
+| Family and social impact answers              | Decision | Merged in #299 without sign off; answer options and the 7 answered day threshold                               |
+| BRIEF wording rules and deny-list             | Decision | `brief.ai.ts` system prompt and `PROHIBITED_PATTERNS`; evaluation harness ready for a clinician rubric pass    |
+| AI unavailable notice wording                 | Decision | New in this sprint (EN, FR, JA); confirm it reads as neutral and adds nothing                                  |
+| FAQ, Resources, Field Guide, symptom language | Decision | As before: rewritten to make fewer claims; need a menopause clinician                                          |
+| Urgent help and escalation language           | Decision | Draft ready; confirm crisis lines per country                                                                  |
+| Claims inventory                              | Decision | `planning/claims-inventory.md`; seven fixes and sign off open                                                  |
+
+## E. Commercial launch readiness
+
+| Item                       | Status      | Evidence / next step                                                                                                                         |
+| -------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity incorporated        | Decision    | Founder                                                                                                                                      |
+| Support email operational  | Decision    | info@embrhealthcare.com; confirm who answers and how fast                                                                                    |
+| Product analytics          | In progress | Admin dashboard counts only (`METRICS.md`), now with activation, AI reliability and appointment outcome; no third party analytics in the app |
+| First cohort defined       | Decision    | Who, how many, how invited                                                                                                                   |
+| Medical device positioning | Decision    | Counsel, per market                                                                                                                          |
+| Website merged and live    | Decision    | landingpage#10 open                                                                                                                          |
+
+---
+
+The detailed tables below are the October record, kept for history.
+Where a row above and a row below disagree, the row above is current.
 
 ## Product
 

@@ -3,7 +3,8 @@ import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { CURRENT_CONSENTS } from "./helpers/consents.js";
-import { briefAi } from "../src/modules/briefs/brief.ai.js";
+import { AppError } from "@embr/shared";
+import { briefAi, tagBriefAiFailure } from "../src/modules/briefs/brief.ai.js";
 import { briefService } from "../src/modules/briefs/brief.service.js";
 import { buildClinicalBriefPdf } from "../src/modules/briefs/brief.pdf.js";
 import { prisma } from "../src/lib/prisma.js";
@@ -57,6 +58,7 @@ const { state, nextId } = vi.hoisted(() => {
         stopReason?: string | null;
         notes: string | null;
       }>,
+      aiRuns: [] as Array<Record<string, unknown>>,
       briefs: [] as Array<{
         id: string;
         userId: string;
@@ -99,12 +101,20 @@ const { aiState } = vi.hoisted(() => ({
       patterns?: unknown[];
     },
     shouldThrow: false,
+    /** When set, generate() rejects with exactly this error. */
+    throwError: null as null | Error,
+    /** Reported through generate()'s observe callback, if given. */
+    telemetry: { latencyMs: 1234, inputTokens: 900, outputTokens: 150 },
   },
 }));
 
-vi.mock("../src/modules/briefs/brief.ai.js", () => ({
+vi.mock("../src/modules/briefs/brief.ai.js", async (importOriginal) => ({
+  // The real reason tagging and PROMPT_VERSION; only the model call is faked.
+  ...(await importOriginal<typeof import("../src/modules/briefs/brief.ai.js")>()),
   briefAi: {
-    generate: vi.fn(async () => {
+    generate: vi.fn(async (_input: unknown, _locale: unknown, observe?: (t: unknown) => void) => {
+      observe?.({ model: "test-model", stopReason: "end_turn", ...aiState.telemetry });
+      if (aiState.throwError) throw aiState.throwError;
       if (aiState.shouldThrow) throw new Error("simulated AI failure");
       if (!aiState.nextResponse) {
         throw new Error("test didn't configure an AI response");
@@ -432,6 +442,12 @@ vi.mock("../src/lib/prisma.js", () => ({
         },
       ),
     },
+    briefAiRun: {
+      create: vi.fn(({ data }: { data: Record<string, unknown> }) => {
+        state.aiRuns.push(data);
+        return Promise.resolve({ id: nextId(), ...data });
+      }),
+    },
     clinicalBrief: {
       // Mirrors the real @@unique([userId, fromDate, toDate]) index —
       // a second create() for the same triple throws the same
@@ -604,6 +620,8 @@ beforeEach(() => {
   state.emailVerificationTokens = [];
   aiState.nextResponse = null;
   aiState.shouldThrow = false;
+  aiState.throwError = null;
+  state.aiRuns = [];
   lockState.held.clear();
   lockState.acquireShouldThrow = false;
   vi.mocked(sendVerificationEmail).mockClear();
@@ -850,7 +868,7 @@ describe("POST /briefs", () => {
     });
   });
 
-  it("surfaces an AI failure as an error rather than silently generating a broken brief", async () => {
+  it("saves the deterministic brief, labelled, when the AI wording fails, and keeps nothing from the model", async () => {
     const app = createApp();
     const agent = request.agent(app);
     await registerAndLogin(agent, "brief-fail@embr.health");
@@ -858,8 +876,98 @@ describe("POST /briefs", () => {
 
     const res = await agent.post("/briefs").send(RANGE);
 
-    expect(res.status).toBeGreaterThanOrEqual(500);
-    expect(state.briefs).toHaveLength(0);
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(res.body.data.aiNarrative).toBe("");
+    expect(res.body.data.aiDiscussionTopics).toEqual([]);
+    expect(res.body.data.citedPatternIds).toEqual([]);
+    // Every deterministic section is still computed and returned.
+    expect(res.body.data.symptomSummary).toBeDefined();
+    expect(res.body.data.cycleSummary).toBeDefined();
+    expect(res.body.data.interpretation).toBeDefined();
+    expect(state.briefs).toHaveLength(1);
+    expect(state.briefs[0]).toMatchObject({ aiStatus: "UNAVAILABLE" });
+  });
+
+  it("falls back the same way on an AI timeout, and records the attempt without any user data", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-timeout@embr.health");
+    aiState.throwError = tagBriefAiFailure(
+      AppError.serviceUnavailable("Brief generation is temporarily unavailable"),
+      "timeout",
+    );
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(state.aiRuns).toHaveLength(1);
+    expect(state.aiRuns[0]).toMatchObject({
+      outcome: "REJECTED",
+      reason: "timeout",
+      latencyMs: 1234,
+      inputTokens: 900,
+      outputTokens: 150,
+      locale: "en",
+    });
+    // Counts and codes only: no user id, brief id or text.
+    expect(Object.keys(state.aiRuns[0]!).sort()).toEqual(
+      [
+        "inputTokens",
+        "latencyMs",
+        "locale",
+        "model",
+        "outcome",
+        "outputTokens",
+        "promptVersion",
+        "reason",
+      ].sort(),
+    );
+  });
+
+  it("falls back when the model's output is rejected by the content safety check", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-unsafe@embr.health");
+    aiState.throwError = tagBriefAiFailure(
+      new Error("Brief output failed content safety check: Output matched a prohibited pattern"),
+      "content_safety",
+    );
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(res.body.data.aiNarrative).toBe("");
+    expect(state.aiRuns[0]).toMatchObject({ outcome: "REJECTED", reason: "content_safety" });
+  });
+
+  it("records an accepted attempt and marks the brief GENERATED when the wording passes", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-ok-run@embr.health");
+    aiState.nextResponse = { narrative: "Fine.", discussionTopics: ["Is this typical?"] };
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("GENERATED");
+    expect(res.body.data.aiNarrative).toBe("Fine.");
+    expect(state.aiRuns[0]).toMatchObject({ outcome: "ACCEPTED", reason: null });
+  });
+
+  it("still saves the brief when recording the metrics row fails", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+    await registerAndLogin(agent, "brief-metrics-down@embr.health");
+    aiState.nextResponse = { narrative: "Fine.", discussionTopics: ["Is this typical?"] };
+    vi.mocked(prisma.briefAiRun.create).mockRejectedValueOnce(new Error("metrics table down"));
+
+    const res = await agent.post("/briefs").send(RANGE);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("GENERATED");
   });
 });
 
@@ -1179,20 +1287,24 @@ describe("POST /briefs — concurrency and locking", () => {
     expect(state.briefs).toHaveLength(2);
   });
 
-  it("releases the lock after a failed generation so a later request for the same range can still succeed", async () => {
+  it("releases the lock after an AI wording failure, so deleting the fallback and retrying gets the wording", async () => {
     const app = createApp();
     const agent = request.agent(app);
     await registerAndLogin(agent, "brief-lock-release-ai@embr.health");
 
     aiState.shouldThrow = true;
-    const failed = await agent.post("/briefs").send(RANGE);
-    expect(failed.status).toBeGreaterThanOrEqual(500);
+    const fallback = await agent.post("/briefs").send(RANGE);
+    expect(fallback.status).toBe(201);
+    expect(fallback.body.data.aiStatus).toBe("UNAVAILABLE");
+
+    expect((await agent.delete(`/briefs/${fallback.body.data.id}`)).status).toBe(204);
 
     aiState.shouldThrow = false;
     aiState.nextResponse = { narrative: "n/a", discussionTopics: ["Ask whether this is typical?"] };
-    const succeeded = await agent.post("/briefs").send(RANGE);
+    const retried = await agent.post("/briefs").send(RANGE);
 
-    expect(succeeded.status).toBe(201);
+    expect(retried.status).toBe(201);
+    expect(retried.body.data.aiStatus).toBe("GENERATED");
     expect(state.briefs).toHaveLength(1);
   });
 
@@ -2440,7 +2552,7 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
     expect(res.status).toBe(201);
   });
 
-  it("rejects an echoed pattern whose id was never supplied", async () => {
+  it("falls back on an echoed pattern whose id was never supplied", async () => {
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "stage4wire4@embr.health");
@@ -2453,10 +2565,16 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
 
     const res = await agent.post("/briefs").send(RANGE);
 
-    expect(res.status).toBeGreaterThanOrEqual(500);
+    // Citation integrity still fails the wording closed: nothing the
+    // model returned is kept, and the brief is saved deterministic only.
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(res.body.data.aiNarrative).toBe("");
+    expect(res.body.data.citedPatternIds).toEqual([]);
+    expect(state.aiRuns.at(-1)).toMatchObject({ outcome: "REJECTED", reason: "citation" });
   });
 
-  it("rejects a duplicate echoed pattern id", async () => {
+  it("falls back on a duplicate echoed pattern id", async () => {
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "stage4wire5@embr.health");
@@ -2469,10 +2587,16 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
 
     const res = await agent.post("/briefs").send(RANGE);
 
-    expect(res.status).toBeGreaterThanOrEqual(500);
+    // Citation integrity still fails the wording closed: nothing the
+    // model returned is kept, and the brief is saved deterministic only.
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(res.body.data.aiNarrative).toBe("");
+    expect(res.body.data.citedPatternIds).toEqual([]);
+    expect(state.aiRuns.at(-1)).toMatchObject({ outcome: "REJECTED", reason: "citation" });
   });
 
-  it("rejects an echoed pattern whose type was changed while keeping the same id", async () => {
+  it("falls back on an echoed pattern whose type was changed while keeping the same id", async () => {
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "stage4wire6@embr.health");
@@ -2485,10 +2609,16 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
 
     const res = await agent.post("/briefs").send(RANGE);
 
-    expect(res.status).toBeGreaterThanOrEqual(500);
+    // Citation integrity still fails the wording closed: nothing the
+    // model returned is kept, and the brief is saved deterministic only.
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(res.body.data.aiNarrative).toBe("");
+    expect(res.body.data.citedPatternIds).toEqual([]);
+    expect(state.aiRuns.at(-1)).toMatchObject({ outcome: "REJECTED", reason: "citation" });
   });
 
-  it("rejects an echoed pattern whose evidenceRef was changed while keeping the same id", async () => {
+  it("falls back on an echoed pattern whose evidenceRef was changed while keeping the same id", async () => {
     const app = createApp();
     const agent = request.agent(app);
     const userId = await registerAndLogin(agent, "stage4wire7@embr.health");
@@ -2501,7 +2631,13 @@ describe("POST /briefs — Stage 4 interpretation wiring and provenance validati
 
     const res = await agent.post("/briefs").send(RANGE);
 
-    expect(res.status).toBeGreaterThanOrEqual(500);
+    // Citation integrity still fails the wording closed: nothing the
+    // model returned is kept, and the brief is saved deterministic only.
+    expect(res.status).toBe(201);
+    expect(res.body.data.aiStatus).toBe("UNAVAILABLE");
+    expect(res.body.data.aiNarrative).toBe("");
+    expect(res.body.data.citedPatternIds).toEqual([]);
+    expect(state.aiRuns.at(-1)).toMatchObject({ outcome: "REJECTED", reason: "citation" });
   });
 
   it("accepts a response that echoes back none of the supplied patterns — a subset (including empty) is a valid, intentional response, not a contract violation", async () => {

@@ -8,3 +8,8 @@
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# Written by the BRIEF evaluation harness (apps/api/eval/brief/run.ts).
+# A CI test compares a fresh run with the committed report byte for
+# byte, so it must stay exactly as the harness writes it.
+apps/api/eval/brief/reports/

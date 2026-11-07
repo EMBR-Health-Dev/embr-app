@@ -2,6 +2,8 @@ import type {
   NotificationPreferencesDto,
   AuthSessionResponse,
   BriefTrendsDto,
+  AppointmentOutcome,
+  BriefFeedbackDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
   ConsentStatusDto,
@@ -378,6 +380,11 @@ export const api = {
     get: (id: string) => apiFetch<ClinicalBriefDto>(`/briefs/${id}`),
 
     delete: (id: string) => apiFetch<void>(`/briefs/${id}`, { method: "DELETE" }),
+
+    feedback: (id: string) => apiFetch<BriefFeedbackDto | null>(`/briefs/${id}/feedback`),
+
+    saveFeedback: (id: string, input: { answer: AppointmentOutcome; comment: string | null }) =>
+      apiFetch<BriefFeedbackDto>(`/briefs/${id}/feedback`, { method: "PUT", body: input }),
 
     // Not a JSON call — same reasoning as the export page's downloads:
     // a plain same-origin URL the browser handles natively (cookies
