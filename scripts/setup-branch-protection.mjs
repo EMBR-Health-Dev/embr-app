@@ -50,8 +50,11 @@ const body = {
     checks: requiredStatusChecks.map((context) => ({ context })),
   },
   enforce_admins: true,
+  // Changes still go through a pull request, so CI runs on every one,
+  // but no approval is required: one person maintains the app for now.
+  // When a second regular contributor joins, raise this to 1.
   required_pull_request_reviews: {
-    required_approving_review_count: 1,
+    required_approving_review_count: 0,
     dismiss_stale_reviews: true,
   },
   restrictions: null, // no push/merge restriction beyond the review requirement
@@ -82,7 +85,9 @@ if (!response.ok) {
 
 console.log(`✅ Branch protection applied to ${repo}@${branch}:`);
 console.log(`   - Required checks: ${requiredStatusChecks.join(", ")}`);
-console.log("   - 1 approving review required, stale reviews dismissed on new commits");
+console.log(
+  "   - Pull request required; no approving review required (raise to 1 for a second contributor)",
+);
 console.log("   - Force pushes and branch deletion blocked");
 console.log("   - Conversation resolution required before merge");
 console.log("   - Rules also apply to admins (enforce_admins: true)");
