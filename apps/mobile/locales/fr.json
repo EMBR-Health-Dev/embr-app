@@ -339,6 +339,8 @@
     "pdf": "PDF",
     "delete": "Supprimer",
     "questionsForGp": "Questions à poser à votre professionnel de santé",
+    "aiUnavailableTitle": "Synthèse rédigée indisponible",
+    "aiUnavailableBody": "La synthèse rédigée et les questions suggérées n’ont pas pu être préparées pour ce BRIEF. Tout ce qui suit est calculé directement à partir de vos données, sans estimation ni ajout. Pour réessayer plus tard, supprimez ce BRIEF de vos briefs précédents, puis créez-le à nouveau.",
     "symptomFrequency": "Fréquence des symptômes",
     "severityTrendTitleWeekly": "Intensité semaine par semaine",
     "severityTrendTitleBlocks": "Intensité par périodes de 4 semaines",

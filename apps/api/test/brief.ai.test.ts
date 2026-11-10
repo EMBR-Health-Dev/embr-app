@@ -25,6 +25,7 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
     static APIError = actual.APIError;
     static RateLimitError = actual.RateLimitError;
     static APIConnectionError = actual.APIConnectionError;
+    static APIConnectionTimeoutError = actual.APIConnectionTimeoutError;
     static InternalServerError = actual.InternalServerError;
     static AuthenticationError = actual.AuthenticationError;
     static BadRequestError = actual.BadRequestError;
@@ -33,7 +34,11 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
   return { ...actual, default: MockAnthropic };
 });
 
-import { briefAi } from "../src/modules/briefs/brief.ai.js";
+import {
+  briefAi,
+  briefAiFailureReason,
+  parseBriefResponse,
+} from "../src/modules/briefs/brief.ai.js";
 import { logger } from "../src/lib/logger.js";
 
 const VALID_INPUT = {
@@ -1140,5 +1145,117 @@ describe("brief.ai Anthropic error classification", () => {
     await expect(briefAi.generate(VALID_INPUT, "en")).rejects.toMatchObject({
       code: "SERVICE_UNAVAILABLE",
     });
+  });
+});
+
+describe("brief.ai failure reasons and telemetry", () => {
+  const VALID_BODY = JSON.stringify({
+    narrative: "Hot flushes were recorded on three days.",
+    discussionTopics: [dt("Is this pattern worth discussing?")],
+    patterns: [],
+  });
+
+  function withUsage(text: string, stopReason = "end_turn") {
+    return {
+      content: [{ type: "text", text }],
+      stop_reason: stopReason,
+      usage: { input_tokens: 812, output_tokens: 143 },
+    };
+  }
+
+  async function reasonOf(promise: Promise<unknown>) {
+    const err = await promise.then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(err).not.toBeNull();
+    return briefAiFailureReason(err);
+  }
+
+  it("reports token counts, stop reason and latency once on success", async () => {
+    mockCreate.mockResolvedValue(withUsage(VALID_BODY));
+    const observe = vi.fn();
+    await briefAi.generate(VALID_INPUT, "en", observe);
+    expect(observe).toHaveBeenCalledTimes(1);
+    expect(observe.mock.calls[0]![0]).toMatchObject({
+      model: env.ANTHROPIC_BRIEF_MODEL,
+      inputTokens: 812,
+      outputTokens: 143,
+      stopReason: "end_turn",
+    });
+    expect(observe.mock.calls[0]![0].latencyMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("still reports telemetry once when the call fails", async () => {
+    mockCreate.mockRejectedValue(new Anthropic.APIConnectionError({ message: "down" }));
+    const observe = vi.fn();
+    await expect(briefAi.generate(VALID_INPUT, "en", observe)).rejects.toBeTruthy();
+    expect(observe).toHaveBeenCalledTimes(1);
+    expect(observe.mock.calls[0]![0]).toMatchObject({ inputTokens: null, outputTokens: null });
+  });
+
+  it("tags a timeout as timeout, keeping SERVICE_UNAVAILABLE", async () => {
+    mockCreate.mockRejectedValue(new Anthropic.APIConnectionTimeoutError({ message: "timed out" }));
+    const promise = briefAi.generate(VALID_INPUT, "en");
+    await expect(promise).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("timeout");
+  });
+
+  it("tags other connection failures as upstream_unavailable", async () => {
+    mockCreate.mockRejectedValue(new Anthropic.APIConnectionError({ message: "down" }));
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("upstream_unavailable");
+  });
+
+  it("tags a response cut off at max_tokens as truncated", async () => {
+    mockCreate.mockResolvedValue(withUsage('{"narrative": "Hot flushes were rec', "max_tokens"));
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("truncated");
+  });
+
+  it("tags unparseable text that was not cut off as invalid_json", async () => {
+    mockCreate.mockResolvedValue(withUsage("Here is your summary."));
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("invalid_json");
+  });
+
+  it("tags a wrong shape as invalid_shape and logs no values from it", async () => {
+    mockCreate.mockResolvedValue(
+      withUsage(JSON.stringify({ narrative: "Night sweats on 9 days", discussionTopics: [] })),
+    );
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("invalid_shape");
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("Night sweats");
+  });
+
+  it("tags a discussion topic citing an unknown pattern as citation", async () => {
+    mockCreate.mockResolvedValue(
+      withUsage(
+        JSON.stringify({
+          narrative: "n",
+          discussionTopics: [dt("Q?", ["frequency_increased:HOT_FLASH"])],
+          patterns: [],
+        }),
+      ),
+    );
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("citation");
+  });
+
+  it("tags prohibited language as content_safety", async () => {
+    mockCreate.mockResolvedValue(
+      withUsage(
+        JSON.stringify({
+          narrative: "This suggests a diagnosis of perimenopause.",
+          discussionTopics: [dt("Q?")],
+          patterns: [],
+        }),
+      ),
+    );
+    expect(await reasonOf(briefAi.generate(VALID_INPUT, "en"))).toBe("content_safety");
+  });
+
+  it("parseBriefResponse runs the same checks without a network call", () => {
+    expect(parseBriefResponse(VALID_BODY, "en").narrative).toContain("Hot flushes");
+    expect(() => parseBriefResponse("{}", "en")).toThrow("unexpected response shape");
+  });
+
+  it("returns unknown for an error this module never tagged", () => {
+    expect(briefAiFailureReason(new Error("x"))).toBe("unknown");
   });
 });

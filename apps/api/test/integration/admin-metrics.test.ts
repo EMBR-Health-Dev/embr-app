@@ -304,6 +304,161 @@ describe.skipIf(!reachable)("computeAdminMetrics against Postgres", () => {
     expect(after.activity.active30d - before.activity.active30d).toBe(2);
   });
 
+  it("counts a first symptom entry within 48 hours of signing up, once her 48 hours are over", async () => {
+    const now = new Date();
+    const before = await computeAdminMetrics(now);
+    const quick = await person({ daysAgo: 5 });
+    await prisma.symptomLog.create({
+      data: {
+        userId: quick.id,
+        category: "FATIGUE",
+        severity: "MILD",
+        occurredAt: new Date(quick.createdAt.getTime() + 3_600_000),
+        createdAt: new Date(quick.createdAt.getTime() + 3_600_000),
+      },
+    });
+    const slow = await person({ daysAgo: 5 });
+    await prisma.symptomLog.create({
+      data: {
+        userId: slow.id,
+        category: "FATIGUE",
+        severity: "MILD",
+        occurredAt: new Date(slow.createdAt.getTime() + 3 * DAY),
+        createdAt: new Date(slow.createdAt.getTime() + 3 * DAY),
+      },
+    });
+    await person({ daysAgo: 1 }); // her 48 hours are not over: not in the cohort
+    const after = await computeAdminMetrics(now);
+    expect(after.activation.firstLog48h.cohort - before.activation.firstLog48h.cohort).toBe(2);
+    expect(after.activation.firstLog48h.reached - before.activation.firstLog48h.reached).toBe(1);
+  });
+
+  it("counts 7 active days among her first 14, for people whose 14 days are over", async () => {
+    const now = new Date();
+    const before = await computeAdminMetrics(now);
+    const steady = await person({ daysAgo: 20 });
+    for (let d = 0; d < 7; d++) {
+      const at = new Date(steady.createdAt.getTime() + d * DAY + 3_600_000);
+      await prisma.contextLog.create({
+        data: { userId: steady.id, date: at, createdAt: at, updatedAt: at },
+      });
+    }
+    const light = await person({ daysAgo: 20 });
+    for (let d = 0; d < 6; d++) {
+      const at = new Date(light.createdAt.getTime() + d * DAY + 3_600_000);
+      await prisma.contextLog.create({
+        data: { userId: light.id, date: at, createdAt: at, updatedAt: at },
+      });
+    }
+    const after = await computeAdminMetrics(now);
+    expect(after.activation.sevenOfFourteen.cohort - before.activation.sevenOfFourteen.cohort).toBe(
+      2,
+    );
+    expect(
+      after.activation.sevenOfFourteen.reached - before.activation.sevenOfFourteen.reached,
+    ).toBe(1);
+  });
+
+  it("summarises AI wording attempts: rejection rate, reasons, latency and tokens", async () => {
+    // Runs from other suites share this table, so this one uses a far
+    // future reference date and rows stamped just before it.
+    const now = new Date("2099-06-30T12:00:00Z");
+    const at = new Date("2099-06-29T12:00:00Z");
+    const base = { model: "m", promptVersion: "1.0", locale: "en" as const, createdAt: at };
+    const ids = (
+      await Promise.all([
+        prisma.briefAiRun.create({
+          data: {
+            ...base,
+            outcome: "ACCEPTED",
+            latencyMs: 1000,
+            inputTokens: 1000,
+            outputTokens: 200,
+          },
+        }),
+        prisma.briefAiRun.create({
+          data: {
+            ...base,
+            outcome: "ACCEPTED",
+            latencyMs: 2000,
+            inputTokens: 1000,
+            outputTokens: 200,
+          },
+        }),
+        prisma.briefAiRun.create({
+          data: { ...base, outcome: "REJECTED", reason: "timeout", latencyMs: 30000 },
+        }),
+        prisma.briefAiRun.create({
+          data: {
+            ...base,
+            outcome: "REJECTED",
+            reason: "citation",
+            latencyMs: 3000,
+            inputTokens: 1000,
+            outputTokens: 200,
+          },
+        }),
+      ])
+    ).map((r) => r.id);
+    try {
+      const m = await computeAdminMetrics(now);
+      expect(m.briefAi.attempts30d).toBe(4);
+      expect(m.briefAi.rejected30d).toBe(2);
+      expect(m.briefAi.rejectionRate).toBe(0.5);
+      expect(m.briefAi.rejectionsByReason).toEqual([
+        { reason: "citation", count: 1 },
+        { reason: "timeout", count: 1 },
+      ]);
+      expect(m.briefAi.latencyP50Ms).toBe(2500);
+      expect(m.briefAi.avgInputTokens).toBe(1000);
+      expect(m.briefAi.avgOutputTokens).toBe(200);
+      // No prices configured in tests: no cost estimate, never a guess.
+      expect(m.briefAi.estimatedCostPerBriefUsd).toBeNull();
+    } finally {
+      await prisma.briefAiRun.deleteMany({ where: { id: { in: ids } } });
+    }
+  });
+
+  it("counts appointment answers, never comments, and leaves admins out", async () => {
+    const before = await computeAdminMetrics();
+    const briefFor = (userId: string) =>
+      prisma.clinicalBrief.create({
+        data: {
+          userId,
+          fromDate: new Date("2026-07-01"),
+          toDate: new Date("2026-09-30"),
+          symptomSummary: [],
+          cycleSummary: {},
+          treatmentSummary: [],
+          aiNarrative: "",
+          aiDiscussionTopics: [],
+        },
+      });
+    const member = await person();
+    const admin = await person({ role: "ADMIN" });
+    const b1 = await briefFor(member.id);
+    const b2 = await briefFor(admin.id);
+    await prisma.briefFeedback.create({
+      data: {
+        briefId: b1.id,
+        userId: member.id,
+        answer: "YES_SIGNIFICANTLY",
+        comment: "Secret words",
+      },
+    });
+    await prisma.briefFeedback.create({
+      data: { briefId: b2.id, userId: admin.id, answer: "NO" },
+    });
+    const after = await computeAdminMetrics();
+    expect(after.appointmentOutcomes.answered - before.appointmentOutcomes.answered).toBe(1);
+    expect(
+      after.appointmentOutcomes.byAnswer.YES_SIGNIFICANTLY -
+        before.appointmentOutcomes.byAnswer.YES_SIGNIFICANTLY,
+    ).toBe(1);
+    expect(after.appointmentOutcomes.byAnswer.NO - before.appointmentOutcomes.byAnswer.NO).toBe(0);
+    expect(JSON.stringify(after)).not.toContain("Secret words");
+  });
+
   it("never returns anything but numbers and dates", async () => {
     const metrics = await computeAdminMetrics();
     const text = JSON.stringify(metrics);

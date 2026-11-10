@@ -93,6 +93,13 @@ const { state, nextId } = vi.hoisted(() => {
         updatedAt: Date;
       }>,
       briefs: [] as Array<{ id: string; userId: string; aiNarrative: string; createdAt: Date }>,
+      briefFeedback: [] as Array<{
+        id: string;
+        userId: string;
+        briefId: string;
+        answer: string;
+        comment: string | null;
+      }>,
       onboarding: [] as Array<{ id: string; userId: string; jobToBeDone: string | null }>,
       memberships: [] as Array<{
         userId: string;
@@ -252,6 +259,11 @@ vi.mock("../src/lib/prisma.js", () => ({
     clinicalBrief: {
       findMany: vi.fn(({ where }: { where: { userId: string } }) =>
         Promise.resolve(state.briefs.filter((b) => b.userId === where.userId)),
+      ),
+    },
+    briefFeedback: {
+      findMany: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(state.briefFeedback.filter((f) => f.userId === where.userId)),
       ),
     },
     reflectionDismissal: {
@@ -461,6 +473,7 @@ beforeEach(() => {
   state.notes = [];
   state.contexts = [];
   state.briefs = [];
+  state.briefFeedback = [];
   state.onboarding = [];
   state.memberships = [];
   state.emailVerificationTokens = [];
@@ -839,6 +852,20 @@ describe("GET /export/all-data.json", () => {
       .send({ category: "FATIGUE", severity: "SEVERE", occurredAt: "2026-09-02T08:00:00.000Z" });
     state.onboarding.push({ id: "ob-1", userId, jobToBeDone: "PREPARE_FOR_APPOINTMENT" });
     state.briefs.push({ id: "b-1", userId, aiNarrative: "Her wording", createdAt: new Date() });
+    state.briefFeedback.push({
+      id: "f-1",
+      userId,
+      briefId: "b-1",
+      answer: "YES_SOMEWHAT",
+      comment: "It helped me start",
+    });
+    state.briefFeedback.push({
+      id: "f-2",
+      userId: "someone-else",
+      briefId: "b-x",
+      answer: "NO",
+      comment: "Not hers",
+    });
     state.briefs.push({
       id: "b-2",
       userId: otherId,
@@ -875,6 +902,9 @@ describe("GET /export/all-data.json", () => {
     );
     expect(body.symptomLogs.map((l: { category: string }) => l.category)).toEqual(["HOT_FLASH"]);
     expect(body.briefs.map((b: { aiNarrative: string }) => b.aiNarrative)).toEqual(["Her wording"]);
+    expect(body.briefFeedback).toEqual([
+      { id: "f-1", briefId: "b-1", answer: "YES_SOMEWHAT", comment: "It helped me start" },
+    ]);
     expect(body.organizations).toEqual([
       { organizationName: "Acme", role: "ORG_MEMBER", joinedAt: "2026-08-01T00:00:00.000Z" },
     ]);

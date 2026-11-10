@@ -70,6 +70,7 @@ export function toClinicalBriefDto(brief: ClinicalBrief): ClinicalBriefDto {
     patientPriorities: brief.patientPriorities as unknown as string[] | null,
     aiNarrative: brief.aiNarrative,
     aiDiscussionTopics: brief.aiDiscussionTopics as unknown as string[],
+    aiStatus: brief.aiStatus,
     locale: brief.locale,
   };
 }

@@ -15,12 +15,29 @@ function Tile({ label, value, note }: { label: string; value: string; note?: str
   );
 }
 
+const OUTCOME_LABELS: Array<[keyof AdminMetricsDto["appointmentOutcomes"]["byAnswer"], string]> = [
+  ["YES_SIGNIFICANTLY", "Yes, significantly"],
+  ["YES_SOMEWHAT", "Yes, somewhat"],
+  ["NOT_REALLY", "Not really"],
+  ["NO", "No"],
+  ["NO_APPOINTMENT_YET", "No appointment yet"],
+];
+
 /**
  * Counts only: how many people signed up, logged and used a BRIEF.
  * Never health content, never one person (see the API's admin.metrics.ts).
  */
 export function MetricsPanel({ metrics }: { metrics: AdminMetricsDto }) {
-  const { accounts, activity, retentionWeek4, briefs, weekly } = metrics;
+  const {
+    accounts,
+    activity,
+    retentionWeek4,
+    briefs,
+    weekly,
+    activation,
+    briefAi,
+    appointmentOutcomes,
+  } = metrics;
 
   return (
     <div className="mt-6 flex flex-col gap-8">
@@ -60,6 +77,24 @@ export function MetricsPanel({ metrics }: { metrics: AdminMetricsDto }) {
         </div>
       </section>
 
+      <section aria-labelledby="metrics-activation">
+        <h2 id="metrics-activation" className="text-sm font-medium text-foreground/70">
+          Activation
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Tile
+            label="First log in 48h"
+            value={formatRate(activation.firstLog48h.rate)}
+            note={`${ofTotal(activation.firstLog48h.reached, activation.firstLog48h.cohort)} signed up 2 to 30 days ago`}
+          />
+          <Tile
+            label="7 of first 14 days"
+            value={formatRate(activation.sevenOfFourteen.rate)}
+            note={`${ofTotal(activation.sevenOfFourteen.reached, activation.sevenOfFourteen.cohort)} signed up 2 to 8 weeks ago`}
+          />
+        </div>
+      </section>
+
       <section aria-labelledby="metrics-briefs">
         <h2 id="metrics-briefs" className="text-sm font-medium text-foreground/70">
           BRIEFs
@@ -70,6 +105,70 @@ export function MetricsPanel({ metrics }: { metrics: AdminMetricsDto }) {
           <Tile label="Downloaded, 30 days" value={briefs.downloaded30d.toLocaleString()} />
           <Tile label="People with a BRIEF" value={briefs.peopleWithBrief.toLocaleString()} />
         </div>
+      </section>
+
+      <section aria-labelledby="metrics-outcomes">
+        <h2 id="metrics-outcomes" className="text-sm font-medium text-foreground/70">
+          Did the BRIEF help in the appointment?
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {OUTCOME_LABELS.map(([key, label]) => (
+            <Tile
+              key={key}
+              label={label}
+              value={ofTotal(appointmentOutcomes.byAnswer[key], appointmentOutcomes.answered)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="metrics-ai">
+        <h2 id="metrics-ai" className="text-sm font-medium text-foreground/70">
+          BRIEF AI wording, last 30 days
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Tile
+            label="Rejected"
+            value={formatRate(briefAi.rejectionRate)}
+            note={`${ofTotal(briefAi.rejected30d, briefAi.attempts30d)} attempts; saved without wording`}
+          />
+          <Tile
+            label="Latency"
+            value={
+              briefAi.latencyP50Ms === null ? "—" : `${(briefAi.latencyP50Ms / 1000).toFixed(1)}s`
+            }
+            note={
+              briefAi.latencyP95Ms === null
+                ? "median"
+                : `median · p95 ${(briefAi.latencyP95Ms / 1000).toFixed(1)}s`
+            }
+          />
+          <Tile
+            label="Tokens"
+            value={briefAi.avgInputTokens === null ? "—" : briefAi.avgInputTokens.toLocaleString()}
+            note={`in · ${briefAi.avgOutputTokens === null ? "—" : briefAi.avgOutputTokens.toLocaleString()} out, on average`}
+          />
+          <Tile
+            label="Cost per BRIEF"
+            value={
+              briefAi.estimatedCostPerBriefUsd === null
+                ? "—"
+                : `$${briefAi.estimatedCostPerBriefUsd.toFixed(4)}`
+            }
+            note={
+              briefAi.estimatedCostPerBriefUsd === null ? "set the price variables" : "estimate"
+            }
+          />
+        </div>
+        {briefAi.rejectionsByReason.length > 0 && (
+          <ul className="mt-3 text-sm text-foreground/80">
+            {briefAi.rejectionsByReason.map((r) => (
+              <li key={r.reason}>
+                <span className="font-mono">{r.reason}</span>: {r.count}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section aria-labelledby="metrics-weekly">

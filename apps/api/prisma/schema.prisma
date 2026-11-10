@@ -79,6 +79,7 @@ model User {
   organizationMemberships OrganizationMembership[]
   sentOrganizationInvites OrganizationInvite[]
   clinicalBriefs          ClinicalBrief[]
+  briefFeedback           BriefFeedback[]
   onboardingProfile       OnboardingProfile?
   reflectionDismissals    ReflectionDismissal[]
   consentRecords          ConsentRecord[]
@@ -769,6 +770,17 @@ model ClinicalBrief {
   /// constraint (questions to ask, never assertions or suggestions).
   aiDiscussionTopics Json
 
+  /// Whether the AI wording above was produced. UNAVAILABLE means the
+  /// optional wording step failed (timeout, rejected output, citation
+  /// or content safety check) and the brief was saved with its
+  /// deterministic findings only: aiNarrative is "" and
+  /// aiDiscussionTopics is []. Nothing the model returned is kept in
+  /// that case. Briefs from before this field are GENERATED.
+  aiStatus BriefAiStatus @default(GENERATED)
+
+  /// Her answer to the appointment follow up question, if given.
+  feedback BriefFeedback?
+
   /// The language aiNarrative/aiDiscussionTopics and every persisted
   /// interpretation.patterns string were actually generated in —
   /// resolved once at generation time from the request's
@@ -1152,4 +1164,62 @@ model ConsentRecord {
 
   @@index([userId, type, createdAt])
   @@map("consent_records")
+}
+
+enum BriefAiStatus {
+  GENERATED
+  UNAVAILABLE
+}
+
+/// One attempt at the BRIEF's optional AI wording, for reliability
+/// metrics (rejection rate and reason, latency, tokens, cost). Holds no
+/// user id, no brief id and no text: only what is needed to count.
+model BriefAiRun {
+  id            String         @id @default(uuid())
+  outcome       BriefAiOutcome
+  /// One of BRIEF_AI_FAILURE_REASONS in brief.ai.ts when REJECTED.
+  reason        String?
+  model         String
+  promptVersion String
+  locale        BriefLocale
+  latencyMs     Int
+  inputTokens   Int?
+  outputTokens  Int?
+  createdAt     DateTime       @default(now())
+
+  @@index([createdAt])
+  @@map("brief_ai_runs")
+}
+
+enum BriefAiOutcome {
+  ACCEPTED
+  REJECTED
+}
+
+/// Did the BRIEF help her communicate in her appointment? One answer
+/// per brief, which she can change. `comment` is optional free text,
+/// encrypted at rest (field-crypto.ts), never sent to the AI and never
+/// shown in admin metrics, which count answers only.
+model BriefFeedback {
+  id        String             @id @default(uuid())
+  briefId   String             @unique
+  brief     ClinicalBrief      @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answer    AppointmentOutcome
+  comment   String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("brief_feedback")
+}
+
+enum AppointmentOutcome {
+  YES_SIGNIFICANTLY
+  YES_SOMEWHAT
+  NOT_REALLY
+  NO
+  NO_APPOINTMENT_YET
 }

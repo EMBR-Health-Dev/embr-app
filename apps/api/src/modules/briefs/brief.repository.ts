@@ -120,6 +120,7 @@ export const briefRepository = {
     patientPriorities: Prisma.InputJsonValue;
     aiNarrative: string;
     aiDiscussionTopics: Prisma.InputJsonValue;
+    aiStatus: "GENERATED" | "UNAVAILABLE";
     locale: Locale;
     generationMetadata: Prisma.InputJsonValue;
   }) {

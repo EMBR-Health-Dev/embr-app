@@ -339,6 +339,8 @@
     "pdf": "PDF",
     "delete": "Delete",
     "questionsForGp": "Questions to bring to your healthcare provider",
+    "aiUnavailableTitle": "Written summary not available",
+    "aiUnavailableBody": "The written summary and suggested questions could not be prepared for this BRIEF. Everything below is calculated directly from your records, and nothing has been estimated or filled in. To try again later, delete this BRIEF from your past briefs and create it again.",
     "symptomFrequency": "Symptom frequency",
     "severityTrendTitleWeekly": "Severity week by week",
     "severityTrendTitleBlocks": "Severity in 4 week blocks",

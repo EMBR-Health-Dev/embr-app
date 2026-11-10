@@ -1,4 +1,5 @@
-import type { AdminMetricsDto } from "@embr/types";
+import type { AdminMetricsDto, AppointmentOutcome } from "@embr/types";
+import { env } from "../../config/env.js";
 import { prisma, type TransactionClient } from "../../lib/prisma.js";
 
 /**
@@ -133,6 +134,65 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
     now,
   );
 
+  // Activation. Signup day is day 0; a cohort only holds people whose
+  // whole window is over, the same rule as week 4 retention.
+  const [activation] = await prisma.$queryRawUnsafe<Row[]>(
+    `${ACTIVITY},
+     first_log AS (
+       SELECT p.id, min(s."createdAt") AS first_at
+       FROM people p JOIN symptom_logs s ON s."userId" = p.id
+       GROUP BY p.id
+     )
+     SELECT
+       (SELECT count(*) FROM people p
+         WHERE p."createdAt" BETWEEN $1::timestamp - interval '30 days'
+                                 AND $1::timestamp - interval '48 hours') AS log_cohort,
+       (SELECT count(*) FROM people p JOIN first_log f ON f.id = p.id
+         WHERE p."createdAt" BETWEEN $1::timestamp - interval '30 days'
+                                 AND $1::timestamp - interval '48 hours'
+           AND f.first_at <= p."createdAt" + interval '48 hours') AS log_reached,
+       (SELECT count(*) FROM people p
+         WHERE (p."createdAt")::date BETWEEN ($1::timestamp)::date - 55
+                                         AND ($1::timestamp)::date - 14) AS seven_cohort,
+       (SELECT count(*) FROM people p
+         WHERE (p."createdAt")::date BETWEEN ($1::timestamp)::date - 55
+                                         AND ($1::timestamp)::date - 14
+           AND (SELECT count(*) FROM activity a
+                 WHERE a."userId" = p.id
+                   AND a.day BETWEEN (p."createdAt")::date AND (p."createdAt")::date + 13) >= 7
+       ) AS seven_reached`,
+    now,
+  );
+
+  // brief_ai_runs holds no user id by design, so attempts by admin or
+  // test accounts are counted too.
+  const [aiRuns] = await prisma.$queryRawUnsafe<Row[]>(
+    `SELECT
+       count(*) AS attempts,
+       count(*) FILTER (WHERE outcome = 'REJECTED') AS rejected,
+       percentile_cont(0.5) WITHIN GROUP (ORDER BY "latencyMs") AS p50,
+       percentile_cont(0.95) WITHIN GROUP (ORDER BY "latencyMs") AS p95,
+       avg("inputTokens") AS avg_in,
+       avg("outputTokens") AS avg_out
+     FROM brief_ai_runs
+     WHERE "createdAt" >= $1::timestamp - interval '30 days'`,
+    now,
+  );
+  const reasons = await prisma.$queryRawUnsafe<Row[]>(
+    `SELECT coalesce(reason, 'unknown') AS reason, count(*) AS count
+     FROM brief_ai_runs
+     WHERE outcome = 'REJECTED' AND "createdAt" >= $1::timestamp - interval '30 days'
+     GROUP BY 1 ORDER BY 2 DESC, 1`,
+    now,
+  );
+
+  const outcomes = await prisma.$queryRawUnsafe<Row[]>(
+    `SELECT f.answer::text AS answer, count(*) AS count
+     FROM brief_feedback f
+     JOIN users u ON u.id = f."userId" AND u.role <> 'ADMIN'
+     GROUP BY 1`,
+  );
+
   const active7d = n(activity?.active7d);
   const cohort = n(retention?.cohort);
   const retained = n(retention?.retained);
@@ -163,6 +223,12 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
       downloaded30d: n(briefs?.downloaded30d),
       peopleWithBrief: n(briefs?.peoplewithbrief),
     },
+    activation: {
+      firstLog48h: ratio(n(activation?.log_cohort), n(activation?.log_reached)),
+      sevenOfFourteen: ratio(n(activation?.seven_cohort), n(activation?.seven_reached)),
+    },
+    briefAi: briefAiSummary(aiRuns, reasons),
+    appointmentOutcomes: appointmentSummary(outcomes),
     weekly: weekly.map((row) => ({
       weekStart: new Date(row.week_start as Date).toISOString().slice(0, 10),
       activePeople: n(row.active),
@@ -170,6 +236,64 @@ export async function computeAdminMetrics(now = new Date()): Promise<AdminMetric
       briefsGenerated: n(row.briefs),
     })),
   };
+}
+
+function ratio(cohort: number, reached: number) {
+  return {
+    cohort,
+    reached,
+    rate: cohort > 0 ? Math.round((reached / cohort) * 1000) / 1000 : null,
+  };
+}
+
+const roundOrNull = (v: unknown, digits = 0): number | null => {
+  if (v === null || v === undefined) return null;
+  const f = 10 ** digits;
+  return Math.round(Number(v) * f) / f;
+};
+
+function briefAiSummary(row: Row | undefined, reasons: Row[]): AdminMetricsDto["briefAi"] {
+  const attempts = n(row?.attempts);
+  const rejected = n(row?.rejected);
+  const avgIn = roundOrNull(row?.avg_in);
+  const avgOut = roundOrNull(row?.avg_out);
+  const inPrice = env.BRIEF_AI_INPUT_USD_PER_MTOK;
+  const outPrice = env.BRIEF_AI_OUTPUT_USD_PER_MTOK;
+  const cost =
+    inPrice !== undefined && outPrice !== undefined && avgIn !== null && avgOut !== null
+      ? Math.round(((avgIn * inPrice + avgOut * outPrice) / 1_000_000) * 10_000) / 10_000
+      : null;
+  return {
+    attempts30d: attempts,
+    rejected30d: rejected,
+    rejectionRate: attempts > 0 ? Math.round((rejected / attempts) * 1000) / 1000 : null,
+    rejectionsByReason: reasons.map((r) => ({ reason: String(r.reason), count: n(r.count) })),
+    latencyP50Ms: roundOrNull(row?.p50),
+    latencyP95Ms: roundOrNull(row?.p95),
+    avgInputTokens: avgIn,
+    avgOutputTokens: avgOut,
+    estimatedCostPerBriefUsd: cost,
+  };
+}
+
+const OUTCOMES: AppointmentOutcome[] = [
+  "YES_SIGNIFICANTLY",
+  "YES_SOMEWHAT",
+  "NOT_REALLY",
+  "NO",
+  "NO_APPOINTMENT_YET",
+];
+
+function appointmentSummary(rows: Row[]): AdminMetricsDto["appointmentOutcomes"] {
+  const byAnswer = Object.fromEntries(OUTCOMES.map((o) => [o, 0])) as Record<
+    AppointmentOutcome,
+    number
+  >;
+  for (const row of rows) {
+    const answer = String(row.answer) as AppointmentOutcome;
+    if (answer in byAnswer) byAnswer[answer] = n(row.count);
+  }
+  return { answered: OUTCOMES.reduce((sum, o) => sum + byAnswer[o], 0), byAnswer };
 }
 
 /**

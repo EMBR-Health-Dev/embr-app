@@ -903,6 +903,20 @@ export interface BriefTreatmentImpactEntryDto extends TreatmentImpactDto {
  * discussion topics framed as questions, never assertions).
  * treatmentSummary is never part of that — it's a deterministic,
  * database-sourced snapshot with no AI involvement at all. */
+export type AppointmentOutcome =
+  "YES_SIGNIFICANTLY" | "YES_SOMEWHAT" | "NOT_REALLY" | "NO" | "NO_APPOINTMENT_YET";
+
+/** Her answer to "Did your EMBR BRIEF help you communicate your
+ * symptoms or concerns during your appointment?" for one brief. */
+export interface BriefFeedbackDto {
+  briefId: string;
+  answer: AppointmentOutcome;
+  comment: string | null;
+  updatedAt: string;
+}
+
+export type BriefAiStatus = "GENERATED" | "UNAVAILABLE";
+
 export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   symptomSummary: BriefSymptomSummaryEntryDto[];
   cycleSummary: BriefCycleSummaryDto;
@@ -1018,6 +1032,11 @@ export interface ClinicalBriefDto extends ClinicalBriefListItemDto {
   patientPriorities: string[] | null;
   aiNarrative: string;
   aiDiscussionTopics: string[];
+  /** "UNAVAILABLE" when the optional AI wording step failed and the
+   * brief was saved with its deterministic findings only: aiNarrative
+   * is "" and aiDiscussionTopics is []. Clients show a labelled notice
+   * in place of the wording, never substitute text of their own. */
+  aiStatus: BriefAiStatus;
   /** The language aiNarrative/aiDiscussionTopics and every persisted
    * interpretation.patterns string were actually generated in —
    * resolved once at generation time from the request's
@@ -1140,6 +1159,32 @@ export interface AdminMetricsDto {
     generated30d: number;
     downloaded30d: number;
     peopleWithBrief: number;
+  };
+  /** Early activation. Definitions in docs/METRICS.md. */
+  activation: {
+    /** People who signed up 2 to 30 days ago, and how many made a symptom entry within 48 hours. */
+    firstLog48h: { cohort: number; reached: number; rate: number | null };
+    /** People who signed up 14 to 55 days ago, and how many were active on 7 of their first 14 days. */
+    sevenOfFourteen: { cohort: number; reached: number; rate: number | null };
+  };
+  /** The BRIEF's optional AI wording over the last 30 days: counts, codes and timings only. */
+  briefAi: {
+    attempts30d: number;
+    rejected30d: number;
+    rejectionRate: number | null;
+    /** Rejections by reason code (brief.ai.ts BRIEF_AI_FAILURE_REASONS), most frequent first. */
+    rejectionsByReason: Array<{ reason: string; count: number }>;
+    latencyP50Ms: number | null;
+    latencyP95Ms: number | null;
+    avgInputTokens: number | null;
+    avgOutputTokens: number | null;
+    /** Mean US dollars per attempt; null unless both price variables are set. */
+    estimatedCostPerBriefUsd: number | null;
+  };
+  /** Answers to the appointment follow up, all time. Counts only, never comments. */
+  appointmentOutcomes: {
+    answered: number;
+    byAnswer: Record<AppointmentOutcome, number>;
   };
   /** The last 8 weeks, oldest first, weeks starting Monday (UTC). */
   weekly: Array<{

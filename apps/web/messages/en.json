@@ -781,6 +781,8 @@
     "briefDetailError": "Couldn't load that brief. Try again.",
     "deleteError": "Couldn't delete that brief. Try again.",
     "questionsForGp": "Questions to bring to your healthcare provider",
+    "aiUnavailableTitle": "Written summary not available",
+    "aiUnavailableBody": "The written summary and suggested questions could not be prepared for this BRIEF. Everything below is calculated directly from your records, and nothing has been estimated or filled in. To try again later, delete this BRIEF from your past briefs and create it again.",
     "symptomFrequency": "Symptom frequency",
     "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",
     "cycleSummary": "Cycle summary",
@@ -1701,5 +1703,21 @@
       "signUpNote": "Create an account to keep these answers. They are sent only after you agree to EMBR processing your health information.",
       "logInToSave": "Already have an account? Log in to save"
     }
+  },
+  "AppointmentFeedback": {
+    "title": "After your appointment",
+    "question": "Did your EMBR BRIEF help you communicate your symptoms or concerns during your appointment?",
+    "YES_SIGNIFICANTLY": "Yes, significantly",
+    "YES_SOMEWHAT": "Yes, somewhat",
+    "NOT_REALLY": "Not really",
+    "NO": "No",
+    "NO_APPOINTMENT_YET": "I have not had an appointment yet",
+    "commentLabel": "Anything you would like to tell us? (optional)",
+    "commentHint": "Please don’t include medical details. Your answer helps us understand whether EMBR is useful. It is not shared with your healthcare provider.",
+    "save": "Save answer",
+    "saving": "Saving…",
+    "saved": "Thank you, your answer is saved. You can change it at any time.",
+    "error": "Your answer could not be saved. Please try again.",
+    "chooseFirst": "Choose an answer first."
   }
 }

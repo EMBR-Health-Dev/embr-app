@@ -246,6 +246,12 @@ const apiEnvSchema = z.object({
   // Haiku is a worse fit for a safety-sensitive, tone-sensitive task
   // like this one.
   ANTHROPIC_BRIEF_MODEL: z.string().default("claude-sonnet-5"),
+  // Optional, for the admin dashboard's cost per BRIEF estimate: the
+  // model's list price in US dollars per million tokens, set by an
+  // operator from the provider's current price page. Left unset, the
+  // dashboard shows token counts and no cost, rather than a guess.
+  BRIEF_AI_INPUT_USD_PER_MTOK: z.coerce.number().nonnegative().optional(),
+  BRIEF_AI_OUTPUT_USD_PER_MTOK: z.coerce.number().nonnegative().optional(),
 });
 
 export const env = loadEnv(apiEnvSchema);

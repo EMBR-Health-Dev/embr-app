@@ -147,6 +147,7 @@ interface PdfStrings {
   prioritiesNote: string;
   summaryHeading: string;
   aiAuthorshipNote: string;
+  aiUnavailableNote: string;
   groundedInHeading: string;
   questionsHeading: string;
   symptomSignalsHeading: string;
@@ -242,6 +243,8 @@ const EN: PdfStrings = {
   summaryHeading: "Summary",
   aiAuthorshipNote:
     "This summary and the questions are written by AI from the counts and patterns in this brief. Your notes are not used.",
+  aiUnavailableNote:
+    "The written summary and suggested questions are not available for this BRIEF. Every section below is calculated directly from the recorded entries; nothing has been estimated or filled in.",
   groundedInHeading: "Grounded in your data",
   questionsHeading: "Questions to bring to your healthcare provider",
   symptomSignalsHeading: "Symptom Signals",
@@ -391,6 +394,8 @@ const JA: PdfStrings = {
   summaryHeading: "要約",
   aiAuthorshipNote:
     "この要約と質問は、このBRIEF内の記録件数とパターンをもとにAIが作成したものです。メモの内容は使用していません。",
+  aiUnavailableNote:
+    "このBRIEFでは、文章による要約と質問の候補は利用できません。以下の各項目はすべて記録から直接計算したもので、推定や補完は行っていません。",
   groundedInHeading: "データに基づく根拠",
   questionsHeading: "担当医への質問",
   // "症状の頻度" (Brief.symptomFrequency's own JA text), not a literal
@@ -529,6 +534,8 @@ const FR: PdfStrings = {
   summaryHeading: "Synthèse",
   aiAuthorshipNote:
     "Cette synthèse et les questions sont rédigées par une IA à partir des totaux et des tendances de ce BRIEF. Vos notes ne sont pas utilisées.",
+  aiUnavailableNote:
+    "La synthèse rédigée et les questions suggérées ne sont pas disponibles pour ce BRIEF. Chaque section ci-dessous est calculée directement à partir des données saisies, sans estimation ni ajout.",
   groundedInHeading: "Fondé sur vos données",
   questionsHeading: "Questions à poser à votre professionnel de santé",
   symptomSignalsHeading: "Signaux des symptômes",

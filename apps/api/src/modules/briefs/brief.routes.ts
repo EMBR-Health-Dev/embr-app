@@ -1,6 +1,11 @@
 import { Router, type Router as ExpressRouter } from "express";
-import { generateBriefSchema, idParamSchema, paginationQuerySchema } from "@embr/validation";
-import type { GenerateBriefInput, PaginationQuery } from "@embr/validation";
+import {
+  briefFeedbackSchema,
+  generateBriefSchema,
+  idParamSchema,
+  paginationQuerySchema,
+} from "@embr/validation";
+import type { BriefFeedbackInput, GenerateBriefInput, PaginationQuery } from "@embr/validation";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
@@ -11,6 +16,7 @@ import { writeAuditLog } from "../auth/audit.js";
 import { requireCsrfToken } from "../auth/csrf.js";
 import { briefGenerationLimiter } from "./brief-rate-limiter.js";
 import { briefService } from "./brief.service.js";
+import { briefFeedbackService } from "./brief-feedback.js";
 import { buildClinicalBriefPdf } from "./brief.pdf.js";
 
 const router: ExpressRouter = Router();
@@ -48,6 +54,7 @@ router.post(
       briefId: brief.id,
       fromDate: brief.fromDate,
       toDate: brief.toDate,
+      aiStatus: brief.aiStatus,
     });
     res.status(201).json({ data: brief, requestId: req.requestId });
   }),
@@ -114,6 +121,36 @@ router.delete(
     await briefService.delete(id, req.user!.sub);
     await writeAuditLog(req, "CLINICAL_BRIEF_DELETED", req.user!.sub, { briefId: id });
     res.status(204).send();
+  }),
+);
+
+router.get(
+  "/briefs/:id/feedback",
+  validate(idParamSchema, "params"),
+  asyncHandler(async (req, res) => {
+    const feedback = await briefFeedbackService.get(requireParam(req, "id"), req.user!.sub);
+    res.status(200).json({ data: feedback, requestId: req.requestId });
+  }),
+);
+
+router.put(
+  "/briefs/:id/feedback",
+  requireCsrfToken(),
+  validate(idParamSchema, "params"),
+  validate(briefFeedbackSchema),
+  asyncHandler(async (req, res) => {
+    const id = requireParam(req, "id");
+    const feedback = await briefFeedbackService.save(
+      id,
+      req.user!.sub,
+      req.body as BriefFeedbackInput,
+    );
+    // The answer code only; the comment never goes to the audit log.
+    await writeAuditLog(req, "BRIEF_FEEDBACK_SAVED", req.user!.sub, {
+      briefId: id,
+      answer: feedback.answer,
+    });
+    res.status(200).json({ data: feedback, requestId: req.requestId });
   }),
 );
 

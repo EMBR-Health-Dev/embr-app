@@ -43,7 +43,15 @@ import { summarizeMrs } from "./mrs-summary.js";
 import { env } from "../../config/env.js";
 import { summarizeLastRecordedPeriod } from "./last-recorded-period.js";
 import { briefRepository } from "./brief.repository.js";
-import { briefAi, type BriefInput } from "./brief.ai.js";
+import {
+  PROMPT_VERSION,
+  briefAi,
+  briefAiFailureReason,
+  tagBriefAiFailure,
+  type BriefAiTelemetry,
+  type BriefInput,
+} from "./brief.ai.js";
+import { recordBriefAiRun } from "./brief-ai-runs.js";
 import { toClinicalBriefDto, toClinicalBriefListItemDto } from "./brief.mappers.js";
 import {
   compareSymptomFrequency,
@@ -52,7 +60,7 @@ import {
 } from "./period-comparison.js";
 import { detectPersistentSymptoms } from "./persistent-symptoms.js";
 import { buildAiSafeStage4Interpretation } from "./stage4-ai-projection.js";
-import { buildStage4Interpretation } from "./stage4-interpretation.js";
+import { buildStage4Interpretation, type Stage4Result } from "./stage4-interpretation.js";
 import { validateStage4Patterns } from "./stage4-validation.js";
 import { computeTreatmentSummary } from "./treatment-summary.js";
 
@@ -346,34 +354,15 @@ async function generateBriefContent(
     interpretation: buildAiSafeStage4Interpretation(interpretation, treatmentImpact, locale),
   };
 
-  const { narrative, discussionTopics, patterns, modelId, promptVersion } = await briefAi.generate(
-    aiInput,
-    locale,
-  );
-
-  // Citation integrity: every pattern the AI echoed back must
-  // resolve to one this step actually supplied, unaltered. Validated
-  // against the *canonical* interpretation, not the AI-safe
-  // projection sent above — they're expected to agree exactly for
-  // id/type/evidenceRef (only observation text differs for treatment
-  // patterns, and stage4-validation.ts deliberately never compares
-  // that field — see its own doc comment), so this remains a
-  // faithful check of what the model actually received. Fails
-  // closed — brief.service.ts awaits this before ever persisting
-  // anything, so a provenance failure means no ClinicalBrief is
-  // created at all, matching the AI's own content-safety failure
-  // path immediately below.
-  const validation = validateStage4Patterns(interpretation.patterns, patterns);
-  if (validation.error !== null) {
-    throw AppError.internal(`Brief generation failed: ${validation.error}`);
-  }
-  // The *canonical* patterns stage4-validation.ts just resolved each
-  // returned id against — not `patterns` (the AI's own response
-  // objects) directly. Only their ids are actually used below, which
-  // were already proven to match a real supplied pattern either way,
-  // but citedPatterns is what a future caller reads if this
-  // ever needs anything beyond the id.
-  const citedPatterns = validation.patterns;
+  // The AI wording is optional; the deterministic findings above are
+  // not. If the wording step fails for any reason (timeout, upstream
+  // error, malformed or truncated output, the content safety deny-list
+  // or citation integrity below), the brief is still saved with every
+  // deterministic section and the wording marked UNAVAILABLE. Nothing
+  // the model returned is kept in that case: no partial narrative, no
+  // topics, no cited patterns. Only a successful, fully validated
+  // response ever reaches the brief, exactly as before.
+  const wording = await generateWording(aiInput, interpretation, locale, userId);
 
   const brief = await briefRepository.create({
     userId,
@@ -406,11 +395,12 @@ async function generateBriefContent(
     // validateStage4Patterns's own doc comment on why a subset is
     // expected and valid), not "every pattern that happened to
     // qualify."
-    citedPatternIds: citedPatterns.map((pattern) => pattern.id),
+    citedPatternIds: wording.citedPatternIds,
     // Her own words, stored as written and never part of aiInput above.
     patientPriorities: priorities,
-    aiNarrative: narrative,
-    aiDiscussionTopics: discussionTopics,
+    aiNarrative: wording.narrative,
+    aiDiscussionTopics: wording.discussionTopics,
+    aiStatus: wording.status,
     locale,
     // Internal-only reproducibility metadata — see
     // ClinicalBrief.generationMetadata's own doc comment. Built here
@@ -421,8 +411,8 @@ async function generateBriefContent(
     generationMetadata: {
       schemaVersion: BRIEF_GENERATION_METADATA_SCHEMA_VERSION,
       patternEngineVersion: interpretation.interpretationVersion,
-      promptVersion,
-      modelId,
+      promptVersion: PROMPT_VERSION,
+      modelId: wording.modelId,
       generatedAt: new Date().toISOString(),
     },
   });
@@ -431,6 +421,97 @@ async function generateBriefContent(
     ...toClinicalBriefDto(brief),
     treatmentSummary,
   };
+}
+
+interface BriefWording {
+  status: "GENERATED" | "UNAVAILABLE";
+  narrative: string;
+  discussionTopics: string[];
+  citedPatternIds: string[];
+  modelId: string;
+}
+
+/**
+ * Runs the optional AI wording step and its citation integrity check,
+ * and records the attempt for the reliability metrics. Returns the
+ * validated wording, or the UNAVAILABLE fallback (empty narrative, no
+ * topics, no citations) on any failure. Never invents text of its own.
+ */
+async function generateWording(
+  aiInput: BriefInput,
+  interpretation: Stage4Result,
+  locale: Locale,
+  userId: string,
+): Promise<BriefWording> {
+  let telemetry: BriefAiTelemetry | null = null;
+  const observe = (t: BriefAiTelemetry) => {
+    telemetry = t;
+  };
+  try {
+    const { narrative, discussionTopics, patterns, modelId } = await briefAi.generate(
+      aiInput,
+      locale,
+      observe,
+    );
+
+    // Citation integrity: every pattern the AI echoed back must
+    // resolve to one this step actually supplied, unaltered. Validated
+    // against the canonical interpretation, not the AI-safe projection
+    // sent above; they agree exactly for id/type/evidenceRef (only
+    // observation text differs for treatment patterns, which
+    // stage4-validation.ts deliberately never compares). A failure
+    // discards the whole response, never just the offending part.
+    const validation = validateStage4Patterns(interpretation.patterns, patterns);
+    if (validation.error !== null) {
+      throw tagBriefAiFailure(
+        AppError.internal(`Brief generation failed: ${validation.error}`),
+        "citation",
+      );
+    }
+
+    await recordBriefAiRun({
+      telemetry,
+      outcome: "ACCEPTED",
+      reason: null,
+      promptVersion: PROMPT_VERSION,
+      model: modelId,
+      locale,
+    });
+    return {
+      status: "GENERATED",
+      narrative,
+      discussionTopics,
+      // The canonical patterns validateStage4Patterns resolved, by id.
+      citedPatternIds: validation.patterns.map((pattern) => pattern.id),
+      modelId,
+    };
+  } catch (err) {
+    const reason = briefAiFailureReason(err);
+    // The reason code only. Error messages from this step can quote
+    // model output or pattern ids, which are built from her data.
+    // An untagged failure is not one of the known AI outcomes, so it may
+    // be a bug in our own code: logged as an error so it alerts.
+    const log = reason === "unknown" ? logger.error.bind(logger) : logger.warn.bind(logger);
+    log(
+      { userId, reason, errName: err instanceof Error ? err.name : typeof err },
+      "brief AI wording unavailable; saving deterministic brief",
+    );
+    await recordBriefAiRun({
+      telemetry,
+      outcome: "REJECTED",
+      reason,
+      promptVersion: PROMPT_VERSION,
+      model: env.ANTHROPIC_BRIEF_MODEL,
+      locale,
+    });
+    return {
+      status: "UNAVAILABLE",
+      narrative: "",
+      discussionTopics: [],
+      citedPatternIds: [],
+      modelId: env.ANTHROPIC_BRIEF_MODEL,
+    };
+  }
 }
 
 export const briefService = {
