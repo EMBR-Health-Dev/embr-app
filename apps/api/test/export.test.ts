@@ -266,6 +266,9 @@ vi.mock("../src/lib/prisma.js", () => ({
         Promise.resolve(state.briefFeedback.filter((f) => f.userId === where.userId)),
       ),
     },
+    briefShare: {
+      findMany: vi.fn(() => Promise.resolve([])),
+    },
     reflectionDismissal: {
       findMany: vi.fn().mockResolvedValue([]),
     },

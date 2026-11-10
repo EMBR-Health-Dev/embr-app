@@ -780,6 +780,29 @@ export const briefFeedbackSchema = z.object({
 });
 export type BriefFeedbackInput = z.infer<typeof briefFeedbackSchema>;
 
+// ---- Sharing a BRIEF with a clinician ----
+
+/** How long a share link works: a week, or a month for a later appointment. */
+export const BRIEF_SHARE_DURATIONS_DAYS = [7, 30] as const;
+
+export const createBriefShareSchema = z.object({
+  expiresInDays: z.union([z.literal(7), z.literal(30)]),
+});
+export type CreateBriefShareInput = z.infer<typeof createBriefShareSchema>;
+
+export const briefShareParamsSchema = z.object({
+  id: z.string().uuid(),
+  shareId: z.string().uuid(),
+});
+
+/** What a clinician sends to open a shared BRIEF: the link's token (from
+ * the URL fragment) and the 6 digit code she gave them. */
+export const viewSharedBriefSchema = z.object({
+  token: z.string().min(20).max(200),
+  code: z.string().regex(/^\d{6}$/, "Enter the 6 digit code"),
+});
+export type ViewSharedBriefInput = z.infer<typeof viewSharedBriefSchema>;
+
 // ---- Onboarding (Milestone 18) ----
 
 export const onboardingJobToBeDoneSchema = z.enum([

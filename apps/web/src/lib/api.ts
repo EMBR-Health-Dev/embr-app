@@ -4,6 +4,8 @@ import type {
   BriefTrendsDto,
   AppointmentOutcome,
   BriefFeedbackDto,
+  BriefShareDto,
+  CreatedBriefShareDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
   ConsentStatusDto,
@@ -385,6 +387,17 @@ export const api = {
 
     saveFeedback: (id: string, input: { answer: AppointmentOutcome; comment: string | null }) =>
       apiFetch<BriefFeedbackDto>(`/briefs/${id}/feedback`, { method: "PUT", body: input }),
+
+    shares: (id: string) => apiFetch<BriefShareDto[]>(`/briefs/${id}/shares`),
+
+    createShare: (id: string, expiresInDays: 7 | 30) =>
+      apiFetch<CreatedBriefShareDto>(`/briefs/${id}/shares`, {
+        method: "POST",
+        body: { expiresInDays },
+      }),
+
+    revokeShare: (id: string, shareId: string) =>
+      apiFetch<void>(`/briefs/${id}/shares/${shareId}`, { method: "DELETE" }),
 
     // Not a JSON call — same reasoning as the export page's downloads:
     // a plain same-origin URL the browser handles natively (cookies

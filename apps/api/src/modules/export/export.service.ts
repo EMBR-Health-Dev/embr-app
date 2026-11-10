@@ -107,6 +107,7 @@ export const exportService = {
       briefs: withoutUserId(data.briefs),
       // Her answers to the appointment follow up, one per brief.
       briefFeedback: withoutUserId(data.briefFeedback),
+      briefShares: data.briefShares,
       dismissedReflections: withoutUserId(data.reflectionDismissals),
       organizations: data.memberships.map((m) => ({
         organizationName: m.organization.name,

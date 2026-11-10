@@ -1627,5 +1627,53 @@
     "saved": "Merci, votre réponse est enregistrée. Vous pouvez la modifier à tout moment.",
     "error": "Votre réponse n’a pas pu être enregistrée. Veuillez réessayer.",
     "chooseFirst": "Choisissez d’abord une réponse."
+  },
+  "BriefShare": {
+    "title": "Partager avec votre professionnel de santé",
+    "intro": "Créez un lien privé que votre professionnel de santé peut ouvrir sans compte. Il lui faut aussi un code à 6 chiffres, que vous lui donnez vous-même.",
+    "duration": "Le lien fonctionne pendant",
+    "days": "{count, plural, one {# jour} other {# jours}}",
+    "create": "Créer le lien",
+    "creating": "Création…",
+    "linkLabel": "Lien",
+    "codeLabel": "Code",
+    "copyLink": "Copier le lien",
+    "copyCode": "Copier le code",
+    "copied": "Copié",
+    "qrAlt": "QR code qui ouvre le lien",
+    "howTo": "Envoyez ou montrez le lien, ou laissez votre professionnel de santé scanner le QR code. Donnez-lui le code séparément, par exemple en personne ou par téléphone. Le lien ne fonctionnera plus à partir du {date}.",
+    "shownOnce": "Pour votre confidentialité, le lien et le code ne sont affichés que maintenant. Vous pouvez créer un nouveau lien à tout moment.",
+    "done": "Terminé",
+    "yourLinks": "Vos liens",
+    "created": "créé le {date}",
+    "until": "jusqu’au {date}",
+    "views": "{count, plural, =0 {pas encore ouvert} one {ouvert une fois} other {ouvert # fois}}",
+    "revoke": "Désactiver",
+    "status": {
+      "ACTIVE": "Actif",
+      "EXPIRED": "Expiré",
+      "REVOKED": "Désactivé",
+      "LOCKED": "Verrouillé après des codes erronés"
+    },
+    "createError": "Le lien n’a pas pu être créé. Veuillez réessayer.",
+    "revokeError": "Le lien n’a pas pu être désactivé. Veuillez réessayer."
+  },
+  "SharedBrief": {
+    "title": "Un BRIEF EMBR partagé",
+    "intro": "Une patiente a choisi de partager avec vous ce relevé de ses propres saisies. Il décrit ce qu’elle a noté ; ce n’est pas un diagnostic.",
+    "noLink": "Ce lien est incomplet. Veuillez ouvrir le lien complet qui vous a été envoyé.",
+    "codeLabel": "Code à 6 chiffres",
+    "codeHint": "La patiente vous donne ce code séparément du lien.",
+    "codeFormat": "Saisissez le code à 6 chiffres.",
+    "open": "Ouvrir le BRIEF",
+    "opening": "Ouverture…",
+    "wrongCode": "Ce code n’est pas correct. Vérifiez-le avec la patiente. Après plusieurs codes erronés, le lien se verrouille.",
+    "unavailable": "Ce lien n’est plus disponible. Il a peut-être expiré ou été désactivé. Demandez-en un nouveau à la patiente.",
+    "tooMany": "Trop de tentatives. Veuillez patienter quelques minutes et réessayer.",
+    "error": "Une erreur s’est produite. Veuillez réessayer.",
+    "availableUntil": "Partagé jusqu’au {date}. Lecture seule.",
+    "downloadPdf": "Télécharger le PDF",
+    "downloading": "Préparation…",
+    "footer": "EMBR montre ce que la patiente a noté et son évolution dans le temps. Il ne pose pas de diagnostic et ne recommande pas de traitement. L’interprétation clinique vous revient."
   }
 }

@@ -604,6 +604,101 @@ paths:
               schema: { $ref: "#/components/schemas/BriefFeedbackDto" }
         "400": { description: Invalid answer or comment too long }
         "404": { description: "Doesn't exist, or belongs to a different user" }
+  /briefs/{id}/shares:
+    get:
+      summary: Her share links for this brief (status, expiry, views; never the link or code)
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Links, newest first
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/BriefShareDto" } }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+    post:
+      summary: Create a link (and 6 digit code) to show this brief to a clinician
+      description: The link and code are returned once, here, and never again. At most 5 live links per brief.
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expiresInDays]
+              properties:
+                expiresInDays: { type: integer, enum: [7, 30] }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  share: { $ref: "#/components/schemas/BriefShareDto" }
+                  url:
+                    {
+                      type: string,
+                      description: "APP_URL/shared#<token>; the token is in the fragment",
+                    }
+                  code: { type: string, pattern: "^\\d{6}$" }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+        "409": { description: Already 5 live links for this brief }
+  /briefs/{id}/shares/{shareId}:
+    delete:
+      summary: Turn a share link off
+      security: [{ cookieAuth: [] }]
+      tags: [Briefs]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: shareId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Turned off (or already off) }
+        "404": { description: "Doesn't exist, or belongs to a different user" }
+  /shared/brief:
+    post:
+      summary: Open a shared brief (clinician, no account)
+      description: Public. Needs the link's token and the 6 digit code. A wrong code on a live link answers 403 and counts toward a lock after 5; an expired, revoked, locked or unknown link, withdrawn consent or a deleted brief all answer the same 404.
+      tags: [Briefs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ViewSharedBriefInput" }
+      responses:
+        "200":
+          description: The brief, read only
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  brief: { $ref: "#/components/schemas/ClinicalBriefDto" }
+                  sharedUntil: { type: string, format: date-time }
+        "400": { description: Malformed token or code }
+        "403": { description: Wrong code }
+        "404": { description: Not available }
+        "429": { description: Too many attempts from this address }
+  /shared/brief/pdf:
+    post:
+      summary: Download a shared brief as PDF (clinician, no account)
+      tags: [Briefs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ViewSharedBriefInput" }
+      responses:
+        "200": { description: "PDF file (Content-Disposition: attachment)" }
+        "403": { description: Wrong code }
+        "404": { description: Not available }
   /briefs/{id}/pdf:
     get:
       summary: Download a brief as PDF
@@ -1257,6 +1352,23 @@ components:
           }
         comment: { type: string, nullable: true, maxLength: 500 }
         updatedAt: { type: string, format: date-time }
+    BriefShareDto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        briefId: { type: string, format: uuid }
+        status: { type: string, enum: [ACTIVE, EXPIRED, REVOKED, LOCKED] }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        revokedAt: { type: string, format: date-time, nullable: true }
+        viewCount: { type: integer }
+        lastViewedAt: { type: string, format: date-time, nullable: true }
+    ViewSharedBriefInput:
+      type: object
+      required: [token, code]
+      properties:
+        token: { type: string, minLength: 20, maxLength: 200 }
+        code: { type: string, pattern: "^\\d{6}$" }
     OrganizationDto:
       type: object
       properties:

@@ -56,6 +56,9 @@ vi.mock("../../lib/api", () => ({
       delete: (...args: unknown[]) => deleteMock(...args),
       feedback: (...args: unknown[]) => feedbackMock(...args),
       saveFeedback: (...args: unknown[]) => saveFeedbackMock(...args),
+      shares: vi.fn().mockResolvedValue([]),
+      createShare: vi.fn(),
+      revokeShare: vi.fn(),
       pdfUrl: (id: string) => `/api/briefs/${id}/pdf`,
     },
     export: {

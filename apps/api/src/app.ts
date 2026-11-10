@@ -31,6 +31,7 @@ import { reflectionRouter } from "./modules/reflections/reflection.routes.js";
 import { organizationRouter } from "./modules/organizations/organization.routes.js";
 import { ssoRouter } from "./modules/sso/sso.routes.js";
 import { briefRouter } from "./modules/briefs/brief.routes.js";
+import { briefShareRouter } from "./modules/briefs/brief-share.routes.js";
 import { onboardingRouter } from "./modules/onboarding/onboarding.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { consentRouter } from "./modules/consent/consent.routes.js";
@@ -146,6 +147,7 @@ export function createApp(): Express {
   app.use(billingRouter);
   app.use(ssoRouter);
   app.use(briefRouter);
+  app.use(briefShareRouter);
   app.use(onboardingRouter);
   app.use(notificationsRouter);
   app.use(consentRouter);
