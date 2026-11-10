@@ -34,6 +34,15 @@ const cycleLengthMock = vi.fn();
 const onboardingGetMock = vi.fn().mockResolvedValue({ lifeStage: null });
 const coOccurrenceMock = vi.fn().mockResolvedValue(null);
 const contextCoOccurrenceMock = vi.fn().mockResolvedValue(null);
+const nextDayContextMock = vi.fn().mockResolvedValue([]);
+const personalBaselineMock = vi.fn().mockResolvedValue({
+  thisWeek: { from: "2026-11-04", to: "2026-11-10" },
+  baselineWeeks: 0,
+  minBaselineWeeks: 4,
+  enoughHistory: false,
+  ruleVersion: "1.0",
+  items: [],
+});
 const evidenceStrengthMock = vi
   .fn()
   // A record exists (outside the window under test) unless a test says
@@ -49,6 +58,8 @@ vi.mock("../../lib/api", () => ({
       cycleLength: (...args: unknown[]) => cycleLengthMock(...args),
       coOccurrence: (...args: unknown[]) => coOccurrenceMock(...args),
       contextCoOccurrence: (...args: unknown[]) => contextCoOccurrenceMock(...args),
+      nextDayContext: (...args: unknown[]) => nextDayContextMock(...args),
+      personalBaseline: (...args: unknown[]) => personalBaselineMock(...args),
       evidenceStrength: (...args: unknown[]) => evidenceStrengthMock(...args),
       symptomHistory: (...args: unknown[]) => symptomHistoryMock(...args),
     },

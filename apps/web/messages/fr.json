@@ -1676,5 +1676,27 @@
     "downloadPdf": "Télécharger le PDF",
     "downloading": "Préparation…",
     "footer": "EMBR montre ce que la patiente a noté et son évolution dans le temps. Il ne pose pas de diagnostic et ne recommande pas de traitement. L’interprétation clinique vous revient."
+  },
+  "PersonalBaseline": {
+    "cardLabel": "Votre semaine habituelle",
+    "heading": "Cette semaine comparée à votre semaine habituelle",
+    "description": "Nombre de jours où chaque symptôme a été noté sur les 7 derniers jours, à côté de votre semaine habituelle.",
+    "symptomColumn": "Symptôme",
+    "thisWeekColumn": "Cette semaine",
+    "usualColumn": "Semaine habituelle",
+    "days": "{count, plural, one {# jour} other {# jours}}",
+    "notEnoughHistory": "Votre semaine habituelle apparaît lorsque vous avez des saisies sur {min} semaines récentes. Pour l’instant : {weeks, plural, one {# semaine} other {# semaines}}.",
+    "nothingRecorded": "Aucun symptôme noté cette semaine ni au cours des dernières semaines.",
+    "caveat": "Une comparaison avec vos propres données uniquement : pas un diagnostic, ni une mesure de l’importance d’un changement.",
+    "whyReasoning": "Votre semaine habituelle est la valeur médiane du nombre de jours par semaine où chaque symptôme a été noté, sur vos {weeks} dernières semaines comportant des saisies. Les semaines sans aucune saisie sont écartées, pour ne pas faire baisser votre semaine habituelle."
+  },
+  "NextDayContext": {
+    "cardLabel": "Signal",
+    "heading": "Ce que vous avez noté le lendemain",
+    "findingHeading": "{category}, le lendemain d’un jour avec : {factor}",
+    "afterFactor": "Noté {days} jours sur {total} au lendemain d’un jour avec : {factor}",
+    "afterOther": "Noté {days} jours sur {total} au lendemain des autres jours où vous avez répondu",
+    "caveat": "Un décompte de ce que vous avez noté : pas un diagnostic, ni une affirmation que l’un cause l’autre.",
+    "whyReasoning": "Ce signal apparaît lorsqu’un symptôme a été noté le lendemain d’un facteur de contexte sur au moins 3 jours, et sur une part plus faible des lendemains de jours sans ce facteur. Seuls les jours suivis d’une saisie le lendemain sont comptés."
   }
 }

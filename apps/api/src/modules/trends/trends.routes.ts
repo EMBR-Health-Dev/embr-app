@@ -77,6 +77,31 @@ router.get(
   }),
 );
 
+router.get(
+  "/trends/next-day-context",
+  validate(trendsQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const data = await trendsService.nextDayContext(
+      req.user!.sub,
+      req.query as unknown as TrendsQuery,
+    );
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
+// No from/to: the rule fixes its own window (this week and the 8 before).
+router.get(
+  "/trends/personal-baseline",
+  validate(timeZoneQuerySchema, "query"),
+  asyncHandler(async (req, res) => {
+    const data = await trendsService.personalBaseline(
+      req.user!.sub,
+      (req.query as unknown as TimeZoneQuery).timeZone,
+    );
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
 // Deliberately no from/to query — evidence strength describes the
 // whole longitudinal record, not a windowed slice of it (see
 // trendsService.evidenceStrength's own doc comment).

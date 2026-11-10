@@ -1675,5 +1675,27 @@
     "downloadPdf": "PDFをダウンロード",
     "downloading": "準備しています…",
     "footer": "EMBRは、患者さんが記録した内容とその経時的な変化を示します。診断や治療の推奨は行いません。臨床的な解釈は医療者に委ねられます。"
+  },
+  "PersonalBaseline": {
+    "cardLabel": "いつもの1週間",
+    "heading": "今週といつもの1週間の比較",
+    "description": "直近7日間に各症状を記録した日数を、いつもの1週間と並べて示します。",
+    "symptomColumn": "症状",
+    "thisWeekColumn": "今週",
+    "usualColumn": "いつもの週",
+    "days": "{count, number}日",
+    "notEnoughHistory": "直近{min}週間分の記録がそろうと、いつもの1週間が表示されます。現在：{weeks}週間。",
+    "nothingRecorded": "今週も最近の週も、記録された症状はありません。",
+    "caveat": "あなた自身の記録との比較です。診断ではなく、変化が重要かどうかを示すものでもありません。",
+    "whyReasoning": "いつもの1週間とは、記録のある直近{weeks}週間について、各症状を記録した1週間あたりの日数の中央値です。記録のない週は除いているため、いつもの値が実際より低くなることはありません。"
+  },
+  "NextDayContext": {
+    "cardLabel": "シグナル",
+    "heading": "翌日に記録したこと",
+    "findingHeading": "{factor}の翌日の{category}",
+    "afterFactor": "{factor}の翌日{total}日のうち{days}日に記録",
+    "afterOther": "それ以外の回答日の翌日{total}日のうち{days}日に記録",
+    "caveat": "あなたが記録した内容の集計です。診断ではなく、一方が他方を引き起こすという主張でもありません。",
+    "whyReasoning": "状況の要因があった日の翌日にある症状が3日以上記録され、その要因がなかった日の翌日より割合が高い場合に表示されます。翌日に記録がある日だけを数えています。"
   }
 }

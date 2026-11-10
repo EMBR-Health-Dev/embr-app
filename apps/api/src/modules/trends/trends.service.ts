@@ -2,6 +2,8 @@ import type { SymptomHistoryQuery, TrendsQuery } from "@embr/validation";
 import type {
   CycleLengthTrendDto,
   EvidenceStrengthDto,
+  NextDayContextDto,
+  PersonalBaselineDto,
   SleepDurationBucket,
   StressLevel,
   ExerciseLevel,
@@ -18,6 +20,8 @@ import { trendsRepository } from "./trends.repository.js";
 import { detectSymptomCoOccurrence } from "./co-occurrence.js";
 import { detectSymptomContextCoOccurrence } from "./context-co-occurrence.js";
 import { computeEvidenceStrength } from "./evidence-strength.js";
+import { computePersonalBaseline, BASELINE_WEEKS } from "./personal-baseline.js";
+import { detectNextDayContext } from "./next-day-context.js";
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -97,6 +101,55 @@ export const trendsService = {
       trendsRepository.contextLogsForCoOccurrence(userId, query),
     ]);
     return detectSymptomContextCoOccurrence(
+      symptomLogs.map((log) => ({
+        category: log.category as SymptomCategory,
+        occurredAt: log.occurredAt,
+      })),
+      contextLogs.map((log) => ({
+        date: log.date,
+        sleepDuration: log.sleepDuration as SleepDurationBucket | null,
+        caffeineAfternoon: log.caffeineAfternoon,
+        alcohol: log.alcohol,
+        stressLevel: log.stressLevel as StressLevel | null,
+        exercise: log.exercise as ExerciseLevel | null,
+      })),
+      timeZone,
+    );
+  },
+
+  /** Her usual week next to this week (personal-baseline.ts). Reads only
+   * the weeks the rule looks at, plus a day either side for time zones. */
+  async personalBaseline(
+    userId: string,
+    requestedTimeZone?: string,
+    now: Date = new Date(),
+  ): Promise<PersonalBaselineDto> {
+    const timeZone = resolveTimeZone(requestedTimeZone);
+    const from = new Date(now.getTime() - (7 * (BASELINE_WEEKS + 1) + 1) * 86_400_000);
+    const query = { from, timeZone } as TrendsQuery;
+    const [symptomLogs, contextLogs] = await Promise.all([
+      trendsRepository.symptomLogsForCoOccurrence(userId, query),
+      trendsRepository.contextLogsForCoOccurrence(userId, query),
+    ]);
+    return computePersonalBaseline({
+      symptomLogs: symptomLogs.map((log) => ({
+        category: log.category as SymptomCategory,
+        occurredAt: log.occurredAt,
+      })),
+      contextDates: contextLogs.map((log) => toIsoDate(log.date)),
+      timeZone,
+      now,
+    });
+  },
+
+  /** Same I/O-vs-logic split, for next-day-context.ts. */
+  async nextDayContext(userId: string, query: TrendsQuery): Promise<NextDayContextDto[]> {
+    const timeZone = resolveTimeZone(query.timeZone);
+    const [symptomLogs, contextLogs] = await Promise.all([
+      trendsRepository.symptomLogsForCoOccurrence(userId, query),
+      trendsRepository.contextLogsForCoOccurrence(userId, query),
+    ]);
+    return detectNextDayContext(
       symptomLogs.map((log) => ({
         category: log.category as SymptomCategory,
         occurredAt: log.occurredAt,

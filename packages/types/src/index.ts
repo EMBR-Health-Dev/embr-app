@@ -448,6 +448,37 @@ export interface SymptomContextCoOccurrenceDto {
   dates: string[];
 }
 
+/** Her own usual week next to this week, per symptom, in days recorded.
+ * Compares her only with herself; never a verdict. */
+export interface PersonalBaselineItemDto {
+  category: SymptomCategory;
+  thisWeekDays: number;
+  /** Median days per week over her recent active weeks; may be a half. */
+  usualWeekDays: number;
+}
+
+export interface PersonalBaselineDto {
+  /** Local calendar dates, the 7 days ending today. */
+  thisWeek: { from: string; to: string };
+  /** How many recent weeks with any entry the usual week is built from. */
+  baselineWeeks: number;
+  minBaselineWeeks: number;
+  enoughHistory: boolean;
+  ruleVersion: string;
+  items: PersonalBaselineItemDto[];
+}
+
+/** What she recorded the day after a context factor, next to the day
+ * after other days. Counts only, never a causal claim. */
+export interface NextDayContextDto {
+  factor: ContextFactor;
+  category: SymptomCategory;
+  afterFactorDays: number;
+  afterFactorTotal: number;
+  otherDays: number;
+  otherTotal: number;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   page: number;
