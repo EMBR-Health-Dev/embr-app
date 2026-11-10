@@ -80,6 +80,7 @@ model User {
   sentOrganizationInvites OrganizationInvite[]
   clinicalBriefs          ClinicalBrief[]
   briefFeedback           BriefFeedback[]
+  briefShares             BriefShare[]
   onboardingProfile       OnboardingProfile?
   reflectionDismissals    ReflectionDismissal[]
   consentRecords          ConsentRecord[]
@@ -781,6 +782,9 @@ model ClinicalBrief {
   /// Her answer to the appointment follow up question, if given.
   feedback BriefFeedback?
 
+  /// Links she created to show this brief to a clinician.
+  shares BriefShare[]
+
   /// The language aiNarrative/aiDiscussionTopics and every persisted
   /// interpretation.patterns string were actually generated in —
   /// resolved once at generation time from the request's
@@ -1222,4 +1226,30 @@ enum AppointmentOutcome {
   NOT_REALLY
   NO
   NO_APPOINTMENT_YET
+}
+
+/// A link she creates to show one brief to her clinician, read only, with
+/// no account. Opening it needs the link's token (kept in the URL
+/// fragment, never sent to a server log) and a separate 6 digit code.
+/// Only hashes of both are stored. It stops working when it expires, when
+/// she revokes it, after MAX failed codes, when she withdraws consent, or
+/// when the brief or her account is deleted (cascade).
+model BriefShare {
+  id             String        @id @default(uuid())
+  briefId        String
+  brief          ClinicalBrief @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash      String        @unique
+  codeHash       String
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  failedAttempts Int           @default(0)
+  viewCount      Int           @default(0)
+  lastViewedAt   DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@index([briefId])
+  @@index([userId])
+  @@map("brief_shares")
 }

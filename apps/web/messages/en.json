@@ -1719,5 +1719,53 @@
     "saved": "Thank you, your answer is saved. You can change it at any time.",
     "error": "Your answer could not be saved. Please try again.",
     "chooseFirst": "Choose an answer first."
+  },
+  "BriefShare": {
+    "title": "Share with your clinician",
+    "intro": "Create a private link your clinician can open without an account. They also need a 6 digit code, which you give them yourself.",
+    "duration": "Link works for",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "create": "Create link",
+    "creating": "Creating…",
+    "linkLabel": "Link",
+    "codeLabel": "Code",
+    "copyLink": "Copy link",
+    "copyCode": "Copy code",
+    "copied": "Copied",
+    "qrAlt": "QR code that opens the link",
+    "howTo": "Send or show the link, or let your clinician scan the QR code. Tell them the code separately, for example in person or by phone. The link stops working on {date}.",
+    "shownOnce": "For your privacy, the link and code are shown only now. You can create a new link at any time.",
+    "done": "Done",
+    "yourLinks": "Your links",
+    "created": "created {date}",
+    "until": "until {date}",
+    "views": "{count, plural, =0 {not opened yet} one {opened once} other {opened # times}}",
+    "revoke": "Turn off",
+    "status": {
+      "ACTIVE": "Active",
+      "EXPIRED": "Expired",
+      "REVOKED": "Turned off",
+      "LOCKED": "Locked after wrong codes"
+    },
+    "createError": "The link could not be created. Please try again.",
+    "revokeError": "The link could not be turned off. Please try again."
+  },
+  "SharedBrief": {
+    "title": "A shared EMBR BRIEF",
+    "intro": "A patient chose to share this record of her own entries with you. It describes what she recorded; it is not a diagnosis.",
+    "noLink": "This link is incomplete. Please open the full link you were sent.",
+    "codeLabel": "6 digit code",
+    "codeHint": "The patient gives you this code separately from the link.",
+    "codeFormat": "Enter the 6 digit code.",
+    "open": "Open BRIEF",
+    "opening": "Opening…",
+    "wrongCode": "That code is not right. Check it with the patient. After several wrong codes the link locks.",
+    "unavailable": "This link is no longer available. It may have expired or been turned off. Ask the patient for a new one.",
+    "tooMany": "Too many attempts. Please wait a few minutes and try again.",
+    "error": "Something went wrong. Please try again.",
+    "availableUntil": "Shared until {date}. Read only.",
+    "downloadPdf": "Download PDF",
+    "downloading": "Preparing…",
+    "footer": "EMBR shows what the patient recorded and how it changed over time. It does not diagnose or recommend treatment. Clinical interpretation is yours."
   }
 }

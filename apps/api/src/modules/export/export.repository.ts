@@ -141,6 +141,7 @@ export const exportRepository = {
       baselineCheckIn,
       briefs,
       briefFeedback,
+      briefShares,
       reflectionDismissals,
       memberships,
     ] = await Promise.all([
@@ -166,6 +167,21 @@ export const exportRepository = {
       // encryption extension decrypts the comment (it handles
       // top level rows only).
       prisma.briefFeedback.findMany({ ...byUser, orderBy: { createdAt: "asc" } }),
+      // Links she made to share a brief: when, until when, how often
+      // opened. Never the stored hashes.
+      prisma.briefShare.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          briefId: true,
+          createdAt: true,
+          expiresAt: true,
+          revokedAt: true,
+          viewCount: true,
+          lastViewedAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
       prisma.reflectionDismissal.findMany({ ...byUser, orderBy: { dismissedAt: "asc" } }),
       prisma.organizationMembership.findMany({
         where: { userId },
@@ -186,6 +202,7 @@ export const exportRepository = {
       baselineCheckIn,
       briefs,
       briefFeedback,
+      briefShares,
       reflectionDismissals,
       memberships,
     };

@@ -903,6 +903,36 @@ export interface BriefTreatmentImpactEntryDto extends TreatmentImpactDto {
  * discussion topics framed as questions, never assertions).
  * treatmentSummary is never part of that — it's a deterministic,
  * database-sourced snapshot with no AI involvement at all. */
+export type BriefShareStatus = "ACTIVE" | "EXPIRED" | "REVOKED" | "LOCKED";
+
+/** A link she made to show one brief to a clinician. Never carries the
+ * link's token or code: those are shown once, when it is created. */
+export interface BriefShareDto {
+  id: string;
+  briefId: string;
+  status: BriefShareStatus;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  viewCount: number;
+  lastViewedAt: string | null;
+}
+
+/** Returned once, when the link is created: the only time the link and
+ * code exist anywhere but in her hands. */
+export interface CreatedBriefShareDto {
+  share: BriefShareDto;
+  url: string;
+  code: string;
+}
+
+/** What the clinician sees: the brief as she would print it, plus when
+ * the link stops working. */
+export interface SharedBriefDto {
+  brief: ClinicalBriefDto;
+  sharedUntil: string;
+}
+
 export type AppointmentOutcome =
   "YES_SIGNIFICANTLY" | "YES_SOMEWHAT" | "NOT_REALLY" | "NO" | "NO_APPOINTMENT_YET";
 
