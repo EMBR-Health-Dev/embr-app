@@ -157,7 +157,7 @@ export default function SharedBriefPage() {
             </p>
           )}
           <div className="mt-6">
-            <BriefContent brief={shared.brief} />
+            <BriefContent brief={shared.brief} audience="clinician" />
           </div>
           <p className="mt-10 text-xs leading-relaxed text-foreground/60">{t("footer")}</p>
         </div>

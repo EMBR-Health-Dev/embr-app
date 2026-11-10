@@ -33,8 +33,8 @@ function BriefPageContent() {
   // someone re-pick dates they just saw on screen a moment ago. Only
   // ever an initial value — never re-synced from the URL after that,
   // so typing into the fields behaves exactly as it did before this.
-  const [fromDate, setFromDate] = useState(() => searchParams.get("from") ?? "");
-  const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
+  const [fromDate, setFromDate] = useState(() => searchParams.get("from") ?? daysAgoIsoDate(30));
+  const [toDate, setToDate] = useState(() => searchParams.get("to") ?? toIsoDate(new Date()));
   // What she most wants her clinician to understand: printed first in
   // the BRIEF, never sent to the AI. Blank lines are dropped by the API.
   const [priorities, setPriorities] = useState<string[]>(["", "", ""]);
@@ -245,6 +245,26 @@ function BriefPageContent() {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
+          <div
+            role="group"
+            aria-label={t("presetsLabel")}
+            className="flex basis-full flex-wrap items-center gap-2"
+          >
+            {[
+              { label: t("preset30"), from: daysAgoIsoDate(30) },
+              { label: t("preset90"), from: daysAgoIsoDate(90) },
+              ...(recordStart ? [{ label: t("presetAll"), from: recordStart }] : []),
+            ].map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset.from)}
+                className="rounded-sm border border-border bg-background min-h-11 px-3 py-1 text-xs sm:min-h-0 font-medium text-foreground transition-colors hover:border-lilac-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
           <fieldset className="basis-full">
             <legend className="text-sm font-medium text-foreground">{t("prioritiesLegend")}</legend>
             <p className="mt-1 text-xs text-foreground/60">{t("prioritiesHint")}</p>
@@ -267,26 +287,6 @@ function BriefPageContent() {
             {generating ? t("generating") : t("generate")}
           </Button>
         </form>
-        <div
-          role="group"
-          aria-label={t("presetsLabel")}
-          className="mt-3 flex flex-wrap items-center gap-2"
-        >
-          {[
-            { label: t("preset30"), from: daysAgoIsoDate(30) },
-            { label: t("preset90"), from: daysAgoIsoDate(90) },
-            ...(recordStart ? [{ label: t("presetAll"), from: recordStart }] : []),
-          ].map((preset) => (
-            <button
-              key={preset.label}
-              type="button"
-              onClick={() => applyPreset(preset.from)}
-              className="rounded-sm border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-lilac-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
         {dateError && (
           <p role="alert" className="mt-3 text-sm font-medium text-foreground">
             {dateError}

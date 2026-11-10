@@ -4,7 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ClinicalBriefDto, Stage4Pattern } from "@embr/types";
 import messages from "../../../messages/en.json";
-import { endOfLocalDay, startOfLocalDay } from "../../lib/date-format";
+import { endOfLocalDay, startOfLocalDay, toIsoDate } from "../../lib/date-format";
+import { daysAgoIsoDate } from "../../lib/record-history";
 
 // A mutable holder, not a fresh literal per call — lets individual
 // tests override the search params (e.g. simulating a link from
@@ -150,6 +151,7 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     expect(await screen.findByText("Pick both a start and end date.")).toBeInTheDocument();
@@ -165,7 +167,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -181,7 +185,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -207,7 +213,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -228,7 +236,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.type(screen.getByLabelText("Priority 1"), "  The anger scares me ");
     await user.type(screen.getByLabelText("Priority 3"), "Sex hurts now");
@@ -251,7 +261,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -266,7 +278,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -282,7 +296,9 @@ describe("Brief page — generation", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -310,12 +326,12 @@ describe("Brief page — prefilled from a Signals link", () => {
     expect(screen.getByLabelText("To")).toHaveValue("2026-02-01");
   });
 
-  it("leaves From/To empty when no query params are present, same as visiting /brief directly", async () => {
+  it("defaults to the last 30 days when no query params are present", async () => {
     const { default: BriefPage } = await import("./page");
     renderWithIntl(<BriefPage />);
 
-    expect(await screen.findByLabelText("From")).toHaveValue("");
-    expect(screen.getByLabelText("To")).toHaveValue("");
+    expect(await screen.findByLabelText("From")).toHaveValue(daysAgoIsoDate(30));
+    expect(screen.getByLabelText("To")).toHaveValue(toIsoDate(new Date()));
   });
 });
 
@@ -331,7 +347,9 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -365,7 +383,9 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -387,7 +407,9 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -401,7 +423,9 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -423,7 +447,9 @@ describe("Brief page — Grounded in your data (Stage 4 citations)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -459,7 +485,9 @@ describe("Brief page — View recorded days (evidence drill-down)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -506,7 +534,9 @@ describe("Brief page — View recorded days (evidence drill-down)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -569,7 +599,9 @@ describe("Brief page — View recorded days (evidence drill-down)", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -708,7 +740,9 @@ describe("Brief page — severity breakdown", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -787,7 +821,9 @@ describe("Brief page — deterministic evidence sections", () => {
     const { default: BriefPage } = await import("./page");
     renderWithIntl(<BriefPage />);
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
   }
@@ -1055,7 +1091,9 @@ describe("Brief page — deterministic evidence sections", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1068,7 +1106,9 @@ describe("Brief page — deterministic evidence sections", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1106,7 +1146,9 @@ describe("Brief page — deterministic evidence sections", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1127,7 +1169,9 @@ describe("Brief page — multiple items", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1180,7 +1224,9 @@ describe("Brief page — PDF download", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1218,7 +1264,9 @@ describe("Brief page — clinician summary download", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1248,7 +1296,9 @@ describe("Brief page — clinician summary download", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1270,7 +1320,9 @@ describe("Brief page — clinician summary download", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1288,7 +1340,9 @@ describe("Brief page — clinician summary download", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
@@ -1559,7 +1613,9 @@ describe("Brief page — history", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-01-01");
+    await user.clear(screen.getByLabelText("To"));
     await user.type(screen.getByLabelText("To"), "2026-02-01");
     await user.click(screen.getByRole("button", { name: "Generate EMBR BRIEF" }));
     expect(await screen.findByText("Fresh brief text.")).toBeInTheDocument();
