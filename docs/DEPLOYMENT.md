@@ -319,7 +319,8 @@ this repo has no evidence of yet.
 ## Branch protection
 
 Run `scripts/setup-branch-protection.mjs` once (see the script's header
-comment for usage) to require CI to pass, require one PR approval, and
+comment for usage) to require CI to pass on a pull request (no approval
+required while one person maintains the app; raise it for a second contributor), and
 block force-pushes/deletion on `main`.
 
 ## Sign up (private early access)
