@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@embr/shared": "workspace:*",
-    "@sentry/node": "^8.47.0",
+    "@sentry/node": "^11.11.0",
     "bullmq": "^5.81.5",
     "ioredis": "^5.4.0",
     "zod": "^3.24.0"
