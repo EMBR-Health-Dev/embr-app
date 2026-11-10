@@ -783,6 +783,7 @@
     "questionsForGp": "Questions à poser à votre professionnel de santé",
     "aiUnavailableTitle": "Synthèse rédigée indisponible",
     "aiUnavailableBody": "La synthèse rédigée et les questions suggérées n’ont pas pu être préparées pour ce BRIEF. Tout ce qui suit est calculé directement à partir de vos données, sans estimation ni ajout. Pour réessayer plus tard, supprimez ce BRIEF de vos briefs précédents, puis créez-le à nouveau.",
+    "aiUnavailableBodyShared": "La synthèse rédigée et les questions suggérées n’ont pas pu être préparées pour ce BRIEF. Tout ce qui suit est calculé directement à partir des données de la patiente, sans estimation ni ajout.",
     "symptomFrequency": "Fréquence des symptômes",
     "occurrenceCount": "{count, plural, one {# occurrence} other {# occurrences}}",
     "cycleSummary": "Synthèse du cycle",

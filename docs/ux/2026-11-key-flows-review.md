@@ -1,0 +1,31 @@
+# UX review: key flows (November 2026)
+
+How it was done: the app ran locally with a fictional demo user (Maya, about 4 weeks of seeded entries). Login, dashboard, timeline, Signals, BRIEF, settings, creating a share link and the clinician's shared view were each screenshotted on a phone (390×844) and on desktop (1440×900). A script also checked for horizontal overflow, tap targets under 44px and page headings. No real data was used and no production system was touched.
+
+## What works
+
+- No horizontal overflow on any screen.
+- Sharing works end to end: a link created on desktop opens on a phone with the code.
+- The BRIEF fallback is honest. With no AI available it shows only calculated findings and says so.
+- The "not a diagnosis" framing is consistent on every BRIEF surface.
+
+## Findings, ranked by impact
+
+| #   | Finding                                                                                                                                                  | Where                                 | Impact                                                                   | Status                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| 1   | The clinician's shared view told the clinician to "delete this BRIEF from your past briefs and create it again", which only the patient can do           | `/shared`                             | High: confusing for exactly the reader we most need to trust EMBR        | **Fixed in this PR** (clinician-specific wording)                                    |
+| 2   | BRIEF dates started empty, and the quick ranges sat _below_ Generate. Tapping Generate first gave an error                                               | `/brief`                              | High: the core conversion step                                           | **Fixed**: defaults to the last 30 days, quick ranges sit next to the dates          |
+| 3   | Quick range buttons were about 28px tall on a phone                                                                                                      | `/brief`                              | Medium (accessibility, WCAG 2.5.8)                                       | **Fixed**: 44px on phones                                                            |
+| 4   | Many other controls are under 44px on a phone: the text-size "A" button, Delete links, "Not now", language switcher, checkboxes, "Edit today's check in" | dashboard, settings, timeline, shared | Medium                                                                   | Open: needs one pass through the shared components                                   |
+| 5   | Two BRIEF prompts on one dashboard ("Create my BRIEF" at the top and "Generate your first EMBR BRIEF" at the bottom)                                     | dashboard                             | Medium: a split call to action                                           | Open: keep the top card only                                                         |
+| 6   | The dashboard's main heading (h1) is the date. The one-tap "Having a hot flash right now?" log sits below the week grid                                  | dashboard                             | Medium: the primary action is not the first thing seen                   | Open: make "Log what you're noticing" the h1 and move the one-tap log above the week |
+| 7   | Very long pages on a phone (timeline about 6,400px, dashboard about 4,000px)                                                                             | timeline, dashboard                   | Medium                                                                   | Open: collapse older weeks and show "Load more" sooner                               |
+| 8   | The BRIEF shows dates in ISO format ("2026-10-12 to 2026-11-10") while the rest of the app uses local formats                                            | BRIEF header, past briefs             | Low                                                                      | Open                                                                                 |
+| 9   | Symptom names are cut off in the shared view's day-by-day labels on a phone ("Sleep Disturban…")                                                         | `/shared`, BRIEF                      | Low                                                                      | Open: wrap the label or use the shorter name                                         |
+| 10  | "Compared with the previous period" is a plain alphabetical list. The biggest changes don't stand out                                                    | BRIEF                                 | Low                                                                      | Open: sort by size of change. Counts only, no interpretation                         |
+| 11  | A returning user with an existing record landed on onboarding after login                                                                                | login → onboarding                    | Needs confirming: probably the demo seed not setting the onboarding flag | Check against a real account                                                         |
+
+## Decisions for the founder
+
+- **Pronouns in clinician copy.** The shared view says "her own entries" / "what she recorded". That fits most users, but not trans men or non-binary people going through menopause. Neutral wording would be "the patient's own entries". This is a positioning call, so the copy is unchanged here.
+- **FR and JA.** The new clinician fallback sentence (EN/FR/JA) should get the same native review as earlier strings.

@@ -88,6 +88,25 @@ describe("Shared BRIEF page (clinician, no account)", () => {
     expect(String(url)).not.toContain(TOKEN);
   });
 
+  it("does not tell the clinician to delete or recreate the BRIEF when the written summary is missing", async () => {
+    fetchMock.mockReturnValue(
+      json(200, {
+        data: {
+          brief: { ...brief(), aiStatus: "UNAVAILABLE", aiNarrative: "", aiDiscussionTopics: [] },
+          sharedUntil: "2026-11-08T10:00:00Z",
+        },
+      }),
+    );
+    await renderPage();
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("6 digit code"), "042917");
+    await user.click(screen.getByRole("button", { name: "Open BRIEF" }));
+
+    const notice = await screen.findByTestId("brief-ai-unavailable");
+    expect(notice).toHaveTextContent("calculated directly from the patient's records");
+    expect(notice).not.toHaveTextContent(/delete this BRIEF/i);
+  });
+
   it("explains a wrong code, and an expired or turned off link, differently", async () => {
     fetchMock
       .mockReturnValueOnce(json(403, { error: { message: "x" } }))

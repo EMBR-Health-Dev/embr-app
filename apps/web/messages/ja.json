@@ -782,6 +782,7 @@
     "questionsForGp": "担当医への質問",
     "aiUnavailableTitle": "文章による要約は利用できません",
     "aiUnavailableBody": "このBRIEFでは、文章による要約と質問の候補を作成できませんでした。以下の内容はすべてあなたの記録から直接計算したもので、推定や補完は行っていません。後でもう一度試す場合は、過去のBRIEFからこのBRIEFを削除して、改めて作成してください。",
+    "aiUnavailableBodyShared": "このBRIEFでは、文章による要約と質問の候補を作成できませんでした。以下の内容はすべて患者さんの記録から直接計算したもので、推定や補完は行っていません。",
     "symptomFrequency": "症状の頻度",
     "occurrenceCount": "{count, plural, other {#回}}",
     "cycleSummary": "周期の要約",

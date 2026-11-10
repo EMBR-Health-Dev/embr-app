@@ -171,7 +171,17 @@ function formatEvidenceLine(
   }
 }
 
-export function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
+export function BriefContent({
+  brief,
+  audience = "owner",
+}: {
+  brief: ClinicalBriefDto;
+  /*
+   * "clinician" is the share-link view: the reader cannot delete or
+   * recreate the BRIEF, so owner-only instructions are left out.
+   */
+  audience?: "owner" | "clinician";
+}) {
   const t = useTranslations("Brief");
   const tEnum = useTranslations("Enums");
   const locale = useLocale();
@@ -217,7 +227,7 @@ export function BriefContent({ brief }: { brief: ClinicalBriefDto }) {
         >
           <p className="font-semibold text-foreground">{t("aiUnavailableTitle")}</p>
           <p className="mt-1 text-sm leading-relaxed text-foreground/80">
-            {t("aiUnavailableBody")}
+            {t(audience === "clinician" ? "aiUnavailableBodyShared" : "aiUnavailableBody")}
           </p>
         </div>
       ) : (
