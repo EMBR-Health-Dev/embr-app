@@ -1768,5 +1768,27 @@
     "downloadPdf": "Download PDF",
     "downloading": "Preparing…",
     "footer": "EMBR shows what the patient recorded and how it changed over time. It does not diagnose or recommend treatment. Clinical interpretation is yours."
+  },
+  "PersonalBaseline": {
+    "cardLabel": "Your usual week",
+    "heading": "This week compared with your usual week",
+    "description": "Days each symptom was recorded in the last 7 days, next to your usual week.",
+    "symptomColumn": "Symptom",
+    "thisWeekColumn": "This week",
+    "usualColumn": "Usual week",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "notEnoughHistory": "Your usual week appears once you have entries in {min} recent weeks. So far: {weeks, plural, one {# week} other {# weeks}}.",
+    "nothingRecorded": "No symptoms recorded this week or in your recent weeks.",
+    "caveat": "A comparison with your own record only: not a diagnosis, and not a measure of whether a change matters.",
+    "whyReasoning": "Your usual week is the middle value of how many days each symptom was recorded per week, across your last {weeks} weeks that have entries. Weeks with no entries are left out, so they don't pull your usual week down."
+  },
+  "NextDayContext": {
+    "cardLabel": "Signal",
+    "heading": "What you recorded on the day after",
+    "findingHeading": "{category} on the day after {factor}",
+    "afterFactor": "Recorded on {days} of {total} days after {factor}",
+    "afterOther": "Recorded on {days} of {total} days after other days you answered this",
+    "caveat": "Counts of what you recorded: not a diagnosis, and not a claim that one causes the other.",
+    "whyReasoning": "This appears when a symptom was recorded on the day after a context factor on at least 3 days, and on a smaller share of the days after days without it. Only days that have an entry the next day are counted."
   }
 }

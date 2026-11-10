@@ -734,6 +734,76 @@ paths:
                   properties:
                     category: { $ref: "#/components/schemas/SymptomCategory" }
                     count: { type: integer }
+  /trends/personal-baseline:
+    get:
+      summary: This week next to her usual week, per symptom
+      description: Deterministic and compared only with her own record. Days each symptom was recorded in the 7 local days ending today, next to the median days per week over her last 8 weeks that have any entry. Weeks with no entries are left out. Fewer than 4 such weeks gives enoughHistory false and no items. Never a verdict.
+      security: [{ cookieAuth: [] }]
+      tags: [Trends]
+      parameters:
+        - { name: timeZone, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Her usual week and this week
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thisWeek:
+                    type: object
+                    properties:
+                      from: { type: string, format: date }
+                      to: { type: string, format: date }
+                  baselineWeeks: { type: integer }
+                  minBaselineWeeks: { type: integer }
+                  enoughHistory: { type: boolean }
+                  ruleVersion: { type: string }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category: { $ref: "#/components/schemas/SymptomCategory" }
+                        thisWeekDays: { type: integer }
+                        usualWeekDays: { type: number }
+  /trends/next-day-context:
+    get:
+      summary: Symptoms recorded on the day after a context factor
+      description: Deterministic counts. For each context factor (same rule as /trends/context-co-occurrence), how many days after it had a symptom recorded, next to how many days after other answered days did. Only next days with an entry count. Shown when at least 3 days after the factor have the symptom, at least 3 comparison days exist, and the share after the factor is higher. At most 3. Never a causal claim.
+      security: [{ cookieAuth: [] }]
+      tags: [Trends]
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: timeZone, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Up to 3 symptom and factor pairs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    factor:
+                      {
+                        type: string,
+                        enum:
+                          [
+                            SHORT_SLEEP,
+                            CAFFEINE_AFTERNOON,
+                            ALCOHOL,
+                            HIGH_STRESS,
+                            VIGOROUS_EXERCISE,
+                          ],
+                      }
+                    category: { $ref: "#/components/schemas/SymptomCategory" }
+                    afterFactorDays: { type: integer }
+                    afterFactorTotal: { type: integer }
+                    otherDays: { type: integer }
+                    otherTotal: { type: integer }
   /trends/cycle-length:
     get:
       summary: Cycle length between period starts

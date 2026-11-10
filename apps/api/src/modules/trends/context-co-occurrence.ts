@@ -49,6 +49,35 @@ export interface ContextLogRow {
  * Given the same input arrays, always returns the same output,
  * regardless of row order.
  */
+/** The one rule per factor listed above, shared with next-day-context.ts. */
+export function qualifyingFactors(log: ContextLogRow): ContextFactor[] {
+  const factors: ContextFactor[] = [];
+  if (log.sleepDuration === "UNDER_6H") factors.push("SHORT_SLEEP");
+  if (log.caffeineAfternoon === true) factors.push("CAFFEINE_AFTERNOON");
+  if (log.alcohol === true) factors.push("ALCOHOL");
+  if (log.stressLevel === "HIGH") factors.push("HIGH_STRESS");
+  if (log.exercise === "VIGOROUS") factors.push("VIGOROUS_EXERCISE");
+  return factors;
+}
+
+/** Whether she answered the question behind a factor that day at all.
+ * An unanswered question is not the same as "no": a day only counts
+ * as "without" a factor when she gave a different answer. */
+export function factorAnswered(log: ContextLogRow, factor: ContextFactor): boolean {
+  switch (factor) {
+    case "SHORT_SLEEP":
+      return log.sleepDuration !== null;
+    case "CAFFEINE_AFTERNOON":
+      return log.caffeineAfternoon !== null;
+    case "ALCOHOL":
+      return log.alcohol !== null;
+    case "HIGH_STRESS":
+      return log.stressLevel !== null;
+    case "VIGOROUS_EXERCISE":
+      return log.exercise !== null;
+  }
+}
+
 export function detectSymptomContextCoOccurrence(
   symptomLogs: Array<{ category: SymptomCategory; occurredAt: Date }>,
   contextLogs: ContextLogRow[],
@@ -70,14 +99,7 @@ export function detectSymptomContextCoOccurrence(
   const datesByFactor = new Map<ContextFactor, Set<string>>();
   for (const log of contextLogs) {
     const dateKey = log.date.toISOString().slice(0, 10);
-    const qualifyingFactors: ContextFactor[] = [];
-    if (log.sleepDuration === "UNDER_6H") qualifyingFactors.push("SHORT_SLEEP");
-    if (log.caffeineAfternoon === true) qualifyingFactors.push("CAFFEINE_AFTERNOON");
-    if (log.alcohol === true) qualifyingFactors.push("ALCOHOL");
-    if (log.stressLevel === "HIGH") qualifyingFactors.push("HIGH_STRESS");
-    if (log.exercise === "VIGOROUS") qualifyingFactors.push("VIGOROUS_EXERCISE");
-
-    for (const factor of qualifyingFactors) {
+    for (const factor of qualifyingFactors(log)) {
       let dates = datesByFactor.get(factor);
       if (!dates) {
         dates = new Set();

@@ -16,6 +16,8 @@ import { AppNav } from "../../components/app-nav";
 import { SectionLabel } from "../../components/section-label";
 import { CoOccurrenceCard } from "../../components/co-occurrence-card";
 import { ContextCoOccurrenceCard } from "../../components/context-co-occurrence-card";
+import { NextDayContextCard } from "../../components/next-day-context-card";
+import { PersonalBaselineCard } from "../../components/personal-baseline-card";
 import { EvidenceStrengthBadge } from "../../components/evidence-strength-badge";
 import { HistoryRangeSwitch } from "../../components/history-range-switch";
 import { SignalsChart } from "../../components/signals-chart";
@@ -166,6 +168,9 @@ export default function TrendsPage() {
           <>
             {evidenceStrength && <EvidenceStrengthBadge strength={evidenceStrength} />}
 
+            {/* Her own usual week: a fixed window, not tied to the range switch below. */}
+            <PersonalBaselineCard />
+
             <HistoryRangeSwitch value={range} onChange={setRange} disabled={dataLoading} />
 
             {dataLoading ? (
@@ -201,6 +206,8 @@ export default function TrendsPage() {
                   key={`ctx-${rangeStart}`}
                   from={startOfDayIso(rangeStart)}
                 />
+
+                <NextDayContextCard key={`next-${rangeStart}`} from={startOfDayIso(rangeStart)} />
 
                 {/* Cycle lengths mean nothing after menopause, so the
                     section is hidden for her. */}

@@ -771,3 +771,99 @@ describe("GET /trends/symptom-history", () => {
     expect(hot.days).toEqual([{ date: "2026-01-02", maxSeverity: "MILD", entries: 1 }]);
   });
 });
+
+describe("GET /trends/next-day-context", () => {
+  it("requires authentication", async () => {
+    const res = await request(createApp()).get("/trends/next-day-context");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns an empty list with no qualifying pair", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "nextday-empty@embr.health");
+    const res = await agent.get("/trends/next-day-context");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  it("counts the day after short sleep against the day after other answered days, for her own data only", async () => {
+    const app = createApp();
+    const agentA = request.agent(app);
+    const agentB = request.agent(app);
+    await registerAndLogin(agentA, "nextdayA@embr.health");
+    await registerAndLogin(agentB, "nextdayB@embr.health");
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+    // Short sleep on 1, 3, 5; enough sleep on 10, 11, 12.
+    for (const d of [1, 3, 5]) {
+      await agentA
+        .post("/context-logs")
+        .send({ date: `2026-06-${pad(d)}`, sleepDuration: "UNDER_6H" });
+      await agentA.post("/symptom-logs").send({
+        category: "BRAIN_FOG",
+        severity: "MILD",
+        occurredAt: `2026-06-${pad(d + 1)}T08:00:00.000Z`,
+      });
+    }
+    for (const d of [10, 11, 12]) {
+      await agentA
+        .post("/context-logs")
+        .send({ date: `2026-06-${pad(d)}`, sleepDuration: "SEVEN_PLUS_H" });
+    }
+    await agentA.post("/symptom-logs").send({
+      category: "HOT_FLASH",
+      severity: "MILD",
+      occurredAt: "2026-06-13T08:00:00.000Z",
+    });
+    // B's entries must never change A's result.
+    for (const d of [10, 11, 12, 13]) {
+      await agentB.post("/symptom-logs").send({
+        category: "BRAIN_FOG",
+        severity: "MILD",
+        occurredAt: `2026-06-${pad(d)}T08:00:00.000Z`,
+      });
+    }
+
+    const res = await agentA.get("/trends/next-day-context");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      {
+        factor: "SHORT_SLEEP",
+        category: "BRAIN_FOG",
+        afterFactorDays: 3,
+        afterFactorTotal: 3,
+        otherDays: 0,
+        otherTotal: 3,
+      },
+    ]);
+  });
+});
+
+describe("GET /trends/personal-baseline", () => {
+  it("requires authentication", async () => {
+    const res = await request(createApp()).get("/trends/personal-baseline");
+    expect(res.status).toBe(401);
+  });
+
+  it("says there is no usual week yet for a new record", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "baseline-empty@embr.health");
+    const res = await agent.get("/trends/personal-baseline").query({ timeZone: "Europe/London" });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      enoughHistory: false,
+      baselineWeeks: 0,
+      minBaselineWeeks: 4,
+      items: [],
+    });
+  });
+
+  it("refuses an unknown time zone with a 400", async () => {
+    const agent = request.agent(createApp());
+    await registerAndLogin(agent, "baseline-badzone@embr.health");
+    for (const path of ["/trends/personal-baseline", "/trends/next-day-context"]) {
+      const res = await agent.get(path).query({ timeZone: "Mars/Olympus_Mons" });
+      expect(res.status).toBe(400);
+    }
+  });
+});

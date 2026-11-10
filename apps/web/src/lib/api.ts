@@ -32,6 +32,8 @@ import type {
   SymptomCheckInDto,
   SymptomCoOccurrenceDto,
   SymptomContextCoOccurrenceDto,
+  NextDayContextDto,
+  PersonalBaselineDto,
   SymptomFrequencyDto,
   SymptomHistoryDto,
   SymptomLogDto,
@@ -196,6 +198,16 @@ export const api = {
     contextCoOccurrence: (query?: { from?: string; to?: string }) =>
       apiFetch<SymptomContextCoOccurrenceDto | null>("/trends/context-co-occurrence", {
         query: { ...query, timeZone: deviceTimeZone() },
+      }),
+
+    nextDayContext: (query?: { from?: string; to?: string }) =>
+      apiFetch<NextDayContextDto[]>("/trends/next-day-context", {
+        query: { ...query, timeZone: deviceTimeZone() },
+      }),
+
+    personalBaseline: () =>
+      apiFetch<PersonalBaselineDto>("/trends/personal-baseline", {
+        query: { timeZone: deviceTimeZone() },
       }),
 
     evidenceStrength: () =>
