@@ -24,6 +24,7 @@ overrides:
   '@vitest/mocker': '>=4.1.11 <5'
   body-parser: '>=1.20.9 <2'
   node-forge: '>=1.4.1 <2'
+  zod: '>=4.6.6 <5'
 
 importers:
 
@@ -122,7 +123,7 @@ importers:
     dependencies:
       '@anthropic-ai/sdk':
         specifier: ^0.137.0
-        version: 0.137.0(zod@3.25.76)
+        version: 0.137.0(zod@4.6.7)
       '@embr/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -187,8 +188,8 @@ importers:
         specifier: ^2.9.1
         version: 2.9.1
       zod:
-        specifier: ^3.24.0
-        version: 3.25.76
+        specifier: '>=4.6.6 <5'
+        version: 4.6.7
     devDependencies:
       '@types/compression':
         specifier: ^1.7.5
@@ -448,8 +449,8 @@ importers:
         specifier: ^5.4.0
         version: 5.11.1
       zod:
-        specifier: ^3.24.0
-        version: 3.25.76
+        specifier: '>=4.6.6 <5'
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.20.5
@@ -486,8 +487,8 @@ importers:
         specifier: ^13.2.0
         version: 13.2.0
       zod:
-        specifier: ^3.24.0
-        version: 3.25.76
+        specifier: '>=4.6.6 <5'
+        version: 4.6.7
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -521,8 +522,8 @@ importers:
   packages/validation:
     dependencies:
       zod:
-        specifier: ^3.24.0
-        version: 3.25.76
+        specifier: '>=4.6.6 <5'
+        version: 4.6.7
     devDependencies:
       typescript:
         specifier: ^5.7.0
@@ -541,7 +542,7 @@ packages:
     resolution: {integrity: sha512-YpEnbPz8kWF1BWthwUCnRhci7OvDLSUO8NFKoevoPkjNkK9CJeibZITgxr9vhqOP8Le61e5tNDHFTxw1dc6Png==}
     hasBin: true
     peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
+      zod: '>=4.6.6 <5'
     peerDependenciesMeta:
       zod:
         optional: true
@@ -7477,10 +7478,10 @@ packages:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
+      zod: '>=4.6.6 <5'
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -7488,13 +7489,13 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@anthropic-ai/sdk@0.137.0(zod@3.25.76)':
+  '@anthropic-ai/sdk@0.137.0(zod@4.6.7)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.1.1
     optionalDependencies:
-      zod: 3.25.76
+      zod: 4.6.7
 
   '@asamuzakjp/css-color@7.1.7':
     dependencies:
@@ -8463,7 +8464,7 @@ snapshots:
       toqr: 0.1.1
       wrap-ansi: 7.0.0
       ws: 8.21.3
-      zod: 3.25.76
+      zod: 4.6.7
     optionalDependencies:
       expo-router: 57.0.12(anvbc2pscpkxq5ndhd3mo66mie)
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3)
@@ -10492,7 +10493,7 @@ snapshots:
       obug: 2.2.1
       std-env: 4.3.0
       tinyrainbow: 3.2.0
-      vitest: 4.1.12(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(@vitest/coverage-v8@4.1.12)(jsdom@30.1.3(@noble/hashes@1.8.0))(vite@6.4.5(@types/node@22.20.5)(jiti@1.21.7)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      vitest: 4.1.12(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(@vitest/coverage-v8@4.1.12)(jsdom@30.1.3(@noble/hashes@1.8.0))(vite@6.4.5(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   '@vitest/expect@4.1.12':
     dependencies:
@@ -11817,8 +11818,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 9.39.5(jiti@1.21.7)
       hermes-parser: 0.25.1
-      zod: 3.25.76
-      zod-validation-error: 4.0.2(zod@3.25.76)
+      zod: 4.6.7
+      zod-validation-error: 4.0.2(zod@4.6.7)
     transitivePeerDependencies:
       - supports-color
 
@@ -11828,8 +11829,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 9.39.5(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 3.25.76
-      zod-validation-error: 4.0.2(zod@3.25.76)
+      zod: 4.6.7
+      zod-validation-error: 4.0.2(zod@4.6.7)
     transitivePeerDependencies:
       - supports-color
 
@@ -15564,8 +15565,8 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@3.25.76):
+  zod-validation-error@4.0.2(zod@4.6.7):
     dependencies:
-      zod: 3.25.76
+      zod: 4.6.7
 
-  zod@3.25.76: {}
+  zod@4.6.7: {}

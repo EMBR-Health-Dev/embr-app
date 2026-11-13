@@ -11,7 +11,7 @@ const baseEnvSchema = z.object({
  * confusing runtime error minutes (or days) later.
  */
 export function loadEnv<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
-  const merged = baseEnvSchema.merge(schema);
+  const merged = baseEnvSchema.extend(schema.shape);
   const parsed = merged.safeParse(process.env);
 
   if (!parsed.success) {

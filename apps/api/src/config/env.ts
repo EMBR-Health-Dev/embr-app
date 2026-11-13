@@ -45,7 +45,11 @@ function requiredInProduction(name: string, devDefault: string) {
     },
     z
       .string({
-        required_error: `${name} has no safe default in production and must be set explicitly`,
+        // Zod 4: the custom message for a missing value goes through `error`.
+        error: (issue) =>
+          issue.input === undefined
+            ? `${name} has no safe default in production and must be set explicitly`
+            : undefined,
       })
       .min(1),
   );
