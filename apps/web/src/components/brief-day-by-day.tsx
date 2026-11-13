@@ -73,7 +73,7 @@ export function BriefDayByDay({
             key={category}
             className="grid grid-cols-[7.5rem_1fr] items-center gap-3 sm:grid-cols-[9rem_1fr]"
           >
-            <span className="truncate text-xs text-foreground/80">
+            <span className="text-xs leading-tight text-foreground/80 [overflow-wrap:anywhere]">
               {tEnum(`category.${category}`)}
             </span>
             <span className="sr-only">

@@ -99,7 +99,7 @@ export function ReflectionCard({
         <button
           onClick={onDismiss}
           aria-label={t("dismiss")}
-          className="shrink-0 text-foreground/40 hover:text-foreground/70"
+          className="-m-3 flex h-11 w-11 shrink-0 items-center justify-center text-foreground/40 hover:text-foreground/70"
         >
           ×
         </button>

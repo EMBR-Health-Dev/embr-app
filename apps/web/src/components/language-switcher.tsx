@@ -32,8 +32,8 @@ export function LanguageSwitcher() {
           aria-current={l === locale}
           className={
             l === locale
-              ? "font-medium text-foreground underline underline-offset-2"
-              : "text-foreground/50 hover:text-foreground disabled:opacity-50"
+              ? "inline-flex min-h-11 items-center font-medium text-foreground underline underline-offset-2 sm:min-h-0"
+              : "inline-flex min-h-11 items-center text-foreground/50 hover:text-foreground disabled:opacity-50 sm:min-h-0"
           }
         >
           {t(l)}

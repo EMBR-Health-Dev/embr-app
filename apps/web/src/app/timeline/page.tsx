@@ -446,7 +446,7 @@ export default function TimelinePage() {
                 type="button"
                 onClick={() => toggleFilter(key)}
                 aria-pressed={activeFilters.has(key)}
-                className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`min-h-11 rounded-sm border px-3 py-1.5 text-sm font-medium sm:min-h-0 transition-colors ${
                   activeFilters.has(key)
                     ? "border-lilac-700 bg-lilac-100 text-foreground"
                     : "border-border text-foreground/50"
@@ -468,7 +468,7 @@ export default function TimelinePage() {
                 type="button"
                 onClick={() => setView(v)}
                 aria-pressed={view === v}
-                className={`rounded-sm px-3 py-1.5 text-sm font-medium ${
+                className={`min-h-11 rounded-sm px-3 py-1.5 text-sm font-medium sm:min-h-0 ${
                   view === v ? "bg-foreground text-background" : "text-foreground/70"
                 }`}
               >

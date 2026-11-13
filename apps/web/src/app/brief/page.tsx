@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { BriefTrendsDto, ClinicalBriefDto, ClinicalBriefListItemDto } from "@embr/types";
 import { useAuth } from "../../lib/auth-context";
 import { api } from "../../lib/api";
@@ -18,9 +18,11 @@ import { daysAgoIsoDate, fetchRecordSpan } from "../../lib/record-history";
 import { BriefContent } from "../../components/brief-content";
 import { BriefShare } from "../../components/brief-share";
 import { richText } from "../../lib/rich-text";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 
 function BriefPageContent() {
   const t = useTranslations("Brief");
+  const locale = useLocale();
   const tCommon = useTranslations("Common");
   const tEnum = useTranslations("Enums");
   const router = useRouter();
@@ -305,7 +307,10 @@ function BriefPageContent() {
             <div className="rounded-sm bg-lilac-100 px-4 py-3">
               <h2 className="font-display text-heading-m text-foreground">{t("briefReady")}</h2>
               <p className="mt-1 text-sm font-medium text-lilac-700">
-                {t("periodRange", { from: justGenerated.fromDate, to: justGenerated.toDate })}
+                {t("periodRange", {
+                  from: formatHistoryDate(locale, justGenerated.fromDate.slice(0, 10)),
+                  to: formatHistoryDate(locale, justGenerated.toDate.slice(0, 10)),
+                })}
               </p>
             </div>
             <BriefContent brief={justGenerated} />
@@ -403,22 +408,29 @@ function BriefPageContent() {
                       onClick={() => void toggleBrief(item.id)}
                       className="text-left text-sm font-medium text-foreground"
                     >
-                      {t("periodRange", { from: item.fromDate, to: item.toDate })}
+                      {t("periodRange", {
+                        from: formatHistoryDate(locale, item.fromDate.slice(0, 10)),
+                        to: formatHistoryDate(locale, item.toDate.slice(0, 10)),
+                      })}
                       <span className="ml-2 text-xs font-normal text-foreground/50">
-                        {t("generatedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
+                        {t("generatedOn", {
+                          date: new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
+                            new Date(item.createdAt),
+                          ),
+                        })}
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center gap-3">
                       <a
                         href={api.briefs.pdfUrl(item.id)}
-                        className="text-xs font-medium text-lilac-700 underline underline-offset-2"
+                        className="text-xs font-medium text-lilac-700 underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
                       >
                         {t("pdf")}
                       </a>
                       <button
                         onClick={() => void handleDelete(item.id)}
                         disabled={deletingId === item.id}
-                        className="text-xs font-medium text-foreground underline decoration-destructive underline-offset-2"
+                        className="text-xs font-medium text-foreground underline decoration-destructive underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
                       >
                         {deletingId === item.id ? "…" : t("delete")}
                       </button>

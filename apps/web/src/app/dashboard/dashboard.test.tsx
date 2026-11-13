@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
@@ -904,8 +904,63 @@ describe("Dashboard — Clinical Brief as an evidence artifact", () => {
 
     expect(await screen.findByRole("button", { name: "View EMBR BRIEF" })).toBeInTheDocument();
     expect(
-      screen.getByText("2026-01-01 → 2026-02-01 · generated February 1, 2026"),
+      screen.getByText("Jan 1, 2026 → Feb 1, 2026 · generated February 1, 2026"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — one BRIEF prompt at a time, and a meaningful heading", () => {
+  afterEach(async () => {
+    const { fetchRecordSpan } = await import("../../lib/record-history");
+    vi.mocked(fetchRecordSpan).mockResolvedValue({
+      start: null,
+      symptomCount: 0,
+      cycleCount: 0,
+      treatmentCount: 0,
+    });
+    window.localStorage.clear();
+  });
+
+  async function withAWeekOfRecords() {
+    const { fetchRecordSpan } = await import("../../lib/record-history");
+    vi.mocked(fetchRecordSpan).mockResolvedValue({
+      start: "2026-01-01",
+      symptomCount: 12,
+      cycleCount: 0,
+      treatmentCount: 0,
+    });
+  }
+
+  it("shows the first-BRIEF nudge and drops the second BRIEF button lower down", async () => {
+    await withAWeekOfRecords();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    expect(await screen.findByText("You have a week of records")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create my BRIEF" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Generate your first EMBR BRIEF" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("brings the lower BRIEF button back once she chooses Not now", async () => {
+    await withAWeekOfRecords();
+    const user = userEvent.setup();
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: "Not now" }));
+    expect(
+      await screen.findByRole("button", { name: "Generate your first EMBR BRIEF" }),
+    ).toBeInTheDocument();
+  });
+
+  it("uses what to do today as the page heading, not the date", async () => {
+    const { default: DashboardPage } = await import("./page");
+    renderWithIntl(<DashboardPage />);
+    const h1 = await screen.findByRole("heading", { level: 1 });
+    expect(h1).toHaveTextContent("Log what you're noticing.");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 });
 

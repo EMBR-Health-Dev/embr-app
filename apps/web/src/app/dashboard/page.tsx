@@ -23,11 +23,12 @@ import { SafetyNotice } from "../../components/safety-notice";
 import { startingPointMessageKey } from "../../lib/onboarding-starting-point";
 import { isPostmenopause } from "../../lib/life-stage";
 import { WeekOnTrack } from "../../components/week-on-track";
+import { formatHistoryDate } from "../../lib/symptom-history-format";
 import { MrsDueCard } from "../../components/mrs-due-card";
 import { CollapsibleCard } from "../../components/collapsible-card";
 import { toIsoDate } from "../../lib/date-format";
 import { RecordSpanSummary } from "../../components/record-span-summary";
-import { GettingStarted } from "../../components/getting-started";
+import { GettingStarted, useFirstBriefNudgeShowing } from "../../components/getting-started";
 import { DailyCheckIn } from "../../components/daily-check-in";
 import { SeverityMark } from "../../components/severity-mark";
 import { fetchRecordSpan, type RecordSpan } from "../../lib/record-history";
@@ -526,6 +527,21 @@ function DashboardContent() {
     }
   }
 
+  // The same inputs GettingStarted gets: while its first-BRIEF nudge is
+  // on screen, the Evidence card below does not repeat the button.
+  const firstBriefNudgeShowing = useFirstBriefNudgeShowing(
+    user?.id ?? "",
+    user && recordSpan && latestBriefLoaded
+      ? {
+          accountCreatedAt: user.createdAt,
+          recordStart: recordSpan.start,
+          symptomCount: recordSpan.symptomCount,
+          hasLifeStage: Boolean(onboardingProfile?.lifeStage),
+          hasBrief: latestBrief !== null,
+        }
+      : null,
+  );
+
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -612,23 +628,14 @@ function DashboardContent() {
 
         {/* ---- TODAY ---- */}
         <section className="mt-10">
-          <SectionLabel as="h1">
+          <SectionLabel as="h2">
             {t("todayLabel")} · {todayLabel}
           </SectionLabel>
-          <p className="mt-2 text-sm text-foreground/60">{t("todayDescription")}</p>
+          <h1 className="mt-2 font-body text-sm font-normal text-foreground/60">
+            {t("todayDescription")}
+          </h1>
 
-          <WeekOnTrack
-            refreshKey={weekRefreshKey}
-            postmenopause={postmenopause}
-            appointmentSoon={onboardingProfile?.appointmentStatus === "WITHIN_MONTH"}
-            latestBriefCreatedAt={latestBrief?.createdAt ?? null}
-            onStep={(key) => {
-              if (key === "cycle") setOpenPanel("cycle");
-              if (key === "context") setOpenPanel("context");
-            }}
-          />
-
-          <div className="mt-6 flex flex-col items-center gap-3 rounded border border-border-subtle bg-muted/40 py-8 text-center">
+          <div className="mt-4 flex flex-col items-center gap-3 rounded border border-border-subtle bg-muted/40 py-8 text-center">
             {/* Signature interaction: one tap, no form, for the moment
                 that actually needs it — mid-hot-flash is not when
                 anyone wants to fill out a category picker. */}
@@ -700,6 +707,17 @@ function DashboardContent() {
             )}
           </div>
 
+          <WeekOnTrack
+            refreshKey={weekRefreshKey}
+            postmenopause={postmenopause}
+            appointmentSoon={onboardingProfile?.appointmentStatus === "WITHIN_MONTH"}
+            latestBriefCreatedAt={latestBrief?.createdAt ?? null}
+            onStep={(key) => {
+              if (key === "cycle") setOpenPanel("cycle");
+              if (key === "context") setOpenPanel("context");
+            }}
+          />
+
           <div id="check-in" className="scroll-mt-6">
             <DailyCheckIn onSaved={() => void refreshAfterCheckIn()} />
           </div>
@@ -716,7 +734,7 @@ function DashboardContent() {
           <div className="mt-6">
             <button
               onClick={() => setFormOpen((v) => !v)}
-              className="text-sm font-medium text-foreground underline underline-offset-2"
+              className="text-sm font-medium text-foreground underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
             >
               {formOpen ? t("close") : t("logDifferentSymptom")}
             </button>
@@ -1161,7 +1179,7 @@ function DashboardContent() {
                             type="button"
                             onClick={() => void deleteLog(log.id)}
                             disabled={deletingLogId === log.id}
-                            className="shrink-0 text-xs font-medium text-foreground/50 underline underline-offset-2 disabled:opacity-50"
+                            className="shrink-0 text-xs font-medium text-foreground/50 underline underline-offset-2 disabled:opacity-50 inline-flex min-h-11 items-center sm:min-h-0"
                           >
                             {t("deleteLog")}
                           </button>
@@ -1181,7 +1199,7 @@ function DashboardContent() {
               <button
                 onClick={() => void loadMoreLogs()}
                 disabled={loadingMoreLogs}
-                className="mt-3 text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50"
+                className="mt-3 text-sm font-medium text-foreground underline underline-offset-2 disabled:opacity-50 inline-flex min-h-11 items-center sm:min-h-0"
               >
                 {loadingMoreLogs ? tCommon("loading") : t("loadMore")}
               </button>
@@ -1213,7 +1231,7 @@ function DashboardContent() {
 
           <Link
             href="/trends"
-            className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-2"
+            className="mt-4 text-sm font-medium text-primary underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
           >
             {t("viewPatterns")}
           </Link>
@@ -1230,8 +1248,8 @@ function DashboardContent() {
           {latestBrief && (
             <p className="mt-3 text-xs text-foreground/50">
               {t("evidenceLatestMeta", {
-                from: latestBrief.fromDate,
-                to: latestBrief.toDate,
+                from: formatHistoryDate(locale, latestBrief.fromDate.slice(0, 10)),
+                to: formatHistoryDate(locale, latestBrief.toDate.slice(0, 10)),
                 date: new Intl.DateTimeFormat(locale, {
                   day: "numeric",
                   month: "long",
@@ -1240,9 +1258,11 @@ function DashboardContent() {
               })}
             </p>
           )}
-          <Link href="/brief" className="mt-5 inline-block">
-            <Button>{latestBrief ? t("viewClinicalBrief") : t("generateFirstBrief")}</Button>
-          </Link>
+          {!firstBriefNudgeShowing && (
+            <Link href="/brief" className="mt-5 inline-block">
+              <Button>{latestBrief ? t("viewClinicalBrief") : t("generateFirstBrief")}</Button>
+            </Link>
+          )}
         </section>
 
         <SafetyNotice />

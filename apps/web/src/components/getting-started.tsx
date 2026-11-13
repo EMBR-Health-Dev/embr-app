@@ -45,6 +45,19 @@ function useDismissed(key: string): boolean {
 }
 
 /**
+ * Whether the first BRIEF nudge is on screen right now: the record
+ * qualifies and she hasn't chosen "Not now". The dashboard uses it to
+ * avoid a second, competing BRIEF button lower on the page.
+ */
+export function useFirstBriefNudgeShowing(
+  userId: string,
+  input: GettingStartedInput | null,
+): boolean {
+  const dismissed = useDismissed(`embr:first-brief-nudge-dismissed:${userId}`);
+  return input !== null && showsFirstBriefNudge(input) && !dismissed;
+}
+
+/**
  * "Start here" for a new account, and the first BRIEF nudge after a
  * week of records. Each can be dismissed; that choice is remembered on
  * this browser only, and nothing about it is sent anywhere.
@@ -71,7 +84,7 @@ export function GettingStarted({ userId, ...input }: GettingStartedInput & { use
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <Link
             href="/brief"
-            className="rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            className="rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground inline-flex min-h-11 items-center sm:min-h-0"
           >
             {t("nudgeAction")}
           </Link>
@@ -80,7 +93,7 @@ export function GettingStarted({ userId, ...input }: GettingStartedInput & { use
             onClick={() => {
               writeDismissed(nudgeKey);
             }}
-            className="text-sm text-graphite-700 underline underline-offset-2"
+            className="text-sm text-graphite-700 underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
           >
             {t("notNow")}
           </button>
@@ -102,7 +115,7 @@ export function GettingStarted({ userId, ...input }: GettingStartedInput & { use
           onClick={() => {
             writeDismissed(startKey);
           }}
-          className="text-xs text-graphite-700 underline underline-offset-2"
+          className="text-xs text-graphite-700 underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
         >
           {t("hide")}
         </button>
@@ -130,7 +143,7 @@ export function GettingStarted({ userId, ...input }: GettingStartedInput & { use
               ) : (
                 <Link
                   href={step.href}
-                  className="font-medium text-foreground underline underline-offset-2"
+                  className="inline-flex min-h-11 items-center font-medium text-foreground underline underline-offset-2 sm:min-h-0"
                 >
                   {t(`steps.${step.key}.title`)}
                 </Link>

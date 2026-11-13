@@ -1385,7 +1385,7 @@ describe("Brief page — history", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
-    const entry = await screen.findByText("2026-01-01 to 2026-02-01");
+    const entry = await screen.findByText("Jan 1, 2026 to Feb 1, 2026");
     await user.click(entry);
 
     expect(await screen.findByText("Past brief narrative.")).toBeInTheDocument();
@@ -1419,7 +1419,7 @@ describe("Brief page — history", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
-    await user.click(await screen.findByText("2026-01-01 to 2026-02-01"));
+    await user.click(await screen.findByText("Jan 1, 2026 to Feb 1, 2026"));
     expect(
       await screen.findByText(
         "Did your EMBR BRIEF help you communicate your symptoms or concerns during your appointment?",
@@ -1471,7 +1471,7 @@ describe("Brief page — history", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
-    await user.click(await screen.findByText("2026-01-01 to 2026-02-01"));
+    await user.click(await screen.findByText("Jan 1, 2026 to Feb 1, 2026"));
     await waitFor(() =>
       expect(screen.getByLabelText("I have not had an appointment yet")).toBeChecked(),
     );
@@ -1497,7 +1497,7 @@ describe("Brief page — history", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
-    const entry = await screen.findByText("2026-01-01 to 2026-02-01");
+    const entry = await screen.findByText("Jan 1, 2026 to Feb 1, 2026");
     await user.click(entry);
 
     // Previously this left openBriefId set with the detail never
@@ -1525,13 +1525,13 @@ describe("Brief page — history", () => {
     const { default: BriefPage } = await import("./page");
     renderWithIntl(<BriefPage />);
 
-    await screen.findByText("2026-01-01 to 2026-02-01");
+    await screen.findByText("Jan 1, 2026 to Feb 1, 2026");
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
     await waitFor(() => expect(deleteMock).toHaveBeenCalledWith("b1"));
     await waitFor(() =>
-      expect(screen.queryByText("2026-01-01 to 2026-02-01")).not.toBeInTheDocument(),
+      expect(screen.queryByText("Jan 1, 2026 to Feb 1, 2026")).not.toBeInTheDocument(),
     );
   });
 
@@ -1554,12 +1554,12 @@ describe("Brief page — history", () => {
     const { default: BriefPage } = await import("./page");
     renderWithIntl(<BriefPage />);
 
-    await screen.findByText("2026-01-01 to 2026-02-01");
+    await screen.findByText("Jan 1, 2026 to Feb 1, 2026");
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(await screen.findByText("Couldn't delete that brief. Try again.")).toBeInTheDocument();
-    expect(screen.getByText("2026-01-01 to 2026-02-01")).toBeInTheDocument();
+    expect(screen.getByText("Jan 1, 2026 to Feb 1, 2026")).toBeInTheDocument();
   });
 
   it("clears the expanded detail view when the currently-open brief is deleted", async () => {
@@ -1583,7 +1583,7 @@ describe("Brief page — history", () => {
     renderWithIntl(<BriefPage />);
 
     const user = userEvent.setup();
-    const entry = await screen.findByText("2026-01-01 to 2026-02-01");
+    const entry = await screen.findByText("Jan 1, 2026 to Feb 1, 2026");
     await user.click(entry);
     expect(await screen.findByText("Open detail text.")).toBeInTheDocument();
 

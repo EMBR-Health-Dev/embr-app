@@ -22,7 +22,7 @@ export function WhyAmISeeingThis({ children }: { children: React.ReactNode }) {
 
   return (
     <details className="group mt-3">
-      <summary className="flex cursor-pointer items-center gap-1.5 text-caption font-medium text-foreground/60 marker:content-none hover:text-foreground/80">
+      <summary className="flex min-h-11 cursor-pointer items-center gap-1.5 sm:min-h-0 text-caption font-medium text-foreground/60 marker:content-none hover:text-foreground/80">
         <svg
           aria-hidden="true"
           viewBox="0 0 8 8"

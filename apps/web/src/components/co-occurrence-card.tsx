@@ -216,7 +216,7 @@ export function CoOccurrenceCard({
 
       <Link
         href={briefHref}
-        className="mt-4 inline-block text-caption font-medium text-primary underline underline-offset-2"
+        className="mt-4 text-caption font-medium text-primary underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
       >
         {t("briefCta")}
       </Link>

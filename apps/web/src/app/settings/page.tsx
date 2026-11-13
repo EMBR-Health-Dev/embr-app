@@ -267,7 +267,7 @@ export default function SettingsPage() {
             {!confirmingLogoutAll ? (
               <button
                 onClick={() => setConfirmingLogoutAll(true)}
-                className="text-sm font-medium text-foreground underline decoration-destructive underline-offset-2"
+                className="text-sm font-medium text-foreground underline decoration-destructive underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
               >
                 {t("logoutEverywhere")}
               </button>
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                 <button
                   onClick={logoutEverywhere}
                   disabled={loggingOutAll}
-                  className="font-medium text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
+                  className="font-medium text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50 inline-flex min-h-11 items-center sm:min-h-0"
                 >
                   {loggingOutAll ? t("loggingOut") : t("logoutEverywhere")}
                 </button>
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => revokeSession(s.id)}
                           disabled={revokingId === s.id}
-                          className="text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50"
+                          className="text-foreground underline decoration-destructive underline-offset-2 disabled:opacity-50 inline-flex min-h-11 items-center sm:min-h-0"
                         >
                           {revokingId === s.id ? t("revoking") : t("revoke")}
                         </button>
@@ -334,7 +334,7 @@ export default function SettingsPage() {
                     ) : (
                       <button
                         onClick={() => setConfirmingRevokeId(s.id)}
-                        className="text-foreground underline decoration-destructive underline-offset-2"
+                        className="text-foreground underline decoration-destructive underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
                       >
                         {t("revoke")}
                       </button>
@@ -354,7 +354,7 @@ export default function SettingsPage() {
           {!deleteConfirming ? (
             <button
               onClick={() => setDeleteConfirming(true)}
-              className="mt-4 text-sm font-medium text-foreground underline decoration-destructive underline-offset-2"
+              className="mt-4 text-sm font-medium text-foreground underline decoration-destructive underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
             >
               {t("deleteMyAccount")}
             </button>
