@@ -139,7 +139,10 @@ describe.skipIf(!reachable)(
 
       const [raw] = await prisma.$queryRaw<Array<{ comment: string }>>`
       SELECT comment FROM brief_feedback WHERE "briefId" = ${brief.id}`;
-      expect(raw!.comment).not.toContain("GP");
+      // The whole sentence, not a fragment: ciphertext is random base64url,
+      // so a two letter fragment such as "GP" turns up in it by chance
+      // (about 2% of runs), which made this test fail intermittently.
+      expect(raw!.comment).not.toContain("My GP read the first page");
       expect(raw!.comment.startsWith("enc:")).toBe(true);
 
       const changed = await briefFeedbackService.save(brief.id, user.id, {

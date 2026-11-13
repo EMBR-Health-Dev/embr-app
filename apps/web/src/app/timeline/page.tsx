@@ -38,6 +38,9 @@ import { SeverityMark } from "../../components/severity-mark";
 import { CapsuleIcon, DropletIcon } from "../../components/little-icons";
 import { formatHistoryDate } from "../../lib/symptom-history-format";
 
+const TIMELINE_FIRST_DAYS = 14;
+const TIMELINE_MORE_DAYS = 30;
+
 // The list endpoints cap a page at 100 items; a long record is read page
 // by page up to this many pages per source (1,000 entries), and the page
 // says so if anything older was left out.
@@ -125,6 +128,14 @@ export default function TimelinePage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [managesOrg, setManagesOrg] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(() => new Set(FILTER_KEYS));
+  // How many days with entries the list shows. A 90 day record ran to
+  // several thousand pixels on a phone; the most recent two weeks come
+  // first and earlier days load on request. Changing the range or the
+  // filters starts again from the most recent days.
+  const [shown, setShown] = useState<{ key: string; days: number }>({
+    key: "",
+    days: TIMELINE_FIRST_DAYS,
+  });
   const [view, setView] = useState<"list" | "month">("list");
   const [month, setMonth] = useState(() => toIsoDate(new Date()).slice(0, 7));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -290,6 +301,10 @@ export default function TimelinePage() {
       (activeFilters.has("treatments") && group.treatmentEvents.length > 0)
     );
   });
+  const listKey = `${range}|${[...activeFilters].sort().join(",")}`;
+  const shownDays = shown.key === listKey ? shown.days : TIMELINE_FIRST_DAYS;
+  const shownDates = visibleDates.slice(0, shownDays);
+  const hiddenDays = visibleDates.length - shownDates.length;
 
   function renderDayEntries(group: DayGroup) {
     const symptoms = daySymptoms(group.symptoms);
@@ -508,65 +523,76 @@ export default function TimelinePage() {
             </p>
           </div>
         ) : (
-          <ol className="mt-10" aria-label={t("chronologyLabel")}>
-            {visibleDates.flatMap((date, index) => {
-              const group = groups.get(date)!;
-              const newer = index === 0 ? null : visibleDates[index - 1]!;
-              const rows = [];
-              // Days with nothing recorded stay visible as a gap, so the
-              // record shows its own continuity rather than hiding it.
-              const gap =
-                newer === null
-                  ? date < todayIso && todayIso >= windowStart
-                    ? emptyDaysBetween(previousDayAfter(todayIso), date)
-                    : 0
-                  : emptyDaysBetween(newer, date);
-              if (gap > 0) rows.push(gapRow(`gap-${date}`, gap));
-              // A month marker wherever the month changes, so a long
-              // record reads as history rather than one undifferentiated list.
-              if (newer === null || newer.slice(0, 7) !== date.slice(0, 7)) {
+          <>
+            <ol className="mt-10" aria-label={t("chronologyLabel")}>
+              {shownDates.flatMap((date, index) => {
+                const group = groups.get(date)!;
+                const newer = index === 0 ? null : shownDates[index - 1]!;
+                const rows = [];
+                // Days with nothing recorded stay visible as a gap, so the
+                // record shows its own continuity rather than hiding it.
+                const gap =
+                  newer === null
+                    ? date < todayIso && todayIso >= windowStart
+                      ? emptyDaysBetween(previousDayAfter(todayIso), date)
+                      : 0
+                    : emptyDaysBetween(newer, date);
+                if (gap > 0) rows.push(gapRow(`gap-${date}`, gap));
+                // A month marker wherever the month changes, so a long
+                // record reads as history rather than one undifferentiated list.
+                if (newer === null || newer.slice(0, 7) !== date.slice(0, 7)) {
+                  rows.push(
+                    <li
+                      key={`month-${date}`}
+                      className="sticky top-0 z-10 -mx-2 bg-background/95 px-2 py-2 backdrop-blur-sm"
+                    >
+                      <h2 className="font-display text-heading-m text-lilac-700">
+                        {formatMonthHeading(date)}
+                      </h2>
+                    </li>,
+                  );
+                }
+                const isToday = date === todayIso;
                 rows.push(
                   <li
-                    key={`month-${date}`}
-                    className="sticky top-0 z-10 -mx-2 bg-background/95 px-2 py-2 backdrop-blur-sm"
+                    key={date}
+                    className="grid grid-cols-[3.25rem_1fr] gap-x-4 sm:grid-cols-[4.5rem_1fr]"
                   >
-                    <h2 className="font-display text-heading-m text-lilac-700">
-                      {formatMonthHeading(date)}
-                    </h2>
+                    <h3 className="pt-0.5 text-right">
+                      <span className="block text-[11px] font-medium uppercase tracking-[0.12em] text-foreground/50">
+                        {isToday ? t("today") : formatWeekday(date)}
+                      </span>
+                      <span className="block font-display text-heading-m leading-tight text-foreground">
+                        {formatDayNumber(date)}
+                      </span>
+                      <span className="sr-only">{formatDateHeading(date)}</span>
+                    </h3>
+                    <div className="relative border-l border-lilac-300 pb-7 pl-6">
+                      <span
+                        aria-hidden="true"
+                        className={`absolute -left-[5px] top-2 h-[9px] w-[9px] rounded-full ring-4 ring-background ${
+                          group.cycle?.isPeriodStart && activeFilters.has("cycle")
+                            ? "bg-graphite-900"
+                            : "bg-lilac-500"
+                        }`}
+                      />
+                      {renderDayEntries(group)}
+                    </div>
                   </li>,
                 );
-              }
-              const isToday = date === todayIso;
-              rows.push(
-                <li
-                  key={date}
-                  className="grid grid-cols-[3.25rem_1fr] gap-x-4 sm:grid-cols-[4.5rem_1fr]"
-                >
-                  <h3 className="pt-0.5 text-right">
-                    <span className="block text-[11px] font-medium uppercase tracking-[0.12em] text-foreground/50">
-                      {isToday ? t("today") : formatWeekday(date)}
-                    </span>
-                    <span className="block font-display text-heading-m leading-tight text-foreground">
-                      {formatDayNumber(date)}
-                    </span>
-                    <span className="sr-only">{formatDateHeading(date)}</span>
-                  </h3>
-                  <div className="relative border-l border-lilac-300 pb-7 pl-6">
-                    <span
-                      aria-hidden="true"
-                      className={`absolute -left-[5px] top-2 h-[9px] w-[9px] rounded-full ring-4 ring-background ${
-                        group.cycle?.isPeriodStart && activeFilters.has("cycle")
-                          ? "bg-graphite-900"
-                          : "bg-lilac-500"
-                      }`}
-                    />
-                    {renderDayEntries(group)}
-                  </div>
-                </li>,
-              );
-              return rows;
-            })}
-          </ol>
+                return rows;
+              })}
+            </ol>
+            {hiddenDays > 0 && (
+              <button
+                type="button"
+                onClick={() => setShown({ key: listKey, days: shownDays + TIMELINE_MORE_DAYS })}
+                className="ml-[4.25rem] inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-2 sm:ml-[5.5rem]"
+              >
+                {t("showEarlier", { count: Math.min(hiddenDays, TIMELINE_MORE_DAYS) })}
+              </button>
+            )}
+          </>
         )}
 
         {!dataLoading && truncated && (

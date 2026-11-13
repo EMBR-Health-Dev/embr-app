@@ -327,6 +327,56 @@ describe("Timeline page — chronology", () => {
   });
 });
 
+describe("Timeline page — shorter list", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-30T12:00:00"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // One fatigue entry a day, Sep 1 to Sep 30: 30 days with entries.
+  const thirtyDays = Array.from({ length: 30 }, (_, i) => {
+    const day = String(30 - i).padStart(2, "0");
+    return {
+      id: `l${day}`,
+      category: "FATIGUE",
+      severity: "MILD",
+      occurredAt: `2026-09-${day}T10:00:00`,
+      notes: null,
+      createdAt: "",
+      updatedAt: "",
+    };
+  });
+
+  it("shows the 14 most recent days with entries, then loads earlier days on request", async () => {
+    symptomLogsList.mockResolvedValue({ ...emptyPage, items: thirtyDays, total: 30 });
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    await screen.findAllByRole("list", { name: "Symptoms" });
+    expect(screen.getAllByRole("list", { name: "Symptoms" })).toHaveLength(14);
+
+    await user.click(screen.getByRole("button", { name: "Show 16 earlier days" }));
+    expect(screen.getAllByRole("list", { name: "Symptoms" })).toHaveLength(30);
+    expect(screen.queryByRole("button", { name: /earlier day/ })).not.toBeInTheDocument();
+  });
+
+  it("starts again from the most recent days when the filters change", async () => {
+    symptomLogsList.mockResolvedValue({ ...emptyPage, items: thirtyDays, total: 30 });
+    const user = userEvent.setup();
+    const { default: TimelinePage } = await import("./page");
+    renderWithIntl(<TimelinePage />);
+
+    await user.click(await screen.findByRole("button", { name: "Show 16 earlier days" }));
+    expect(screen.getAllByRole("list", { name: "Symptoms" })).toHaveLength(30);
+    await user.click(screen.getByRole("button", { name: "Cycle" }));
+    expect(screen.getAllByRole("list", { name: "Symptoms" })).toHaveLength(14);
+  });
+});
+
 describe("Timeline page — full record", () => {
   it("shows how far back the record goes, and 'Full record' fetches from its first entry", async () => {
     const { fetchRecordSpan } = await import("../../lib/record-history");

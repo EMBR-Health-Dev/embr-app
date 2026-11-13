@@ -481,7 +481,8 @@
     "chronologyLabel": "Votre suivi, du plus récent au plus ancien",
     "today": "Aujourd’hui",
     "noEntryGap": "{count, plural, one {Aucune saisie pendant 1 jour} other {Aucune saisie pendant # jours}}",
-    "exerciseAnswered": "Activité physique : {value}"
+    "exerciseAnswered": "Activité physique : {value}",
+    "showEarlier": "{count, plural, one {Afficher # jour précédent} other {Afficher # jours précédents}}"
   },
   "Trends": {
     "title": "Signaux",
