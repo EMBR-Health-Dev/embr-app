@@ -268,3 +268,56 @@ export async function sendOrganizationInviteEmail(
     `You've been invited to join ${organizationName} on EMBR: ${link}`,
   );
 }
+
+/**
+ * A Help page message, sent to the support inbox with Reply-To set to
+ * the person, so answering is just replying. Unlike the transactional
+ * emails above, this one reports whether it was handed to Resend: the
+ * person is told it was sent only when it was. The message text is
+ * never logged.
+ */
+export async function sendSupportMessageEmail(input: {
+  topic: string;
+  message: string;
+  replyEmail: string;
+  page?: string;
+  platform?: string;
+  appVersion?: string;
+}): Promise<boolean> {
+  if (!resend) {
+    logger.warn({ topic: input.topic }, "RESEND_API_KEY not configured: support message not sent");
+    return false;
+  }
+  const context = [
+    `Topic: ${input.topic}`,
+    `Reply to: ${input.replyEmail}`,
+    input.page ? `Page: ${input.page}` : null,
+    input.platform ? `Platform: ${input.platform}` : null,
+    input.appVersion ? `App version: ${input.appVersion}` : null,
+  ].filter((line): line is string => line !== null);
+  const text = `${input.message}\n\n--\n${context.join("\n")}\n`;
+  const escape = (v: string) =>
+    v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const html = `<p style="white-space:pre-wrap">${escape(input.message)}</p><hr><p style="color:#666;font-size:13px">${context.map(escape).join("<br>")}</p>`;
+  try {
+    const { error } = await withTimeout(
+      resend.emails.send({
+        from: env.EMAIL_FROM,
+        to: env.SUPPORT_EMAIL,
+        replyTo: input.replyEmail,
+        subject: `[EMBR Help] ${input.topic}`,
+        html,
+        text,
+      }),
+      SEND_TIMEOUT_MS,
+    );
+    if (error) {
+      logger.error({ error, topic: input.topic }, "failed to send support message via Resend");
+      return false;
+    }
+    return true;
+  } catch (err) {
+    logger.error({ err, topic: input.topic }, "failed to send support message via Resend");
+    return false;
+  }
+}

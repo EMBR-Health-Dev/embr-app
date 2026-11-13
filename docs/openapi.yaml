@@ -734,6 +734,39 @@ paths:
                   properties:
                     category: { $ref: "#/components/schemas/SymptomCategory" }
                     count: { type: integer }
+  /support/messages:
+    post:
+      summary: Send a Help page message to the support inbox
+      description: Public, so someone who cannot sign in can still write. Nothing is stored; the message is emailed to SUPPORT_EMAIL with Reply-To set to replyEmail, and only its topic is logged. 5 per hour per IP. A filled honeypot field (company) is accepted with 202 and dropped. 503 when the email could not be sent, so the page can offer the plain address instead.
+      tags: [Support]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic, message, replyEmail]
+              properties:
+                topic:
+                  {
+                    type: string,
+                    enum: [ACCOUNT, SIGN_IN, BRIEF, SHARING, DATA_PRIVACY, PROBLEM, OTHER],
+                  }
+                message: { type: string, minLength: 10, maxLength: 2000 }
+                replyEmail: { type: string, format: email }
+                page:
+                  {
+                    type: string,
+                    description: "An app path such as /settings; never a query string",
+                  }
+                platform: { type: string, enum: [web, ios, android] }
+                appVersion: { type: string, maxLength: 40 }
+                company: { type: string, description: "Honeypot; leave empty" }
+      responses:
+        "202": { description: Sent to the support inbox }
+        "400": { description: Invalid input }
+        "429": { description: Too many messages from this address }
+        "503": { description: The email could not be sent }
   /trends/personal-baseline:
     get:
       summary: This week next to her usual week, per symptom

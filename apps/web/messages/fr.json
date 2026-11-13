@@ -25,7 +25,8 @@
     "requestEarlyAccess": "Demander un accès anticipé",
     "emailHint": "Utilisez l’e-mail avec lequel vous vous êtes inscrite.",
     "failedHelp": "Vérifiez qu’il s’agit bien de l’e-mail utilisé à l’inscription, ou",
-    "resetPassword": "réinitialisez votre mot de passe"
+    "resetPassword": "réinitialisez votre mot de passe",
+    "needHelp": "Besoin d’aide pour vous connecter ?"
   },
   "LanguageSwitcher": {
     "label": "Langue",
@@ -435,12 +436,8 @@
     "export": "Exporter",
     "organization": "Organisation",
     "logout": "Se déconnecter",
-    "feedback": "Envoyer un avis",
-    "feedbackSubject": "Avis sur EMBR",
-    "feedbackIntro": "Que s’est-il passé, ou qu’est-ce qui rendrait EMBR plus utile pour vous ?",
-    "feedbackPage": "Page",
-    "feedbackBrowser": "Navigateur",
-    "monthlyRating": "Bilan mensuel"
+    "monthlyRating": "Bilan mensuel",
+    "help": "Aide"
   },
   "Timeline": {
     "title": "Chronologie",
@@ -1699,5 +1696,75 @@
     "afterOther": "Noté {days} jours sur {total} au lendemain des autres jours où vous avez répondu",
     "caveat": "Un décompte de ce que vous avez noté : pas un diagnostic, ni une affirmation que l’un cause l’autre.",
     "whyReasoning": "Ce signal apparaît lorsqu’un symptôme a été noté le lendemain d’un facteur de contexte sur au moins 3 jours, et sur une part plus faible des lendemains de jours sans ce facteur. Seuls les jours suivis d’une saisie le lendemain sont comptés."
+  },
+  "Help": {
+    "title": "Aide",
+    "intro": "Les réponses aux questions fréquentes, et un moyen de nous écrire.",
+    "faqHeading": "Questions fréquentes",
+    "faq": {
+      "whatIsEmbr": {
+        "q": "Qu’est-ce qu’EMBR ?",
+        "a": "EMBR vous permet de garder une trace de vos symptômes, de votre cycle et de vos traitements dans le temps, et d’apporter un résumé clair à votre professionnel de santé. EMBR ne pose pas de diagnostic et ne constitue pas un avis médical."
+      },
+      "whatIsBrief": {
+        "q": "Qu’est-ce qu’un EMBR BRIEF ?",
+        "a": "Un résumé structuré de la période que vous choisissez : la fréquence de chaque symptôme noté, les tendances dans vos saisies, la durée des cycles, les traitements, et des questions que vous pourriez poser. Vous pouvez le télécharger en PDF."
+      },
+      "sharing": {
+        "q": "Comment partager mon BRIEF avec mon médecin ?",
+        "a": "Ouvrez un BRIEF et créez un lien privé. Il fonctionne 7 ou 30 jours et demande aussi un code à 6 chiffres, que vous transmettez vous-même. Vous pouvez désactiver un lien à tout moment."
+      },
+      "signIn": {
+        "q": "Je n’arrive pas à me connecter",
+        "a": "Vous pouvez réinitialiser votre mot de passe ou demander un lien de connexion par e-mail. Si aucun e-mail n’arrive après quelques minutes, vérifiez vos courriers indésirables, puis écrivez-nous ci-dessous."
+      },
+      "verify": {
+        "q": "Je n’ai pas reçu l’e-mail de vérification",
+        "a": "Vous pouvez le renvoyer depuis les Paramètres. Vérifiez aussi vos courriers indésirables."
+      },
+      "export": {
+        "q": "Comment obtenir une copie de mes données ?",
+        "a": "Utilisez Exporter pour télécharger vos saisies, ou toutes vos données en une fois."
+      },
+      "delete": {
+        "q": "Comment supprimer mon compte ?",
+        "a": "Dans les Paramètres, rubrique Supprimer le compte. Votre compte et votre dossier sont supprimés définitivement."
+      },
+      "language": {
+        "q": "Comment changer de langue ?",
+        "a": "Choisissez English, Français ou 日本語 dans les Paramètres. Votre BRIEF utilise la langue choisie."
+      }
+    },
+    "links": {
+      "resetPassword": "Réinitialiser le mot de passe",
+      "loginLink": "Recevoir un lien de connexion",
+      "settings": "Ouvrir les Paramètres",
+      "export": "Ouvrir Exporter",
+      "brief": "Ouvrir EMBR BRIEF"
+    },
+    "contactHeading": "Nous écrire",
+    "contactIntro": "Nous lisons chaque message et répondons par e-mail, en général sous deux jours ouvrés.",
+    "noHealthDetails": "Merci de ne pas inclure de détails de santé, comme des symptômes ou des médicaments. Nous n’en avons pas besoin pour vous aider avec l’application, et l’e-mail n’est pas fait pour cela.",
+    "notForEmergencies": "Ce formulaire n’est pas destiné aux questions médicales ni aux urgences, et il n’est pas surveillé en permanence.",
+    "topicLabel": "De quoi s’agit-il ?",
+    "topics": {
+      "ACCOUNT": "Mon compte",
+      "SIGN_IN": "La connexion",
+      "BRIEF": "EMBR BRIEF",
+      "SHARING": "Le partage avec mon médecin",
+      "DATA_PRIVACY": "Mes données et la confidentialité",
+      "PROBLEM": "Quelque chose ne fonctionne pas",
+      "OTHER": "Autre chose"
+    },
+    "messageLabel": "Votre message",
+    "emailLabel": "Votre e-mail, pour vous répondre",
+    "send": "Envoyer le message",
+    "sending": "Envoi…",
+    "sent": "Merci. Votre message a été envoyé, et nous répondrons à {email}.",
+    "sendAnother": "Envoyer un autre message",
+    "failed": "Votre message n’a pas pu être envoyé. Écrivez-nous plutôt à {address}.",
+    "tooMany": "Vous avez envoyé plusieurs messages en peu de temps. Réessayez dans une heure, ou écrivez-nous à {address}.",
+    "invalid": "Vérifiez les champs signalés et réessayez.",
+    "backHome": "Retour à EMBR"
   }
 }

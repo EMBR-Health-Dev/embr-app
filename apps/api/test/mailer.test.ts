@@ -461,3 +461,42 @@ describe("sendWelcomeEmail", () => {
     await expect(sendWelcomeEmail("user@example.com", "en")).resolves.toBeUndefined();
   });
 });
+
+describe("sendSupportMessageEmail", () => {
+  const input = {
+    topic: "BRIEF",
+    message: "The PDF <b>won't</b> open & I tried twice",
+    replyEmail: "maya@example.com",
+    page: "/brief",
+    platform: "web",
+  };
+
+  it("sends to the support inbox with Reply-To set to her, and escapes the message in HTML", async () => {
+    mockEnv({ SUPPORT_EMAIL: "help@embrhealthcare.com" });
+    mockSend.mockResolvedValue({ data: { id: "x" }, error: null });
+    const { sendSupportMessageEmail } = await import("../src/modules/auth/mailer.js");
+
+    expect(await sendSupportMessageEmail(input)).toBe(true);
+    const sent = mockSend.mock.calls[0]![0];
+    expect(sent).toMatchObject({
+      to: "help@embrhealthcare.com",
+      replyTo: "maya@example.com",
+      subject: "[EMBR Help] BRIEF",
+    });
+    expect(sent.html).toContain("&lt;b&gt;won't&lt;/b&gt; open &amp; I tried twice");
+    expect(sent.html).not.toContain("<b>won't</b>");
+    expect(sent.text).toContain("Page: /brief");
+  });
+
+  it("reports false, not success, when Resend refuses or email is not configured", async () => {
+    mockEnv({ SUPPORT_EMAIL: "help@embrhealthcare.com" });
+    mockSend.mockResolvedValue({ data: null, error: { message: "nope" } });
+    let mailer = await import("../src/modules/auth/mailer.js");
+    expect(await mailer.sendSupportMessageEmail(input)).toBe(false);
+
+    vi.resetModules();
+    mockEnv({ RESEND_API_KEY: undefined });
+    mailer = await import("../src/modules/auth/mailer.js");
+    expect(await mailer.sendSupportMessageEmail(input)).toBe(false);
+  });
+});
