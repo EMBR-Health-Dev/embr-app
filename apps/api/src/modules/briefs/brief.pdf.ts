@@ -23,6 +23,7 @@ import {
 import { EMBR_WORDMARK } from "../../lib/brand-wordmark.js";
 import { briefDayGrid } from "./brief-day-grid.js";
 import type { Locale } from "../../lib/locale.js";
+import { byLargestChange } from "./period-comparison-order.js";
 
 // Palette shared with the summary export: see lib/pdf-palette.ts.
 const INK = PDF_INK;
@@ -525,7 +526,9 @@ export function buildClinicalBriefPdf(
   if (brief.frequencyComparison && brief.frequencyComparison.length > 0) {
     sectionHeading(doc, t.comparedWithPreviousHeading);
     doc.fontSize(10).font(EMBR_PDF_BODY_FONT);
-    for (const { category, currentCount, previousCount } of brief.frequencyComparison) {
+    for (const { category, currentCount, previousCount } of byLargestChange(
+      brief.frequencyComparison,
+    )) {
       doc
         .fillColor(INK)
         .text(`${categoryLabel(category, locale)}`, { continued: true, width: 300 });

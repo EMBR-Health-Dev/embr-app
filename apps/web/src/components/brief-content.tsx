@@ -6,6 +6,7 @@ import type { BriefMrsSummaryDto, ClinicalBriefDto, Stage4Pattern } from "@embr/
 import { BriefDayByDay } from "./brief-day-by-day";
 import { BriefSeverityTrend } from "./brief-severity-trend";
 import { richText } from "../lib/rich-text";
+import { byLargestChange } from "../lib/period-comparison";
 import { SEVERITY_FILL, formatHistoryDate } from "../lib/symptom-history-format";
 
 /*
@@ -418,7 +419,7 @@ export function BriefContent({
         <div className={BRIEF_SECTION}>
           <h3 className={BRIEF_SECTION_HEADING}>{t("frequencyComparisonTitle")}</h3>
           <ul className="mt-1 text-foreground/70">
-            {brief.frequencyComparison.map((entry) => (
+            {byLargestChange(brief.frequencyComparison).map((entry) => (
               <li key={entry.category}>
                 {tEnum(`category.${entry.category}`)}:{" "}
                 {t("frequencyComparisonEntry", {

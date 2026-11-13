@@ -481,7 +481,8 @@
     "chronologyLabel": "Your record, newest first",
     "today": "Today",
     "noEntryGap": "{count, plural, one {No entry recorded for 1 day} other {No entry recorded for # days}}",
-    "exerciseAnswered": "Exercise: {value}"
+    "exerciseAnswered": "Exercise: {value}",
+    "showEarlier": "{count, plural, one {Show # earlier day} other {Show # earlier days}}"
   },
   "Trends": {
     "title": "Signals",
