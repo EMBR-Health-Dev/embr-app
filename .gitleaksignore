@@ -1,3 +1,4 @@
-# gitleaks: commit:file:rule:line fingerprints for two test-fixture false positives, see docs/GITLEAKS-AUDIT.md
+# gitleaks: commit:file:rule:line fingerprints for test-fixture false positives, see docs/GITLEAKS-AUDIT.md
 cde6fce00abccf90b86c7a9b9cf4df1d6b003592:apps/api/test/setup.ts:stripe-access-token:21
 365a5868dd0f713792bcac843787cc32bf56e32d:apps/mobile/lib/reset-token.test.ts:generic-api-key:14
+6a2b7c109e80848f22cb86d88dad3f70f97ababe:apps/api/test/integration/mfa.test.ts:generic-api-key:55
