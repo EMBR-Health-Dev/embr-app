@@ -123,9 +123,124 @@ paths:
             embr_csrf cookies; also returns both the access token and
             refresh token in the body for non-browser (mobile) clients,
             which have no cookie jar to read them from. Browser clients
-            rely on the cookies and can ignore both fields.
+            rely on the cookies and can ignore both fields. When two-step
+            sign in is on, the body is instead { mfaRequired: true,
+            mfaToken } with no cookies and no session: send the token and a
+            code to POST /auth/login/mfa. The same applies to
+            POST /auth/login-link/consume.
         "401": { description: Invalid email or password }
         "429": { description: Too many login attempts for this account/IP }
+  /auth/login/mfa:
+    post:
+      summary: Second step of sign in, with two-step sign in on
+      description: A 6 digit code from the authenticator app, or a one time recovery code. A challenge lasts 5 minutes and allows 5 codes; an accepted app code cannot be used again.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mfaToken, code]
+              properties:
+                mfaToken: { type: string }
+                code:
+                  { type: string, description: "123456, or a recovery code such as ABCDE-FGHJK" }
+      responses:
+        "200": { description: Session issued, exactly as POST /auth/login without two-step sign in }
+        "400": { description: Wrong code }
+        "401": { description: Challenge expired, already used, or ended after 5 wrong codes }
+  /auth/mfa:
+    get:
+      summary: Two-step sign in status
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "200":
+          description: Whether it is on, and how many recovery codes are unused
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled: { type: boolean }
+                  recoveryCodesLeft: { type: integer }
+  /auth/mfa/setup:
+    post:
+      summary: Start setting up two-step sign in
+      description: Returns a new secret and otpauth URI to add to an authenticator app. Held as pending for 15 minutes; nothing changes for sign in until /auth/mfa/confirm.
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      responses:
+        "200":
+          description: Secret and otpauth URI (shown once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret: { type: string }
+                  otpauthUri: { type: string }
+        "409": { description: Already on }
+  /auth/mfa/confirm:
+    post:
+      summary: Turn on two-step sign in with a first code from the app
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, pattern: "^\\d{3}\\s?\\d{3}$" }
+      responses:
+        "200":
+          description: 10 one time recovery codes, shown once
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recoveryCodes: { type: array, items: { type: string } }
+        "400": { description: Wrong code, or setup expired }
+  /auth/mfa/disable:
+    post:
+      summary: Turn off two-step sign in
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password, code]
+              properties:
+                password: { type: string }
+                code: { type: string }
+      responses:
+        "204": { description: Off; recovery codes deleted }
+        "400": { description: Wrong password or code }
+  /auth/mfa/recovery-codes:
+    post:
+      summary: Replace the recovery codes (the old ones stop working)
+      security: [{ cookieAuth: [] }]
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        "200": { description: 10 new recovery codes, shown once }
+        "400": { description: Wrong code }
   /auth/login-link:
     post:
       summary: Email a one time sign in link

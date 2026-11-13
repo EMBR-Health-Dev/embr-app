@@ -23,12 +23,48 @@ import {
   type Locale,
 } from "../../lib/locale.js";
 import { logger } from "../../lib/logger.js";
+import { mfaEnabled, mfaService } from "./mfa.service.js";
+import type { User } from "../../generated/prisma/index.js";
 import { notificationsRepository } from "../notifications/notifications.repository.js";
 
 interface IssuedSession {
   user: UserDto;
   accessToken: string;
   refreshToken: string;
+}
+
+/** With two-step sign in on, a correct first step gives this instead of a session. */
+export interface MfaChallengeResult {
+  mfaRequired: true;
+  mfaToken: string;
+}
+export type SignInResult = IssuedSession | MfaChallengeResult;
+
+export function isMfaChallenge(result: SignInResult): result is MfaChallengeResult {
+  return "mfaRequired" in result;
+}
+
+/** The last step of every successful sign in: a session, and the account as the client sees it. */
+async function finishSignIn(
+  req: Request,
+  user: User,
+  auditMeta: Record<string, unknown> = {},
+): Promise<IssuedSession> {
+  const { accessToken, refreshToken } = await issueSession(req, user);
+  await rememberSignInLocale(req, user.id);
+  await writeAuditLog(
+    req,
+    "LOGIN_SUCCEEDED",
+    user.id,
+    Object.keys(auditMeta).length > 0 ? auditMeta : undefined,
+  );
+  const onboarding = await onboardingRepository.findByUserId(user.id);
+  const consents = await consentService.statesFor(user.id);
+  return {
+    user: toUserDto(user, onboarding?.completedAt ?? null, consents),
+    accessToken,
+    refreshToken,
+  };
 }
 
 function requestMeta(req: Request) {
@@ -151,7 +187,7 @@ export const authService = {
     await sendVerificationEmail(user.email, token, locale);
   },
 
-  async login(req: Request, input: { email: string; password: string }): Promise<IssuedSession> {
+  async login(req: Request, input: { email: string; password: string }): Promise<SignInResult> {
     const user = await authRepository.findUserByEmail(input.email);
 
     // Always run verifyPassword, even against a dummy hash, when the
@@ -166,17 +202,16 @@ export const authService = {
       throw AppError.unauthorized("Invalid email or password");
     }
 
-    const { accessToken, refreshToken } = await issueSession(req, user);
-    await rememberSignInLocale(req, user.id);
-    await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id);
+    if (mfaEnabled(user)) {
+      return { mfaRequired: true, mfaToken: await mfaService.startChallenge(user.id, "password") };
+    }
+    return finishSignIn(req, user);
+  },
 
-    const onboarding = await onboardingRepository.findByUserId(user.id);
-    const consents = await consentService.statesFor(user.id);
-    return {
-      user: toUserDto(user, onboarding?.completedAt ?? null, consents),
-      accessToken,
-      refreshToken,
-    };
+  /** The second step: a code from the app, or a recovery code, for a challenge. */
+  async completeMfaSignIn(req: Request, mfaToken: string, code: string): Promise<IssuedSession> {
+    const { user, factor, method } = await mfaService.completeChallenge(req, mfaToken, code);
+    return finishSignIn(req, user, { mfa: factor, ...(method === "email_link" ? { method } : {}) });
   },
 
   async requestLoginLink(
@@ -194,7 +229,7 @@ export const authService = {
     await writeAuditLog(req, "LOGIN_LINK_REQUESTED", user.id);
   },
 
-  async loginWithLink(req: Request, token: string): Promise<IssuedSession> {
+  async loginWithLink(req: Request, token: string): Promise<SignInResult> {
     const userId = await authRepository.consumeLoginLinkToken(hashToken(token));
     const user = userId ? await authRepository.findUserById(userId) : null;
     if (!user) {
@@ -214,18 +249,15 @@ export const authService = {
       }
     }
 
-    const { accessToken, refreshToken } = await issueSession(req, user);
-    await rememberSignInLocale(req, user.id);
-    await writeAuditLog(req, "LOGIN_SUCCEEDED", user.id, { method: "email_link" });
     if (firstVerification) await sendWelcomeAfterFirstVerification(req, user);
-
-    const onboarding = await onboardingRepository.findByUserId(user.id);
-    const consents = await consentService.statesFor(user.id);
-    return {
-      user: toUserDto(current, onboarding?.completedAt ?? null, consents),
-      accessToken,
-      refreshToken,
-    };
+    // The link proves the email address, not the second factor.
+    if (mfaEnabled(current)) {
+      return {
+        mfaRequired: true,
+        mfaToken: await mfaService.startChallenge(user.id, "email_link"),
+      };
+    }
+    return finishSignIn(req, current, { method: "email_link" });
   },
 
   async refresh(req: Request, presentedToken: string): Promise<IssuedSession> {

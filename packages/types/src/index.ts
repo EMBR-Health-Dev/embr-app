@@ -36,6 +36,8 @@ export interface UserDto {
   email: string;
   role: Role;
   emailVerified: boolean;
+  /** Two-step sign in (an authenticator app code after the password) is on. */
+  mfaEnabled: boolean;
   createdAt: string;
   /** Null until the person finishes or explicitly skips onboarding —
    * this is the one signal both web and mobile use to decide whether
@@ -1297,4 +1299,27 @@ export interface SaveBaselineCheckInResultDto {
   baseline: BaselineCheckInDto;
   /** False when she already had a baseline; it is returned unchanged. */
   created: boolean;
+}
+
+/** POST /auth/login (and the email link) when two-step sign in is on:
+ * no session yet, only a short lived token for POST /auth/login/mfa. */
+export interface MfaChallengeDto {
+  mfaRequired: true;
+  mfaToken: string;
+}
+
+/** POST /auth/mfa/setup: shown once, to add EMBR to an authenticator app. */
+export interface MfaSetupDto {
+  secret: string;
+  otpauthUri: string;
+}
+
+/** Shown once, when two-step sign in is turned on or the codes are replaced. */
+export interface MfaRecoveryCodesDto {
+  recoveryCodes: string[];
+}
+
+export interface MfaStatusDto {
+  enabled: boolean;
+  recoveryCodesLeft: number;
 }

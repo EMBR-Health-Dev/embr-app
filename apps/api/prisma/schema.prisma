@@ -61,6 +61,17 @@ model User {
   /// Null (anyone who opted in before this existed) gets the email in
   /// English, Japanese and French together.
   weeklyEmailLocale     BriefLocale?
+  /// Two-step sign in (TOTP, RFC 6238). The secret is stored encrypted
+  /// with the field key (lib/field-crypto.ts), never in plain text.
+  /// mfaPendingSecret holds a secret during setup, until a first code
+  /// proves the authenticator app has it.
+  mfaSecret             String?
+  mfaPendingSecret      String?
+  mfaPendingAt          DateTime?
+  mfaEnabledAt          DateTime?
+  /// The 30 second step of the last code accepted, so a code that was
+  /// just used cannot be used again.
+  mfaLastUsedStep       Int?
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 
@@ -84,6 +95,8 @@ model User {
   onboardingProfile       OnboardingProfile?
   reflectionDismissals    ReflectionDismissal[]
   consentRecords          ConsentRecord[]
+  mfaRecoveryCodes        MfaRecoveryCode[]
+  mfaChallenges           MfaChallenge[]
 
   @@map("users")
 }
@@ -1252,4 +1265,35 @@ model BriefShare {
   @@index([briefId])
   @@index([userId])
   @@map("brief_shares")
+}
+
+/// One time recovery codes for two-step sign in, for when the
+/// authenticator app is lost. Only a hash is stored; each works once.
+model MfaRecoveryCode {
+  id        String    @id @default(uuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@map("mfa_recovery_codes")
+}
+
+/// The step between a correct password (or sign in link) and a session,
+/// for someone with two-step sign in on. Holds no session; only a hash
+/// of the token the client keeps for a few minutes.
+model MfaChallenge {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  method    String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mfa_challenges")
 }
