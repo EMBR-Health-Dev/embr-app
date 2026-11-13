@@ -1248,6 +1248,7 @@
   "Consent": {
     "termsLabel": "Je comprends qu’EMBR est en accès anticipé privé et encore en phase de test.",
     "privacyLabel": "Je comprends comment mes informations seront utilisées pour tester EMBR.",
+    "earlyAccessLabel": "Je comprends qu’EMBR est en accès anticipé privé, encore en phase de test, et comment mes informations seront utilisées pour ces tests.",
     "healthExplanation": "EMBR utilise les informations de santé que vous choisissez de saisir, notamment vos symptômes, votre cycle, votre contexte quotidien et vos traitements, pour constituer votre suivi EMBR, montrer les évolutions dans le temps et créer votre EMBR BRIEF.",
     "healthLabel": "Je consens au traitement par EMBR des informations de santé que je fournis, pour ces finalités.",
     "manageNote": "Vous pouvez gérer vos choix de confidentialité dans les paramètres de votre compte. Lorsque le traitement repose sur votre consentement, vous pouvez le retirer à tout moment.",

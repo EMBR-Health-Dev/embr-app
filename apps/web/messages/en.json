@@ -1248,6 +1248,7 @@
   "Consent": {
     "termsLabel": "I understand that EMBR is in private early access and is still being tested.",
     "privacyLabel": "I understand how my information will be used for testing EMBR.",
+    "earlyAccessLabel": "I understand that EMBR is in private early access, is still being tested, and how my information will be used for testing.",
     "healthExplanation": "EMBR uses the health information you choose to enter, including symptoms, cycle details, daily context and treatments, to provide your EMBR record, show changes over time and create your EMBR BRIEF.",
     "healthLabel": "I consent to EMBR processing the health information I provide for these purposes.",
     "manageNote": "You can manage your privacy choices in your account settings. Where processing is based on consent, you can withdraw your consent at any time.",

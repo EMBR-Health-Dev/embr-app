@@ -341,7 +341,16 @@ accounts the same way with or without one. People who already have an
 account can still log in and accept. While sign up is closed, the invite
 page offers newcomers early access instead of "Create an account".
 
-To reopen: publish the final legal documents, add their links back to the
+**Beta sign up (decided 2026-11-13).** The founder chose to open web sign up
+for the beta before the final documents are published. The form asks for an
+early access acknowledgement (one box, recorded as `TERMS` and `PRIVACY` at
+their draft versions) and, separately, health processing consent. It does not
+link to or ask agreement to the unpublished Terms or Privacy Policy. To open:
+set `PUBLIC_REGISTRATION_ENABLED=true` on the API and
+`NEXT_PUBLIC_REGISTRATION_OPEN=true` on the web service, then redeploy the web
+(it is a build-time value). Mobile stays closed.
+
+To open with final documents later: publish the final legal documents, add their links back to the
 consent screen (`LEGAL_DOCUMENT_URLS`, see `docs/legal/consent-decision-sheet.md`),
 set the final `LEGAL_DOCUMENT_VERSIONS`, then set all three to `true` (web and
 mobile need a rebuild, since public env values are baked in at build time; the
