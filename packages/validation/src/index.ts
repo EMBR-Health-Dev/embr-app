@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+// Zod 4 words a missing value as "Invalid input: expected string, received
+// undefined". Keep Zod 3's "Required" so API error details, which the web
+// and mobile apps can show, read the same as before the upgrade.
+z.config({
+  customError: (issue) =>
+    issue.code === "invalid_type" && issue.input === undefined ? "Required" : undefined,
+});
+
 /**
  * Shared Zod primitives so every app validates pagination, IDs, etc.
  * identically. Domain schemas (RegisterUserSchema, LogSymptomSchema, ...)
