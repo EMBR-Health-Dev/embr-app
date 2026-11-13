@@ -973,3 +973,35 @@ export const saveBaselineCheckInSchema = z
     path: ["symptomsAnswered"],
   });
 export type SaveBaselineCheckInInput = z.infer<typeof saveBaselineCheckInSchema>;
+
+// ---- Help page contact form (POST /support/messages) ----
+
+export const SUPPORT_TOPICS = [
+  "ACCOUNT",
+  "SIGN_IN",
+  "BRIEF",
+  "SHARING",
+  "DATA_PRIVACY",
+  "PROBLEM",
+  "OTHER",
+] as const;
+export const MAX_SUPPORT_MESSAGE_LENGTH = 2000;
+
+export const supportMessageSchema = z.object({
+  topic: z.enum(SUPPORT_TOPICS),
+  message: z.string().trim().min(10, "Tell us a little more").max(MAX_SUPPORT_MESSAGE_LENGTH),
+  replyEmail: z.string().trim().toLowerCase().email("Must be a valid email address").max(254),
+  // Where she was in the app: a path only, never a query string, which
+  // can carry dates or ids.
+  page: z
+    .string()
+    .max(200)
+    .regex(/^\/[A-Za-z0-9/_-]*$/, "A path such as /settings")
+    .optional(),
+  platform: z.enum(["web", "ios", "android"]).optional(),
+  appVersion: z.string().max(40).optional(),
+  // Left empty by people; filled by form-filling bots. Not an error, so a
+  // bot learns nothing: the message is accepted and quietly dropped.
+  company: z.string().max(200).optional(),
+});
+export type SupportMessageInput = z.infer<typeof supportMessageSchema>;

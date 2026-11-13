@@ -83,6 +83,9 @@ const apiEnvSchema = z.object({
   // email. Same env-var-with-a-real-default pattern the old SMTP_FROM
   // used, just renamed since it's no longer SMTP-specific.
   EMAIL_FROM: z.string().default("no-reply@embrhealthcare.com"),
+  // Where Help page messages are delivered (POST /support/messages). An
+  // inbox, not a database: support messages are never stored by EMBR.
+  SUPPORT_EMAIL: z.string().email().default("info@embrhealthcare.com"),
 
   // ---- Retention (closed-beta minimum) ----
   // Applies only to already-dead rows (expired tokens, expired/revoked

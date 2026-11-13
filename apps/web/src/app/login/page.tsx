@@ -223,6 +223,14 @@ function LoginForm() {
           </a>
         )}
       </p>
+      <p className="mt-3 text-center text-sm">
+        <Link
+          href="/help?from=%2Flogin#contact"
+          className="inline-flex min-h-11 items-center text-foreground/60 underline underline-offset-2 sm:min-h-0"
+        >
+          {t("needHelp")}
+        </Link>
+      </p>
     </div>
   );
 }

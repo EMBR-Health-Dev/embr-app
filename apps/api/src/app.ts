@@ -36,6 +36,7 @@ import { onboardingRouter } from "./modules/onboarding/onboarding.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { consentRouter } from "./modules/consent/consent.routes.js";
 import { publicAssessmentRouter } from "./modules/public-assessment/public-assessment.routes.js";
+import { supportRouter } from "./modules/support/support.routes.js";
 import { billingRouter } from "./modules/billing/billing.routes.js";
 import { billingWebhookRouter } from "./modules/billing/billing.webhook.routes.js";
 
@@ -152,6 +153,7 @@ export function createApp(): Express {
   app.use(notificationsRouter);
   app.use(consentRouter);
   app.use(publicAssessmentRouter);
+  app.use(supportRouter);
 
   // ---- 404 + error handling (must be last) ----
   app.use(notFoundMiddleware());

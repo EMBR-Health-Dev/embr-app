@@ -25,7 +25,8 @@
     "requestEarlyAccess": "Request early access",
     "emailHint": "Use the email you signed up with.",
     "failedHelp": "Check the email is the one you signed up with, or",
-    "resetPassword": "reset your password"
+    "resetPassword": "reset your password",
+    "needHelp": "Need help signing in?"
   },
   "LanguageSwitcher": {
     "label": "Language",
@@ -435,12 +436,8 @@
     "export": "Export",
     "organization": "Organization",
     "logout": "Log out",
-    "feedback": "Send feedback",
-    "feedbackSubject": "EMBR feedback",
-    "feedbackIntro": "What happened, or what would make EMBR better for you?",
-    "feedbackPage": "Page",
-    "feedbackBrowser": "Browser",
-    "monthlyRating": "Monthly rating"
+    "monthlyRating": "Monthly rating",
+    "help": "Help"
   },
   "Timeline": {
     "title": "Timeline",
@@ -1791,5 +1788,75 @@
     "afterOther": "Recorded on {days} of {total} days after other days you answered this",
     "caveat": "Counts of what you recorded: not a diagnosis, and not a claim that one causes the other.",
     "whyReasoning": "This appears when a symptom was recorded on the day after a context factor on at least 3 days, and on a smaller share of the days after days without it. Only days that have an entry the next day are counted."
+  },
+  "Help": {
+    "title": "Help",
+    "intro": "Answers to common questions, and a way to reach us.",
+    "faqHeading": "Common questions",
+    "faq": {
+      "whatIsEmbr": {
+        "q": "What is EMBR?",
+        "a": "EMBR is a place to keep a record of your symptoms, cycle and treatments over time, and to bring a clear summary of it to your healthcare provider. It does not diagnose, and it is not medical advice."
+      },
+      "whatIsBrief": {
+        "q": "What is an EMBR BRIEF?",
+        "a": "A structured summary of the period you choose: how often each symptom was recorded, patterns in what you logged, cycle lengths and treatments, and questions you may want to ask. You can download it as a PDF."
+      },
+      "sharing": {
+        "q": "How do I share my BRIEF with my clinician?",
+        "a": "Open a BRIEF and create a private link. It works for 7 or 30 days and also needs a 6 digit code, which you give your clinician yourself. You can turn a link off at any time."
+      },
+      "signIn": {
+        "q": "I can't sign in",
+        "a": "You can reset your password, or ask for a sign in link by email. If neither email arrives within a few minutes, check your spam folder, then write to us below."
+      },
+      "verify": {
+        "q": "I didn't get the verification email",
+        "a": "You can send it again from Settings. Check your spam folder too."
+      },
+      "export": {
+        "q": "How do I get a copy of my data?",
+        "a": "Use Export to download your entries, or all your data at once."
+      },
+      "delete": {
+        "q": "How do I delete my account?",
+        "a": "In Settings, under Delete account. This permanently removes your account and your record."
+      },
+      "language": {
+        "q": "How do I change the language?",
+        "a": "Choose English, Français or 日本語 in Settings. Your BRIEF uses the language you choose."
+      }
+    },
+    "links": {
+      "resetPassword": "Reset password",
+      "loginLink": "Get a sign in link",
+      "settings": "Open Settings",
+      "export": "Open Export",
+      "brief": "Open EMBR BRIEF"
+    },
+    "contactHeading": "Contact us",
+    "contactIntro": "We read every message and reply by email, usually within two working days.",
+    "noHealthDetails": "Please don't include health details, such as symptoms or medicines. We don't need them to help with the app, and email isn't the place for them.",
+    "notForEmergencies": "This form is not for medical questions or emergencies, and it is not watched around the clock.",
+    "topicLabel": "What is it about?",
+    "topics": {
+      "ACCOUNT": "My account",
+      "SIGN_IN": "Signing in",
+      "BRIEF": "EMBR BRIEF",
+      "SHARING": "Sharing with my clinician",
+      "DATA_PRIVACY": "My data and privacy",
+      "PROBLEM": "Something isn't working",
+      "OTHER": "Something else"
+    },
+    "messageLabel": "Your message",
+    "emailLabel": "Your email, so we can reply",
+    "send": "Send message",
+    "sending": "Sending…",
+    "sent": "Thank you. Your message was sent, and we'll reply to {email}.",
+    "sendAnother": "Send another message",
+    "failed": "Your message could not be sent. Please email us at {address} instead.",
+    "tooMany": "You've sent several messages in a short time. Please try again in an hour, or email us at {address}.",
+    "invalid": "Check the highlighted fields and try again.",
+    "backHome": "Back to EMBR"
   }
 }
