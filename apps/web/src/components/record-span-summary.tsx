@@ -39,7 +39,7 @@ export function RecordSpanSummary({
       {showTimelineLink && (
         <Link
           href="/timeline?range=all"
-          className="mt-1 inline-block text-sm font-medium text-lilac-700 underline underline-offset-2"
+          className="mt-1 text-sm font-medium text-lilac-700 underline underline-offset-2 inline-flex min-h-11 items-center sm:min-h-0"
         >
           {t("viewFullTimeline")}
         </Link>

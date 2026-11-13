@@ -267,7 +267,7 @@ export function DailyCheckIn({ onSaved }: { onSaved: () => void }) {
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="mt-3 text-sm font-medium text-lilac-700 underline underline-offset-4"
+          className="mt-3 text-sm font-medium text-lilac-700 underline underline-offset-4 inline-flex min-h-11 items-center sm:min-h-0"
         >
           {showAll ? t("showFewer") : t("addAnother")}
         </button>

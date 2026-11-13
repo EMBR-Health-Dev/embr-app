@@ -48,7 +48,10 @@ export function WeeklyEmailControl() {
           onChange={(e) => void update(e.target.checked)}
           className="h-5 w-5 accent-lilac-700 disabled:opacity-60"
         />
-        <label htmlFor={id} className="text-sm font-medium text-foreground">
+        <label
+          htmlFor={id}
+          className="flex min-h-11 items-center text-sm font-medium text-foreground sm:min-h-0"
+        >
           {t("weeklyEmailToggle")}
         </label>
       </div>

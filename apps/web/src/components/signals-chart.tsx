@@ -178,7 +178,7 @@ export function SignalsChart({
               {row.href ? (
                 <Link
                   href={row.href}
-                  className="text-body-s font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="inline-flex min-h-11 items-center text-body-s font-medium text-foreground underline-offset-4 hover:underline sm:min-h-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   {row.label}
                 </Link>

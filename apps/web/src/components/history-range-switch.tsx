@@ -29,7 +29,7 @@ export function HistoryRangeSwitch({
             aria-pressed={active}
             disabled={disabled}
             onClick={() => onChange(range)}
-            className={`rounded-sm border px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 ${
+            className={`min-h-11 rounded-sm border px-3.5 py-1.5 sm:min-h-0 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 ${
               active
                 ? "border-lilac-700 bg-lilac-100 text-foreground"
                 : "border-lilac-300 bg-background text-foreground hover:border-lilac-500"

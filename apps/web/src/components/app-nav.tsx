@@ -150,7 +150,7 @@ export function AppNav({
         <details data-testid="app-nav-mobile" className="group relative md:hidden">
           <summary
             aria-label={t("menu")}
-            className="cursor-pointer list-none font-medium text-muted-foreground marker:content-none hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="flex min-h-11 cursor-pointer list-none items-center font-medium text-muted-foreground marker:content-none hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             {t("menu")}
           </summary>
@@ -160,7 +160,7 @@ export function AppNav({
                 key={link.href}
                 href={link.href}
                 aria-current={isActive(link.href) ? "page" : undefined}
-                className={`rounded-sm px-2 py-1.5 font-medium ${
+                className={`flex min-h-11 items-center rounded-sm px-2 py-1.5 font-medium ${
                   isActive(link.href)
                     ? "text-foreground underline decoration-primary decoration-2 underline-offset-4"
                     : "text-foreground hover:bg-muted"
@@ -174,19 +174,22 @@ export function AppNav({
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-sm px-2 py-1.5 text-foreground hover:bg-muted"
+                className="flex min-h-11 items-center rounded-sm px-2 py-1.5 text-foreground hover:bg-muted"
               >
                 {link.label}
               </Link>
             ))}
-            <a href={feedback} className="rounded-sm px-2 py-1.5 text-foreground hover:bg-muted">
+            <a
+              href={feedback}
+              className="flex min-h-11 items-center rounded-sm px-2 py-1.5 text-foreground hover:bg-muted"
+            >
               {t("feedback")}
             </a>
             <div className="my-1 h-px bg-border-subtle" aria-hidden="true" />
             <span className="truncate px-2 py-1 text-xs text-muted-foreground">{userEmail}</span>
             <button
               onClick={onLogout}
-              className="rounded-sm px-2 py-1.5 text-left text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center rounded-sm px-2 py-1.5 text-left text-foreground hover:bg-muted"
             >
               {t("logout")}
             </button>
