@@ -1,6 +1,11 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import i18next from "i18next";
-import { isOnboardingStep, STEP_ROUTES, ONBOARDING_STEPS } from "./onboarding-steps";
+import {
+  isOnboardingStep,
+  STEP_ROUTES,
+  ONBOARDING_STEPS,
+  ONBOARDING_FLOW,
+} from "./onboarding-steps";
 import { firstSuggestedCategory, ONBOARDING_AREA_TO_CATEGORIES } from "./onboarding-areas";
 import { startingPointMessageKey } from "./onboarding-starting-point";
 import en from "../locales/en.json";
@@ -21,6 +26,23 @@ describe("isOnboardingStep", () => {
   it("every step has a corresponding mobile route", () => {
     for (const step of ONBOARDING_STEPS) {
       expect(STEP_ROUTES[step]).toMatch(/^\/onboarding\//);
+    }
+  });
+});
+
+describe("the two screen onboarding", () => {
+  it("shows a welcome, then what she has noticed", () => {
+    expect(ONBOARDING_FLOW).toEqual(["WELCOME", "WHATS_GOING_ON"]);
+  });
+
+  it("resumes anyone stopped on a removed step at what she has noticed", () => {
+    for (const step of [
+      "JOB_TO_BE_DONE",
+      "LIFE_STAGE",
+      "APPOINTMENT_STATUS",
+      "THE_LOOP",
+    ] as const) {
+      expect(STEP_ROUTES[step]).toBe("/onboarding/whats-going-on");
     }
   });
 });

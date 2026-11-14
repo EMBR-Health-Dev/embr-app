@@ -8,6 +8,15 @@ const API_URL = process.env.API_URL ?? "http://localhost:4000";
 const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  // Onboarding is two screens now (welcome, what she has noticed); an
+  // open tab or bookmark on one of the old screens lands on the second.
+  async redirects() {
+    return ["job-to-be-done", "life-stage", "appointment-status", "the-loop"].map((step) => ({
+      source: `/onboarding/${step}`,
+      destination: "/onboarding/whats-going-on",
+      permanent: false,
+    }));
+  },
   async rewrites() {
     // Proxying through the Next.js server means the browser only ever
     // talks to its own origin — the API's Set-Cookie response headers

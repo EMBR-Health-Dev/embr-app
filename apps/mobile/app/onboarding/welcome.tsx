@@ -15,8 +15,8 @@ export default function WelcomeScreen() {
   async function handleContinue() {
     setStarting(true);
     try {
-      await patch({ currentStep: "JOB_TO_BE_DONE" });
-      router.push(STEP_ROUTES.JOB_TO_BE_DONE);
+      await patch({ currentStep: "WHATS_GOING_ON" });
+      router.push(STEP_ROUTES.WHATS_GOING_ON);
     } finally {
       setStarting(false);
     }
