@@ -1,6 +1,7 @@
 import type {
   NotificationPreferencesDto,
   AuthSessionResponse,
+  MfaChallengeDto,
   BriefTrendsDto,
   ClinicalBriefDto,
   ClinicalBriefListItemDto,
@@ -36,8 +37,16 @@ export const api = {
     register: (input: { email: string; password: string }) =>
       apiFetch<UserDto>("/auth/register", { method: "POST", body: input }),
 
+    /** With two-step sign in on, a challenge comes back instead of a session. */
     login: (input: { email: string; password: string }) =>
-      apiFetch<AuthSessionResponse>("/auth/login", { method: "POST", body: input }),
+      apiFetch<AuthSessionResponse | MfaChallengeDto>("/auth/login", {
+        method: "POST",
+        body: input,
+      }),
+
+    /** The second step: a code from her authenticator app, or a recovery code. */
+    completeMfa: (input: { mfaToken: string; code: string }) =>
+      apiFetch<AuthSessionResponse>("/auth/login/mfa", { method: "POST", body: input }),
 
     // Unlike apps/web, which relies on the refresh token cookie and
     // sends no body, mobile has to present the refresh token itself

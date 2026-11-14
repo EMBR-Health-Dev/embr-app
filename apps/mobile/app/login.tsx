@@ -10,6 +10,8 @@ import { LanguageSwitcher } from "../components/language-switcher";
 import { errorMarker, theme } from "../lib/theme";
 import { WEB_SIGN_UP_HREF, isRegistrationOpen } from "../lib/registration";
 import { BrandWordmark } from "../components/brand-wordmark";
+import { MfaCodeStep } from "../components/mfa-code-step";
+import type { UserDto } from "@embr/types";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -25,6 +27,12 @@ export default function LoginScreen() {
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Set when two-step sign in is on: the password was right, now the code.
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+
+  function goIn(user: UserDto) {
+    router.replace(user.onboardingCompletedAt ? "/(app)" : "/onboarding");
+  }
 
   async function handleSubmit() {
     setFormError(null);
@@ -38,13 +46,31 @@ export default function LoginScreen() {
 
     setSubmitting(true);
     try {
-      const user = await login(parsed.data.email, parsed.data.password);
-      router.replace(user.onboardingCompletedAt ? "/(app)" : "/onboarding");
+      const result = await login(parsed.data.email, parsed.data.password);
+      if ("mfaToken" in result) setMfaToken(result.mfaToken);
+      else goIn(result.user);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : t("login.genericError"));
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (mfaToken) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.content}>
+          <MfaCodeStep
+            mfaToken={mfaToken}
+            onSignedIn={goIn}
+            onRestart={() => {
+              setMfaToken(null);
+              setPassword("");
+            }}
+          />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (

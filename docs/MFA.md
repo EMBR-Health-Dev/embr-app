@@ -61,16 +61,34 @@ on. Every client that signs in (web, admin, mobile) must handle
 someone who turns it on on the web can't sign in to an app that can't ask
 for the code.
 
-| Part | What                                                                                                                                                                                                     | Status  |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| 1    | API (#322)                                                                                                                                                                                               | Merged  |
-| 2    | Web: the code step on `/login` and `/login-link` (always on), and the Settings section (`components/two-step-settings.tsx`), hidden unless `NEXT_PUBLIC_MFA_SETUP_ENABLED=true` or she already has it on | This PR |
-| 3    | Mobile and admin login code step                                                                                                                                                                         | Next    |
+| Part | What                                                                                                                                                           | Status  |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1    | API (#322)                                                                                                                                                     | Merged  |
+| 2    | Web: the code step on `/login` and `/login-link`, and the Settings section, hidden unless `NEXT_PUBLIC_MFA_SETUP_ENABLED=true` or she already has it on (#324) | Merged  |
+| 3    | Mobile (`app/login.tsx`, `components/mfa-code-step.tsx`, `lib/auth-context.tsx`) and admin (`app/login/page.tsx`) login code step                              | This PR |
 
-Set `NEXT_PUBLIC_MFA_SETUP_ENABLED=true` on the web service (a build
-argument, like `NEXT_PUBLIC_REGISTRATION_OPEN`) only once part 3 has shipped.
-Until then nobody can turn it on, and the web code step is ready for when
-they can.
+Once part 3 is merged and deployed, turn setup on:
+
+1. Admin: deployed with the web apps, nothing else to wait for.
+2. Mobile: the code step is in the app itself, so it reaches people only with
+   a new build. Before turning setup on, make sure the build testers have
+   installed includes part 3; an older build shows the API's answer to a
+   two-step account as a failed sign in, with no way to enter the code.
+3. Then set `NEXT_PUBLIC_MFA_SETUP_ENABLED=true` on the web service (a build
+   argument, like `NEXT_PUBLIC_REGISTRATION_OPEN`) and redeploy the web.
+
+### On mobile and admin
+
+- Mobile: `login()` in the auth context returns either the signed in user or
+  `{ mfaToken }`. No tokens are written to the phone's secure storage until
+  `completeMfa` succeeds. The login screen then shows the same code step as
+  the web (EN/FR/JA), with the recovery code switch, and `/auth/login/mfa` is
+  in the mobile API client's no-refresh list.
+- Admin: the login page asks for the code after the password, and checks the
+  ADMIN role only once the code is accepted, logging a non-admin back out as
+  before. When the challenge ends it returns to the password step.
+- Setup and turning it off stay on the web Settings page; mobile and admin
+  only sign in.
 
 ### On the web
 

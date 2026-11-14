@@ -16,6 +16,23 @@
     "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
     "signUpOnWeb": "S’inscrire sur le web"
   },
+  "mfa": {
+    "title": "Saisissez votre code",
+    "subtitle": "Ouvrez votre application d’authentification et saisissez le code à 6 chiffres d’EMBR.",
+    "recoverySubtitle": "Saisissez l’un des codes de récupération enregistrés lors de l’activation de la connexion en deux étapes. Chaque code ne fonctionne qu’une fois.",
+    "codeLabel": "Code à 6 chiffres",
+    "recoveryCodeLabel": "Code de récupération",
+    "enterCode": "Saisissez le code à 6 chiffres de votre application.",
+    "enterRecoveryCode": "Saisissez l’un de vos codes de récupération.",
+    "wrongCode": "Ce code n’est pas correct. Vérifiez votre application et réessayez.",
+    "verify": "Continuer",
+    "verifying": "Vérification…",
+    "useRecovery": "Utiliser plutôt un code de récupération",
+    "useApp": "Utiliser plutôt le code de mon application",
+    "lostBoth": "Vous avez perdu votre téléphone et vos codes de récupération ? Contactez-nous depuis la page Aide du site EMBR et nous vous aiderons à retrouver l’accès.",
+    "startAgain": "Se reconnecter",
+    "genericError": "Un problème est survenu. Réessayez dans un instant."
+  },
   "languageSwitcher": {
     "label": "Langue",
     "en": "English",
