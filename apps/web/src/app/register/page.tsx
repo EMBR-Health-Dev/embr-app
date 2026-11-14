@@ -71,7 +71,8 @@ function RegisterForm() {
     });
     const missingConsents: Partial<Record<ConsentType, string>> = {};
     if (!consentChecked.TERMS) missingConsents.TERMS = tConsent("termsRequired");
-    if (!consentChecked.PRIVACY) missingConsents.PRIVACY = tConsent("privacyRequired");
+    // TERMS and PRIVACY share one box here, so one message is enough.
+    else if (!consentChecked.PRIVACY) missingConsents.PRIVACY = tConsent("privacyRequired");
     if (!parsed.success || Object.keys(missingConsents).length > 0) {
       const errors: Record<string, string> = {};
       for (const issue of parsed.success ? [] : parsed.error.issues) {
@@ -175,7 +176,7 @@ function RegisterForm() {
           <p className="text-xs text-foreground/50">{t("passwordHint")}</p>
 
           <ConsentItems
-            items={["TERMS", "PRIVACY", "HEALTH_PROCESSING"]}
+            items={[["TERMS", "PRIVACY"], "HEALTH_PROCESSING"]}
             checked={consentChecked}
             onToggle={(type, value) => setConsentChecked((prev) => ({ ...prev, [type]: value }))}
             errors={consentErrors}

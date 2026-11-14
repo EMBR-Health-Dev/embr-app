@@ -37,8 +37,9 @@ async function fillCredentials(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Password"), "Sup3rSecret!Pass");
 }
 
-const termsBox = () => screen.getByRole("checkbox", { name: /private early access/ });
-const privacyBox = () => screen.getByRole("checkbox", { name: /how my information will be used/ });
+// One box confirms both early access items (TERMS and PRIVACY).
+const earlyAccessBox = () =>
+  screen.getByRole("checkbox", { name: /private early access.*how my information will be used/ });
 const healthBox = () => screen.getByRole("checkbox", { name: /health information I provide/ });
 
 beforeEach(() => {
@@ -46,11 +47,10 @@ beforeEach(() => {
 });
 
 describe("Register — consent", () => {
-  it("shows three separate boxes, none pre-checked", async () => {
+  it("shows two boxes, early access and health, none pre-checked", async () => {
     await renderPage();
-    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
-    expect(termsBox()).not.toBeChecked();
-    expect(privacyBox()).not.toBeChecked();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+    expect(earlyAccessBox()).not.toBeChecked();
     expect(healthBox()).not.toBeChecked();
     expect(screen.getByText(/uses the health information you choose to enter/)).toBeInTheDocument();
   });
@@ -72,7 +72,7 @@ describe("Register — consent", () => {
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(registerMock).not.toHaveBeenCalled();
-    expect(screen.getAllByText("Please confirm this item to continue.")).toHaveLength(2);
+    expect(screen.getAllByText("Please confirm this item to continue.")).toHaveLength(1);
   });
 
   it("sends each ticked item with the version shown, the language and the client", async () => {
@@ -80,8 +80,7 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage();
     await fillCredentials(user);
-    await user.click(termsBox());
-    await user.click(privacyBox());
+    await user.click(earlyAccessBox());
     await user.click(healthBox());
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
@@ -104,8 +103,7 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage();
     await fillCredentials(user);
-    await user.click(termsBox());
-    await user.click(privacyBox());
+    await user.click(earlyAccessBox());
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => expect(registerMock).toHaveBeenCalledTimes(1));
@@ -122,8 +120,7 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage();
     await fillCredentials(user);
-    await user.click(termsBox());
-    await user.click(privacyBox());
+    await user.click(earlyAccessBox());
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(await screen.findByText("Please review this item to continue.")).toBeInTheDocument();
@@ -135,8 +132,7 @@ describe("Register — consent", () => {
     const user = userEvent.setup();
     await renderPage();
     await fillCredentials(user);
-    await user.click(termsBox());
-    await user.click(privacyBox());
+    await user.click(earlyAccessBox());
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(await screen.findByText(/Please reload the page/)).toBeInTheDocument();

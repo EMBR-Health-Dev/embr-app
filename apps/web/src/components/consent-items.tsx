@@ -10,6 +10,14 @@ const LABEL_KEY: Record<ConsentType, "termsLabel" | "privacyLabel" | "healthLabe
 };
 
 /**
+ * One item, or several confirmed by a single box. Sign up asks for the
+ * two early access acknowledgements (TERMS and PRIVACY) with one box to
+ * keep it short; each is still recorded separately, with its version.
+ * Health processing is always its own box.
+ */
+export type ConsentItem = ConsentType | readonly ConsentType[];
+
+/**
  * One separate, unchecked-by-default checkbox per consent item. Shared
  * by the registration form and the consent screen so the wording and
  * behaviour can never drift between them. Checked state is always
@@ -26,7 +34,7 @@ export function ConsentItems({
   errors = {},
   notes = {},
 }: {
-  items: ConsentType[];
+  items: readonly ConsentItem[];
   checked: Partial<Record<ConsentType, boolean>>;
   onToggle: (type: ConsentType, value: boolean) => void;
   errors?: Partial<Record<ConsentType, string>>;
@@ -36,12 +44,15 @@ export function ConsentItems({
 
   return (
     <fieldset className="flex flex-col gap-4">
-      {items.map((type) => {
-        const id = `consent-${type}`;
-        const error = errors[type];
-        const note = notes[type];
+      {items.map((item) => {
+        const types: readonly ConsentType[] = typeof item === "string" ? [item] : item;
+        const type = types[0]!;
+        const combined = types.length > 1;
+        const id = `consent-${types.join("-")}`;
+        const error = types.map((t) => errors[t]).find(Boolean);
+        const note = types.map((t) => notes[t]).find(Boolean);
         return (
-          <div key={type} className="flex flex-col gap-2">
+          <div key={id} className="flex flex-col gap-2">
             {type === "HEALTH_PROCESSING" && (
               <p className="text-sm text-foreground/70">{t("healthExplanation")}</p>
             )}
@@ -49,14 +60,16 @@ export function ConsentItems({
               <input
                 id={id}
                 type="checkbox"
-                checked={checked[type] === true}
-                onChange={(e) => onToggle(type, e.target.checked)}
+                checked={types.every((t) => checked[t] === true)}
+                onChange={(e) => {
+                  for (const t of types) onToggle(t, e.target.checked);
+                }}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `${id}-error` : note ? `${id}-note` : undefined}
                 className="mt-0.5 h-4 w-4 shrink-0 accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               />
               <label htmlFor={id} className="text-sm text-foreground">
-                {t(LABEL_KEY[type])}
+                {combined ? t("earlyAccessLabel") : t(LABEL_KEY[type])}
               </label>
             </div>
             {note && (

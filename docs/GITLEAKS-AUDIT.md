@@ -103,3 +103,9 @@ If the gate goes red again: run the two commands in section D and diff
 the output against the committed file. Unknown fingerprints are a new
 finding, not noise — triage it before adding it. This file is an
 allowlist for reviewed false positives, not a general mute button.
+
+## G. Later additions
+
+| Date       | Fingerprint                                                          | Why it is a false positive                                                                                                                                                                 |
+| ---------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-11-13 | `6a2b7c10…:apps/api/test/integration/mfa.test.ts:generic-api-key:55` | `const PASSWORD = "..."` is the password of a throwaway account the two-step sign in integration test creates in the local test database and deletes afterwards. It is no real credential. |
