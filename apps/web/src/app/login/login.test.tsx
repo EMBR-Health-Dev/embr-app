@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
+import { ApiError } from "../../lib/api-client";
 
 const routerPush = vi.fn();
 let searchParamsValue = new URLSearchParams();
@@ -19,10 +20,12 @@ vi.mock("../../lib/auth-context", () => ({
 }));
 
 const loginMock = vi.fn();
+const completeMfaMock = vi.fn();
 vi.mock("../../lib/api", () => ({
   api: {
     auth: {
       login: (...args: unknown[]) => loginMock(...args),
+      completeMfa: (...args: unknown[]) => completeMfaMock(...args),
     },
     sso: { startUrl: (email: string) => `/api/auth/sso/start?email=${email}` },
   },
@@ -47,6 +50,7 @@ beforeEach(() => {
   routerPush.mockClear();
   refreshMock.mockClear();
   loginMock.mockReset();
+  completeMfaMock.mockReset();
   searchParamsValue = new URLSearchParams();
 });
 
@@ -250,5 +254,83 @@ describe("Login — consent routing", () => {
     renderWithIntl(<LoginPage />);
     await fillAndSubmit();
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/dashboard"));
+  });
+});
+
+describe("Login — two-step sign in", () => {
+  const session = {
+    user: { id: "u1", email: "person@embr.health", onboardingCompletedAt: "2026-10-01" },
+    accessToken: "at",
+    refreshToken: "rt",
+  };
+
+  async function reachCodeStep() {
+    loginMock.mockResolvedValue({ mfaRequired: true, mfaToken: "challenge-token" });
+    const { default: LoginPage } = await import("./page");
+    renderWithIntl(<LoginPage />);
+    await fillAndSubmit();
+    expect(await screen.findByRole("heading", { name: "Enter your code" })).toBeInTheDocument();
+  }
+
+  it("asks for the code after the password and does not sign in until then", async () => {
+    await reachCodeStep();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(routerPush).not.toHaveBeenCalled();
+
+    completeMfaMock.mockResolvedValue(session);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("6 digit code"), "123 456");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/dashboard"));
+    expect(completeMfaMock).toHaveBeenCalledWith({ mfaToken: "challenge-token", code: "123 456" });
+    expect(refreshMock).toHaveBeenCalled();
+  });
+
+  it("keeps her on the code step after a wrong code", async () => {
+    await reachCodeStep();
+    completeMfaMock.mockRejectedValue(
+      new ApiError(400, "VALIDATION_ERROR", "That code is not right"),
+    );
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("6 digit code"), "000000");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      await screen.findByText("That code is not right. Check your app and try again."),
+    ).toBeInTheDocument();
+    expect(routerPush).not.toHaveBeenCalled();
+  });
+
+  it("offers to sign in again once the challenge has ended", async () => {
+    await reachCodeStep();
+    completeMfaMock.mockRejectedValue(
+      new ApiError(401, "UNAUTHORIZED", "Too many wrong codes. Please sign in again."),
+    );
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("6 digit code"), "000000");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      await screen.findByText("Too many wrong codes. Please sign in again."),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sign in again" }));
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+  });
+
+  it("accepts a recovery code instead", async () => {
+    await reachCodeStep();
+    completeMfaMock.mockResolvedValue(session);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Use a recovery code instead" }));
+    await user.type(screen.getByLabelText("Recovery code"), "abcde-fghjk");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(completeMfaMock).toHaveBeenCalledWith({
+        mfaToken: "challenge-token",
+        code: "abcde-fghjk",
+      }),
+    );
   });
 });

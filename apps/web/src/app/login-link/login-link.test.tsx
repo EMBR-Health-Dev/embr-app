@@ -15,9 +15,11 @@ const refreshMock = vi.fn().mockResolvedValue(undefined);
 vi.mock("../../lib/auth-context", () => ({ useAuth: () => ({ refresh: refreshMock }) }));
 const requestMock = vi.fn();
 const consumeMock = vi.fn();
+const completeMfaMock = vi.fn();
 vi.mock("../../lib/api", () => ({
   api: {
     auth: {
+      completeMfa: (...a: unknown[]) => completeMfaMock(...a),
       requestLoginLink: (...a: unknown[]) => requestMock(...a),
       consumeLoginLink: (...a: unknown[]) => consumeMock(...a),
     },
@@ -38,6 +40,7 @@ beforeEach(() => {
   refreshMock.mockClear();
   requestMock.mockReset();
   consumeMock.mockReset();
+  completeMfaMock.mockReset();
   searchParamsValue = new URLSearchParams();
 });
 
@@ -82,5 +85,27 @@ describe("Sign in with an email link", () => {
       "/login-link",
     );
     expect(routerPush).not.toHaveBeenCalled();
+  });
+});
+
+describe("Sign in with an email link — two-step sign in", () => {
+  it("asks for the code after the link, then signs in", async () => {
+    searchParamsValue = new URLSearchParams("token=abc");
+    consumeMock.mockResolvedValue({ mfaRequired: true, mfaToken: "challenge-token" });
+    completeMfaMock.mockResolvedValue({
+      user: { id: "u1", email: "person@embr.health", onboardingCompletedAt: "2026-10-01" },
+      accessToken: "at",
+      refreshToken: "rt",
+    });
+    const user = userEvent.setup();
+    await renderPage();
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByRole("heading", { name: "Enter your code" })).toBeInTheDocument();
+    expect(refreshMock).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText("6 digit code"), "123456");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(completeMfaMock).toHaveBeenCalledWith({ mfaToken: "challenge-token", code: "123456" });
+    expect(routerPush).toHaveBeenCalledWith("/dashboard");
   });
 });

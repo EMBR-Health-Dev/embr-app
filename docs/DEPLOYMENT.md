@@ -357,6 +357,12 @@ mobile need a rebuild, since public env values are baked in at build time; the
 web Dockerfile takes `NEXT_PUBLIC_REGISTRATION_OPEN` as a build argument, which
 Railway fills from the service variable of the same name).
 
+## Two-step sign in
+
+| Where | Variable                        | Default        | Effect                                                                                                                                                                |
+| ----- | ------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web   | `NEXT_PUBLIC_MFA_SETUP_ENABLED` | unset (hidden) | Settings offers to turn two-step sign in on. Build time, like `NEXT_PUBLIC_REGISTRATION_OPEN`. Leave off until mobile and admin can ask for the code (`docs/MFA.md`). |
+
 ## Production configuration checklist
 
 A human operator's checklist for verifying a real deployment's

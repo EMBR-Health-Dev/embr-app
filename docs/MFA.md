@@ -60,3 +60,27 @@ on. Every client that signs in (web, admin, mobile) must handle
 `mfaRequired` before the Settings screen that turns it on ships. Otherwise
 someone who turns it on on the web can't sign in to an app that can't ask
 for the code.
+
+| Part | What                                                                                                                                                                                                     | Status  |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1    | API (#322)                                                                                                                                                                                               | Merged  |
+| 2    | Web: the code step on `/login` and `/login-link` (always on), and the Settings section (`components/two-step-settings.tsx`), hidden unless `NEXT_PUBLIC_MFA_SETUP_ENABLED=true` or she already has it on | This PR |
+| 3    | Mobile and admin login code step                                                                                                                                                                         | Next    |
+
+Set `NEXT_PUBLIC_MFA_SETUP_ENABLED=true` on the web service (a build
+argument, like `NEXT_PUBLIC_REGISTRATION_OPEN`) only once part 3 has shipped.
+Until then nobody can turn it on, and the web code step is ready for when
+they can.
+
+### On the web
+
+- Sign in: after a correct password or email link, `/login` and `/login-link`
+  show "Enter your code", with a switch to a recovery code. A wrong code
+  keeps her on the step; once the challenge ends (5 minutes or 5 codes) she
+  is offered to sign in again. `/auth/login/mfa` is in the API client's
+  no-refresh list, so that 401 never looks like an expired session.
+- Settings: set up shows a QR code (made in the browser, never sent
+  anywhere) and the key in groups of four for typing by hand, then asks for
+  a first code. Recovery codes are shown once, with copy and download.
+  Replacing them needs a current code; turning it off needs her password
+  and a code.

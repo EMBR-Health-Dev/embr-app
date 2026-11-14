@@ -14,6 +14,10 @@ import type {
   CycleLengthTrendDto,
   DeviceSessionDto,
   EvidenceStrengthDto,
+  MfaChallengeDto,
+  MfaRecoveryCodesDto,
+  MfaSetupDto,
+  MfaStatusDto,
   MrsCheckInDto,
   MrsItem,
   MyOrganizationMembershipDto,
@@ -74,8 +78,16 @@ export const api = {
     register: (input: RegisterInput) =>
       apiFetch<UserDto>("/auth/register", { method: "POST", body: input }),
 
+    /** With two-step sign in on, a challenge comes back instead of a session. */
     login: (input: { email: string; password: string }) =>
-      apiFetch<AuthSessionResponse>("/auth/login", { method: "POST", body: input }),
+      apiFetch<AuthSessionResponse | MfaChallengeDto>("/auth/login", {
+        method: "POST",
+        body: input,
+      }),
+
+    /** The second step: a code from her app, or a recovery code. */
+    completeMfa: (input: { mfaToken: string; code: string }) =>
+      apiFetch<AuthSessionResponse>("/auth/login/mfa", { method: "POST", body: input }),
 
     logout: () => apiFetch<void>("/auth/logout", { method: "POST" }),
 
@@ -93,7 +105,7 @@ export const api = {
       apiFetch<void>("/auth/login-link", { method: "POST", body: { email } }),
 
     consumeLoginLink: (token: string) =>
-      apiFetch<AuthSessionResponse>("/auth/login-link/consume", {
+      apiFetch<AuthSessionResponse | MfaChallengeDto>("/auth/login-link/consume", {
         method: "POST",
         body: { token },
       }),
@@ -109,6 +121,20 @@ export const api = {
 
     deleteAccount: (input: { password: string }) =>
       apiFetch<void>("/auth/me", { method: "DELETE", body: input }),
+
+    mfa: {
+      status: () => apiFetch<MfaStatusDto>("/auth/mfa"),
+      setup: () => apiFetch<MfaSetupDto>("/auth/mfa/setup", { method: "POST" }),
+      confirm: (code: string) =>
+        apiFetch<MfaRecoveryCodesDto>("/auth/mfa/confirm", { method: "POST", body: { code } }),
+      disable: (input: { password: string; code: string }) =>
+        apiFetch<void>("/auth/mfa/disable", { method: "POST", body: input }),
+      regenerateRecoveryCodes: (code: string) =>
+        apiFetch<MfaRecoveryCodesDto>("/auth/mfa/recovery-codes", {
+          method: "POST",
+          body: { code },
+        }),
+    },
 
     sessions: {
       list: () => apiFetch<DeviceSessionDto[]>("/auth/sessions"),

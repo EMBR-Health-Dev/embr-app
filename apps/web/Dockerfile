@@ -21,6 +21,9 @@ ENV API_URL=${API_URL}
 # the platform must pass it as a build argument. Unset means closed.
 ARG NEXT_PUBLIC_REGISTRATION_OPEN=false
 ENV NEXT_PUBLIC_REGISTRATION_OPEN=${NEXT_PUBLIC_REGISTRATION_OPEN}
+# Whether Settings offers to turn two-step sign in on (apps/web/src/lib/mfa.ts).
+ARG NEXT_PUBLIC_MFA_SETUP_ENABLED=false
+ENV NEXT_PUBLIC_MFA_SETUP_ENABLED=${NEXT_PUBLIC_MFA_SETUP_ENABLED}
 COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY packages/validation ./packages/validation

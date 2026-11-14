@@ -40,6 +40,7 @@ vi.mock("../../lib/api", () => ({
       resendVerification: (...args: unknown[]) => resendVerificationMock(...args),
       changePassword: vi.fn(),
       logoutAll: vi.fn(),
+      mfa: { status: vi.fn().mockResolvedValue({ enabled: false, recoveryCodesLeft: 0 }) },
     },
     organizations: {
       mine: vi.fn().mockResolvedValue([]),
