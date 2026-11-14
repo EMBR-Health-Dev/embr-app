@@ -52,7 +52,7 @@ function isPostgresReachable(url: string | undefined, timeoutMs = 750): Promise<
 }
 
 const reachable = await isPostgresReachable(process.env.DATABASE_URL);
-const PASSWORD = "Correct-Horse-Battery-2026";
+const PASSWORD = "Sup3rSecret!Pass";
 const created: string[] = [];
 const app = createApp();
 
