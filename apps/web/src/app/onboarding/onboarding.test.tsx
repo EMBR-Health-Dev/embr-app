@@ -99,14 +99,23 @@ describe("Onboarding index — resume behavior", () => {
   });
 
   it("redirects to the stored currentStep, not the beginning", async () => {
-    onboardingProfile = emptyProfile({ currentStep: "APPOINTMENT_STATUS" });
+    onboardingProfile = emptyProfile({ currentStep: "WHATS_GOING_ON" });
     const { default: OnboardingIndex } = await import("./page");
 
     renderWithIntl(<OnboardingIndex />);
 
-    await waitFor(() =>
-      expect(routerReplace).toHaveBeenCalledWith("/onboarding/appointment-status"),
-    );
+    await waitFor(() => expect(routerReplace).toHaveBeenCalledWith("/onboarding/whats-going-on"));
+  });
+
+  it("resumes someone stopped on a removed step at what she has noticed", async () => {
+    for (const step of ["JOB_TO_BE_DONE", "LIFE_STAGE", "APPOINTMENT_STATUS", "THE_LOOP"]) {
+      routerReplace.mockClear();
+      onboardingProfile = emptyProfile({ currentStep: step });
+      const { default: OnboardingIndex } = await import("./page");
+      const { unmount } = renderWithIntl(<OnboardingIndex />);
+      await waitFor(() => expect(routerReplace).toHaveBeenCalledWith("/onboarding/whats-going-on"));
+      unmount();
+    }
   });
 
   it("falls back to WELCOME if currentStep is somehow not a real step", async () => {
@@ -119,53 +128,7 @@ describe("Onboarding index — resume behavior", () => {
   });
 });
 
-describe("Screen 2 — job to be done", () => {
-  it("persists the selection and advances to LIFE_STAGE", async () => {
-    const user = userEvent.setup();
-    const { default: JobToBeDoneScreen } = await import("./job-to-be-done/page");
-
-    renderWithIntl(<JobToBeDoneScreen />);
-    await user.click(screen.getByText("Prepare for a healthcare conversation"));
-
-    await waitFor(() =>
-      expect(onboardingPatch).toHaveBeenCalledWith({
-        jobToBeDone: "PREPARE_FOR_APPOINTMENT",
-        currentStep: "LIFE_STAGE",
-      }),
-    );
-  });
-});
-
-describe("Screen 3 — life stage", () => {
-  it("persists the chosen stage and advances to WHATS_GOING_ON", async () => {
-    const user = userEvent.setup();
-    const { default: LifeStageScreen } = await import("./life-stage/page");
-
-    renderWithIntl(<LifeStageScreen />);
-    await user.click(screen.getByText("No period for 12 months or more (postmenopause)"));
-
-    await waitFor(() =>
-      expect(onboardingPatch).toHaveBeenCalledWith({
-        lifeStage: "POSTMENOPAUSE",
-        currentStep: "WHATS_GOING_ON",
-      }),
-    );
-  });
-
-  it("stores nothing when she prefers not to say", async () => {
-    const user = userEvent.setup();
-    const { default: LifeStageScreen } = await import("./life-stage/page");
-
-    renderWithIntl(<LifeStageScreen />);
-    await user.click(screen.getByText("Prefer not to say"));
-
-    await waitFor(() =>
-      expect(onboardingPatch).toHaveBeenCalledWith({ currentStep: "WHATS_GOING_ON" }),
-    );
-  });
-});
-
-describe("Screen 4 — what's going on", () => {
+describe("Screen 2 — what's going on (the last one)", () => {
   it("toggles multiple areas and persists them as an array on continue", async () => {
     const user = userEvent.setup();
     const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
@@ -173,12 +136,12 @@ describe("Screen 4 — what's going on", () => {
     renderWithIntl(<WhatsGoingOnScreen />);
     await user.click(screen.getByText("Sleep"));
     await user.click(screen.getByText("Mood"));
-    await user.click(screen.getByText("Continue"));
+    await user.click(screen.getByText("Log your first entry"));
 
     await waitFor(() =>
       expect(onboardingPatch).toHaveBeenCalledWith({
         noticedAreas: ["SLEEP", "MOOD"],
-        currentStep: "APPOINTMENT_STATUS",
+        status: "completed",
       }),
     );
   });
@@ -190,12 +153,12 @@ describe("Screen 4 — what's going on", () => {
     renderWithIntl(<WhatsGoingOnScreen />);
     await user.click(screen.getByText("Energy"));
     await user.click(screen.getByText("Energy"));
-    await user.click(screen.getByText("Continue"));
+    await user.click(screen.getByText("Log your first entry"));
 
     await waitFor(() =>
       expect(onboardingPatch).toHaveBeenCalledWith({
         noticedAreas: [],
-        currentStep: "APPOINTMENT_STATUS",
+        status: "completed",
       }),
     );
   });
@@ -247,138 +210,57 @@ describe("Screen 4 — what's going on", () => {
 
     renderWithIntl(<WhatsGoingOnScreen />);
     await user.click(screen.getByRole("button", { name: /^Cycle/ }));
-    await user.click(screen.getByText("Continue"));
+    await user.click(screen.getByText("Log your first entry"));
 
     await waitFor(() =>
       expect(onboardingPatch).toHaveBeenCalledWith({
         noticedAreas: ["CYCLE"],
-        currentStep: "APPOINTMENT_STATUS",
+        status: "completed",
       }),
     );
   });
 });
 
-describe("Screen 5 — appointment status", () => {
-  it("persists the selection and advances to THE_LOOP", async () => {
+describe("Onboarding — two screens, then the first entry", () => {
+  it("welcome goes straight to what she has noticed", async () => {
     const user = userEvent.setup();
-    const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
+    const { default: WelcomeScreen } = await import("./welcome/page");
 
-    renderWithIntl(<AppointmentStatusScreen />);
-    await user.click(screen.getByText("Within the next month"));
+    renderWithIntl(<WelcomeScreen />);
+    await user.click(screen.getByText("Get started"));
 
     await waitFor(() =>
-      expect(onboardingPatch).toHaveBeenCalledWith({
-        appointmentStatus: "WITHIN_MONTH",
-        currentStep: "THE_LOOP",
-      }),
+      expect(onboardingPatch).toHaveBeenCalledWith({ currentStep: "WHATS_GOING_ON" }),
     );
+    expect(routerPush).toHaveBeenCalledWith("/onboarding/whats-going-on");
   });
 
-  it.each([
-    ["Within the next 3 months or longer", "WITHIN_THREE_MONTHS_OR_LONGER"],
-    ["Waiting to schedule", "WAITING_TO_SCHEDULE"],
-    ["Not now", "NOT_NOW"],
-  ])("persists %s as %s", async (label, value) => {
+  it("finishes onboarding and opens her first entry for the first area she picked", async () => {
     const user = userEvent.setup();
-    const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
+    const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
 
-    renderWithIntl(<AppointmentStatusScreen />);
-    await user.click(screen.getByText(label));
-
-    await waitFor(() =>
-      expect(onboardingPatch).toHaveBeenCalledWith({
-        appointmentStatus: value,
-        currentStep: "THE_LOOP",
-      }),
-    );
-  });
-
-  it("never renders any date input — no exact date is ever collected here", async () => {
-    const { default: AppointmentStatusScreen } = await import("./appointment-status/page");
-    const { container } = renderWithIntl(<AppointmentStatusScreen />);
-
-    expect(container.querySelector('input[type="date"]')).toBeNull();
-  });
-});
-
-describe("Screen 6 — the loop", () => {
-  it("marks onboarding completed on 'Log your first entry', without ever touching symptom-log or brief creation", async () => {
-    const user = userEvent.setup();
-    const { default: TheLoopScreen } = await import("./the-loop/page");
-
-    renderWithIntl(<TheLoopScreen />);
+    renderWithIntl(<WhatsGoingOnScreen />);
+    await user.click(screen.getByText("Sleep"));
     await user.click(screen.getByText("Log your first entry"));
 
-    await waitFor(() => expect(onboardingPatch).toHaveBeenCalledWith({ status: "completed" }));
-    // The only API surface this screen touches at all is
-    // onboardingPatch (mocked above) — there is no api.symptomLogs or
-    // api.briefs reference anywhere in the module, so there is
-    // structurally nothing else for this interaction to have created.
-    expect(routerPush).toHaveBeenCalled();
+    await waitFor(() => expect(routerPush).toHaveBeenCalled());
+    expect(String(routerPush.mock.calls[0]![0])).toMatch(/^\/dashboard\?logCategory=/);
   });
 
-  it("marks onboarding completed on 'Go to dashboard instead' too", async () => {
+  it("opens a blank first entry when she picked nothing", async () => {
     const user = userEvent.setup();
-    const { default: TheLoopScreen } = await import("./the-loop/page");
+    const { default: WhatsGoingOnScreen } = await import("./whats-going-on/page");
 
-    renderWithIntl(<TheLoopScreen />);
-    await user.click(screen.getByText("Go to dashboard instead"));
+    renderWithIntl(<WhatsGoingOnScreen />);
+    await user.click(screen.getByText("Log your first entry"));
 
-    await waitFor(() => expect(onboardingPatch).toHaveBeenCalledWith({ status: "completed" }));
-    expect(routerPush).toHaveBeenCalledWith("/dashboard");
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/dashboard?firstLog=1"));
   });
 
-  it("shows the fixed illustrative example, verbatim, never phrased as an observation about this user", async () => {
-    onboardingProfile = emptyProfile({ noticedAreas: ["SLEEP", "ENERGY"] });
-    const { default: TheLoopScreen } = await import("./the-loop/page");
-
-    renderWithIntl(<TheLoopScreen />);
-
-    expect(
-      screen.getByText('"On 6 days, lower energy appeared alongside disrupted sleep."'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/These are patterns in your records, not diagnoses/),
-    ).toBeInTheDocument();
-  });
-
-  it("uses the user's noticed areas for the TRACK stage when present", async () => {
-    onboardingProfile = emptyProfile({ noticedAreas: ["MOOD", "FOCUS"] });
-    const { default: TheLoopScreen } = await import("./the-loop/page");
-
-    renderWithIntl(<TheLoopScreen />);
-
-    expect(screen.getByText("Mood · Focus")).toBeInTheDocument();
-  });
-
-  it("translates the newer Cycle and Something else areas too, not just the original five", async () => {
-    onboardingProfile = emptyProfile({ noticedAreas: ["CYCLE", "OTHER"] });
-    const { default: TheLoopScreen } = await import("./the-loop/page");
-
-    renderWithIntl(<TheLoopScreen />);
-
-    expect(screen.getByText("Cycle · Something else")).toBeInTheDocument();
-  });
-
-  it("falls back to the generic example when nothing was selected", async () => {
-    onboardingProfile = emptyProfile({ noticedAreas: [] });
-    const { default: TheLoopScreen } = await import("./the-loop/page");
-
-    renderWithIntl(<TheLoopScreen />);
-
-    expect(screen.getByText("Sleep · Energy · Mood")).toBeInTheDocument();
-  });
-
-  it("mentions that treatments can be tracked too, under the TRACK stage", async () => {
-    const { default: TheLoopScreen } = await import("./the-loop/page");
-
-    renderWithIntl(<TheLoopScreen />);
-
-    expect(
-      screen.getByText(
-        "You can also keep track of treatments you try, including HRT, supplements, medication, or anything else you want to remember.",
-      ),
-    ).toBeInTheDocument();
+  it("shows two progress marks, not six", async () => {
+    const { default: WelcomeScreen } = await import("./welcome/page");
+    const { container } = renderWithIntl(<WelcomeScreen />);
+    expect(container.querySelectorAll('[aria-hidden="true"] > span.rounded-full')).toHaveLength(2);
   });
 });
 

@@ -6,8 +6,7 @@ import { useTranslations } from "next-intl";
 import { useOnboarding } from "../../../lib/onboarding-context";
 import { OnboardingScreen } from "../../../components/onboarding-screen";
 import { Button } from "../../../components/button";
-import { STEP_ROUTES } from "../../../lib/onboarding-steps";
-import { ONBOARDING_AREA_LABELS } from "../../../lib/onboarding-areas";
+import { ONBOARDING_AREA_LABELS, firstSuggestedCategory } from "../../../lib/onboarding-areas";
 
 const AREAS = Object.keys(ONBOARDING_AREA_LABELS) as Array<keyof typeof ONBOARDING_AREA_LABELS>;
 const AREA_KEYS: Record<string, string> = {
@@ -68,11 +67,14 @@ export default function WhatsGoingOnScreen() {
     );
   }
 
+  // The last onboarding screen: what she picked becomes her first
+  // entry's starting point, and onboarding is done.
   async function handleContinue() {
     setSaving(true);
     try {
-      await patch({ noticedAreas: selected, currentStep: "APPOINTMENT_STATUS" });
-      router.push(STEP_ROUTES.APPOINTMENT_STATUS);
+      await patch({ noticedAreas: selected, status: "completed" });
+      const suggested = firstSuggestedCategory(selected);
+      router.push(suggested ? `/dashboard?logCategory=${suggested}` : "/dashboard?firstLog=1");
     } finally {
       setSaving(false);
     }
@@ -117,7 +119,7 @@ export default function WhatsGoingOnScreen() {
         })}
       </div>
       <Button onClick={() => void handleContinue()} disabled={saving} className="mt-10 self-start">
-        {saving ? "…" : t("continue")}
+        {saving ? "…" : t("logFirstEntry")}
       </Button>
     </OnboardingScreen>
   );

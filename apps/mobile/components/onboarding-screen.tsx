@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../lib/onboarding-context";
-import { ONBOARDING_STEPS, type OnboardingStep } from "../lib/onboarding-steps";
+import { ONBOARDING_FLOW, type OnboardingStep } from "../lib/onboarding-steps";
 import { theme } from "../lib/theme";
 
 export function OnboardingScreen({
@@ -15,7 +15,7 @@ export function OnboardingScreen({
 }) {
   const { t } = useTranslation();
   const { patch } = useOnboarding();
-  const index = ONBOARDING_STEPS.indexOf(step);
+  const index = ONBOARDING_FLOW.indexOf(step as (typeof ONBOARDING_FLOW)[number]);
 
   async function handleSkip() {
     await patch({ status: "skipped" });
@@ -27,7 +27,7 @@ export function OnboardingScreen({
       <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.progress} accessibilityElementsHidden>
-            {ONBOARDING_STEPS.map((s, i) => (
+            {ONBOARDING_FLOW.map((s, i) => (
               <View
                 key={s}
                 style={[styles.progressDash, i <= index && styles.progressDashActive]}

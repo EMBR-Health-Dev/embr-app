@@ -107,15 +107,6 @@
       "body": "EMBR vous aide à transformer ce que vous vivez en un suivi que vous pouvez relire, comprendre et, le moment venu, apporter lors d’un échange avec votre médecin. EMBR ne pose pas de diagnostic et ne remplace pas votre médecin. Il vous aide à organiser votre propre suivi, selon vos conditions.",
       "getStarted": "Commencer"
     },
-    "jobToBeDone": {
-      "headline": "Pour quoi souhaitez-vous qu’EMBR vous aide ?",
-      "hint": "Cela oriente simplement ce que nous vous montrons en premier. Vous pourrez toujours changer d’avis.",
-      "understandExperience": "Comprendre ce que je vis",
-      "understandPatterns": "Comprendre les tendances dans le temps",
-      "prepareForAppointment": "Préparer un échange avec un professionnel de santé",
-      "keepRecord": "Tenir un meilleur suivi, sur la durée",
-      "notSure": "Je ne sais pas encore"
-    },
     "whatsGoingOn": {
       "headline": "Qu’avez-vous remarqué ces derniers temps ?",
       "hint": "Choisissez tout ce qui vous semble différent récemment. Ce n’est qu’un point de départ. Votre premier check in partira de ce que vous indiquez ici.",
@@ -133,35 +124,8 @@
       "cycle": "Cycle",
       "cycleExamples": "Régularité · Flux · Spotting · Changements prémenstruels",
       "somethingElse": "Autre chose",
-      "somethingElseExamples": "Digestion · Libido · Changements vaginaux ou urinaires · Stress · Activité physique · Traitements"
-    },
-    "appointmentStatus": {
-      "headline": "Avez-vous bientôt un rendez-vous médical ?",
-      "hint": "Pas besoin de la date exacte pour l’instant. Cela nous aide simplement à savoir s’il faut garder un BRIEF à portée de main.",
-      "withinMonth": "Dans le mois qui vient",
-      "withinThreeMonthsOrLonger": "Dans les 3 prochains mois ou plus tard",
-      "waitingToSchedule": "En attente de prise de rendez-vous",
-      "notNow": "Pas pour l’instant"
-    },
-    "theLoop": {
-      "headline": "Voici comment fonctionne EMBR.",
-      "trackFallback": "Sommeil · Énergie · Humeur",
-      "trackTreatmentsHint": "Vous pouvez aussi suivre les traitements que vous essayez, y compris le THM, les compléments alimentaires, les médicaments ou tout ce que vous souhaitez garder en mémoire.",
-      "patternsLabel": "Tendances",
-      "patternsTitle": "Après quelques semaines de saisie, EMBR peut vous aider à revoir ce qui se produisait en même temps.",
-      "patternsExampleLabel": "Par exemple :",
-      "patternsExample": "« Sur 6 jours, une baisse d’énergie a été notée en même temps qu’un sommeil perturbé. »",
-      "patternsCaveat": "Ce sont des tendances dans vos saisies, pas des diagnostics. EMBR ne vous dit pas ce qui cause vos symptômes.",
-      "trackLabel": "Suivre",
-      "briefLabel": "Brief",
-      "briefTitle": "Suivi · Tendances · Questions",
-      "briefBody": "Quand vous le souhaitez, EMBR transforme vos saisies en une synthèse simple à apporter à un rendez-vous médical.",
-      "briefControlNote": "Vous décidez quand la créer. Rien n’est généré automatiquement.",
-      "conversationLabel": "Échange avec un professionnel de santé",
-      "conversationTitle": "Votre Brief peut vous aider à expliquer ce que vous vivez, ce que vous avez remarqué au fil du temps et ce que vous souhaitez demander.",
-      "conversationBody": "Vous pouvez aussi simplement continuer à utiliser EMBR pour vous-même.",
-      "logFirstEntry": "Faire votre première saisie",
-      "goToDashboard": "Aller plutôt au tableau de bord"
+      "somethingElseExamples": "Digestion · Libido · Changements vaginaux ou urinaires · Stress · Activité physique · Traitements",
+      "logFirstEntry": "Faire votre première saisie"
     },
     "lifeStage": {
       "headline": "Où en êtes-vous en ce moment ?",

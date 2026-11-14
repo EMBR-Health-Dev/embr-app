@@ -5,8 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../lib/onboarding-context";
 import { OnboardingScreen } from "../../components/onboarding-screen";
 import { theme } from "../../lib/theme";
-import { STEP_ROUTES } from "../../lib/onboarding-steps";
-import { ONBOARDING_AREA_LABELS } from "../../lib/onboarding-areas";
+import { ONBOARDING_AREA_LABELS, firstSuggestedCategory } from "../../lib/onboarding-areas";
 
 const AREAS = Object.keys(ONBOARDING_AREA_LABELS) as (keyof typeof ONBOARDING_AREA_LABELS)[];
 const AREA_KEYS: Record<string, string> = {
@@ -64,8 +63,14 @@ export default function WhatsGoingOnScreen() {
   async function handleContinue() {
     setSaving(true);
     try {
-      await patch({ noticedAreas: selected, currentStep: "APPOINTMENT_STATUS" });
-      router.push(STEP_ROUTES.APPOINTMENT_STATUS);
+      // The last onboarding screen: what she picked becomes her first
+      // entry's starting point, and onboarding is done.
+      await patch({ noticedAreas: selected, status: "completed" });
+      const suggested = firstSuggestedCategory(selected);
+      router.replace({
+        pathname: "/(app)",
+        params: suggested ? { logCategory: suggested } : { firstLog: "1" },
+      });
     } finally {
       setSaving(false);
     }
@@ -103,7 +108,7 @@ export default function WhatsGoingOnScreen() {
         style={[styles.button, saving && styles.buttonDisabled]}
       >
         <Text style={styles.buttonText}>
-          {saving ? "…" : t("onboarding.whatsGoingOn.continue")}
+          {saving ? "…" : t("onboarding.whatsGoingOn.logFirstEntry")}
         </Text>
       </Pressable>
     </OnboardingScreen>

@@ -4,19 +4,19 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BrandWordmark } from "./brand-wordmark";
 import { useOnboarding } from "../lib/onboarding-context";
-import { ONBOARDING_STEPS, type OnboardingStep } from "../lib/onboarding-steps";
+import { ONBOARDING_FLOW, type OnboardingStep } from "../lib/onboarding-steps";
 
 export function OnboardingScreen({
   step,
   children,
 }: {
-  step: OnboardingStep;
+  step: (typeof ONBOARDING_FLOW)[number] & OnboardingStep;
   children: React.ReactNode;
 }) {
   const t = useTranslations("Onboarding");
   const router = useRouter();
   const { patch } = useOnboarding();
-  const index = ONBOARDING_STEPS.indexOf(step);
+  const index = ONBOARDING_FLOW.indexOf(step);
 
   async function handleSkip() {
     await patch({ status: "skipped" });
@@ -36,7 +36,7 @@ export function OnboardingScreen({
           </button>
         </div>
         <div className="mt-6 flex gap-1.5" aria-hidden="true">
-          {ONBOARDING_STEPS.map((s, i) => (
+          {ONBOARDING_FLOW.map((s, i) => (
             <span
               key={s}
               className={`h-[3px] w-6 rounded-full transition-colors ${

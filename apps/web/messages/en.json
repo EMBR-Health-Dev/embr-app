@@ -152,35 +152,8 @@
       "cycle": "Cycle",
       "cycleExamples": "Timing · Flow · Spotting · Premenstrual changes",
       "somethingElse": "Something else",
-      "somethingElseExamples": "Digestion · Libido · Vaginal or urinary changes · Stress · Exercise · Treatments"
-    },
-    "appointmentStatus": {
-      "headline": "Do you have a healthcare appointment coming up?",
-      "hint": "No need for the exact date yet. Just helps us know whether to keep an EMBR BRIEF close at hand.",
-      "withinMonth": "Within the next month",
-      "withinThreeMonthsOrLonger": "Within the next 3 months or longer",
-      "waitingToSchedule": "Waiting to schedule",
-      "notNow": "Not now"
-    },
-    "theLoop": {
-      "headline": "Here's how EMBR works.",
-      "trackFallback": "Sleep · Energy · Mood",
-      "trackTreatmentsHint": "You can also keep track of treatments you try, including HRT, supplements, medication, or anything else you want to remember.",
-      "patternsLabel": "Signals",
-      "patternsTitle": "After you've logged for a couple of weeks, EMBR can help you look back at what was happening together.",
-      "patternsExampleLabel": "For example:",
-      "patternsExample": "\"On 6 days, lower energy appeared alongside disrupted sleep.\"",
-      "patternsCaveat": "These are patterns in your records, not diagnoses. EMBR does not tell you what is causing your symptoms.",
-      "trackLabel": "Track",
-      "briefLabel": "Brief",
-      "briefTitle": "Record · Signals · Questions",
-      "briefBody": "When you want one, EMBR turns your records into a simple summary you can take to a healthcare appointment.",
-      "briefControlNote": "You decide when to create it. Nothing is generated automatically.",
-      "conversationLabel": "Healthcare conversation",
-      "conversationTitle": "You can use your Brief to help explain what you've been experiencing, what you've noticed over time, and what you want to ask about.",
-      "conversationBody": "You can also just keep using EMBR for yourself.",
-      "logFirstEntry": "Log your first entry",
-      "goToDashboard": "Go to dashboard instead"
+      "somethingElseExamples": "Digestion · Libido · Vaginal or urinary changes · Stress · Exercise · Treatments",
+      "logFirstEntry": "Log your first entry"
     },
     "lifeStage": {
       "headline": "Where are you right now?",

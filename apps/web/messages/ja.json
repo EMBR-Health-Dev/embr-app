@@ -152,35 +152,8 @@
       "cycle": "周期",
       "cycleExamples": "周期のタイミング・経血量・不正出血・生理前の変化",
       "somethingElse": "その他",
-      "somethingElseExamples": "消化・性欲・膣や排尿の変化・ストレス・運動・治療による変化"
-    },
-    "appointmentStatus": {
-      "headline": "近々、診察の予定はありますか？",
-      "hint": "正確な日付はまだ不要です。EMBR BRIEFをすぐ使える状態にしておくかどうかの参考にします。",
-      "withinMonth": "1か月以内",
-      "withinThreeMonthsOrLonger": "3か月以内、またはそれ以降",
-      "waitingToSchedule": "まだ予約していません",
-      "notNow": "今は予定なし"
-    },
-    "theLoop": {
-      "headline": "EMBRの仕組みをご紹介します。",
-      "trackFallback": "睡眠・エネルギー・気分",
-      "trackTreatmentsHint": "HRT、サプリメント、薬など、試している治療や覚えておきたいことも記録できます。",
-      "patternsLabel": "シグナル",
-      "patternsTitle": "数週間記録を続けると、EMBRは同じ時期に起きていたことを振り返る手助けをします。",
-      "patternsExampleLabel": "例えば：",
-      "patternsExample": "「エネルギー低下と睡眠の乱れが、同じ日に6日記録されました。」",
-      "patternsCaveat": "これはあなたの記録の中のパターンであり、診断ではありません。EMBRは症状の原因を教えるものではありません。",
-      "trackLabel": "記録",
-      "briefLabel": "BRIEF",
-      "briefTitle": "記録・シグナル・質問",
-      "briefBody": "必要なときに、EMBRはあなたの記録をもとに、診察に持っていけるシンプルな要約を作成します。",
-      "briefControlNote": "作成するタイミングはあなたが決めます。自動で作成されることはありません。",
-      "conversationLabel": "診察での会話",
-      "conversationTitle": "BRIEFを使うと、経験してきたこと、時間の経過とともに気づいたこと、聞きたいことを説明しやすくなります。",
-      "conversationBody": "もちろん、自分のためだけにEMBRを使い続けることもできます。",
-      "logFirstEntry": "最初の記録をつける",
-      "goToDashboard": "代わりにダッシュボードへ"
+      "somethingElseExamples": "消化・性欲・膣や排尿の変化・ストレス・運動・治療による変化",
+      "logFirstEntry": "最初の記録をつける"
     },
     "lifeStage": {
       "headline": "今のあなたに近いのは？",
