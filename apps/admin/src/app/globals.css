@@ -39,7 +39,9 @@
     --muted-foreground: var(--color-graphite-300); /* 7.52:1 on background, verified */
     --primary: var(--color-lilac-500);
     --primary-hover: var(--color-lilac-600);
-    --primary-foreground: var(--color-graphite-900); /* 5.07:1 on primary — same pair as web, contrast is intrinsic to the button itself */
+    --primary-foreground: var(
+      --color-graphite-900
+    ); /* 5.07:1 on primary — same pair as web, contrast is intrinsic to the button itself */
     /* A solid, moderately-light dark tone rather than pearl-50 at low
        opacity — this way the plain `border-border` class (no opacity
        modifier) produces a sensible subtle border in both themes,
@@ -57,7 +59,11 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body), -apple-system, system-ui, sans-serif;
+    font-family:
+      var(--font-body),
+      -apple-system,
+      system-ui,
+      sans-serif;
   }
   h1,
   h2,

@@ -359,9 +359,9 @@ Railway fills from the service variable of the same name).
 
 ## Two-step sign in
 
-| Where | Variable                        | Default        | Effect                                                                                                                                                                |
-| ----- | ------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web   | `NEXT_PUBLIC_MFA_SETUP_ENABLED` | unset (hidden) | Settings offers to turn two-step sign in on. Build time, like `NEXT_PUBLIC_REGISTRATION_OPEN`. Leave off until mobile and admin can ask for the code (`docs/MFA.md`). |
+| Where | Variable                        | Default        | Effect                                                                                                                                                                                               |
+| ----- | ------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web   | `NEXT_PUBLIC_MFA_SETUP_ENABLED` | unset (hidden) | Settings offers to turn two-step sign in on. Build time, like `NEXT_PUBLIC_REGISTRATION_OPEN`. Turn on only once the mobile build testers use includes the code step (`docs/MFA.md`, Rollout order). |
 
 ## Production configuration checklist
 

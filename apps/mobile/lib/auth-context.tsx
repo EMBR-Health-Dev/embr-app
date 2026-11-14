@@ -1,15 +1,22 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { router } from "expo-router";
-import type { UserDto } from "@embr/types";
+import type { AuthSessionResponse, UserDto } from "@embr/types";
 import { api } from "./api";
 import { ApiError, setSessionExpiredHandler } from "./api-client";
 import { clearReminder } from "./reminders";
 import { tokenStorage } from "./token-storage";
 
+/**
+ * A correct password either signs her in, or, with two-step sign in on,
+ * asks for the code from her authenticator app (completeMfa).
+ */
+export type LoginResult = { user: UserDto } | { mfaToken: string };
+
 interface AuthContextValue {
   user: UserDto | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<UserDto>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  completeMfa: (mfaToken: string, code: string) => Promise<UserDto>;
   register: (email: string, password: string) => Promise<UserDto>;
   logout: () => Promise<void>;
 }
@@ -69,8 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setSessionExpiredHandler(null);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const session = await api.auth.login({ email, password });
+  const startSession = useCallback(async (session: AuthSessionResponse) => {
     await tokenStorage.set({
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -78,6 +84,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(session.user);
     return session.user;
   }, []);
+
+  const login = useCallback(
+    async (email: string, password: string): Promise<LoginResult> => {
+      const result = await api.auth.login({ email, password });
+      // No tokens yet: nothing is stored until the code is accepted.
+      if ("mfaRequired" in result && result.mfaRequired) return { mfaToken: result.mfaToken };
+      return { user: await startSession(result as AuthSessionResponse) };
+    },
+    [startSession],
+  );
+
+  const completeMfa = useCallback(
+    async (mfaToken: string, code: string) =>
+      startSession(await api.auth.completeMfa({ mfaToken, code })),
+    [startSession],
+  );
 
   const register = useCallback(async (email: string, password: string) => {
     // Matches apps/web: registering does not log the user in — email
@@ -104,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, completeMfa, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

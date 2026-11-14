@@ -16,6 +16,23 @@
     "sessionExpired": "Your session expired. Log in again to continue.",
     "signUpOnWeb": "Sign up on the web"
   },
+  "mfa": {
+    "title": "Enter your code",
+    "subtitle": "Open your authenticator app and enter the 6 digit code for EMBR.",
+    "recoverySubtitle": "Enter one of the recovery codes you saved when you turned on two-step sign in. Each one works once.",
+    "codeLabel": "6 digit code",
+    "recoveryCodeLabel": "Recovery code",
+    "enterCode": "Enter the 6 digit code from your app.",
+    "enterRecoveryCode": "Enter one of your recovery codes.",
+    "wrongCode": "That code is not right. Check your app and try again.",
+    "verify": "Continue",
+    "verifying": "Checking…",
+    "useRecovery": "Use a recovery code instead",
+    "useApp": "Use the code from my app instead",
+    "lostBoth": "Lost your phone and your recovery codes? Contact us from the Help page on the EMBR website and we will help you get back in.",
+    "startAgain": "Sign in again",
+    "genericError": "Something went wrong. Try again in a moment."
+  },
   "languageSwitcher": {
     "label": "Language",
     "en": "English",

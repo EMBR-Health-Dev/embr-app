@@ -81,6 +81,9 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
 // recurse.
 const NO_REFRESH_PATHS = new Set([
   "/auth/login",
+  // A 401 here means the sign in challenge ended (expired or too many
+  // wrong codes); there is no session yet to refresh.
+  "/auth/login/mfa",
   "/auth/register",
   "/auth/refresh",
   "/auth/forgot-password",
