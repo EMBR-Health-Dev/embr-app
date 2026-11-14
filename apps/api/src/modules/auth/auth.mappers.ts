@@ -23,6 +23,7 @@ export function toUserDto(
     email: user.email,
     role: user.role,
     emailVerified: user.emailVerifiedAt !== null,
+    mfaEnabled: Boolean(user.mfaEnabledAt && user.mfaSecret),
     createdAt: user.createdAt.toISOString(),
     onboardingCompletedAt: onboardingCompletedAt ? onboardingCompletedAt.toISOString() : null,
     consents,

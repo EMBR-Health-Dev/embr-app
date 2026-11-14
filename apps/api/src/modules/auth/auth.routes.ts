@@ -9,6 +9,14 @@ import {
   loginLinkConsumeSchema,
   loginLinkRequestSchema,
   loginSchema,
+  mfaConfirmSchema,
+  mfaDisableSchema,
+  mfaLoginSchema,
+  mfaRegenerateSchema,
+  type MfaConfirmInput,
+  type MfaDisableInput,
+  type MfaLoginInput,
+  type MfaRegenerateInput,
   refreshTokenBodySchema,
   registerSchema,
   resendVerificationSchema,
@@ -18,7 +26,8 @@ import {
 import { asyncHandler } from "../../lib/async-handler.js";
 import { validate } from "../../lib/validate.js";
 import { requireParam } from "../../lib/params.js";
-import { authService } from "./auth.service.js";
+import { authService, isMfaChallenge } from "./auth.service.js";
+import { mfaService } from "./mfa.service.js";
 import { authRepository } from "./auth.repository.js";
 import { toUserDto } from "./auth.mappers.js";
 import { requireAuth } from "./auth.middleware.js";
@@ -95,7 +104,13 @@ router.post(
   loginLimiter,
   validate(loginSchema),
   asyncHandler(async (req, res) => {
-    const { user, accessToken, refreshToken } = await authService.login(req, req.body);
+    const result = await authService.login(req, req.body);
+    if (isMfaChallenge(result)) {
+      // No session and no cookies yet: only a token for the second step.
+      res.status(200).json({ data: result, requestId: req.requestId });
+      return;
+    }
+    const { user, accessToken, refreshToken } = result;
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, refreshToken);
     issueCsrfToken(res);
@@ -105,6 +120,97 @@ router.post(
     // field; mobile has no cookie, so this is the only place it gets
     // one at all.
     res.status(200).json({ data: { user, accessToken, refreshToken }, requestId: req.requestId });
+  }),
+);
+
+// The second step of sign in, with two-step sign in on. Same limiter as
+// the password step: each challenge also allows only 5 codes.
+router.post(
+  "/auth/login/mfa",
+  loginLimiter,
+  validate(mfaLoginSchema),
+  asyncHandler(async (req, res) => {
+    const { mfaToken, code } = req.body as MfaLoginInput;
+    const { user, accessToken, refreshToken } = await authService.completeMfaSignIn(
+      req,
+      mfaToken,
+      code,
+    );
+    setAccessTokenCookie(res, accessToken);
+    setRefreshTokenCookie(res, refreshToken);
+    issueCsrfToken(res);
+    res.status(200).json({ data: { user, accessToken, refreshToken }, requestId: req.requestId });
+  }),
+);
+
+router.get(
+  "/auth/mfa",
+  requireAuth(),
+  asyncHandler(async (req, res) => {
+    res
+      .status(200)
+      .json({ data: await mfaService.status(req.user!.sub), requestId: req.requestId });
+  }),
+);
+
+// Step one of setup: a secret to add to the app. Nothing changes for
+// sign in until /auth/mfa/confirm gets a code made from it.
+router.post(
+  "/auth/mfa/setup",
+  requireAuth(),
+  requireCsrfToken(),
+  asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    res
+      .status(200)
+      .json({ data: await mfaService.beginSetup(req.user!.sub), requestId: req.requestId });
+  }),
+);
+
+router.post(
+  "/auth/mfa/confirm",
+  loginLimiter,
+  requireAuth(),
+  requireCsrfToken(),
+  validate(mfaConfirmSchema),
+  asyncHandler(async (req, res) => {
+    const data = await mfaService.confirmSetup(
+      req,
+      req.user!.sub,
+      (req.body as MfaConfirmInput).code,
+    );
+    res.set("Cache-Control", "no-store");
+    res.status(200).json({ data, requestId: req.requestId });
+  }),
+);
+
+router.post(
+  "/auth/mfa/disable",
+  loginLimiter,
+  requireAuth(),
+  requireCsrfToken(),
+  validate(mfaDisableSchema),
+  asyncHandler(async (req, res) => {
+    const { password, code } = req.body as MfaDisableInput;
+    await mfaService.disable(req, req.user!.sub, password, code);
+    res.status(204).send();
+  }),
+);
+
+router.post(
+  "/auth/mfa/recovery-codes",
+  loginLimiter,
+  requireAuth(),
+  requireCsrfToken(),
+  validate(mfaRegenerateSchema),
+  asyncHandler(async (req, res) => {
+    const data = await mfaService.regenerateRecoveryCodes(
+      req,
+      req.user!.sub,
+      (req.body as MfaRegenerateInput).code,
+    );
+    res.set("Cache-Control", "no-store");
+    res.status(200).json({ data, requestId: req.requestId });
   }),
 );
 
@@ -127,10 +233,12 @@ router.post(
   loginLimiter,
   validate(loginLinkConsumeSchema),
   asyncHandler(async (req, res) => {
-    const { user, accessToken, refreshToken } = await authService.loginWithLink(
-      req,
-      req.body.token,
-    );
+    const result = await authService.loginWithLink(req, req.body.token);
+    if (isMfaChallenge(result)) {
+      res.status(200).json({ data: result, requestId: req.requestId });
+      return;
+    }
+    const { user, accessToken, refreshToken } = result;
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, refreshToken);
     issueCsrfToken(res);

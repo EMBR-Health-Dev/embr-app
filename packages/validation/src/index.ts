@@ -1005,3 +1005,31 @@ export const supportMessageSchema = z.object({
   company: z.string().max(200).optional(),
 });
 export type SupportMessageInput = z.infer<typeof supportMessageSchema>;
+
+// ---- Two-step sign in ----
+
+/** A 6 digit app code, or a recovery code such as ABCDE-FGHJK. */
+const mfaCode = z.string().trim().min(6, "Enter the code").max(20);
+
+export const mfaLoginSchema = z.object({
+  mfaToken: z.string().min(20).max(200),
+  code: mfaCode,
+});
+export type MfaLoginInput = z.infer<typeof mfaLoginSchema>;
+
+export const mfaConfirmSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{3}\s?\d{3}$/, "Enter the 6 digit code from your app"),
+});
+export type MfaConfirmInput = z.infer<typeof mfaConfirmSchema>;
+
+export const mfaDisableSchema = z.object({
+  password: z.string().min(1).max(200),
+  code: mfaCode,
+});
+export type MfaDisableInput = z.infer<typeof mfaDisableSchema>;
+
+export const mfaRegenerateSchema = z.object({ code: mfaCode });
+export type MfaRegenerateInput = z.infer<typeof mfaRegenerateSchema>;

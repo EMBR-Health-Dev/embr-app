@@ -26,6 +26,7 @@ function meResponse(onboardingCompletedAt: string | null) {
     createdAt: "2026-01-01T00:00:00.000Z",
     onboardingCompletedAt,
     consents: { TERMS: "CURRENT", PRIVACY: "CURRENT", HEALTH_PROCESSING: "CURRENT" } as const,
+    mfaEnabled: false,
   };
 }
 
