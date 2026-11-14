@@ -20,6 +20,7 @@ import { ThemeControl } from "../../components/theme-control";
 import { LifeStageControl } from "../../components/life-stage-control";
 import { LastPeriodControl } from "../../components/last-period-control";
 import { WeeklyEmailControl } from "../../components/weekly-email-control";
+import { TwoStepSettings } from "../../components/two-step-settings";
 
 export default function SettingsPage() {
   const t = useTranslations("Settings");
@@ -250,6 +251,8 @@ export default function SettingsPage() {
             </Button>
           </form>
         </section>
+
+        <TwoStepSettings />
 
         <section className="mt-10">
           <h2 className="font-display text-heading-m text-foreground">{t("displayTitle")}</h2>

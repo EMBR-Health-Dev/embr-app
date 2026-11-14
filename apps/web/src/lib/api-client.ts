@@ -117,6 +117,9 @@ const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 const NO_REFRESH_PATHS = new Set([
   "/auth/login",
   "/auth/login-link/consume",
+  // A 401 here means the sign in challenge ended (expired or too many
+  // wrong codes), not that a session did: there is no session yet.
+  "/auth/login/mfa",
   "/auth/register",
   "/auth/refresh",
   "/auth/forgot-password",

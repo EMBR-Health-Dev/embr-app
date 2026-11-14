@@ -11,6 +11,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "../../i18n/locale";
 import { EARLY_ACCESS_HREF, REGISTRATION_OPEN } from "../../lib/registration";
 import { ApiError } from "../../lib/api-client";
 import { useAuth } from "../../lib/auth-context";
+import { isMfaChallenge } from "../../lib/mfa";
 import { consentHref, needsConsentReview } from "../../lib/consent";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
@@ -89,6 +90,9 @@ function RegisterForm() {
       if (fromCheckIn) {
         try {
           const session = await api.auth.login({ email, password });
+          // A new account never has two-step sign in on; if somehow it
+          // does, she finishes signing in from the login page.
+          if (isMfaChallenge(session)) throw new Error("two-step sign in");
           await refresh();
           router.push(needsConsentReview(session.user) ? consentHref("/check-in") : "/check-in");
           return;

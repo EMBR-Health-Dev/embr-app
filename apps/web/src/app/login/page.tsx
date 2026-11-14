@@ -15,6 +15,9 @@ import { Button } from "../../components/button";
 import { Field } from "../../components/field";
 import { PasswordField } from "../../components/password-field";
 import { LanguageSwitcher } from "../../components/language-switcher";
+import { MfaCodeStep } from "../../components/mfa-code-step";
+import { isMfaChallenge } from "../../lib/mfa";
+import type { AuthSessionResponse } from "@embr/types";
 
 function LoginForm() {
   const t = useTranslations("Login");
@@ -37,6 +40,25 @@ function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [credentialsRejected, setCredentialsRejected] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Set when two-step sign in is on: the password was right, now the code.
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+
+  async function finishSignIn(session: AuthSessionResponse) {
+    await refresh();
+    // An explicit redirect param (SSO, accept-invite) always wins —
+    // those flows have their own reason for sending the person
+    // somewhere specific, and onboarding shouldn't interrupt them.
+    const destination = redirectParam
+      ? redirectTo
+      : session.user.onboardingCompletedAt
+        ? "/dashboard"
+        : "/onboarding";
+    // Consent comes before anything else, including an explicit
+    // redirect: none of those destinations work until every item is
+    // current (the API returns 403 CONSENT_REQUIRED). The consent
+    // screen carries the destination and continues there afterwards.
+    router.push(needsConsentReview(session.user) ? consentHref(destination) : destination);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -56,21 +78,12 @@ function LoginForm() {
 
     setSubmitting(true);
     try {
-      const session = await api.auth.login(parsed.data);
-      await refresh();
-      // An explicit redirect param (SSO, accept-invite) always wins —
-      // those flows have their own reason for sending the person
-      // somewhere specific, and onboarding shouldn't interrupt them.
-      const destination = redirectParam
-        ? redirectTo
-        : session.user.onboardingCompletedAt
-          ? "/dashboard"
-          : "/onboarding";
-      // Consent comes before anything else, including an explicit
-      // redirect: none of those destinations work until every item is
-      // current (the API returns 403 CONSENT_REQUIRED). The consent
-      // screen carries the destination and continues there afterwards.
-      router.push(needsConsentReview(session.user) ? consentHref(destination) : destination);
+      const result = await api.auth.login(parsed.data);
+      if (isMfaChallenge(result)) {
+        setMfaToken(result.mfaToken);
+        return;
+      }
+      await finishSignIn(result);
     } catch (err) {
       // Deliberately the same message shape the API itself returns for
       // both "wrong password" and "no such account" — no reason for the
@@ -101,6 +114,19 @@ function LoginForm() {
     // without threading it through, SSO always landed on /dashboard
     // regardless of what page sent the person to /login.
     window.location.href = api.sso.startUrl(parsedEmail.data, redirectParam ?? undefined);
+  }
+
+  if (mfaToken) {
+    return (
+      <MfaCodeStep
+        mfaToken={mfaToken}
+        onSignedIn={finishSignIn}
+        onRestart={() => {
+          setMfaToken(null);
+          setPassword("");
+        }}
+      />
+    );
   }
 
   return (

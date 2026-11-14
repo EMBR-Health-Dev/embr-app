@@ -11,6 +11,9 @@ import { useAuth } from "../../lib/auth-context";
 import { consentHref, needsConsentReview } from "../../lib/consent";
 import { Button } from "../../components/button";
 import { Field } from "../../components/field";
+import { MfaCodeStep } from "../../components/mfa-code-step";
+import { isMfaChallenge } from "../../lib/mfa";
+import type { AuthSessionResponse } from "@embr/types";
 
 /** Asks for an email and sends a one time sign in link to it. */
 function RequestLink() {
@@ -105,19 +108,39 @@ function UseLink({ token }: { token: string }) {
   const { refresh } = useAuth();
   const [failed, setFailed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+
+  async function finishSignIn(session: AuthSessionResponse) {
+    await refresh();
+    const destination = session.user.onboardingCompletedAt ? "/dashboard" : "/onboarding";
+    router.push(needsConsentReview(session.user) ? consentHref(destination) : destination);
+  }
 
   async function signIn() {
     setFailed(false);
     setSubmitting(true);
     try {
-      const session = await api.auth.consumeLoginLink(token);
-      await refresh();
-      const destination = session.user.onboardingCompletedAt ? "/dashboard" : "/onboarding";
-      router.push(needsConsentReview(session.user) ? consentHref(destination) : destination);
+      const result = await api.auth.consumeLoginLink(token);
+      if (isMfaChallenge(result)) {
+        setMfaToken(result.mfaToken);
+        return;
+      }
+      await finishSignIn(result);
     } catch {
       setFailed(true);
       setSubmitting(false);
     }
+  }
+
+  if (mfaToken) {
+    // The link is used up by now, so starting again means a new one.
+    return (
+      <MfaCodeStep
+        mfaToken={mfaToken}
+        onSignedIn={finishSignIn}
+        onRestart={() => router.push("/login-link")}
+      />
+    );
   }
 
   return (
